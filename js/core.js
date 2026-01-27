@@ -14,7 +14,8 @@ let userProfile = {
         sim_promo_enabled: false         // sim 8%網購
     },
     usage: { "winter_total": 0, "winter_eligible": 0, "em_q1_total": 0, "em_q1_eligible": 0, "guru_rc_used": 0, "guru_spend_accum": 0 },
-    stats: { totalSpend: 0, totalVal: 0, txCount: 0 }
+    stats: { totalSpend: 0, totalVal: 0, txCount: 0 },
+    transactions: []
 };
 
 function loadUserData() {
@@ -22,9 +23,11 @@ function loadUserData() {
     if (s) {
         let loaded = JSON.parse(s);
         userProfile = { ...userProfile, ...loaded };
+        if (!userProfile.settings) userProfile.settings = {};
         if (!userProfile.settings.red_hot_allocation) userProfile.settings.red_hot_allocation = { dining: 5, world: 0, home: 0, enjoyment: 0, style: 0 };
         if (!userProfile.stats) userProfile.stats = { totalSpend: 0, totalVal: 0, txCount: 0 };
         if (!userProfile.usage) userProfile.usage = {};
+        if (!userProfile.transactions) userProfile.transactions = [];
     }
     saveUserData();
 }

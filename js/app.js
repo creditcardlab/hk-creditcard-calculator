@@ -42,6 +42,7 @@ window.switchTab = function (t) {
     document.getElementById(`btn-${t}`).classList.replace('text-gray-400', 'text-blue-600');
 
     if (t === 'dashboard') renderDashboard(userProfile);
+    if (t === 'ledger') renderLedger(userProfile.transactions);
 }
 
 window.toggleMode = function (m) {
@@ -130,6 +131,22 @@ function commitTransaction(data) {
             alertMsg += "\n🌏 EM推廣累積更新";
         }
     });
+
+    // Record Transaction History
+    if (!userProfile.transactions) userProfile.transactions = [];
+    const tx = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        cardId: cardId || 'unknown',
+        category: category,
+        amount: amount,
+        rebateVal: estValue,
+        rebateText: data.resultText || (estValue > 0 ? `$${estValue.toFixed(2)}` : 'No Reward'),
+        desc: data.program || 'Spending'
+    };
+    userProfile.transactions.unshift(tx);
+    // Keep last 100
+    if (userProfile.transactions.length > 100) userProfile.transactions = userProfile.transactions.slice(0, 100);
 
     saveUserData();
     return alertMsg;
