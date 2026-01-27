@@ -29,7 +29,8 @@ function updateCategoryDropdown(ownedCards) {
         { v: "dining", t: "🍱 餐飲 (Dining)" },
         { v: "online", t: "💻 網上購物 (Online)" },
         // Split Overseas Category - 3 Way
-        { v: "overseas_jktt", t: "🇯🇵🇰🇷🇹🇭🇹🇼 海外 (日韓泰台)" },
+        { v: "overseas_jkt", t: "🇯🇵🇰🇷🇹🇭 海外 (日韓泰)" },
+        { v: "overseas_tw", t: "🇹🇼 海外 (台灣)" },
         { v: "overseas_cn", t: "🇨🇳🇲🇴 海外 (內地澳門)" },
         { v: "overseas_other", t: "🌎 海外 (其他)" },
         { v: "alipay", t: "📱 Alipay / WeChat Pay" },

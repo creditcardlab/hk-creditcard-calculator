@@ -83,7 +83,7 @@ function resolveCategory(cardId, inputCategory) {
         if (cardId === 'hangseng_travel_plus') return 'travel_plus_tier1';
     }
 
-    if (inputCategory === 'overseas_jktt') {
+    if (inputCategory === 'overseas_jkt' || inputCategory === 'overseas_tw') {
         if (cardId === 'hangseng_travel_plus') return 'travel_plus_tier1';
     }
 
@@ -97,7 +97,8 @@ function resolveCategory(cardId, inputCategory) {
 
 const CATEGORY_HIERARCHY = {
     "overseas_cn": ["overseas"],
-    "overseas_jktt": ["overseas"],
+    "overseas_jkt": ["overseas"],
+    "overseas_tw": ["overseas"],
     "overseas_other": ["overseas"],
     "travel_plus_tier1": ["overseas"],
     // Can expand for local spending too if needed
@@ -378,7 +379,7 @@ function commitTransaction(data) {
     if (guruRC > 0) userProfile.usage["guru_rc_used"] = (userProfile.usage["guru_rc_used"] || 0) + guruRC;
     const level = parseInt(userProfile.settings.guru_level);
     // Track all overseas spending for Guru upgrade progress
-    const isOverseas = ['overseas', 'overseas_jktt', 'overseas_cn', 'overseas_other'].includes(category);
+    const isOverseas = ['overseas', 'overseas_jkt', 'overseas_tw', 'overseas_cn', 'overseas_other'].includes(category);
     if (level > 0 && isOverseas) userProfile.usage["guru_spend_accum"] = (userProfile.usage["guru_spend_accum"] || 0) + amount;
 
     missionTags.forEach(tag => {

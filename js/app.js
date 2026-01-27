@@ -114,7 +114,7 @@ function commitTransaction(data) {
 
     const level = parseInt(userProfile.settings.guru_level);
     // Track all overseas spending for Guru upgrade progress
-    const isOverseas = ['overseas', 'overseas_jktt', 'overseas_cn', 'overseas_other'].includes(category);
+    const isOverseas = ['overseas', 'overseas_jkt', 'overseas_tw', 'overseas_cn', 'overseas_other'].includes(category);
     if (level > 0 && isOverseas) userProfile.usage["guru_spend_accum"] = (userProfile.usage["guru_spend_accum"] || 0) + amount;
 
     let alertMsg = "";

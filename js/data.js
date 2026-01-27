@@ -218,28 +218,28 @@ const modulesDB = {
     "red_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
     "red_online": { type: "category", match: ["online"], rate: 0.04, desc: "網購 (4%)", mode: "replace", cap_limit: 10000, cap_key: "red_online_cap" },
     "red_designated_bonus": { type: "category", match: ["red_designated"], rate: 0.076, desc: "指定商戶加碼 (7.6%)", cap_limit: 1250, cap_key: "red_designated_cap" },
-    "red_category_bonus": { type: "category", match: ["grocery", "overseas", "overseas_jktt", "overseas_cn", "overseas_other"], rate: 0.01, desc: "超市/海外 (1%)", mode: "replace" },
-    "em_overseas_mission": { type: "mission_tracker", setting_key: "em_promo_enabled", match: ["overseas", "overseas_jktt", "overseas_cn", "overseas_other"], desc: "🌏 EM推廣", mission_id: "em_promo", promo_end: "2026-03-31" },
-    "winter_tracker": { type: "mission_tracker", setting_key: "winter_promo_enabled", match: ["dining", "overseas", "overseas_jktt", "overseas_cn", "overseas_other", "travel"], desc: "❄️ 冬日賞", mission_id: "winter_promo", promo_end: "2026-02-28" },
+    "red_category_bonus": { type: "category", match: ["grocery", "overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.01, desc: "超市/海外 (1%)", mode: "replace" },
+    "em_overseas_mission": { type: "mission_tracker", setting_key: "em_promo_enabled", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], desc: "🌏 EM推廣", mission_id: "em_promo", promo_end: "2026-03-31" },
+    "winter_tracker": { type: "mission_tracker", setting_key: "winter_promo_enabled", match: ["dining", "overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other", "travel"], desc: "❄️ 冬日賞", mission_id: "winter_promo", promo_end: "2026-02-28" },
     "travel_guru_v2": { type: "guru_capped", category: "overseas", config: { 1: { rate: 0.03, cap_rc: 500, desc: "GO級 (+3%)" }, 2: { rate: 0.04, cap_rc: 1200, desc: "GING級 (+4%)" }, 3: { rate: 0.06, cap_rc: 2200, desc: "GURU級 (+6%)" } }, usage_key: "guru_rc_used" },
 
     // --- SC ---
     "sc_cathay_base": { type: "always", rate: 0.1666, desc: "基本 $6/里" },
     "sc_cathay_dining_hotel": { type: "category", match: ["dining", "hotel"], rate: 0.0834, desc: "食肆/酒店 $4/里" },
-    "sc_cathay_overseas_std": { type: "category", match: ["overseas", "overseas_jktt", "overseas_cn", "overseas_other"], rate: 0.0834, desc: "海外 $4/里" },
-    "sc_cathay_overseas_priority": { type: "category", match: ["overseas", "overseas_jktt", "overseas_cn", "overseas_other"], rate: 0.1667, desc: "優先理財: 海外 $3/里" },
-    "sc_cathay_private": { type: "category", match: ["overseas", "overseas_jktt", "overseas_cn", "overseas_other"], rate: 0.3334, desc: "優先私人: 海外 $2/里" },
+    "sc_cathay_overseas_std": { type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.0834, desc: "海外 $4/里" },
+    "sc_cathay_overseas_priority": { type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.1667, desc: "優先理財: 海外 $3/里" },
+    "sc_cathay_private": { type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.3334, desc: "優先私人: 海外 $2/里" },
     "sc_cathay_airlines": { type: "category", match: ["cathay_hkexpress"], rate: 0.3334, desc: "CX/UO 加碼至 $2/里" },
     "sc_simply_cash_base": { type: "always", rate: 0.015, desc: "本地 1.5%" },
-    "sc_simply_cash_foreign": { type: "category", match: ["overseas", "overseas_jktt", "overseas_cn", "overseas_other"], rate: 0.02, desc: "外幣 2%", mode: "replace" },
+    "sc_simply_cash_foreign": { type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.02, desc: "外幣 2%", mode: "replace" },
     "sc_smart_base": { type: "always", rate: 0.0055, desc: "基本 0.55%" },
     "sc_smart_designated": { type: "category", match: ["smart_designated"], rate: 0.05, desc: "指定商戶 5%", mode: "replace", cap_limit: 60000, cap_key: "sc_smart_cap" },
 
     // --- Citi ---
     "citi_pm_base": { type: "always", rate: 1.5, desc: "基本 1.5X ($8/里)" },
-    "citi_pm_overseas": { type: "category", match: ["overseas", "overseas_jktt", "overseas_cn", "overseas_other"], rate: 3, desc: "海外 3X ($4/里)", mode: "replace" },
+    "citi_pm_overseas": { type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 3, desc: "海外 3X ($4/里)", mode: "replace" },
     "citi_prestige_base": { type: "always", rate: 2, desc: "基本 2X ($6/里)" },
-    "citi_prestige_overseas": { type: "category", match: ["overseas", "overseas_jktt", "overseas_cn", "overseas_other"], rate: 3, desc: "海外 3X ($4/里)", mode: "replace" },
+    "citi_prestige_overseas": { type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 3, desc: "海外 3X ($4/里)", mode: "replace" },
 
     // Rewards 2026 Rules
     "citi_rewards_base": { type: "always", rate: 1, desc: "基本 1X積分" },
@@ -261,7 +261,7 @@ const modulesDB = {
     "citi_club_base": { type: "always", rate: 0.05, desc: "基本 1%" },
     "citi_club_designated": { type: "category", match: ["citi_club_merchant"], rate: 0.2, desc: "Club商戶 4%", mode: "replace" },
     "citi_cb_base": { type: "always", rate: 0.01, desc: "基本 (1%)" },
-    "citi_cb_special": { type: "category", match: ["dining", "hotel", "overseas", "overseas_jktt", "overseas_cn", "overseas_other"], rate: 0.02, desc: "特選類別 (2%)", mode: "replace" },
+    "citi_cb_special": { type: "category", match: ["dining", "hotel", "overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.02, desc: "特選類別 (2%)", mode: "replace" },
     "citi_octopus_base": { type: "always", rate: 0.005, desc: "基本 0.5%" },
 
     // 交通 15% (Merged into standard "transport" category)
@@ -286,9 +286,9 @@ const modulesDB = {
 
     // --- Other Banks ---
     "dbs_black_base": { type: "always", rate: 0.008, desc: "本地 ($6/里)" }, // 1/125 = 0.008 DBS$ (approx) if $125=$1DBS$. Wait, $6=1Mile. DBS$48=1000Mile. 1Mile=0.048DBS$. 0.048/6 = 0.008. Correct.
-    "dbs_black_overseas_std": { type: "category", match: ["overseas", "overseas_jktt", "overseas_cn", "overseas_other"], rate: 0.012, desc: "海外 ($4/里)", mode: "replace" }, // 0.048/4 = 0.012
+    "dbs_black_overseas_std": { type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.012, desc: "海外 ($4/里)", mode: "replace" }, // 0.048/4 = 0.012
     "dbs_black_overseas_promo": {
-        type: "category", match: ["overseas", "overseas_jktt", "overseas_cn", "overseas_other"], rate: 0.024, desc: "海外 ($2/里)", mode: "replace",
+        type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.024, desc: "海外 ($2/里)", mode: "replace",
         setting_key: "dbs_black_promo_enabled", req_mission_key: "spend_dbs_black", req_mission_spend: 20000
     },
 
@@ -314,7 +314,7 @@ const modulesDB = {
         min_spend: 300, cap_mode: "reward", cap_limit: 150, cap_key: "dbs_live_fresh_cap" // Cap 150 DBS$
     },
     "dbs_live_fresh_online_foreign": {
-        type: "category", match: ["overseas_jktt", "overseas_cn", "overseas_other"], rate: 0.01, desc: "網上外幣 (1%)", mode: "replace"
+        type: "category", match: ["overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.01, desc: "網上外幣 (1%)", mode: "replace"
         // 只限外幣網上簽賬（海外交易），非自選類別時適用
     },
     "dbs_live_fresh_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
@@ -325,7 +325,7 @@ const modulesDB = {
     // MMPower (Base 0.4% + Bonus)
     // Overseas: 6% Total => 5.6% Bonus. Cap $500 Reward.
     "mmpower_overseas_bonus": {
-        type: "category", match: ["overseas", "overseas_jktt", "overseas_cn", "overseas_other"], rate: 0.056, desc: "MMP+海外 (5.6%)",
+        type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.056, desc: "MMP+海外 (5.6%)",
         cap_mode: "reward", cap_limit: 500, cap_key: "mmpower_reward_cap"
     },
     // Online: 5% Total => 4.6% Bonus. Cap $500 Reward (Shared).
@@ -357,7 +357,7 @@ const modulesDB = {
     },
     // Tier 2 Foreign (Other Overseas): 5% Total => 4.6% Bonus.
     "travel_plus_tier2_bonus": {
-        type: "category", match: ["overseas", "overseas_jktt", "overseas_cn", "overseas_other"], rate: 0.046, desc: "T+其他外幣 (4.6%)",
+        type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.046, desc: "T+其他外幣 (4.6%)",
         cap_mode: "reward", cap_limit: 500, cap_key: "travel_plus_reward_cap"
     },
     // Dining: 5% Total => 4.6% Bonus.
@@ -426,12 +426,12 @@ const modulesDB = {
 
     // Cheers 海外簽賬
     "boc_cheers_overseas": {
-        type: "category", match: ["overseas_jktt", "overseas_cn", "overseas_other", "overseas"], rate: 9, desc: "外幣 +9X積分",
+        type: "category", match: ["overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other", "overseas"], rate: 9, desc: "外幣 +9X積分",
         cap_mode: "reward", cap_limit: 250000, cap_key: "boc_cheers_travel_cap",
         secondary_cap_key: "boc_cheers_total_cap_vi", secondary_cap_limit: 300000
     },
     "boc_cheers_overseas_vs": {
-        type: "category", match: ["overseas_jktt", "overseas_cn", "overseas_other", "overseas"], rate: 9, desc: "外幣 +9X積分",
+        type: "category", match: ["overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other", "overseas"], rate: 9, desc: "外幣 +9X積分",
         cap_mode: "reward", cap_limit: 150000, cap_key: "boc_cheers_travel_cap_vs",
         secondary_cap_key: "boc_cheers_total_cap_vs", secondary_cap_limit: 180000
     },
@@ -466,9 +466,9 @@ const modulesDB = {
 
     // 狂賞飛 (Amazing Fly)
     "boc_amazing_fly_cn": { type: "category", match: ["overseas_cn"], rate: 12, desc: "✈️ 狂賞飛 - 中澳 (+12X積分)", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000, cap_mode: "reward", cap_limit: 60000, cap_key: "boc_amazing_fly_cn_cap" },
-    "boc_amazing_fly_other": { type: "category", match: ["overseas_jktt", "overseas_other"], rate: 6, desc: "✈️ 狂賞飛 - 其他 (+6X積分)", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000, cap_mode: "reward", cap_limit: 60000, cap_key: "boc_amazing_fly_other_cap" },
+    "boc_amazing_fly_other": { type: "category", match: ["overseas_jkt", "overseas_tw", "overseas_other"], rate: 6, desc: "✈️ 狂賞飛 - 其他 (+6X積分)", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000, cap_mode: "reward", cap_limit: 60000, cap_key: "boc_amazing_fly_other_cap" },
     "boc_amazing_fly_cn_vs": { type: "category", match: ["overseas_cn"], rate: 12, desc: "✈️ 狂賞飛 - 中澳 (+12X積分)", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000, cap_mode: "reward", cap_limit: 60000, cap_key: "boc_amazing_fly_cn_cap" },
-    "boc_amazing_fly_other_vs": { type: "category", match: ["overseas_jktt", "overseas_other"], rate: 6, desc: "✈️ 狂賞飛 - 其他 (+6X積分)", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000, cap_mode: "reward", cap_limit: 60000, cap_key: "boc_amazing_fly_other_cap" },
+    "boc_amazing_fly_other_vs": { type: "category", match: ["overseas_jkt", "overseas_tw", "overseas_other"], rate: 6, desc: "✈️ 狂賞飛 - 其他 (+6X積分)", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000, cap_mode: "reward", cap_limit: 60000, cap_key: "boc_amazing_fly_other_cap" },
 
     // Chill Card
     "boc_chill_base": { type: "always", rate: 0.5, desc: "基本 (0.5X積分)" },
@@ -478,7 +478,7 @@ const modulesDB = {
         cap_mode: "reward", cap_limit: 15000, cap_key: "boc_chill_cap"
     },
     "boc_chill_online_overseas": {
-        type: "category", match: ["online", "overseas_jktt", "overseas_cn", "overseas_other"],
+        type: "category", match: ["online", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"],
         rate: 5, desc: "網購/海外 5X積分 (5%)", mode: "replace",
         cap_mode: "reward", cap_limit: 15000, cap_key: "boc_chill_cap"
     },
@@ -497,8 +497,7 @@ const modulesDB = {
     // --- American Express Modules ---
     "ae_explorer_base": { type: "always", rate: 3, desc: "基本 3X" },
     "ae_explorer_overseas": {
-        type: "category", match: ["overseas", "online_foreign"], rate: 7.75, desc: "外幣 +7.75X",
-        cap_mode: "spending", cap_limit: 10000, cap_key: "ae_explorer_q_overseas_cap"
+        type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other", "online", "travel", "airline"], rate: 0.272, desc: "海外/網上/旅遊 ($3.6/里)", mode: "replace"
     },
     "ae_explorer_selected": {
         type: "category", match: ["travel", "cathay_hkexpress", "online", "entertainment", "electronics"], rate: 9, desc: "指定 +9X",
@@ -508,7 +507,7 @@ const modulesDB = {
     // AE Platinum (Fine Head)
     "ae_plat_base": { type: "always", rate: 2, desc: "Turbo 2X" },
     "ae_plat_overseas": {
-        type: "category", match: ["overseas", "online_foreign"], rate: 6, desc: "海外 +6X",
+        type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "online_foreign"], rate: 6, desc: "海外 +6X",
         cap_mode: "spending", cap_limit: 15000, cap_key: "ae_plat_overseas_cap"
     },
     "ae_plat_travel": {
@@ -539,24 +538,8 @@ const modulesDB = {
     },
     // Fubon Travel
     "fubon_travel_base": { type: "always", rate: 1, desc: "基本 1X" },
-    "fubon_travel_tw": { type: "category", match: ["overseas_jktt"], rate: 19, desc: "台灣 +19X (20X)", mode: "add" }, // Assumes jktt includes TW. Need to verify country? 'overseas_jktt' handles JP/KR/TH/TW.
-    // Wait, TW is 20X. JP/KR is 10X.
-    // I need to split 'overseas_jktt' or have specific logic?
-    // User asked for separation.
-    // I'll add strict category comments?
-    // "overseas_jktt" is "JP KR TH TW".
-    // I will implement "fubon_travel_jpkr" (9X) and "fubon_travel_tw" (19X).
-    // Both match "overseas_jktt".
-    // Since modules run in order, I can't easily distinguishing them unless input category is specific.
-    // Input categories: "overseas_jktt", "overseas_cn", "overseas_other".
-    // I'll match `overseas_jktt` for JP/KR (10X).
-    // I'll match `overseas_tw`? (New category?)
-    // I'll stick to `overseas_jktt` -> 10X (JP/KR).
-    // And add a note that TW is higher?
-    // Or I'll set it to 10X and user manually adjusts?
-    // I'll use 10X for `overseas_jktt` and 20X if I can detect TW.
-    // For now, map `overseas_jktt` to `fubon_travel_jpkr` (9X).
-    "fubon_travel_jpkr": { type: "category", match: ["overseas_jktt"], rate: 9, desc: "日韓泰台 +9X (10X)", mode: "add" },
+    "fubon_travel_tw": { type: "category", match: ["overseas_tw"], rate: 19, desc: "台灣 +19X (20X)", mode: "add" },
+    "fubon_travel_jpkr": { type: "category", match: ["overseas_jkt"], rate: 9, desc: "日韓泰 +9X (10X)", mode: "add" },
     // "fubon_travel_tw": I can't trigger this without new UI.
     // I'll omit separate TW module for now and assume 10X is good baseline.
     "fubon_travel_euro": { type: "category", match: ["overseas_other"], rate: 4, desc: "歐美 +4X (5X)", mode: "add" },
@@ -569,9 +552,9 @@ const modulesDB = {
         cap_mode: "reward", cap_limit: 200, cap_key: "sim_online_cap"
     },
     "sim_non_online_tracker": {
-        type: "category", match: ["general", "dining", "retail", "grocery", "transport", "entertainment", "travel", "health_beauty", "telecom", "apparel"],
-        // Excludes "online".
-        rate: 0, desc: "非網購追蹤", mode: "tracker", tracking_key: "sim_non_online_spend",
+        type: "mission_tracker", req_mission_key: "sim_non_online_spend",
+        match: ["general", "dining", "nfc_payment", "overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other", "alipay", "wechat", "payme", "oepay", "grocery", "sportswear", "medical", "transport", "travel", "entertainment", "apparel", "health_beauty", "telecom", "other", "moneyback_merchant", "tuition", "chill_merchant", "go_merchant"],
+        desc: "Sim Credit 非網購 ($500)", mission_id: "sim_non_online",
         eligible_check: (cat) => cat !== 'online' && cat !== 'online_foreign'
     },
 
