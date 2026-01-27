@@ -7,7 +7,11 @@ let userProfile = {
         em_promo_enabled: false,
         winter_promo_enabled: false,
         red_hot_rewards_enabled: true,
-        red_hot_allocation: { dining: 5, world: 0, home: 0, enjoyment: 0, style: 0 }
+        red_hot_allocation: { dining: 5, world: 0, home: 0, enjoyment: 0, style: 0 },
+        boc_amazing_enabled: false,      // 狂賞派 + 狂賞飛
+        dbs_black_promo_enabled: false,  // DBS Black $2/里推廣
+        fubon_in_promo_enabled: false,   // Fubon iN 網購20X
+        sim_promo_enabled: false         // sim 8%網購
     },
     usage: { "winter_total": 0, "winter_eligible": 0, "em_q1_total": 0, "em_q1_eligible": 0, "guru_rc_used": 0, "guru_spend_accum": 0 },
     stats: { totalSpend: 0, totalVal: 0, txCount: 0 }
@@ -373,7 +377,9 @@ function commitTransaction(data) {
 
     if (guruRC > 0) userProfile.usage["guru_rc_used"] = (userProfile.usage["guru_rc_used"] || 0) + guruRC;
     const level = parseInt(userProfile.settings.guru_level);
-    if (level > 0 && category === 'overseas') userProfile.usage["guru_spend_accum"] = (userProfile.usage["guru_spend_accum"] || 0) + amount;
+    // Track all overseas spending for Guru upgrade progress
+    const isOverseas = ['overseas', 'overseas_jktt', 'overseas_cn', 'overseas_other'].includes(category);
+    if (level > 0 && isOverseas) userProfile.usage["guru_spend_accum"] = (userProfile.usage["guru_spend_accum"] || 0) + amount;
 
     missionTags.forEach(tag => {
         if (tag.id === "winter_promo") {

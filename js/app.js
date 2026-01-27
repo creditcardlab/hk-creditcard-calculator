@@ -113,7 +113,9 @@ function commitTransaction(data) {
     if (guruRC > 0) userProfile.usage["guru_rc_used"] = (userProfile.usage["guru_rc_used"] || 0) + guruRC;
 
     const level = parseInt(userProfile.settings.guru_level);
-    if (level > 0 && category === 'overseas') userProfile.usage["guru_spend_accum"] = (userProfile.usage["guru_spend_accum"] || 0) + amount;
+    // Track all overseas spending for Guru upgrade progress
+    const isOverseas = ['overseas', 'overseas_jktt', 'overseas_cn', 'overseas_other'].includes(category);
+    if (level > 0 && isOverseas) userProfile.usage["guru_spend_accum"] = (userProfile.usage["guru_spend_accum"] || 0) + amount;
 
     let alertMsg = "";
     missionTags.forEach(tag => {

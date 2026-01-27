@@ -289,7 +289,7 @@ const modulesDB = {
     "dbs_black_overseas_std": { type: "category", match: ["overseas", "overseas_jktt", "overseas_cn", "overseas_other"], rate: 0.012, desc: "海外 ($4/里)", mode: "replace" }, // 0.048/4 = 0.012
     "dbs_black_overseas_promo": {
         type: "category", match: ["overseas", "overseas_jktt", "overseas_cn", "overseas_other"], rate: 0.024, desc: "海外 ($2/里)", mode: "replace",
-        req_mission_key: "spend_dbs_black", req_mission_spend: 20000
+        setting_key: "dbs_black_promo_enabled", req_mission_key: "spend_dbs_black", req_mission_spend: 20000
     },
 
     "dbs_eminent_bonus": {
@@ -400,26 +400,26 @@ const modulesDB = {
     "boc_cheers_base": { type: "always", rate: 1, desc: "基本 (1X積分)" },
     "boc_cheers_dining": {
         type: "category", match: ["dining"], rate: 10, desc: "餐飲 10X積分",
-        mode: "replace", req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000,
+        mode: "replace", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 100000, cap_key: "boc_cheers_dining_cap",
         secondary_cap_key: "boc_cheers_total_cap_vi", secondary_cap_limit: 300000 // VI Total 300k
     },
     "boc_cheers_travel": {
         type: "category", match: ["travel", "cathay_hkexpress"], rate: 10, desc: "旅遊 10X積分",
-        mode: "replace", req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000,
+        mode: "replace", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 250000, cap_key: "boc_cheers_travel_cap",
         secondary_cap_key: "boc_cheers_total_cap_vi", secondary_cap_limit: 300000
     },
     // Cheers VS
     "boc_cheers_dining_vs": {
         type: "category", match: ["dining"], rate: 8, desc: "餐飲 8X積分",
-        mode: "replace", req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000,
+        mode: "replace", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 60000, cap_key: "boc_cheers_dining_cap_vs",
         secondary_cap_key: "boc_cheers_total_cap_vs", secondary_cap_limit: 180000 // VS Total 180k
     },
     "boc_cheers_travel_vs": {
         type: "category", match: ["travel", "cathay_hkexpress"], rate: 8, desc: "旅遊 8X積分",
-        mode: "replace", req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000,
+        mode: "replace", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 150000, cap_key: "boc_cheers_travel_cap_vs",
         secondary_cap_key: "boc_cheers_total_cap_vs", secondary_cap_limit: 180000
     },
@@ -440,13 +440,13 @@ const modulesDB = {
     "boc_amazing_red_local": {
         type: "category", match: ["dining", "travel", "entertainment", "telecom", "medical", "apparel", "hotel"],
         rate: 0.05, desc: "🔥 狂賞派 (5% 紅日限定)",
-        min_single_spend: 500, req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000,
+        setting_key: "boc_amazing_enabled", min_single_spend: 500, req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 300, cap_key: "boc_amazing_cap" // 每月 $300 上限
     },
     "boc_amazing_red_overseas": {
         type: "category", match: ["online"],  // 狂賞派海外只適用於網上簽賬
         rate: 0.05, desc: "🔥 狂賞派 (5% 紅日限定)",
-        req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000,
+        setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 300, cap_key: "boc_amazing_cap" // 狂賞派 $300/月 (與本地共用)
     },
 
@@ -454,27 +454,27 @@ const modulesDB = {
     "boc_amazing_red_local_vs": {
         type: "category", match: ["dining", "travel", "entertainment", "telecom", "medical", "apparel", "hotel"],
         rate: 0.05, desc: "🔥 狂賞派 (5% 紅日限定)",
-        min_single_spend: 500, req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000,
+        setting_key: "boc_amazing_enabled", min_single_spend: 500, req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 300, cap_key: "boc_amazing_cap" // 每月 $300 上限
     },
     "boc_amazing_red_overseas_vs": {
         type: "category", match: ["online"],  // 狂賞派海外只適用於網上簽賬
         rate: 0.05, desc: "🔥 狂賞派 (5% 紅日限定)",
-        req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000,
+        setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 300, cap_key: "boc_amazing_cap" // 狂賞派 $300/月 (與本地共用)
     },
 
     // 狂賞飛 (Amazing Fly)
-    "boc_amazing_fly_cn": { type: "category", match: ["overseas_cn"], rate: 12, desc: "✈️ 狂賞飛 - 中澳 (+12X積分)", req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000, cap_mode: "reward", cap_limit: 60000, cap_key: "boc_amazing_fly_cn_cap" },
-    "boc_amazing_fly_other": { type: "category", match: ["overseas_jktt", "overseas_other"], rate: 6, desc: "✈️ 狂賞飛 - 其他 (+6X積分)", req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000, cap_mode: "reward", cap_limit: 60000, cap_key: "boc_amazing_fly_other_cap" },
-    "boc_amazing_fly_cn_vs": { type: "category", match: ["overseas_cn"], rate: 12, desc: "✈️ 狂賞飛 - 中澳 (+12X積分)", req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000, cap_mode: "reward", cap_limit: 60000, cap_key: "boc_amazing_fly_cn_cap" },
-    "boc_amazing_fly_other_vs": { type: "category", match: ["overseas_jktt", "overseas_other"], rate: 6, desc: "✈️ 狂賞飛 - 其他 (+6X積分)", req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000, cap_mode: "reward", cap_limit: 60000, cap_key: "boc_amazing_fly_other_cap" },
+    "boc_amazing_fly_cn": { type: "category", match: ["overseas_cn"], rate: 12, desc: "✈️ 狂賞飛 - 中澳 (+12X積分)", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000, cap_mode: "reward", cap_limit: 60000, cap_key: "boc_amazing_fly_cn_cap" },
+    "boc_amazing_fly_other": { type: "category", match: ["overseas_jktt", "overseas_other"], rate: 6, desc: "✈️ 狂賞飛 - 其他 (+6X積分)", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000, cap_mode: "reward", cap_limit: 60000, cap_key: "boc_amazing_fly_other_cap" },
+    "boc_amazing_fly_cn_vs": { type: "category", match: ["overseas_cn"], rate: 12, desc: "✈️ 狂賞飛 - 中澳 (+12X積分)", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000, cap_mode: "reward", cap_limit: 60000, cap_key: "boc_amazing_fly_cn_cap" },
+    "boc_amazing_fly_other_vs": { type: "category", match: ["overseas_jktt", "overseas_other"], rate: 6, desc: "✈️ 狂賞飛 - 其他 (+6X積分)", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000, cap_mode: "reward", cap_limit: 60000, cap_key: "boc_amazing_fly_other_cap" },
 
     // Chill Card
     "boc_chill_base": { type: "always", rate: 0.5, desc: "基本 (0.5X積分)" },
     "boc_chill_merchant": {
         type: "category", match: ["chill_merchant"], rate: 10, desc: "Chill商戶 10X積分 (10%) ⚠️ 需實體零售$1,500",
-        mode: "replace", req_mission_key: "spend_boc_chill", req_mission_spend: 1500,
+        mode: "replace", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_chill", req_mission_spend: 1500,
         cap_mode: "reward", cap_limit: 15000, cap_key: "boc_chill_cap"
     },
     "boc_chill_online_overseas": {
@@ -534,7 +534,7 @@ const modulesDB = {
     "fubon_in_base": { type: "always", rate: 1, desc: "基本 1X (0.4%)" },
     "fubon_in_online": {
         type: "category", match: ["online"], rate: 19, desc: "網購 +19X (8%)",
-        mode: "add", req_mission_key: "spend_fubon_in_platinum", req_mission_spend: 1000,
+        mode: "add", setting_key: "fubon_in_promo_enabled", req_mission_key: "spend_fubon_in_platinum", req_mission_spend: 1000,
         cap_mode: "reward", cap_limit: 62500, cap_key: "fubon_in_bonus_cap" // $250 = 62,500 pts
     },
     // Fubon Travel
@@ -565,7 +565,7 @@ const modulesDB = {
     "sim_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
     "sim_online": {
         type: "category", match: ["online"], rate: 0.076, desc: "網購 +7.6% (8%)",
-        mode: "add", req_mission_key: "sim_non_online_spend", req_mission_spend: 500,
+        mode: "add", setting_key: "sim_promo_enabled", req_mission_key: "sim_non_online_spend", req_mission_spend: 500,
         cap_mode: "reward", cap_limit: 200, cap_key: "sim_online_cap"
     },
     "sim_non_online_tracker": {

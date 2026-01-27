@@ -97,7 +97,7 @@ function showChinaTips() { alert("【🇨🇳 中國內地/澳門】\n\n推薦�
 
 // Helper: Create Progress Card Component
 function createProgressCard(config) {
-    const { title, icon, theme, badge, subTitle, sections, warning } = config;
+    const { title, icon, theme, badge, subTitle, sections, warning, actionButton } = config;
 
     // Theme mapping
     const themeMap = {
@@ -114,6 +114,11 @@ function createProgressCard(config) {
     const badgeHtml = badge ? `<span class="${t.badge} text-white text-[10px] px-2 py-0.5 rounded-full">${badge}</span>` : '';
     const subTitleHtml = subTitle ? `<span class="text-[10px] ${t.subText}">${subTitle}</span>` : '';
     const warningHtml = warning ? `<div>${warning}</div>` : '';
+    const actionButtonHtml = actionButton ? `<div class="mt-3 pt-3 border-t border-gray-200">
+        <button onclick="${actionButton.onClick}" class="${actionButton.className || 'w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2'}">
+            ${actionButton.icon ? `<i class="${actionButton.icon}"></i>` : ''}${actionButton.label}
+        </button>
+    </div>` : '';
 
     let sectionsHtml = [];
     if (sections) {
@@ -149,6 +154,7 @@ function createProgressCard(config) {
         <div class="p-4 space-y-4">
             ${warningHtml}
             ${sectionsHtml}
+            ${actionButtonHtml}
         </div>
     </div>`;
 }
@@ -185,12 +191,21 @@ function renderDashboard(userProfile) {
         const isMaxed = rcUsed >= curRebate.cap;
         const lvName = { 1: "GO級", 2: "GING級", 3: "GURU級" }[level];
 
+        // Show upgrade button if spending threshold met and not at max level
+        const canUpgrade = spendAccum >= curUpg.target && level < 3;
+        const upgradeButton = canUpgrade ? {
+            label: `🎉 升級至 ${curUpg.next}`,
+            icon: "fas fa-level-up-alt",
+            onClick: "handleGuruUpgrade()"
+        } : null;
+
         html += createProgressCard({
             title: "Travel Guru", icon: "fas fa-trophy", theme: "yellow", badge: lvName,
             sections: [
                 { label: "🚀 升級進度", valueText: `$${spendAccum.toLocaleString()} / $${curUpg.target.toLocaleString()}`, progress: upgPct, barColor: "bg-blue-500", striped: true },
                 { label: "💰 本級回贈", valueText: `${Math.floor(rcUsed)} / ${curRebate.cap}`, progress: rebatePct, barColor: isMaxed ? "bg-red-500" : "bg-yellow-400" }
-            ]
+            ],
+            actionButton: upgradeButton
         });
     }
 
@@ -221,7 +236,10 @@ function renderDashboard(userProfile) {
     if (userProfile.settings.winter_promo_enabled) {
         const endDate = modulesDB["winter_tracker"].promo_end;
         const daysLeft = getDaysLeft(endDate);
-        const warn = (userProfile.ownedCards.includes('hsbc_vs') || userProfile.ownedCards.includes('hsbc_red')) ? '' : `<div class="bg-red-50 text-red-500 text-[10px] p-2 rounded mb-2 border border-red-100">⚠️ 請啟用 VS 或 Red 卡</div>`;
+        // Check if user has any HSBC card that supports winter tracker (all except EveryMile)
+        const hsbcWinterCards = ['hsbc_vs', 'hsbc_red', 'hsbc_pulse', 'hsbc_unionpay_std', 'hsbc_easy', 'hsbc_gold_student', 'hsbc_gold', 'hsbc_premier'];
+        const hasEligibleCard = userProfile.ownedCards.some(card => hsbcWinterCards.includes(card));
+        const warn = hasEligibleCard ? '' : `<div class="bg-red-50 text-red-500 text-[10px] p-2 rounded mb-2 border border-red-100">⚠️ 請啟用任何 HSBC 卡片（EveryMile 除外）</div>`;
 
         // 任務進度
         const total = userProfile.usage["winter_total"] || 0;
@@ -641,8 +659,12 @@ function renderSettings(userProfile) {
     html += `<div class="mb-4 border p-3 rounded-xl bg-gray-50"><div class="flex justify-between items-center mb-2"><label class="text-xs font-bold text-red-600">已登記「最紅自主獎賞」</label><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-rh-enabled" class="sr-only peer" ${rhEnabled ? 'checked' : ''} onchange="toggleSetting('red_hot_rewards_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-red-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"></div></label></div><div id="rh-allocator-container" class="${rhEnabled ? '' : 'hidden'} space-y-2 transition-all"><div class="text-[10px] text-gray-400 mb-2">分配 5X 獎賞錢 (總和: <span id="rh-total" class="text-blue-600">5</span>/5)</div>${renderAllocatorRow("dining", "賞滋味 (Dining)", userProfile.settings.red_hot_allocation.dining)}${renderAllocatorRow("world", "賞世界 (World)", userProfile.settings.red_hot_allocation.world)}${renderAllocatorRow("enjoyment", "賞享受 (Enjoyment)", userProfile.settings.red_hot_allocation.enjoyment)}${renderAllocatorRow("home", "賞家居 (Home)", userProfile.settings.red_hot_allocation.home)}${renderAllocatorRow("style", "賞購物 (Style)", userProfile.settings.red_hot_allocation.style)}</div></div>`;
 
     html += `<div class="flex justify-between items-center bg-red-50 p-2 rounded border border-red-100"><span>冬日賞 2026</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-winter" class="sr-only peer" ${userProfile.settings.winter_promo_enabled ? 'checked' : ''} onchange="toggleSetting('winter_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-red-500"></div></label></div>`;
+    html += `<div class="flex justify-between items-center bg-blue-50 p-2 rounded border border-blue-100"><span>BOC 狂賞派 + 狂賞飛</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-boc-amazing" class="sr-only peer" ${userProfile.settings.boc_amazing_enabled ? 'checked' : ''} onchange="toggleSetting('boc_amazing_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-blue-600"></div></label></div>`;
+    html += `<div class="flex justify-between items-center bg-gray-100 p-2 rounded border border-gray-300"><span>DBS Black $2/里推廣</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-dbs-black" class="sr-only peer" ${userProfile.settings.dbs_black_promo_enabled ? 'checked' : ''} onchange="toggleSetting('dbs_black_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-gray-800"></div></label></div>`;
+    html += `<div class="flex justify-between items-center bg-purple-50 p-2 rounded border border-purple-100"><span>Fubon iN 網購20X</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-fubon-in" class="sr-only peer" ${userProfile.settings.fubon_in_promo_enabled ? 'checked' : ''} onchange="toggleSetting('fubon_in_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-purple-600"></div></label></div>`;
+    html += `<div class="flex justify-between items-center bg-green-50 p-2 rounded border border-green-100"><span>sim 8%網購推廣</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-sim" class="sr-only peer" ${userProfile.settings.sim_promo_enabled ? 'checked' : ''} onchange="toggleSetting('sim_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-green-600"></div></label></div>`;
     html += `<div class="flex justify-between items-center bg-gray-800 text-white p-2 rounded border border-gray-600"><span>Mox 活期任務 (+$250k)</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-mox" class="sr-only peer" ${userProfile.settings.mox_deposit_task_enabled ? 'checked' : ''} onchange="toggleSetting('mox_deposit_task_enabled')"><div class="w-9 h-5 bg-gray-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-green-400"></div></label></div>`;
-    html += `<div class="flex justify-between items-center bg-purple-50 p-2 rounded border border-purple-100"><span>EM 推廣</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-em" class="sr-only peer" ${userProfile.settings.em_promo_enabled ? 'checked' : ''} onchange="toggleSetting('em_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-purple-600"></div></label></div>`;
+    html += `<div class="flex justify-between items-center bg-purple-50 p-2 rounded border border-purple-100"><span>EM 推廣</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-em" class="sr-only peer" ${userProfile.settings.em_promo_enabled ? 'checked' : ''} onchange="toggleSetting('em_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-purple-600"></div></label></div>`;
     html += `</div><div class="text-center mt-4"><button onclick="if(confirm('清除資料?')){localStorage.clear();location.reload();}" class="text-red-400 text-xs">Reset All</button></div></div>`;
 
     list.innerHTML = html;
