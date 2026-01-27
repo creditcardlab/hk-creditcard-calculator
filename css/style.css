@@ -1,0 +1,121 @@
+/* css/style.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    padding-bottom: 100px;
+    background-color: #F3F4F6;
+}
+
+/* Custom Scrollbar for Settings */
+#settings-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+#settings-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+#settings-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+/* Progress Bar Stripes Animation */
+.progress-stripe {
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent);
+    background-size: 1rem 1rem;
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+@keyframes progress-bar-stripes {
+    0% {
+        background-position: 1rem 0;
+    }
+
+    100% {
+        background-position: 0 0;
+    }
+}
+
+/* Modal Animation Classes */
+.modal-open {
+    overflow: hidden;
+}
+
+.modal-visible {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+.modal-slide-up {
+    transform: translateY(0) !important;
+}
+
+/* Card Interaction */
+.card-enter {
+    animation: fadeSlideIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Collapsible Section Styles */
+.collapsible-header {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s;
+}
+
+.collapsible-header:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.collapsible-content.expanded {
+    max-height: 2000px;
+    /* Large enough to accommodate content */
+    transition: max-height 0.5s ease-in;
+}
+
+.rotate-icon {
+    transition: transform 0.3s ease;
+}
+
+.rotate-icon.expanded {
+    transform: rotate(180deg);
+}
+
+/* Top Result Highlight */
+.top-result {
+    border: 2px solid #10b981;
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+}
+
+.top-result-badge {
+    position: absolute;
+    top: -8px;
+    right: 8px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}

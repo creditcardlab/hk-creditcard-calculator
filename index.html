@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>信用卡管家 V8.4 Refactored</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+
+<body class="max-w-md mx-auto min-h-screen relative">
+
+    <div class="bg-white p-4 shadow-sm sticky top-0 z-20 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-gray-800"><i class="fas fa-wallet text-blue-600 mr-2"></i>信用卡管家</h1>
+        <span class="text-xs text-white bg-indigo-600 px-2 py-1 rounded-full">V1.0 Calculator</span>
+    </div>
+
+    <div id="view-dashboard" class="p-4 space-y-4 tab-content">
+        <div id="dashboard-container"></div>
+        <h3 class="text-xs font-bold text-gray-500 uppercase ml-1">額度監控 (Cap)</h3>
+        <div id="cap-monitors" class="space-y-3"></div>
+    </div>
+
+    <div id="view-calculator" class="p-4 space-y-4 tab-content hidden">
+        <div class="flex justify-center mb-4">
+            <div class="bg-gray-200 p-1 rounded-lg flex text-xs font-bold">
+                <button id="btn-mode-miles" onclick="toggleMode('miles')"
+                    class="px-4 py-1.5 rounded-md transition-all bg-white text-blue-600 shadow-sm">顯示里數 (Miles)</button>
+                <button id="btn-mode-cash" onclick="toggleMode('cash')"
+                    class="px-4 py-1.5 rounded-md transition-all text-gray-500">顯示現金 ($)</button>
+            </div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">簽賬金額 (HKD)</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-3 text-gray-400">$</span>
+                    <input type="number" id="amount" value="3000"
+                        class="w-full pl-8 p-3 bg-gray-50 rounded-xl text-lg font-semibold" oninput="runCalc()">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">消費場景</label>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <select id="category" class="w-full p-3 bg-gray-50 rounded-xl"
+                            onchange="runCalc(); toggleCategoryHelp();">
+                        </select>
+                        <button id="cat-help-btn" onclick="showRedMerchantList()"
+                            class="hidden w-10 h-10 flex items-center justify-center bg-rose-100 text-rose-500 rounded-full shadow-sm hover:bg-rose-200">
+                            <i class="fas fa-question"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="calc-results" class="space-y-3 pb-10"></div>
+    </div>
+
+    <div id="view-settings" class="p-4 space-y-4 tab-content hidden">
+        <div id="settings-container"></div>
+    </div>
+
+    <div
+        class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around p-3 pb-5 z-20 max-w-md mx-auto">
+        <button onclick="switchTab('dashboard')" class="flex flex-col items-center text-blue-600 tab-btn w-1/3"
+            id="btn-dashboard"><i class="fas fa-chart-pie text-xl mb-1"></i><span class="text-[10px]">進度</span></button>
+        <button onclick="switchTab('calculator')" class="flex flex-col items-center text-gray-400 tab-btn w-1/3"
+            id="btn-calculator"><i class="fas fa-calculator text-xl mb-1"></i><span
+                class="text-[10px]">計算</span></button>
+        <button onclick="switchTab('settings')" class="flex flex-col items-center text-gray-400 tab-btn w-1/3"
+            id="btn-settings"><i class="fas fa-cog text-xl mb-1"></i><span class="text-[10px]">設定</span></button>
+    </div>
+
+    <!-- Scripts: Loaded in dependency order -->
+    <script src="js/data.js"></script>
+    <script src="js/core.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
