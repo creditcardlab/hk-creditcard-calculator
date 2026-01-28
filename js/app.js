@@ -55,9 +55,29 @@ window.toggleMode = function (m) {
 window.runCalc = function () {
     const amt = parseFloat(document.getElementById('amount').value) || 0;
     const cat = document.getElementById('category').value;
+    let txDate = document.getElementById('tx-date').value;
+
+    // Fallback: If date is empty, use Today
+    if (!txDate) {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        txDate = `${y}-${m}-${d}`;
+    }
+
+    // Auto-detect Holiday
+    const isHoliday = HolidayManager.isHoliday(txDate);
+
+    // Update Badge UI
+    const badge = document.getElementById('holiday-badge');
+    if (badge) {
+        if (isHoliday) badge.classList.remove('hidden');
+        else badge.classList.add('hidden');
+    }
 
     // Calls core.js function
-    const results = calculateResults(amt, cat, currentMode, userProfile);
+    const results = calculateResults(amt, cat, currentMode, userProfile, txDate, isHoliday);
 
     // Calls ui.js function
     renderCalculatorResults(results, currentMode);

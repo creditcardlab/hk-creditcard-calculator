@@ -10,6 +10,69 @@ function getDaysLeft(dateStr) {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
+// Helper: Standard Date Display (YYYY-MM-DD (剩 X 日))
+function formatDateWithDaysLeft(dateStr) {
+    if (!dateStr) return "";
+    const days = getDaysLeft(dateStr);
+    return `${dateStr} (剩 ${days} 日)`;
+}
+
+// Helper: Reset Date Display (重置於 YYYY-MM-DD (剩 X 日))
+function formatResetDate(dateStr) {
+    if (!dateStr) return "";
+    const days = getDaysLeft(dateStr);
+    return `於 ${dateStr} 重置 (剩 ${days} 日)`;
+}
+
+// Helper: Promo End Date Display (推廣期至 YYYY-MM-DD (剩 X 日))
+function formatPromoDate(dateStr) {
+    if (!dateStr) return "";
+    const days = getDaysLeft(dateStr);
+    return `推廣期至 ${dateStr} (剩 ${days} 日)`;
+}
+
+// Helper: Get Month End Date String (e.g. "2026-01-31")
+function getMonthEndStr() {
+    const now = new Date();
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(lastDay.getDate()).padStart(2, '0');
+    return `${now.getFullYear()}-${m}-${d}`;
+}
+
+// Helper: Get Quarter End Date String (e.g. "2026-03-31")
+function getQuarterEndStr() {
+    const now = new Date();
+    const currentMonth = now.getMonth(); // 0-11
+    const endMonth = Math.floor(currentMonth / 3) * 3 + 2;
+    const year = now.getFullYear();
+    const lastDay = new Date(year, endMonth + 1, 0);
+    const m = String(endMonth + 1).padStart(2, '0');
+    const d = String(lastDay.getDate()).padStart(2, '0');
+    return `${year}-${m}-${d}`;
+}
+
+// Helper: Render Warning Card (Yellow/Black for Not Registered)
+function renderWarningCard(title, icon, description, settingKey) {
+    return `<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-xl shadow-sm mb-4">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-yellow-600 text-xl mt-1"></i>
+            </div>
+            <div class="ml-3 w-full">
+                <h3 class="text-sm font-bold text-yellow-800">${title}</h3>
+                <div class="mt-1 text-xs text-yellow-700 font-bold mb-2">
+                    ⚠️ 尚未登記 (NOT REGISTERED)
+                </div>
+                <div class="text-[10px] text-yellow-600 mb-2">${description || "請前往設定頁面開啟此推廣。"}</div>
+                <button onclick="toggleSetting('${settingKey}'); refreshUI();" class="text-xs bg-yellow-200 hover:bg-yellow-300 text-yellow-800 px-3 py-1.5 rounded-lg font-bold transition-colors">
+                    立即開啟
+                </button>
+            </div>
+        </div>
+    </div>`;
+}
+
 // Helper: Toggle Collapsible Section
 function toggleCollapsible(id) {
     const content = document.getElementById(id);
@@ -105,51 +168,6 @@ function showChinaTips() { alert("【🇨🇳 中國內地/澳門】\n\n推薦�
 
 // Helper: Create Progress Card Component
 function createProgressCard(config) {
-    // ... existing code ...
-    // Note: Since I am replacing huge chunk, I must preserve previous code.
-    // Wait, replace_file_content does block replacement. I should be careful not to delete createProgressCard if it's below.
-    // The TargetContent above starts at line 23 'function updateCategoryDropdown'.
-    // The TargetContent ends at line 746 (eof).
-    // This is too big and unsafe to replace entire file logic blindly.
-    // I should do it in smaller chunks or accurately target the sections.
-}
-
-function toggleCategoryHelp() {
-    const cat = document.getElementById('category').value;
-    const helpBtn = document.getElementById('cat-help-btn');
-
-    const helpMap = {
-        'red_designated': showRedMerchantList,
-        'em_designated_spend': showEveryMileMerchantList,
-        'grocery': showSupermarketList,
-        'china_consumption': showChinaTips,
-        'smart_designated': showSmartMerchantList,
-        'citi_club_merchant': showClubMerchantList
-    };
-
-    let handler = helpMap[cat];
-    if (cat === 'transport' && userProfile.ownedCards.includes('citi_octopus')) {
-        handler = showOctopusTips;
-    }
-
-    if (handler) {
-        helpBtn.classList.remove('hidden');
-        helpBtn.onclick = handler;
-    } else {
-        helpBtn.classList.add('hidden');
-    }
-}
-
-function showClubMerchantList() { alert("【Citi The Club 指定商戶 (4%)】\n\n🛍️ Club Shopping\n☕ Starbucks\n🍔 McDonald's\n🐼 Foodpanda (部分)\n📱 1010 / csl 服務月費\n\n回贈為 Clubpoints。"); }
-function showOctopusTips() { alert("【Citi Octopus 交通神卡攻略 (15%)】\n\n🚌 適用：九巴、港鐵、渡輪、電車\n\n💰 門檻/上限：\n1. 月簽 $4,000：回贈上限 $300 (即交通簽 $2,000)\n2. 月簽 $10,000：回贈上限 $500\n\n⚡ 0成本達標大法：\n每月增值電子錢包 (PayMe/Alipay/WeChat) 各 $1,000，輕鬆達標 $3,000！\n\n🎁 疊加政府補貼：可賺高達 30%+ 回贈！"); }
-function showSmartMerchantList() { alert("【SC Smart 指定商戶 (5%)】\n\n🥦 超市：百佳, 759, Donki\n🍽️ 餐飲：麥當勞, Deliveroo, Foodpanda\n💊 零售：HKTVmall, 屈臣氏, Klook, Decathlon\n\n⚠️ 每年最高簽賬 HK$60,000。"); }
-function showSupermarketList() { alert("【🥦 超市類別定義】\n\n✅ 認可：百佳, Donki, 759, AEON\n⚠️ HSBC陷阱：❌ 不包惠康, Market Place, 萬寧"); }
-function showRedMerchantList() { alert("【HSBC Red 指定 (8%)】\n\n🍽️ 壽司郎, 譚仔, Coffee Academïcs\n👕 GU, Decathlon, Uniqlo\n🎮 NAMCO"); }
-function showEveryMileMerchantList() { alert("【EveryMile 指定 ($2/里)】\n\n🚌 交通 (港鐵/巴士/Uber)\n☕ 咖啡 (Starbucks/Pacific)\n🌏 旅遊 (Klook/Agoda)"); }
-function showChinaTips() { alert("【🇨🇳 中國內地/澳門】\n\n推薦：Pulse (手機支付+2%)、EveryMile ($2/里)、MMPower (6%)"); }
-
-// Helper: Create Progress Card Component
-function createProgressCard(config) {
     const { title, icon, theme, badge, subTitle, sections, warning, actionButton } = config;
 
     // Theme mapping
@@ -160,7 +178,8 @@ function createProgressCard(config) {
         'yellow': { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-800', bar: 'bg-yellow-400', badge: 'bg-yellow-500', subText: 'text-yellow-700' },
         'green': { bg: 'bg-green-50', border: 'border-green-100', text: 'text-green-700', bar: 'bg-green-500', badge: 'bg-green-600', subText: 'text-green-600' },
         'indigo': { bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'text-indigo-700', bar: 'bg-indigo-500', badge: 'bg-indigo-600', subText: 'text-indigo-800' },
-        'black': { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-800', bar: 'bg-gray-800', badge: 'bg-black', subText: 'text-gray-600' }
+        'black': { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-800', bar: 'bg-gray-800', badge: 'bg-black', subText: 'text-gray-600' },
+        'gray': { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-800', bar: 'bg-gray-500', badge: 'bg-gray-600', subText: 'text-gray-600' }
     };
 
     const t = themeMap[theme] || themeMap['blue'];
@@ -229,6 +248,8 @@ function createResultCard(res, dataStr, mainValHtml, redemptionHtml) {
 
 function renderDashboard(userProfile) {
     const container = document.getElementById('dashboard-container');
+    const monthEndStr = getMonthEndStr();
+    const quarterEndStr = getQuarterEndStr();
     let html = `<div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white p-5 rounded-2xl shadow-lg mb-4"><div class="flex justify-between items-start"><div><h2 class="text-blue-100 text-xs font-bold uppercase tracking-wider">本月總簽賬</h2><div class="text-3xl font-bold mt-1">$${userProfile.stats.totalSpend.toLocaleString()}</div></div><div class="text-right"><h2 class="text-blue-100 text-xs font-bold uppercase tracking-wider">預估總回贈</h2><div class="text-xl font-bold mt-1 text-yellow-300">≈ $${Math.floor(userProfile.stats.totalVal).toLocaleString()}</div></div></div><div class="mt-4 pt-4 border-t border-blue-400/30 flex justify-between text-xs text-blue-100"><span>已記錄 ${userProfile.stats.txCount} 筆</span><span onclick="handleReset()" class="cursor-pointer hover:text-white underline">重置</span></div></div>`;
 
     // 1. Travel Guru
@@ -263,145 +284,151 @@ function renderDashboard(userProfile) {
     }
 
     // 2. EveryMile Promo
-    if (userProfile.settings.em_promo_enabled) {
-        const endDate = modulesDB["em_overseas_mission"].promo_end;
-        const daysLeft = getDaysLeft(endDate);
-        const warn = userProfile.ownedCards.includes('hsbc_everymile') ? '' : `<div class="bg-red-50 text-red-500 text-[10px] p-2 rounded mb-2 border border-red-100">⚠️ 請啟用 EveryMile 卡</div>`;
-        const total = userProfile.usage["em_q1_total"] || 0;
-        const eligible = userProfile.usage["em_q1_eligible"] || 0;
-        const isUnlocked = total >= 12000;
-        const missionPct = Math.min(100, (total / 12000) * 100);
-        const pot = Math.min(225, eligible * 0.015);
-        const rewardPct = Math.min(100, (pot / 225) * 100);
-        const barCls = isUnlocked ? (pot >= 225 ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
+    if (userProfile.ownedCards.includes('hsbc_everymile')) {
+        if (!userProfile.settings.em_promo_enabled) {
+            html += renderWarningCard("EveryMile 海外推廣", "fas fa-plane", "需登記以賺取額外回贈", "em_promo_enabled");
+        } else {
+            const endDate = modulesDB["em_overseas_mission"].promo_end;
+            const subTitle = formatPromoDate(endDate);
+            const total = userProfile.usage["em_q1_total"] || 0;
+            const eligible = userProfile.usage["em_q1_eligible"] || 0;
+            const isUnlocked = total >= 12000;
+            const missionPct = Math.min(100, (total / 12000) * 100);
+            const pot = Math.min(225, eligible * 0.015);
+            const rewardPct = Math.min(100, (pot / 225) * 100);
+            const barCls = isUnlocked ? (pot >= 225 ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
 
-        html += createProgressCard({
-            title: "EveryMile 海外", icon: "fas fa-plane", theme: "purple", badge: "已登記",
-            subTitle: `至 ${endDate} (剩${daysLeft}天)`, warning: warn,
-            sections: [
-                { label: "🎯 任務進度", valueText: `$${total.toLocaleString()} / 12,000`, progress: missionPct, barColor: "bg-purple-500" },
-                { label: "💰 回贈進度", valueText: `${Math.floor(pot)} / 225`, progress: rewardPct, barColor: barCls, striped: true }
-            ]
-        });
+            html += createProgressCard({
+                title: "EveryMile 海外", icon: "fas fa-plane", theme: "purple",
+                badge: subTitle,
+                sections: [
+                    { label: "🎯 任務進度", valueText: `$${total.toLocaleString()} / $12,000`, progress: missionPct, barColor: "bg-purple-500" },
+                    { label: "💰 回贈進度", valueText: `${Math.floor(pot)} / 225 RC(EM)`, progress: rewardPct, barColor: barCls, striped: true }
+                ]
+            });
+        }
     }
 
-    // 3. Winter Promo
-    if (userProfile.settings.winter_promo_enabled) {
-        const endDate = modulesDB["winter_tracker"].promo_end;
-        const daysLeft = getDaysLeft(endDate);
-        // Check if user has any HSBC card that supports winter tracker (all except EveryMile)
-        const hsbcWinterCards = ['hsbc_vs', 'hsbc_red', 'hsbc_pulse', 'hsbc_unionpay_std', 'hsbc_easy', 'hsbc_gold_student', 'hsbc_gold', 'hsbc_premier'];
-        const hasEligibleCard = userProfile.ownedCards.some(card => hsbcWinterCards.includes(card));
-        const warn = hasEligibleCard ? '' : `<div class="bg-red-50 text-red-500 text-[10px] p-2 rounded mb-2 border border-red-100">⚠️ 請啟用任何 HSBC 卡片（EveryMile 除外）</div>`;
+    // 3. Winter Promo (Check if any eligible card owned)
+    const hsbcWinterCards = ['hsbc_vs', 'hsbc_red', 'hsbc_pulse', 'hsbc_unionpay_std', 'hsbc_easy', 'hsbc_gold_student', 'hsbc_gold', 'hsbc_premier'];
+    const hasEligibleCard = userProfile.ownedCards.some(card => hsbcWinterCards.includes(card));
 
-        // 任務進度
-        const total = userProfile.usage["winter_total"] || 0;
-        const missionPct = Math.min(100, (total / 40000) * 100);
-        const l1 = total >= 20000, l2 = total >= 40000;
+    if (hasEligibleCard) {
+        if (!userProfile.settings.winter_promo_enabled) {
+            html += renderWarningCard("最紅冬日賞", "fas fa-gift", "需登記以賺取額外回贈", "winter_promo_enabled");
+        } else {
+            const endDate = modulesDB["winter_tracker"].promo_end;
+            const subTitle = formatPromoDate(endDate);
+            // 任務進度
+            const total = userProfile.usage["winter_total"] || 0;
+            const missionPct = Math.min(100, (total / 40000) * 100);
+            const l1 = total >= 20000, l2 = total >= 40000;
 
-        // 回贈計算邏輯
-        const eligible = userProfile.usage["winter_eligible"] || 0;
-        let pot = 0, cap = 250;
-        if (l2) { pot = Math.min(800, eligible * 0.06); cap = 800; }
-        else { pot = Math.min(250, eligible * 0.03); cap = 250; }
+            // 回贈計算邏輯
+            const eligible = userProfile.usage["winter_eligible"] || 0;
+            let pot = 0, cap = 250;
+            if (l2) { pot = Math.min(800, eligible * 0.06); cap = 800; }
+            else { pot = Math.min(250, eligible * 0.03); cap = 250; }
 
-        const rewardPct = Math.min(100, (pot / cap) * 100);
-        const max = pot >= cap;
-        const txt = (l1 || l2) ? (max ? `<span class="text-red-500 font-bold">⚠️ 已達等級上限</span>` : `<span class="text-green-600 font-bold">✅ 賺取中</span>`) : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> 待解鎖: ${Math.floor(pot)} RC</span>`;
-        const barCls = (l1 || l2) ? (max ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
+            const rewardPct = Math.min(100, (pot / cap) * 100);
+            const max = pot >= cap;
+            const txt = (l1 || l2) ? (max ? `<span class="text-red-500 font-bold">⚠️ 已達等級上限</span>` : `<span class="text-green-600 font-bold">✅ 賺取中</span>`) : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> 待解鎖: ${Math.floor(pot)} RC</span>`;
+            const barCls = (l1 || l2) ? (max ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
 
-        html += createProgressCard({
-            title: "最紅冬日賞", icon: "fas fa-gift", theme: "red", badge: "已登記",
-            subTitle: `至 ${endDate} (剩${daysLeft}天)`, warning: warn,
-            sections: [
-                {
-                    label: "🎯 任務進度", valueText: `$${total.toLocaleString()}`, progress: missionPct, barColor: "bg-red-500",
-                    markers: `<span>Start</span><span class="${l1 ? 'text-red-600 font-bold' : ''}">Lv1 ($20,000)</span><span class="${l2 ? 'text-red-600 font-bold' : ''}">Lv2 ($40,000)</span>`,
-                    overlay: `<div class="absolute top-0 left-1/2 w-0.5 h-3 bg-white opacity-50"></div>`
-                },
-                {
-                    label: "💰 回贈進度", valueText: `${Math.floor(pot)} / ${cap}`, progress: rewardPct, barColor: barCls, striped: true,
-                    subText: txt
-                }
-            ]
-        });
+            html += createProgressCard({
+                title: "最紅冬日賞", icon: "fas fa-gift", theme: "red",
+                badge: subTitle,
+                sections: [
+                    {
+                        label: "🎯 任務進度", valueText: `$${total.toLocaleString()}`, progress: missionPct, barColor: "bg-red-500",
+                        markers: `<span>Start</span><span class="${l1 ? 'text-red-600 font-bold' : ''}">Lv1 ($20,000)</span><span class="${l2 ? 'text-red-600 font-bold' : ''}">Lv2 ($40,000)</span>`,
+                        overlay: `<div class="absolute top-0 left-1/2 w-0.5 h-3 bg-white opacity-50"></div>`
+                    },
+                    {
+                        label: "💰 回贈進度", valueText: `${Math.floor(pot)} / ${cap}`, progress: rewardPct, barColor: barCls, striped: true,
+                        subText: txt
+                    }
+                ]
+            });
+        }
     }
 
     // 4. Monthly Spending Missions
     const missionCards = [
+        // MMPower
         {
-            id: 'hangseng_mmpower', name: 'MMPower 每月任務', target: 5000,
-            rewardKey: 'mmpower_reward_cap', rewardCap: 500,
-            icon: 'fas fa-gamepad', theme: 'red', rewardText: '額外 +FUN'
+            id: 'hangseng_mmpower', name: 'MMPower +FUN Dollars', target: 5000,
+            rewardKey: 'mmpower_reward_cap', rewardCap: 500, rewardUnit: '+FUN',
+            icon: 'fas fa-bolt', theme: 'gray', settingKey: 'mmpower_promo_enabled',
+            badge: formatResetDate(monthEndStr)
         },
+        // Travel+
         {
-            id: 'hangseng_travel_plus', name: 'Travel+ 每月任務', target: 6000,
-            rewardKey: 'travel_plus_reward_cap', rewardCap: 500,
-            icon: 'fas fa-plane-departure', theme: 'blue', rewardText: '額外 +FUN'
+            id: 'hangseng_travel_plus', name: 'Travel+ 外幣回贈', target: 7575,
+            rewardKey: 'travel_plus_reward_cap', rewardCap: 500, rewardUnit: '+FUN',
+            icon: 'fas fa-plane-departure', theme: 'purple', settingKey: 'travel_plus_promo_enabled',
+            badge: formatResetDate(monthEndStr)
         },
+        // BOC Amazing Rewards (Weekday)
         {
-            id: 'dbs_black', name: 'DBS Black 兌換任務', target: 20000,
-            rewardKey: null, // Spending only
-            icon: 'fas fa-plane', theme: 'black', rewardText: null
+            id: 'boc_cheers_vi', name: '狂賞派 (平日)', target: 6000, // 120/0.02 = 6000
+            rewardKey: 'boc_amazing_local_weekday_cap', rewardCap: 120, rewardUnit: '元',
+            icon: 'fas fa-calendar-day', theme: 'blue', settingKey: 'boc_amazing_enabled',
+            badge: formatResetDate(monthEndStr)
         },
+        // BOC Amazing Rewards (Holiday)
         {
-            id: 'boc_cheers_vi', name: 'BOC Cheers VI 每月任務', target: 5000,
-            rewardKey: 'boc_cheers_dining_cap', rewardCap: 100000, rewardUnit: '分', // 100k points dining cap
-            icon: 'fas fa-glass-cheers', theme: 'purple', rewardText: '餐飲回贈Cap',
-            secondaryCap: { key: 'boc_cheers_travel_cap', limit: 250000, text: '旅遊/外幣Cap', unit: '分' } // 250k points travel cap
-        },
-        {
-            id: 'boc_cheers_vs', name: 'BOC Cheers VS 每月任務', target: 5000,
-            rewardKey: 'boc_cheers_dining_cap_vs', rewardCap: 60000, rewardUnit: '分',
-            icon: 'fas fa-glass-cheers', theme: 'purple', rewardText: '餐飲回贈Cap',
-            secondaryCap: { key: 'boc_cheers_travel_cap_vs', limit: 150000, text: '旅遊/外幣Cap', unit: '分' }
-        },
-        {
-            id: 'boc_chill', name: 'BOC Chill 每月任務', target: 1500,
-            rewardKey: 'boc_chill_cap', rewardCap: 150,
-            icon: 'fas fa-film', theme: 'indigo', rewardText: '回贈上限'
-        },
-        // BOC Amazing Rewards (狂賞派)
-        {
-            id: 'boc_cheers_vi', name: '狂賞派 (5%) 每月任務', target: 5000,
-            rewardKey: 'boc_amazing_cap', rewardCap: 300, rewardUnit: '元',
-            icon: 'fas fa-fire', theme: 'red', rewardText: '回贈上限'
-        },
-        {
-            id: 'boc_cheers_vs', name: '狂賞派 (5%) 每月任務', target: 5000,
-            rewardKey: 'boc_amazing_cap', rewardCap: 300, rewardUnit: '元',
-            icon: 'fas fa-fire', theme: 'red', rewardText: '回贈上限'
+            id: 'boc_cheers_vi', name: '狂賞派 (紅日)', target: 6000, // 300/0.05 = 6000
+            rewardKey: 'boc_amazing_local_holiday_cap', rewardCap: 300, rewardUnit: '元',
+            icon: 'fas fa-umbrella-beach', theme: 'red', settingKey: 'boc_amazing_enabled',
+            badge: formatResetDate(monthEndStr)
         },
         // BOC Amazing Fly (狂賞飛)
         {
-            id: 'boc_cheers_vi', name: '狂賞飛 (外幣) 每月任務', target: 5000,
-            rewardKey: 'boc_amazing_fly_cn_cap', rewardCap: 300, rewardUnit: '元',
-            secondaryCap: { key: 'boc_amazing_fly_other_cap', limit: 300, text: '回贈上限 (其他)', unit: '元' },
-            icon: 'fas fa-plane', theme: 'blue', rewardText: '回贈上限 (中澳)'
+            id: 'boc_cheers_vi', name: '狂賞飛 (外幣) 季度任務', target: 5000,
+            rewardKey: 'boc_amazing_fly_cn_cap', rewardCap: 60000, rewardUnit: '分',
+            secondaryCap: { key: 'boc_amazing_fly_other_cap', limit: 60000, text: '回贈上限 (其他)', unit: '分' },
+            icon: 'fas fa-plane', theme: 'blue', rewardText: '回贈上限 (中澳)', settingKey: 'boc_amazing_enabled',
+            badge: formatResetDate(quarterEndStr)
         },
         {
-            id: 'boc_cheers_vs', name: '狂賞飛 (外幣) 每月任務', target: 5000,
-            rewardKey: 'boc_amazing_fly_cn_cap', rewardCap: 300, rewardUnit: '元',
-            secondaryCap: { key: 'boc_amazing_fly_other_cap', limit: 300, text: '回贈上限 (其他)', unit: '元' },
-            icon: 'fas fa-plane', theme: 'blue', rewardText: '回贈上限 (中澳)'
+            id: 'boc_cheers_vs', name: '狂賞飛 (外幣) 季度任務', target: 5000,
+            rewardKey: 'boc_amazing_fly_cn_cap', rewardCap: 60000, rewardUnit: '分',
+            secondaryCap: { key: 'boc_amazing_fly_other_cap', limit: 60000, text: '回贈上限 (其他)', unit: '分' },
+            icon: 'fas fa-plane', theme: 'blue', rewardText: '回贈上限 (中澳)', settingKey: 'boc_amazing_enabled',
+            badge: formatResetDate(quarterEndStr)
         },
         // Fubon iN
         {
-            id: 'fubon_in_platinum', name: 'Fubon iN 月簽任務', target: 1000,
+            id: 'fubon_in_platinum', name: 'Fubon iN 網購', target: 1000,
             rewardKey: 'fubon_in_bonus_cap', rewardCap: 62500, rewardUnit: '分',
-            icon: 'fas fa-mouse-pointer', theme: 'purple', rewardText: '網購Cap'
+            icon: 'fas fa-shopping-cart', theme: 'purple', settingKey: 'fubon_in_promo_enabled',
+            badge: formatPromoDate("2026-06-30")
+        },
+        // DBS Black
+        {
+            id: 'dbs_black', name: 'Black World 海外', target: 20000,
+            rewardKey: 'dbs_black_promo_cap', rewardCap: 0, rewardUnit: '里', // No cap per se, but req mission
+            icon: 'fas fa-globe', theme: "gray", settingKey: 'dbs_black_promo_enabled',
+            badge: formatPromoDate("2026-12-31")
         },
         // sim Credit
         {
-            id: 'sim_credit', name: 'sim 非網購任務', target: 500,
-            usageKey: 'sim_non_online_spend', // Custom tracking key from module
+            id: 'sim_credit', name: 'sim 網購', target: 500,
             rewardKey: 'sim_online_cap', rewardCap: 200, rewardUnit: '元',
-            icon: 'fas fa-shopping-basket', theme: 'green', rewardText: '網購Cap'
+            icon: 'fas fa-credit-card', theme: 'blue', settingKey: 'sim_promo_enabled',
+            badge: formatResetDate(monthEndStr)
         }
     ];
 
     missionCards.forEach(mc => {
         if (userProfile.ownedCards.includes(mc.id)) {
+            // Check Setting Key (Warning Logic)
+            if (mc.settingKey && userProfile.settings[mc.settingKey] === false) {
+                html += renderWarningCard(mc.name, mc.icon, "需登記以賺取回贈", mc.settingKey);
+                return; // Skip rendering the progress card
+            }
+
             const spendKey = mc.usageKey || `spend_${mc.id}`;
             const spend = userProfile.usage[spendKey] || 0;
             const pct = Math.min(100, (spend / mc.target) * 100);
@@ -435,14 +462,21 @@ function renderDashboard(userProfile) {
 
                 const unit = mc.rewardUnit || '';
                 const prefix = unit ? '' : '$';
+                const rewardLabel = mc.rewardText || "回贈進度";
+
+                // SubText Logic
+                let subText = `尚餘 ${prefix}${Math.ceil(remaining).toLocaleString()}${unit}`;
+                if (isMaxed) subText = '⚠️ 已爆 Cap';
+                else if (!isUnlocked) subText = '🔒 需達到簽賬門檻';
 
                 sections.push({
-                    label: `💰 ${mc.rewardText}`,
+                    label: `💰 ${rewardLabel}`,
                     valueText: `${prefix}${Math.floor(rewardUsed).toLocaleString()}${unit} / ${prefix}${mc.rewardCap.toLocaleString()}${unit}`,
                     progress: rewardPct,
                     striped: true,
-                    barColor: isMaxed ? "bg-red-500" : (isUnlocked ? "bg-green-500" : null), // null = default theme
-                    subText: isMaxed ? '⚠️ 已爆 Cap' : `尚餘 ${prefix}${Math.floor(remaining).toLocaleString()}${unit}`
+                    // If locked, show Gray bar to indicate "Potential/Pending". If unlocked, Green. If maxed, Red.
+                    barColor: isMaxed ? "bg-red-500" : (isUnlocked ? "bg-green-500" : "bg-gray-400 opacity-50"),
+                    subText: subText
                 });
             }
 
@@ -462,25 +496,29 @@ function renderDashboard(userProfile) {
                     progress: secPct,
                     striped: true,
                     barColor: secMaxed ? "bg-red-500" : (isUnlocked ? "bg-green-500" : null),
-                    subText: secMaxed ? '⚠️ 已爆 Cap' : `尚餘 ${prefix}${Math.floor(remaining).toLocaleString()}${unit}`
+                    subText: secMaxed ? '⚠️ 已爆 Cap' : `尚餘 ${prefix}${Math.ceil(remaining).toLocaleString()}${unit}`
                 });
             }
 
+            // Cap Monitors - Reset Text Logic
+            let badgeText = mc.badge || formatResetDate(monthEndStr);
+
             html += createProgressCard({
-                title: mc.name, icon: mc.icon, theme: mc.theme, badge: "每月重置",
+                title: mc.name, icon: mc.icon, theme: mc.theme, badge: badgeText,
                 sections: sections
             });
         }
     });
 
-    container.innerHTML = html;
+    // 5. Cap Monitors (Merged into main dashboard)
+    // Clear old container to prevent duplication or empty space
+    const c = document.getElementById('cap-monitors');
+    if (c) c.innerHTML = "";
 
-    // Cap Monitors
-    const c = document.getElementById('cap-monitors'); c.innerHTML = "";
     const monitors = [
         { id: 'hsbc_red', key: 'red_online_cap', name: 'Red 網購 (4%)', limit: 10000, rate: 0.04, color: 'bg-pink-500', reset: '🔄 每月1日重置' },
-        { id: 'hsbc_gold_student', key: 'student_tuition_cap', name: '學生學費', limit: 8333, rate: 0.024, color: 'bg-green-500', reset: '📅 推廣期內' },
-        { id: 'sc_smart', key: 'sc_smart_cap', name: 'Smart 指定 (5%)', limit: 60000, rate: 0.05, color: 'bg-emerald-500', reset: '🔄 每年發卡日重置' },
+        { id: 'hsbc_gold_student', key: 'student_tuition_cap', name: '學生學費', type: 'reward_cap', limit: 200, rate: 0.024, color: 'bg-green-500', reset: formatPromoDate('2026-03-31') }, // Use Dynamic Promo Date
+        { id: 'sc_smart', key: 'sc_smart_cap', name: 'Smart 指定 (5%)', limit: 60000, rate: 0.05, color: 'bg-emerald-500', reset: '🔄 每月1日重置' },
         { id: 'citi_octopus', key: 'citi_oct_transport_cap', name: 'Citi Octopus (15%)', limit: 2000, rate: 0.15, color: 'bg-orange-500', reset: '🔄 每月1日重置' },
         // DBS Cap Monitors
         { id: 'dbs_eminent', key: 'dbs_eminent_bonus_cap', name: 'Eminent 指定 (5%)', limit: 8000, rate: 0.05, color: 'bg-gray-800', reset: '🔄 每月1日重置' },
@@ -502,8 +540,8 @@ function renderDashboard(userProfile) {
         { id: 'fubon_in_platinum', key: 'fubon_in_bonus_cap', name: 'Fubon iN 網購 (20X)', type: 'reward_cap', limit: 62500, rate: 19, color: 'bg-purple-600', reset: '🔄 每月重置', unit: '分' },
         { id: 'sim_credit', key: 'sim_online_cap', name: 'sim 網購 (8%)', type: 'reward_cap', limit: 200, rate: 0.08, color: 'bg-blue-500', reset: '🔄 每月重置' },
         { id: 'aeon_wakuwaku', key: 'aeon_waku_cap', name: 'WAKU 網購/日本', type: 'reward_cap', limit: 300, rate: 0.06, color: 'bg-pink-500', reset: '🔄 每月重置' },
-        { id: 'wewa', key: 'wewa_annual_cap', name: 'WeWa 旅遊 (4%)', type: 'reward_cap', limit: 2000, rate: 0.04, color: 'bg-yellow-500', reset: '🔄 每年重置' },
-        { id: 'earnmore', key: 'earnmore_annual_spend', name: 'EarnMORE (2%)', limit: 150000, rate: 0.02, color: 'bg-blue-400', reset: '🔄 每年重置' }
+        { id: 'wewa', key: 'wewa_annual_cap', name: 'WeWa 旅遊 (4%)', type: 'reward_cap', limit: 2000, rate: 0.04, color: 'bg-yellow-500', reset: formatPromoDate('2026-12-31') },
+        { id: 'earnmore', key: 'earnmore_annual_spend', name: 'EarnMORE (2%)', limit: 150000, rate: 0.02, color: 'bg-blue-400', reset: formatPromoDate('2026-12-31') }
     ];
     monitors.forEach(m => {
         if (userProfile.ownedCards.includes(m.id)) {
@@ -555,12 +593,21 @@ function renderDashboard(userProfile) {
                 `;
             }
 
-            c.innerHTML += `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <div class="flex justify-between mb-2">
+            // Dynamic Reset Text replacement
+            let resetText = m.reset;
+            if (resetText.includes('每月') && !resetText.includes('1日')) {
+                resetText = formatResetDate(monthEndStr);
+            }
+            if (resetText === '🔄 每月重置') resetText = formatResetDate(monthEndStr);
+            if (resetText === '🔄 每季重置') resetText = formatResetDate(quarterEndStr);
+
+
+            html += `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
+                <div class="flex justify-between items-start mb-3">
                     <div class="flex flex-col">
                         <span class="font-bold text-gray-700 text-sm">${m.name}</span>
-                        <span class="text-[10px] text-gray-400">${m.reset}</span>
                     </div>
+                    ${resetText ? `<span class="bg-gray-600 text-white text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap shadow-sm">${resetText}</span>` : ''}
                 </div>
                 
                 ${thresholdHtml}
@@ -576,11 +623,13 @@ function renderDashboard(userProfile) {
                 </div>
                 
                 <div class="text-[10px] text-right text-gray-500 mt-1">
-                    尚餘: ${displayPrefix}${Math.floor(remaining).toLocaleString()}${displayUnit}
+                    尚餘: ${displayPrefix}${Math.ceil(remaining).toLocaleString()}${displayUnit}
                 </div>
             </div>`;
         }
     });
+
+    container.innerHTML = html;
 }
 
 function renderCalculatorResults(results, currentMode) {
@@ -603,6 +652,17 @@ function renderCalculatorResults(results, currentMode) {
             resultText = `$${v}`;
         } else {
             resultText = `${v} ${u}`; // Fallback
+        }
+
+        // [NEW] Foreign Currency Fee Logic
+        let feeHtml = '';
+        const cardConfig = cardsDB.find(c => c.id === res.cardId);
+        // Check if category implies foreign currency
+        const isForeign = res.category.startsWith('overseas') || res.category === 'foreign' || res.category === 'travel_plus_tier1';
+
+        if (cardConfig && cardConfig.fcf > 0 && isForeign) {
+            const fee = res.amount * cardConfig.fcf;
+            feeHtml = `<div class="text-xs text-red-400 mt-0.5"><i class="fas fa-money-bill-wave mr-1"></i>手續費: -$${fee.toFixed(1)} (${(cardConfig.fcf * 100).toFixed(2)}%)</div>`;
         }
 
         const dataStr = encodeURIComponent(JSON.stringify({
@@ -652,6 +712,7 @@ function renderCalculatorResults(results, currentMode) {
             <div class="w-2/3 pr-2">
                 <div class="font-bold text-gray-800 text-sm truncate">${res.cardName}</div>
                 <div class="text-xs text-gray-500 mt-1">${res.breakdown.join(" + ") || "基本回贈"}</div>
+                ${feeHtml}
             </div>
             <div class="text-right w-1/3 flex flex-col items-end">
                 ${mainValHtml}
@@ -733,6 +794,8 @@ function renderSettings(userProfile) {
     html += `<div class="flex justify-between items-center bg-red-50 p-2 rounded border border-red-100"><span>冬日賞 2026</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-winter" class="sr-only peer" ${userProfile.settings.winter_promo_enabled ? 'checked' : ''} onchange="toggleSetting('winter_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-red-500"></div></label></div>`;
     html += `<div class="flex justify-between items-center bg-blue-50 p-2 rounded border border-blue-100"><span>BOC 狂賞派 + 狂賞飛</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-boc-amazing" class="sr-only peer" ${userProfile.settings.boc_amazing_enabled ? 'checked' : ''} onchange="toggleSetting('boc_amazing_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-blue-600"></div></label></div>`;
     html += `<div class="flex justify-between items-center bg-gray-100 p-2 rounded border border-gray-300"><span>DBS Black $2/里推廣</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-dbs-black" class="sr-only peer" ${userProfile.settings.dbs_black_promo_enabled ? 'checked' : ''} onchange="toggleSetting('dbs_black_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-gray-800"></div></label></div>`;
+    html += `<div class="flex justify-between items-center bg-gray-200 p-2 rounded border border-gray-300"><span>MMPower +FUN Dollars</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-mmpower" class="sr-only peer" ${userProfile.settings.mmpower_promo_enabled ? 'checked' : ''} onchange="toggleSetting('mmpower_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-gray-800"></div></label></div>`;
+    html += `<div class="flex justify-between items-center bg-purple-50 p-2 rounded border border-purple-100"><span>Travel+ 外幣回贈</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-travel-plus" class="sr-only peer" ${userProfile.settings.travel_plus_promo_enabled ? 'checked' : ''} onchange="toggleSetting('travel_plus_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-purple-600"></div></label></div>`;
     html += `<div class="flex justify-between items-center bg-purple-50 p-2 rounded border border-purple-100"><span>Fubon iN 網購20X</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-fubon-in" class="sr-only peer" ${userProfile.settings.fubon_in_promo_enabled ? 'checked' : ''} onchange="toggleSetting('fubon_in_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-purple-600"></div></label></div>`;
     html += `<div class="flex justify-between items-center bg-green-50 p-2 rounded border border-green-100"><span>sim 8%網購推廣</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-sim" class="sr-only peer" ${userProfile.settings.sim_promo_enabled ? 'checked' : ''} onchange="toggleSetting('sim_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-green-600"></div></label></div>`;
     html += `<div class="flex justify-between items-center bg-gray-800 text-white p-2 rounded border border-gray-600"><span>Mox 活期任務 (+$250k)</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-mox" class="sr-only peer" ${userProfile.settings.mox_deposit_task_enabled ? 'checked' : ''} onchange="toggleSetting('mox_deposit_task_enabled')"><div class="w-9 h-5 bg-gray-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-green-400"></div></label></div>`;

@@ -1,5 +1,73 @@
 // js/core.js - V9.10 (Logic Core)
 
+// --- CONFIG ---
+const USER_DATA_KEY = 'cc_mgr_user_data_v2';
+const HOLIDAY_CACHE_KEY = 'cc_mgr_holidays_cache';
+
+// Static Holidays Failure Fallback (2025-2026)
+// Source: 1823.gov.hk
+const STATIC_HOLIDAYS = [
+    // 2025
+    "20250101", "20250129", "20250130", "20250131", "20250404", "20250418", "20250419", "20250421",
+    "20250501", "20250505", "20250531", "20250701", "20251001", "20251007", "20251029", "20251225", "20251226",
+    // 2026 (Estimated)
+    "20260101", "20260217", "20260218", "20260219", "20260403", "20260404", "20260406", "20260501", "20260525", "20260619", "20260701", "20260928", "20261001", "20261020", "20261225", "20261226"
+];
+
+// --- HOLIDAY MANAGER ---
+const HolidayManager = {
+    holidays: [], // array of YYYYMMDD strings
+
+    init: async function () {
+        // 1. Load from LocalStorage
+        const cached = localStorage.getItem(HOLIDAY_CACHE_KEY);
+        if (cached) {
+            const data = JSON.parse(cached);
+            // Check expiry (e.g. 7 days)
+            if (Date.now() - data.timestamp < 7 * 24 * 60 * 60 * 1000) {
+                this.holidays = data.list;
+                console.log("Loaded cached holidays:", this.holidays.length);
+            }
+        }
+
+        // 2. Fetch from API (Background)
+        // HK Gov API: https://www.1823.gov.hk/common/ical/gc/en.json
+        try {
+            const response = await fetch('https://www.1823.gov.hk/common/ical/gc/en.json');
+            if (response.ok) {
+                const json = await response.json();
+                if (json && json.vcalendar && json.vcalendar[0] && json.vcalendar[0].vevent) {
+                    const rawEvents = json.vcalendar[0].vevent;
+                    const newHolidays = rawEvents.map(e => {
+                        let d = e.dtstart[0];
+                        return d; // YYYYMMDD
+                    });
+                    this.holidays = [...new Set([...STATIC_HOLIDAYS, ...newHolidays])].sort();
+
+                    // Save Cache
+                    localStorage.setItem(HOLIDAY_CACHE_KEY, JSON.stringify({
+                        timestamp: Date.now(),
+                        list: this.holidays
+                    }));
+                    console.log("Fetched holidays from Gov API:", this.holidays.length);
+                }
+            }
+        } catch (err) {
+            console.warn("Holiday fetch failed, using static/cache.", err);
+            if (this.holidays.length === 0) this.holidays = STATIC_HOLIDAYS;
+        }
+
+        // Ensure static fallback if empty
+        if (this.holidays.length === 0) this.holidays = STATIC_HOLIDAYS;
+    },
+
+    isHoliday: function (dateStr) { // Input: YYYY-MM-DD
+        if (!dateStr) return false;
+        const compact = dateStr.replace(/-/g, ''); // YYYYMMDD
+        return this.holidays.includes(compact);
+    }
+};
+
 let userProfile = {
     ownedCards: ["hsbc_red", "hsbc_everymile"],
     settings: {
@@ -122,27 +190,93 @@ function isCategoryMatch(moduleMatches, category) {
     return false;
 }
 
-function calculateResults(amount, inputCategory, displayMode) {
+// Helper: Check if module is valid for the given date/context
+function checkValidity(mod, txDate, isHoliday) {
+    let d;
+    let dateStr;
+
+    if (!txDate) {
+        // If no date provided, default to Today for validation context
+        // This prevents "Double Count" where both mutually exclusive modules become valid
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const dayStr = String(now.getDate()).padStart(2, '0');
+        dateStr = `${y}-${m}-${dayStr}`;
+        d = now;
+    } else {
+        d = new Date(txDate);
+        dateStr = txDate; // YYYY-MM-DD
+    }
+
+    // 1. Date Range
+    if (mod.valid_from && dateStr < mod.valid_from) return false;
+    if (mod.valid_to && dateStr > mod.valid_to) return false;
+
+    // 2. Day of Week (0=Sun, 1=Mon... 6=Sat)
+    if (mod.valid_days && Array.isArray(mod.valid_days)) {
+        const day = d.getDay();
+        if (!mod.valid_days.includes(day)) return false;
+    }
+
+    // 3. Holiday (If specified)
+    // valid_on_holiday: true (only holiday), false (only non-holiday), undefined (both)
+    if (mod.valid_on_holiday === true && !isHoliday) return false;
+    if (mod.valid_on_holiday === false && isHoliday) return false;
+
+    // 4. Red Day (BOC Amazing Rewards specific: Holiday + Sundays)
+    // valid_on_red_day: true (Red Day only), false (Normal Day only)
+    if (mod.valid_on_red_day !== undefined) {
+        const day = d.getDay();
+        const isRedDay = isHoliday || day === 0; // Holiday OR Sunday
+
+        if (mod.valid_on_red_day === true && !isRedDay) return false;  // Require Red Day, but is Normal
+        if (mod.valid_on_red_day === false && isRedDay) return false; // Require Normal Day, but is Red
+    }
+
+    return true;
+}
+
+function calculateResults(amount, category, displayMode, userProfile, txDate, isHoliday) {
     let results = [];
 
-    cardsDB.forEach(card => {
-        if (!userProfile.ownedCards.includes(card.id)) return;
-        const category = resolveCategory(card.id, inputCategory);
+    userProfile.ownedCards.forEach(cardId => {
+        const card = cardsDB.find(c => c.id === cardId);
+        if (!card) return;
+        const resolvedCategory = resolveCategory(card.id, category);
 
         let totalRate = 0;
         let breakdown = [];
-        let trackingKey = null;
-        let missionTags = [];
         let guruRC = 0;
+        let missionTags = [];
+        let trackingKey = null;
 
-        const replacerModule = card.modules.find(mid => {
+        // [Module Logic]
+        if (!card.modules || !Array.isArray(card.modules)) return;
+
+        // Filter Valid Modules First
+        const activeModules = card.modules.filter(modID => {
+            const m = modulesDB[modID];
+            if (!m) return false;
+            return checkValidity(m, txDate, isHoliday);
+        });
+
+        // Check for Replacer Module first (Optimization)
+        // This replacerModule is for category-specific 'replace' mode modules
+        const replacerModule = activeModules.find(mid => {
             const m = modulesDB[mid];
-            if (!m || m.type !== 'category' || !isCategoryMatch(m.match, category) || m.mode !== 'replace') return false;
+            if (!m || m.type !== 'category' || !isCategoryMatch(m.match, resolvedCategory) || m.mode !== 'replace') return false;
 
             // [CRITICAL FIX] Check if mission spending threshold is met
+            // User Request: Show Potential Rebate even if not unlocked yet (Retroactive), but warn.
             if (m.req_mission_spend && m.req_mission_key) {
                 const currentSpend = userProfile.usage[m.req_mission_key] || 0;
-                if (currentSpend < m.req_mission_spend) return false; // Threshold not met
+                // If not met, we still ALLOW it for "Potential" view, but potentially mark it?
+                // For replacer, if we return true, it replaces base. We want this for "Projected view".
+                if (currentSpend < m.req_mission_spend) {
+                    // We can't easily modify 'date' here, but we can rely on main loop to add warning description.
+                    // Just allow it to pass.
+                }
             }
 
             // [CRITICAL FIX] Check if single transaction minimum is met
@@ -155,8 +289,10 @@ function calculateResults(amount, inputCategory, displayMode) {
         });
 
         // ... (Module Logic 保持 V10.7 不變) ...
-        card.modules.forEach(modID => {
+        activeModules.forEach(modID => {
             const mod = modulesDB[modID];
+            // [FIX] Clone mod to avoid mutating global DB if we change desc
+            // Actually mod is ref. Safer to use tempDesc.
             if (!mod) return;
             let hit = false;
             let rate = 0;
@@ -171,7 +307,12 @@ function calculateResults(amount, inputCategory, displayMode) {
             // [NEW] Mission Spend Check (Monthly Cumulative)
             if (mod.req_mission_spend && mod.req_mission_key) {
                 const currentSpend = userProfile.usage[mod.req_mission_key] || 0;
-                if (currentSpend < mod.req_mission_spend) return;
+                if (currentSpend < mod.req_mission_spend) {
+                    // Do NOT return. Allow calculation but warn.
+                    // Changed "(未達標)" to simpler lock, user found text confusing.
+                    // "🔒 EM推廣 (+1.5%)" implies it is included but locked.
+                    mod.tempDesc = `🔒 ${mod.desc}`;
+                }
             }
 
             if (mod.type === "red_hot_allocation") {
@@ -203,30 +344,30 @@ function calculateResults(amount, inputCategory, displayMode) {
                         }
 
                         if (isMaxed) {
-                            breakdown.push(`<span class="text-gray-300 line-through text-[10px]">${mod.desc} (爆Cap)</span>`);
+                            breakdown.push(`<span class="text-gray-300 line-through text-[10px]">${mod.tempDesc || mod.desc} (爆Cap)</span>`);
                         } else {
                             const projectedReward = amount * mod.rate;
                             if (projectedReward <= remaining) {
                                 rate = mod.rate;
                                 guruRC = projectedReward;
                                 hit = true;
-                                breakdown.push(mod.desc);
+                                breakdown.push(mod.tempDesc || mod.desc);
                             } else {
                                 rate = remaining / amount;
-                                breakdown.push(`${mod.desc}(部分)`);
+                                breakdown.push(`${mod.tempDesc || mod.desc}(部分)`);
                                 hit = true;
                             }
                         }
                     } else {
                         // Standard Spending-based Cap
                         const capCheck = checkCap(mod.cap_key, mod.cap_limit);
-                        if (capCheck.isMaxed) breakdown.push(`<span class="text-gray-300 line-through text-[10px]">${mod.desc}</span>`);
-                        else if (amount > capCheck.remaining) { rate = (capCheck.remaining * mod.rate) / amount; breakdown.push(`${mod.desc}(部分)`); hit = true; }
+                        if (capCheck.isMaxed) breakdown.push(`<span class="text-gray-300 line-through text-[10px]">${mod.tempDesc || mod.desc}</span>`);
+                        else if (amount > capCheck.remaining) { rate = (capCheck.remaining * mod.rate) / amount; breakdown.push(`${mod.tempDesc || mod.desc}(部分)`); hit = true; }
                         else {
                             rate = mod.rate;
                             hit = true;
                             // [FIXED] Push description when within spending cap
-                            breakdown.push(mod.desc);
+                            breakdown.push(mod.tempDesc || mod.desc);
                         }
                     }
                 } else { rate = mod.rate; hit = true; }
@@ -275,6 +416,19 @@ function calculateResults(amount, inputCategory, displayMode) {
             const emTotal = userProfile.usage["em_q1_total"] || 0;
             const winterTotal = userProfile.usage["winter_total"] || 0;
             if (tag.eligible) {
+                // [NEW] Redundancy Check: If breakdown already mentions this mission as "Not Met", skip the generic tracker line.
+                // This prevents: "Basic... + Bonus (Not Met) + Tracker (Accumulating)"
+                // [NEW] Redundancy Check: Fix emoji mismatch
+                // Strip emojis from tag.desc (e.g. "🌏 EM推廣" -> "EM推廣")
+                const cleanTagDesc = tag.desc.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
+
+                // Check if breakdown contains this cleaned name AND a Lock icon (indicating it's the warned version)
+                const alreadyWarned = breakdown.some(b => b.includes(cleanTagDesc) && b.includes("🔒"));
+
+                if (alreadyWarned) {
+                    return;
+                }
+
                 let isCapped = false;
                 if (tag.id === 'em_promo') { if ((userProfile.usage["em_q1_eligible"] || 0) * 0.015 >= 225) isCapped = true; if (isCapped) { label = "🚫 EM推廣(爆Cap)"; cls = "text-gray-400"; } else if (emTotal < 12000) { label = "🔒 EM推廣(累積中)"; cls = "text-gray-400"; } }
                 if (tag.id === 'winter_promo') { const e = userProfile.usage["winter_eligible"] || 0; let max = 0, r = 0; if (winterTotal >= 40000) { max = 800; r = 0.06 } else if (winterTotal >= 20000) { max = 250; r = 0.03 } if (max > 0 && (e * r) >= max) isCapped = true; if (isCapped) { label = "🚫 冬日賞(爆Cap)"; cls = "text-gray-400"; } else if (winterTotal < 20000) { label = "🔒 冬日賞(累積中)"; cls = "text-gray-400"; } }
@@ -289,9 +443,8 @@ function calculateResults(amount, inputCategory, displayMode) {
 
         const conv = conversionDB.find(c => c.src === card.currency);
         const native = amount * totalRate;
-        const estHKD = native * conv.cash_rate;
 
-        // [UPDATED] Calculate both values for sorting
+        // Calculate both values for sorting
         const estMiles = native * conv.miles_rate;
         const estCash = native * conv.cash_rate;
 
