@@ -39,10 +39,15 @@
 - 使用者應自行核實銀行條款，並對自己的財務決策負責
 - 本工具不構成任何財務建議
 
+## 🐛 問題回報 / 意見反饋
+
+如果你發現計算有誤或有新卡想加入，歡迎填寫 [Google Form 匿名回報](https://docs.google.com/forms/d/e/1FAIpQLSc924Ytr60wr15_QFdrITFGoR3tjDmtg2djbPPxswkUvJZY4A/viewform)，或提交 GitHub Issue。
+
 ## 📄 License
 
 MIT License - 詳見 [LICENSE](LICENSE) 文件
 
 ---
 
+Last Updated: 2026-01-28
 Made with ❤️ in Hong Kong
