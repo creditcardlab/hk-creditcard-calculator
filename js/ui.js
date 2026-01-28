@@ -516,30 +516,30 @@ function renderDashboard(userProfile) {
     if (c) c.innerHTML = "";
 
     const monitors = [
-        { id: 'hsbc_red', key: 'red_online_cap', name: 'Red 網購 (4%)', limit: 10000, rate: 0.04, color: 'bg-pink-500', reset: '🔄 每月1日重置' },
+        { id: 'hsbc_red', key: 'red_online_cap', name: 'Red 網購 (4%)', limit: 10000, rate: 0.04, color: 'bg-pink-500', reset: formatResetDate(monthEndStr) },
         { id: 'hsbc_gold_student', key: 'student_tuition_cap', name: '學生學費', type: 'reward_cap', limit: 200, rate: 0.024, color: 'bg-green-500', reset: formatPromoDate('2026-03-31') }, // Use Dynamic Promo Date
-        { id: 'sc_smart', key: 'sc_smart_cap', name: 'Smart 指定 (5%)', limit: 60000, rate: 0.05, color: 'bg-emerald-500', reset: '🔄 每月1日重置' },
-        { id: 'citi_octopus', key: 'citi_oct_transport_cap', name: 'Citi Octopus (15%)', limit: 2000, rate: 0.15, color: 'bg-orange-500', reset: '🔄 每月1日重置' },
+        { id: 'sc_smart', key: 'sc_smart_cap', name: 'Smart 指定 (5%)', limit: 60000, rate: 0.05, color: 'bg-emerald-500', reset: formatResetDate(monthEndStr) },
+        { id: 'citi_octopus', key: 'citi_oct_transport_cap', name: 'Citi Octopus (15%)', limit: 2000, rate: 0.15, color: 'bg-orange-500', reset: formatResetDate(monthEndStr) },
         // DBS Cap Monitors
-        { id: 'dbs_eminent', key: 'dbs_eminent_bonus_cap', name: 'Eminent 指定 (5%)', limit: 8000, rate: 0.05, color: 'bg-gray-800', reset: '🔄 每月1日重置' },
-        { id: 'dbs_live_fresh', key: 'dbs_live_fresh_cap', name: 'Live Fresh (5%)', type: 'reward_cap', limit: 150, rate: 0.05, color: 'bg-teal-500', reset: '🔄 每月1日重置' },
+        { id: 'dbs_eminent', key: 'dbs_eminent_bonus_cap', name: 'Eminent 指定 (5%)', limit: 8000, rate: 0.05, color: 'bg-gray-800', reset: formatResetDate(monthEndStr) },
+        { id: 'dbs_live_fresh', key: 'dbs_live_fresh_cap', name: 'Live Fresh (5%)', type: 'reward_cap', limit: 150, rate: 0.05, color: 'bg-teal-500', reset: formatResetDate(monthEndStr) },
 
         // BOC Cap Monitors
-        { id: 'boc_go_diamond', key: 'boc_go_mobile_cap', name: 'Go 手機支付 (4%)', type: 'reward_cap', limit: 100, rate: 0.04, color: 'bg-green-600', reset: '🔄 每月1日重置', unit: '分' },
-        { id: 'boc_go_diamond', key: 'boc_go_merchant_cap', name: 'Go 商戶 (5%)', type: 'reward_cap', limit: 100, rate: 0.05, color: 'bg-blue-600', reset: '🔄 每月1日重置', unit: '分' },
+        { id: 'boc_go_diamond', key: 'boc_go_mobile_cap', name: 'Go 手機支付 (4%)', type: 'reward_cap', limit: 100, rate: 0.04, color: 'bg-green-600', reset: formatResetDate(monthEndStr), unit: '分' },
+        { id: 'boc_go_diamond', key: 'boc_go_merchant_cap', name: 'Go 商戶 (5%)', type: 'reward_cap', limit: 100, rate: 0.05, color: 'bg-blue-600', reset: formatResetDate(monthEndStr), unit: '分' },
 
         // AE Cap Monitors
-        { id: 'ae_explorer', key: 'ae_explorer_q_overseas_cap', name: 'AE Explorer 季選 (海外 7X)', limit: 10000, rate: 7, color: 'bg-blue-800', reset: '🔄 每季重置', unit: '分' },
-        { id: 'ae_explorer', key: 'ae_explorer_q_selected_cap', name: 'AE Explorer 季選 (指定 7X)', limit: 10000, rate: 7, color: 'bg-blue-800', reset: '🔄 每季重置', unit: '分' },
-        { id: 'ae_platinum', key: 'ae_plat_overseas_cap', name: '細頭 Accelerator (海外)', limit: 15000, rate: 5, color: 'bg-gray-400', reset: '🔄 每季重置', unit: '分' },
-        { id: 'ae_platinum', key: 'ae_plat_travel_cap', name: '細頭 Accelerator (旅遊)', limit: 15000, rate: 7, color: 'bg-gray-400', reset: '🔄 每季重置', unit: '分' },
-        { id: 'ae_platinum', key: 'ae_plat_daily_cap', name: '細頭 Accelerator (日常)', limit: 15000, rate: 7, color: 'bg-gray-400', reset: '🔄 每季重置', unit: '分' },
-        { id: 'ae_platinum_credit', key: 'ae_pcc_double_cap', name: '大頭 Double Points', type: 'reward_cap', limit: 30000, rate: 3, color: 'bg-yellow-600', reset: '🔄 每月重置', unit: '分' },
+        { id: 'ae_explorer', key: 'ae_explorer_q_overseas_cap', name: 'AE Explorer 季選 (海外 7X)', limit: 10000, rate: 7, color: 'bg-blue-800', reset: formatResetDate(quarterEndStr), unit: '分' },
+        { id: 'ae_explorer', key: 'ae_explorer_q_selected_cap', name: 'AE Explorer 季選 (指定 7X)', limit: 10000, rate: 7, color: 'bg-blue-800', reset: formatResetDate(quarterEndStr), unit: '分' },
+        { id: 'ae_platinum', key: 'ae_plat_overseas_cap', name: '細頭 Accelerator (海外)', limit: 15000, rate: 5, color: 'bg-gray-400', reset: formatResetDate(quarterEndStr), unit: '分' },
+        { id: 'ae_platinum', key: 'ae_plat_travel_cap', name: '細頭 Accelerator (旅遊)', limit: 15000, rate: 7, color: 'bg-gray-400', reset: formatResetDate(quarterEndStr), unit: '分' },
+        { id: 'ae_platinum', key: 'ae_plat_daily_cap', name: '細頭 Accelerator (日常)', limit: 15000, rate: 7, color: 'bg-gray-400', reset: formatResetDate(quarterEndStr), unit: '分' },
+        { id: 'ae_platinum_credit', key: 'ae_pcc_double_cap', name: '大頭 Double Points', type: 'reward_cap', limit: 30000, rate: 3, color: 'bg-yellow-600', reset: formatResetDate(monthEndStr), unit: '分' },
 
         // New Card Caps
-        { id: 'fubon_in_platinum', key: 'fubon_in_bonus_cap', name: 'Fubon iN 網購 (20X)', type: 'reward_cap', limit: 62500, rate: 19, color: 'bg-purple-600', reset: '🔄 每月重置', unit: '分' },
-        { id: 'sim_credit', key: 'sim_online_cap', name: 'sim 網購 (8%)', type: 'reward_cap', limit: 200, rate: 0.08, color: 'bg-blue-500', reset: '🔄 每月重置' },
-        { id: 'aeon_wakuwaku', key: 'aeon_waku_cap', name: 'WAKU 網購/日本', type: 'reward_cap', limit: 300, rate: 0.06, color: 'bg-pink-500', reset: '🔄 每月重置' },
+        { id: 'fubon_in_platinum', key: 'fubon_in_bonus_cap', name: 'Fubon iN 網購 (20X)', type: 'reward_cap', limit: 62500, rate: 19, color: 'bg-purple-600', reset: formatResetDate(monthEndStr), unit: '分' },
+        { id: 'sim_credit', key: 'sim_online_cap', name: 'sim 網購 (8%)', type: 'reward_cap', limit: 200, rate: 0.08, color: 'bg-blue-500', reset: formatResetDate(monthEndStr) },
+        { id: 'aeon_wakuwaku', key: 'aeon_waku_cap', name: 'WAKU 網購/日本', type: 'reward_cap', limit: 300, rate: 0.06, color: 'bg-pink-500', reset: formatResetDate(monthEndStr) },
         { id: 'wewa', key: 'wewa_annual_cap', name: 'WeWa 旅遊 (4%)', type: 'reward_cap', limit: 2000, rate: 0.04, color: 'bg-yellow-500', reset: formatPromoDate('2026-12-31') },
         { id: 'earnmore', key: 'earnmore_annual_spend', name: 'EarnMORE (2%)', limit: 150000, rate: 0.02, color: 'bg-blue-400', reset: formatPromoDate('2026-12-31') }
     ];
@@ -594,12 +594,8 @@ function renderDashboard(userProfile) {
             }
 
             // Dynamic Reset Text replacement
+            // Dynamic Reset Text replacement
             let resetText = m.reset;
-            if (resetText.includes('每月') && !resetText.includes('1日')) {
-                resetText = formatResetDate(monthEndStr);
-            }
-            if (resetText === '🔄 每月重置') resetText = formatResetDate(monthEndStr);
-            if (resetText === '🔄 每季重置') resetText = formatResetDate(quarterEndStr);
 
 
             html += `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
