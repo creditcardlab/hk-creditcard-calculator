@@ -497,6 +497,9 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
 
     let valStrPotential = "", unitStrPotential = "";
 
+    const supportsMiles = conv.miles_rate !== 0;
+    const supportsCash = conv.cash_rate !== 0;
+
     if (displayMode === 'miles') {
         if (conv.miles_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
         else { valStr = Math.floor(estMiles).toLocaleString(); unitStr = "里"; }
@@ -522,6 +525,8 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         breakdown, trackingKey, guruRC, missionTags, category,
         rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, // [UPDATED] Passed for commitTransaction
         redemptionConfig: card.redemption,
+        supportsMiles,
+        supportsCash,
         nativeVal: native,
         nativeValPotential: nativePotential,
         pendingUnlocks

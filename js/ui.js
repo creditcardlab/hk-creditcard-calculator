@@ -650,33 +650,25 @@ function renderCalculatorResults(results, currentMode) {
             resultText = `${v} ${u}`; // Fallback
         }
 
-        // Foreign Currency Fee Logic (cash mode only)
-        let feeFormulaHtml = '';
-        let feeFormulaLabelHtml = '';
+        // Foreign Currency Fee Logic
+        let feeNetValue = null;
+        let feeNetPotential = null;
         let feeLineHtml = '';
         let hasFee = false;
         const showFeeEquation = currentMode === 'cash' && userProfile && userProfile.settings && userProfile.settings.deduct_fcf_ranking;
+        const allowFeeNet = showFeeEquation && res.supportsCash;
         const cardConfig = cardsDB.find(c => c.id === res.cardId);
         // Check if category implies foreign currency
         const isForeign = res.category.startsWith('overseas') || res.category === 'foreign' || res.category === 'travel_plus_tier1';
 
         if (cardConfig && cardConfig.fcf > 0 && isForeign) {
             const fee = res.amount * cardConfig.fcf;
-            const gross = Math.floor(res.estCash).toLocaleString();
             const feeVal = fee.toFixed(1);
-            const net = Math.floor(res.estCash - fee).toLocaleString();
+            const net = res.estCash - fee;
+            const netPotential = res.estCashPotential - fee;
             hasFee = true;
-            if (showFeeEquation) {
-                feeFormulaLabelHtml = `<div class="text-[10px] text-gray-500 mt-1">回贈 - 外幣手續費 = 淨回贈</div>`;
-                feeFormulaHtml = `
-                    <div class="text-xl font-bold">
-                        <span class="text-emerald-600">$${gross}</span>
-                        <span class="text-gray-400"> - </span>
-                        <span class="text-red-500">$${feeVal}</span>
-                        <span class="text-gray-400"> = </span>
-                        <span class="text-blue-600">$${net}</span>
-                    </div>`;
-            }
+            feeNetValue = Math.floor(net).toLocaleString();
+            feeNetPotential = Math.floor(netPotential).toLocaleString();
             feeLineHtml = `<div class="text-xs text-red-400 mt-0.5"><i class="fas fa-money-bill-wave mr-1"></i>外幣手續費: $${feeVal} (${(cardConfig.fcf * 100).toFixed(2)}%)</div>`;
         }
 
@@ -690,18 +682,28 @@ function renderCalculatorResults(results, currentMode) {
             resultText: resultText,
             pendingUnlocks: res.pendingUnlocks || []
         }));
-        const valClass = res.displayVal === '---' ? 'text-gray-400 font-medium' : 'text-red-600 font-bold';
+        let displayVal = res.displayVal;
+        let displayUnit = res.displayUnit;
+        let valClass = res.displayVal === '---' ? 'text-gray-400 font-medium' : 'text-red-600 font-bold';
 
-        let mainValHtml = `<div class="text-xl ${valClass}">${res.displayVal} <span class="text-xs text-gray-400">${res.displayUnit}</span></div>`;
+        if (allowFeeNet && hasFee && feeNetValue !== null) {
+            displayVal = feeNetValue;
+            displayUnit = "HKD";
+            valClass = 'text-blue-600 font-bold';
+        }
+
+        let mainValHtml = `<div class="text-xl ${valClass}">${displayVal} <span class="text-xs text-gray-400">${displayUnit}</span></div>`;
         let potentialHtml = "";
         if (res.displayValPotential && res.displayValPotential !== res.displayVal && res.displayValPotential !== "---") {
-            potentialHtml = `<div class="text-[10px] text-gray-500 mt-0.5">🔓 解鎖後：${res.displayValPotential} ${res.displayUnitPotential}</div>`;
+            let potentialVal = res.displayValPotential;
+            let potentialUnit = res.displayUnitPotential;
+            if (allowFeeNet && hasFee && feeNetPotential !== null) {
+                potentialVal = feeNetPotential;
+                potentialUnit = "HKD";
+            }
+            potentialHtml = `<div class="text-[10px] text-gray-500 mt-0.5">🔓 解鎖後：${potentialVal} ${potentialUnit}</div>`;
         }
         let redemptionHtml = "";
-
-        if (hasFee && showFeeEquation && !res.redemptionConfig) {
-            mainValHtml = feeFormulaHtml;
-        }
         if (potentialHtml && !res.redemptionConfig) {
             mainValHtml += potentialHtml;
         }
@@ -709,33 +711,17 @@ function renderCalculatorResults(results, currentMode) {
         if (res.redemptionConfig) {
             const rd = res.redemptionConfig;
             if (res.displayVal !== '---') {
-                if (hasFee && showFeeEquation) {
-                    mainValHtml = `
-                        ${feeFormulaHtml}
-                        <div class="text-xs text-gray-500 mt-1 font-mono">(${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit})</div>
-                        ${potentialHtml}
-                    `;
-                } else {
-                    mainValHtml = `
-                        <div class="text-xl ${valClass}">${res.displayVal} <span class="text-xs text-gray-400">${res.displayUnit}</span></div>
-                        <div class="text-xs text-gray-500 mt-0.5 font-mono">(${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit})</div>
-                        ${potentialHtml}
-                    `;
-                }
+                mainValHtml = `
+                    <div class="text-xl ${valClass}">${displayVal} <span class="text-xs text-gray-400">${displayUnit}</span></div>
+                    <div class="text-xs text-gray-500 mt-0.5 font-mono">(${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit})</div>
+                    ${potentialHtml}
+                `;
             } else {
-                if (hasFee && showFeeEquation) {
-                    mainValHtml = `
-                        ${feeFormulaHtml}
-                        <div class="text-xs text-gray-500 mt-1 font-mono">${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit}</div>
-                        ${potentialHtml}
-                    `;
-                } else {
-                    mainValHtml = `
-                        <div class="text-xl text-gray-400 font-medium">---</div>
-                        <div class="text-xs text-gray-500 mt-0.5 font-mono">${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit}</div>
-                        ${potentialHtml}
-                    `;
-                }
+                mainValHtml = `
+                    <div class="text-xl text-gray-400 font-medium">---</div>
+                    <div class="text-xs text-gray-500 mt-0.5 font-mono">${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit}</div>
+                    ${potentialHtml}
+                `;
             }
 
             redemptionHtml = `
@@ -758,7 +744,6 @@ function renderCalculatorResults(results, currentMode) {
                 <div class="font-bold text-gray-800 text-sm truncate">${res.cardName}</div>
                 <div class="text-xs text-gray-500 mt-1">${res.breakdown.join(" + ") || "基本回贈"}</div>
                 ${hasFee && !showFeeEquation ? feeLineHtml : ''}
-                ${hasFee && showFeeEquation ? feeFormulaLabelHtml : ''}
             </div>
             <div class="text-right w-1/3 flex flex-col items-end">
                 ${mainValHtml}
