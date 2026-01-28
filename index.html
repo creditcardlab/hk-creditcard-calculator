@@ -32,6 +32,12 @@
                     class="px-4 py-1.5 rounded-md transition-all text-gray-500">顯示現金 ($)</button>
             </div>
         </div>
+        <div id="fee-deduct-wrap" class="flex items-center justify-center text-[10px] text-gray-600">
+            <label class="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-full">
+                <input id="toggle-fee-deduct" type="checkbox" class="accent-blue-600" onchange="toggleFeeDeduct(this.checked)">
+                扣除外幣手續費（只影響排序）
+            </label>
+        </div>
         <div class="bg-white p-5 rounded-2xl shadow-sm space-y-4">
             <div>
                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">簽賬金額 (HKD)</label>

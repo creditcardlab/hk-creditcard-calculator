@@ -650,15 +650,34 @@ function renderCalculatorResults(results, currentMode) {
             resultText = `${v} ${u}`; // Fallback
         }
 
-        // [NEW] Foreign Currency Fee Logic
-        let feeHtml = '';
+        // Foreign Currency Fee Logic (cash mode only)
+        let feeFormulaHtml = '';
+        let feeFormulaLabelHtml = '';
+        let feeLineHtml = '';
+        let hasFee = false;
+        const showFeeEquation = currentMode === 'cash' && userProfile && userProfile.settings && userProfile.settings.deduct_fcf_ranking;
         const cardConfig = cardsDB.find(c => c.id === res.cardId);
         // Check if category implies foreign currency
         const isForeign = res.category.startsWith('overseas') || res.category === 'foreign' || res.category === 'travel_plus_tier1';
 
         if (cardConfig && cardConfig.fcf > 0 && isForeign) {
             const fee = res.amount * cardConfig.fcf;
-            feeHtml = `<div class="text-xs text-red-400 mt-0.5"><i class="fas fa-money-bill-wave mr-1"></i>手續費: -$${fee.toFixed(1)} (${(cardConfig.fcf * 100).toFixed(2)}%)</div>`;
+            const gross = Math.floor(res.estCash).toLocaleString();
+            const feeVal = fee.toFixed(1);
+            const net = Math.floor(res.estCash - fee).toLocaleString();
+            hasFee = true;
+            if (showFeeEquation) {
+                feeFormulaLabelHtml = `<div class="text-[10px] text-gray-500 mt-1">回贈 - 外幣手續費 = 淨回贈</div>`;
+                feeFormulaHtml = `
+                    <div class="text-xl font-bold">
+                        <span class="text-emerald-600">$${gross}</span>
+                        <span class="text-gray-400"> - </span>
+                        <span class="text-red-500">$${feeVal}</span>
+                        <span class="text-gray-400"> = </span>
+                        <span class="text-blue-600">$${net}</span>
+                    </div>`;
+            }
+            feeLineHtml = `<div class="text-xs text-red-400 mt-0.5"><i class="fas fa-money-bill-wave mr-1"></i>外幣手續費: $${feeVal} (${(cardConfig.fcf * 100).toFixed(2)}%)</div>`;
         }
 
         const dataStr = encodeURIComponent(JSON.stringify({
@@ -668,25 +687,55 @@ function renderCalculatorResults(results, currentMode) {
             rewardTrackingKey: res.rewardTrackingKey,
             secondaryRewardTrackingKey: res.secondaryRewardTrackingKey,
             generatedReward: res.generatedReward,
-            resultText: resultText
+            resultText: resultText,
+            pendingUnlocks: res.pendingUnlocks || []
         }));
         const valClass = res.displayVal === '---' ? 'text-gray-400 font-medium' : 'text-red-600 font-bold';
 
         let mainValHtml = `<div class="text-xl ${valClass}">${res.displayVal} <span class="text-xs text-gray-400">${res.displayUnit}</span></div>`;
+        let potentialHtml = "";
+        if (res.displayValPotential && res.displayValPotential !== res.displayVal && res.displayValPotential !== "---") {
+            potentialHtml = `<div class="text-[10px] text-gray-500 mt-0.5">🔓 解鎖後：${res.displayValPotential} ${res.displayUnitPotential}</div>`;
+        }
         let redemptionHtml = "";
+
+        if (hasFee && showFeeEquation && !res.redemptionConfig) {
+            mainValHtml = feeFormulaHtml;
+        }
+        if (potentialHtml && !res.redemptionConfig) {
+            mainValHtml += potentialHtml;
+        }
 
         if (res.redemptionConfig) {
             const rd = res.redemptionConfig;
             if (res.displayVal !== '---') {
-                mainValHtml = `
-                    <div class="text-xl ${valClass}">${res.displayVal} <span class="text-xs text-gray-400">${res.displayUnit}</span></div>
-                    <div class="text-xs text-gray-500 mt-0.5 font-mono">(${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit})</div>
-                `;
+                if (hasFee && showFeeEquation) {
+                    mainValHtml = `
+                        ${feeFormulaHtml}
+                        <div class="text-xs text-gray-500 mt-1 font-mono">(${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit})</div>
+                        ${potentialHtml}
+                    `;
+                } else {
+                    mainValHtml = `
+                        <div class="text-xl ${valClass}">${res.displayVal} <span class="text-xs text-gray-400">${res.displayUnit}</span></div>
+                        <div class="text-xs text-gray-500 mt-0.5 font-mono">(${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit})</div>
+                        ${potentialHtml}
+                    `;
+                }
             } else {
-                mainValHtml = `
-                    <div class="text-xl text-gray-400 font-medium">---</div>
-                    <div class="text-xs text-gray-500 mt-0.5 font-mono">${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit}</div>
-                `;
+                if (hasFee && showFeeEquation) {
+                    mainValHtml = `
+                        ${feeFormulaHtml}
+                        <div class="text-xs text-gray-500 mt-1 font-mono">${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit}</div>
+                        ${potentialHtml}
+                    `;
+                } else {
+                    mainValHtml = `
+                        <div class="text-xl text-gray-400 font-medium">---</div>
+                        <div class="text-xs text-gray-500 mt-0.5 font-mono">${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit}</div>
+                        ${potentialHtml}
+                    `;
+                }
             }
 
             redemptionHtml = `
@@ -708,7 +757,8 @@ function renderCalculatorResults(results, currentMode) {
             <div class="w-2/3 pr-2">
                 <div class="font-bold text-gray-800 text-sm truncate">${res.cardName}</div>
                 <div class="text-xs text-gray-500 mt-1">${res.breakdown.join(" + ") || "基本回贈"}</div>
-                ${feeHtml}
+                ${hasFee && !showFeeEquation ? feeLineHtml : ''}
+                ${hasFee && showFeeEquation ? feeFormulaLabelHtml : ''}
             </div>
             <div class="text-right w-1/3 flex flex-col items-end">
                 ${mainValHtml}

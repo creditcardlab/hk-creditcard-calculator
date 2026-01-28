@@ -8,10 +8,18 @@ let currentMode = 'miles';
 function init() {
     loadUserData();
     if (!userProfile.usage["guru_spend_accum"]) userProfile.usage["guru_spend_accum"] = 0;
+    if (userProfile.settings.deduct_fcf_ranking === undefined) userProfile.settings.deduct_fcf_ranking = false;
 
     // Initial Render
     refreshUI();
     if (userProfile.ownedCards.length === 0) switchTab('settings');
+
+    // Initialize holidays in background; rerun calc when ready
+    if (typeof HolidayManager !== 'undefined' && HolidayManager.init) {
+        HolidayManager.init().then(() => {
+            if (typeof runCalc === 'function') runCalc();
+        });
+    }
 }
 
 // --- CORE ACTIONS ---
@@ -25,6 +33,14 @@ function refreshUI() {
     // Dynamically update categories based on owned cards
     if (typeof updateCategoryDropdown === 'function') {
         updateCategoryDropdown(userProfile.ownedCards);
+    }
+
+    const feeToggle = document.getElementById('toggle-fee-deduct');
+    if (feeToggle) feeToggle.checked = !!userProfile.settings.deduct_fcf_ranking;
+    const feeWrap = document.getElementById('fee-deduct-wrap');
+    if (feeWrap) {
+        if (currentMode === 'cash') feeWrap.classList.remove('hidden');
+        else feeWrap.classList.add('hidden');
     }
 
     runCalc();
@@ -49,6 +65,11 @@ window.toggleMode = function (m) {
     currentMode = m;
     document.getElementById('btn-mode-miles').className = m === 'miles' ? "px-4 py-1.5 rounded-md transition-all bg-white text-blue-600 shadow-sm" : "px-4 py-1.5 rounded-md transition-all text-gray-500";
     document.getElementById('btn-mode-cash').className = m === 'cash' ? "px-4 py-1.5 rounded-md transition-all bg-white text-blue-600 shadow-sm" : "px-4 py-1.5 rounded-md transition-all text-gray-500";
+    const feeWrap = document.getElementById('fee-deduct-wrap');
+    if (feeWrap) {
+        if (m === 'cash') feeWrap.classList.remove('hidden');
+        else feeWrap.classList.add('hidden');
+    }
     runCalc();
 }
 
@@ -77,7 +98,9 @@ window.runCalc = function () {
     }
 
     // Calls core.js function
-    const results = calculateResults(amt, cat, currentMode, userProfile, txDate, isHoliday);
+    const results = calculateResults(amt, cat, currentMode, userProfile, txDate, isHoliday, {
+        deductFcfForRanking: !!userProfile.settings.deduct_fcf_ranking && currentMode === 'cash'
+    });
 
     // Calls ui.js function
     renderCalculatorResults(results, currentMode);
@@ -112,7 +135,7 @@ window.handleGuruUpgrade = function () {
 // --- DATA MODIFIERS ---
 
 function commitTransaction(data) {
-    const { amount, trackingKey, estValue, guruRC, missionTags, category, cardId, rewardTrackingKey, secondaryRewardTrackingKey, generatedReward } = data;
+    const { amount, trackingKey, estValue, guruRC, missionTags, category, cardId, rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, pendingUnlocks } = data;
 
     userProfile.stats.totalSpend += amount;
     userProfile.stats.totalVal += estValue;
@@ -162,14 +185,73 @@ function commitTransaction(data) {
         amount: amount,
         rebateVal: estValue,
         rebateText: data.resultText || (estValue > 0 ? `$${estValue.toFixed(2)}` : 'No Reward'),
-        desc: data.program || 'Spending'
+        desc: data.program || 'Spending',
+        pendingUnlocks: Array.isArray(pendingUnlocks) ? pendingUnlocks : []
     };
     userProfile.transactions.unshift(tx);
     // Keep last 100
     if (userProfile.transactions.length > 100) userProfile.transactions = userProfile.transactions.slice(0, 100);
 
+    applyPendingUnlocks();
     saveUserData();
     return alertMsg;
+}
+
+window.toggleFeeDeduct = function (checked) {
+    userProfile.settings.deduct_fcf_ranking = !!checked;
+    saveUserData();
+    runCalc();
+}
+
+function applyPendingUnlocks() {
+    if (!userProfile.transactions || userProfile.transactions.length === 0) return;
+
+    userProfile.transactions.forEach(tx => {
+        if (!Array.isArray(tx.pendingUnlocks) || tx.pendingUnlocks.length === 0) return;
+
+        const remaining = [];
+        tx.pendingUnlocks.forEach(p => {
+            const currentSpend = userProfile.usage[p.reqKey] || 0;
+            if (currentSpend < (p.reqSpend || 0)) {
+                remaining.push(p);
+                return;
+            }
+
+            let remainingCap = Infinity;
+            if (p.capKey && p.capLimit) {
+                const used = userProfile.usage[p.capKey] || 0;
+                remainingCap = Math.max(0, p.capLimit - used);
+            }
+            if (p.secondaryCapKey && p.secondaryCapLimit) {
+                const usedSec = userProfile.usage[p.secondaryCapKey] || 0;
+                remainingCap = Math.min(remainingCap, Math.max(0, p.secondaryCapLimit - usedSec));
+            }
+
+            if (remainingCap <= 0) return;
+
+            const applyNative = Math.min(p.pendingNative || 0, remainingCap);
+            if (applyNative <= 0) return;
+
+            if (p.capKey) {
+                userProfile.usage[p.capKey] = (userProfile.usage[p.capKey] || 0) + applyNative;
+            }
+            if (p.secondaryCapKey) {
+                userProfile.usage[p.secondaryCapKey] = (userProfile.usage[p.secondaryCapKey] || 0) + applyNative;
+            }
+
+            const applyCash = applyNative * (p.cashRate || 0);
+            tx.rebateVal = (tx.rebateVal || 0) + applyCash;
+            tx.rebateText = `$${tx.rebateVal.toFixed(2)}`;
+            userProfile.stats.totalVal += applyCash;
+
+            const leftover = (p.pendingNative || 0) - applyNative;
+            if (leftover > 0) {
+                remaining.push({ ...p, pendingNative: leftover });
+            }
+        });
+
+        tx.pendingUnlocks = remaining;
+    });
 }
 
 function upgradeGuruLevel() {

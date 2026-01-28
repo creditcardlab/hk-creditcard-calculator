@@ -1,7 +1,7 @@
 // js/core.js - V9.10 (Logic Core)
 
 // --- CONFIG ---
-const USER_DATA_KEY = 'cc_mgr_user_data_v2';
+const USER_DATA_KEY = 'shawn_app_v9_2_data';
 const HOLIDAY_CACHE_KEY = 'cc_mgr_holidays_cache';
 
 // Static Holidays Failure Fallback (2025-2026)
@@ -87,7 +87,7 @@ let userProfile = {
 };
 
 function loadUserData() {
-    const s = localStorage.getItem('shawn_app_v9_2_data');
+    const s = localStorage.getItem(USER_DATA_KEY);
     if (s) {
         let loaded = JSON.parse(s);
         userProfile = { ...userProfile, ...loaded };
@@ -101,7 +101,7 @@ function loadUserData() {
 }
 
 function saveUserData() {
-    localStorage.setItem('shawn_app_v9_2_data', JSON.stringify(userProfile));
+    localStorage.setItem(USER_DATA_KEY, JSON.stringify(userProfile));
 }
 
 function checkCap(key, limit) { const u = userProfile.usage[key] || 0; return { used: u, remaining: Math.max(0, limit - u), isMaxed: u >= limit }; }
@@ -190,6 +190,33 @@ function isCategoryMatch(moduleMatches, category) {
     return false;
 }
 
+function isForeignCategory(category) {
+    return category && (category.startsWith('overseas') || category === 'foreign' || category === 'travel_plus_tier1');
+}
+
+function isMissionMet(mod, userProfile) {
+    if (!mod.req_mission_spend || !mod.req_mission_key) return true;
+    const currentSpend = userProfile.usage[mod.req_mission_key] || 0;
+    return currentSpend >= mod.req_mission_spend;
+}
+
+function isRetroactive(mod) {
+    if (mod.retroactive === false) return false;
+    return !!(mod.req_mission_spend && mod.req_mission_key);
+}
+
+function isReplacerEligible(mod, amount, resolvedCategory, userProfile, includeLocked) {
+    if (!mod || mod.type !== 'category' || !isCategoryMatch(mod.match, resolvedCategory) || mod.mode !== 'replace') return false;
+    if (mod.min_single_spend && amount < mod.min_single_spend) return false;
+    if (mod.min_spend && amount < mod.min_spend) return false;
+
+    if (mod.req_mission_spend && mod.req_mission_key) {
+        const met = isMissionMet(mod, userProfile);
+        if (!met && !(includeLocked && isRetroactive(mod))) return false;
+    }
+    return true;
+}
+
 // Helper: Check if module is valid for the given date/context
 function checkValidity(mod, txDate, isHoliday) {
     let d;
@@ -237,326 +264,290 @@ function checkValidity(mod, txDate, isHoliday) {
     return true;
 }
 
-function calculateResults(amount, category, displayMode, userProfile, txDate, isHoliday) {
-    let results = [];
+function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday) {
+    const resolvedCategory = resolveCategory(card.id, category);
 
-    userProfile.ownedCards.forEach(cardId => {
-        const card = cardsDB.find(c => c.id === cardId);
-        if (!card) return;
-        const resolvedCategory = resolveCategory(card.id, category);
+    let totalRate = 0;
+    let totalRatePotential = 0;
+    let breakdown = [];
+    let guruRC = 0;
+    let missionTags = [];
+    let trackingKey = null;
+    let rewardInfo = null;
+    let pendingUnlocks = [];
 
-        let totalRate = 0;
-        let breakdown = [];
-        let guruRC = 0;
-        let missionTags = [];
-        let trackingKey = null;
+    // [Module Logic]
+    if (!card.modules || !Array.isArray(card.modules)) return null;
 
-        // [Module Logic]
-        if (!card.modules || !Array.isArray(card.modules)) return;
+    // Filter Valid Modules First
+    const activeModules = card.modules.filter(modID => {
+        const m = modulesDB[modID];
+        if (!m) return false;
+        return checkValidity(m, txDate, isHoliday);
+    });
 
-        // Filter Valid Modules First
-        const activeModules = card.modules.filter(modID => {
-            const m = modulesDB[modID];
-            if (!m) return false;
-            return checkValidity(m, txDate, isHoliday);
-        });
+    // Check for Replacer Module first (Optimization)
+    // This replacerModule is for category-specific 'replace' mode modules
+    const replacerModuleCurrent = activeModules.find(mid => {
+        const m = modulesDB[mid];
+        return isReplacerEligible(m, amount, resolvedCategory, userProfile, false);
+    });
+    const replacerModulePotential = activeModules.find(mid => {
+        const m = modulesDB[mid];
+        return isReplacerEligible(m, amount, resolvedCategory, userProfile, true);
+    });
 
-        // Check for Replacer Module first (Optimization)
-        // This replacerModule is for category-specific 'replace' mode modules
-        const replacerModule = activeModules.find(mid => {
-            const m = modulesDB[mid];
-            if (!m || m.type !== 'category' || !isCategoryMatch(m.match, resolvedCategory) || m.mode !== 'replace') return false;
+    // ... (Module Logic 保持 V10.7 不變) ...
+    activeModules.forEach(modID => {
+        const mod = modulesDB[modID];
+        // [FIX] Clone mod to avoid mutating global DB if we change desc
+        // Actually mod is ref. Safer to use tempDesc.
+        if (!mod) return;
+        let tempDesc = null;
+        let hit = false;
+        let rate = 0;
+        if (mod.setting_key && userProfile.settings[mod.setting_key] === false) return;
 
-            // [CRITICAL FIX] Check if mission spending threshold is met
-            // User Request: Show Potential Rebate even if not unlocked yet (Retroactive), but warn.
-            if (m.req_mission_spend && m.req_mission_key) {
-                const currentSpend = userProfile.usage[m.req_mission_key] || 0;
-                // If not met, we still ALLOW it for "Potential" view, but potentially mark it?
-                // For replacer, if we return true, it replaces base. We want this for "Projected view".
-                if (currentSpend < m.req_mission_spend) {
-                    // We can't easily modify 'date' here, but we can rely on main loop to add warning description.
-                    // Just allow it to pass.
+        // [NEW] Min Spend Check (Single Transaction)
+        if (mod.min_spend && amount < mod.min_spend) return;
+
+        // [NEW] Single Transaction Minimum (for BOC Amazing Rewards)
+        if (mod.min_single_spend && amount < mod.min_single_spend) return;
+
+        // [NEW] Mission Spend Check (Monthly Cumulative)
+        const missionRequired = !!(mod.req_mission_spend && mod.req_mission_key);
+        const missionMet = missionRequired ? isMissionMet(mod, userProfile) : true;
+        const retroactive = missionRequired ? isRetroactive(mod) : false;
+        const applyCurrent = missionMet;
+        const applyPotential = missionMet || retroactive;
+
+        if (!applyPotential) return;
+        if (!applyCurrent && retroactive) {
+            tempDesc = `🔒 ${mod.desc}`;
+        } else if (!applyCurrent && !retroactive) {
+            tempDesc = `🔒 ${mod.desc}`;
+        }
+
+        if (mod.type === "red_hot_allocation") {
+            const rhCat = getRedHotCategory(category);
+            if (rhCat) {
+                const multiplier = userProfile.settings.red_hot_allocation[rhCat] || 0;
+                if (multiplier > 0) { rate = multiplier * mod.rate_per_x; const pct = (rate * 100).toFixed(1); tempDesc = `${mod.desc} (${multiplier}X = ${pct}%)`; hit = true; }
+            }
+        }
+        else if (mod.type === "red_hot_fixed_bonus") { const rhCat = getRedHotCategory(category); if (rhCat) { rate = mod.multiplier * mod.rate_per_x; hit = true; } }
+            else if (mod.type === "guru_capped") {
+                const res = calculateGuru(mod, amount, parseInt(userProfile.settings.guru_level), category);
+                if (res.desc) {
+                    breakdown.push(res.desc);
+                    guruRC = res.generatedRC;
+                    totalRate += res.rate;
+                    totalRatePotential += res.rate;
                 }
             }
-
-            // [CRITICAL FIX] Check if single transaction minimum is met
-            if (m.min_single_spend && amount < m.min_single_spend) return false;
-
-            // [CRITICAL FIX] Check if min_spend is met
-            if (m.min_spend && amount < m.min_spend) return false;
-
-            return true;
-        });
-
-        // ... (Module Logic 保持 V10.7 不變) ...
-        activeModules.forEach(modID => {
-            const mod = modulesDB[modID];
-            // [FIX] Clone mod to avoid mutating global DB if we change desc
-            // Actually mod is ref. Safer to use tempDesc.
-            if (!mod) return;
-            let hit = false;
-            let rate = 0;
-            if (mod.setting_key && userProfile.settings[mod.setting_key] === false) return;
-
-            // [NEW] Min Spend Check (Single Transaction)
-            if (mod.min_spend && amount < mod.min_spend) return;
-
-            // [NEW] Single Transaction Minimum (for BOC Amazing Rewards)
-            if (mod.min_single_spend && amount < mod.min_single_spend) return;
-
-            // [NEW] Mission Spend Check (Monthly Cumulative)
-            if (mod.req_mission_spend && mod.req_mission_key) {
-                const currentSpend = userProfile.usage[mod.req_mission_key] || 0;
-                if (currentSpend < mod.req_mission_spend) {
-                    // Do NOT return. Allow calculation but warn.
-                    // Changed "(未達標)" to simpler lock, user found text confusing.
-                    // "🔒 EM推廣 (+1.5%)" implies it is included but locked.
-                    mod.tempDesc = `🔒 ${mod.desc}`;
-                }
-            }
-
-            if (mod.type === "red_hot_allocation") {
-                const rhCat = getRedHotCategory(category);
-                if (rhCat) {
-                    const multiplier = userProfile.settings.red_hot_allocation[rhCat] || 0;
-                    if (multiplier > 0) { rate = multiplier * mod.rate_per_x; const pct = (rate * 100).toFixed(1); mod.tempDesc = `${mod.desc} (${multiplier}X = ${pct}%)`; hit = true; }
-                }
-            }
-            else if (mod.type === "red_hot_fixed_bonus") { const rhCat = getRedHotCategory(category); if (rhCat) { rate = mod.multiplier * mod.rate_per_x; hit = true; } }
-            else if (mod.type === "guru_capped") { const res = calculateGuru(mod, amount, parseInt(userProfile.settings.guru_level), category); if (res.desc) { breakdown.push(res.desc); guruRC = res.generatedRC; totalRate += res.rate; } }
             else if (mod.type === "mission_tracker") { if (userProfile.settings[mod.setting_key]) missionTags.push({ id: mod.mission_id, eligible: isCategoryMatch(mod.match, category), desc: mod.desc }); }
             else if (mod.type === "category" && isCategoryMatch(mod.match, category)) {
                 if (mod.cap_limit) {
-                    trackingKey = mod.cap_key;
+                    if (applyCurrent) trackingKey = mod.cap_key;
 
-                    // [UPDATED] Check Cap Mode (Spending vs Reward)
-                    if (mod.cap_mode === 'reward') {
-                        // Reward-based Cap Logic (e.g. Hang Seng Base + Bonus)
-                        const rewardCapCheck = checkCap(mod.cap_key, mod.cap_limit);
-                        let remaining = rewardCapCheck.remaining;
-                        let isMaxed = rewardCapCheck.isMaxed;
+                // [UPDATED] Check Cap Mode (Spending vs Reward)
+                if (mod.cap_mode === 'reward') {
+                    // Reward-based Cap Logic (e.g. Hang Seng Base + Bonus)
+                    const rewardCapCheck = checkCap(mod.cap_key, mod.cap_limit);
+                    let remaining = rewardCapCheck.remaining;
+                    let isMaxed = rewardCapCheck.isMaxed;
 
-                        // [NEW] Secondary Cap Check (e.g. Total Cap)
-                        if (mod.secondary_cap_key && mod.secondary_cap_limit) {
-                            const secCap = checkCap(mod.secondary_cap_key, mod.secondary_cap_limit);
-                            if (secCap.isMaxed) isMaxed = true;
-                            remaining = Math.min(remaining, secCap.remaining);
-                        }
+                    // [NEW] Secondary Cap Check (e.g. Total Cap)
+                    if (mod.secondary_cap_key && mod.secondary_cap_limit) {
+                        const secCap = checkCap(mod.secondary_cap_key, mod.secondary_cap_limit);
+                        if (secCap.isMaxed) isMaxed = true;
+                        remaining = Math.min(remaining, secCap.remaining);
+                    }
 
                         if (isMaxed) {
-                            breakdown.push(`<span class="text-gray-300 line-through text-[10px]">${mod.tempDesc || mod.desc} (爆Cap)</span>`);
+                            breakdown.push(`<span class="text-gray-300 line-through text-[10px]">${tempDesc || mod.desc} (爆Cap)</span>`);
                         } else {
                             const projectedReward = amount * mod.rate;
                             if (projectedReward <= remaining) {
                                 rate = mod.rate;
-                                guruRC = projectedReward;
                                 hit = true;
-                                breakdown.push(mod.tempDesc || mod.desc);
+                                breakdown.push(tempDesc || mod.desc);
                             } else {
                                 rate = remaining / amount;
-                                breakdown.push(`${mod.tempDesc || mod.desc}(部分)`);
+                                breakdown.push(`${tempDesc || mod.desc}(部分)`);
                                 hit = true;
                             }
                         }
-                    } else {
-                        // Standard Spending-based Cap
-                        const capCheck = checkCap(mod.cap_key, mod.cap_limit);
-                        if (capCheck.isMaxed) breakdown.push(`<span class="text-gray-300 line-through text-[10px]">${mod.tempDesc || mod.desc}</span>`);
-                        else if (amount > capCheck.remaining) { rate = (capCheck.remaining * mod.rate) / amount; breakdown.push(`${mod.tempDesc || mod.desc}(部分)`); hit = true; }
-                        else {
-                            rate = mod.rate;
-                            hit = true;
-                            // [FIXED] Push description when within spending cap
-                            breakdown.push(mod.tempDesc || mod.desc);
-                        }
+                } else {
+                    // Standard Spending-based Cap
+                    const capCheck = checkCap(mod.cap_key, mod.cap_limit);
+                    if (capCheck.isMaxed) breakdown.push(`<span class="text-gray-300 line-through text-[10px]">${tempDesc || mod.desc}</span>`);
+                    else if (amount > capCheck.remaining) { rate = (capCheck.remaining * mod.rate) / amount; breakdown.push(`${tempDesc || mod.desc}(部分)`); hit = true; }
+                    else {
+                        rate = mod.rate;
+                        hit = true;
+                        // [FIXED] Push description when within spending cap
+                        breakdown.push(tempDesc || mod.desc);
                     }
-                } else { rate = mod.rate; hit = true; }
-            }
-            else if (mod.type === "always") { if (replacerModule) return; rate = mod.rate; hit = true; }
+                }
+            } else { rate = mod.rate; hit = true; }
+        }
+            else if (mod.type === "always") { rate = mod.rate; hit = true; }
 
             if (hit && mod.type !== "guru_capped") {
-                totalRate += rate;
-                const descText = mod.tempDesc || mod.desc;
-                if (!mod.cap_limit) breakdown.push(descText);
-                if (mod.tempDesc) delete mod.tempDesc;
+                const skipCurrent = mod.type === "always" && replacerModuleCurrent;
+                const skipPotential = mod.type === "always" && replacerModulePotential;
 
-                // [UPDATED] Capture Reward Tracking Info
-                if (mod.cap_mode === 'reward' && mod.cap_limit) {
-                    // We need to pass this to result. 
-                    // Since a card might have multiple reward-capped modules (unlikely to overlap, but possible), 
-                    // we should probably sum them or handle the primary one.
-                    // For Hang Seng, it's usually one bonus module active per category.
-                    // So we can store it in a variable.
-                    // However, `results.push` is outside this loop.
-                    // Let's attach it to a temporary object `rewardInfo`.
-                    if (!card.rewardInfo) card.rewardInfo = { key: mod.cap_key, val: 0 };
+                const allowCurrent = applyCurrent && !skipCurrent;
+                const allowPotential = applyPotential && !skipPotential;
+
+                if (allowCurrent) totalRate += rate;
+                if (allowPotential) totalRatePotential += rate;
+
+                const descText = tempDesc || mod.desc;
+                if (!mod.cap_limit && (allowCurrent || allowPotential)) breakdown.push(descText);
+
+                // [UPDATED] Capture Reward Tracking Info (current only)
+                if (allowCurrent && mod.cap_mode === 'reward' && mod.cap_limit) {
+                    if (!rewardInfo) rewardInfo = { key: mod.cap_key, val: 0 };
                     const actualReward = amount * rate;
-                    card.rewardInfo.val += actualReward;
-                    card.rewardInfo.key = mod.cap_key;
-                    if (mod.secondary_cap_key) card.rewardInfo.secondaryKey = mod.secondary_cap_key;
+                    rewardInfo.val += actualReward;
+                    rewardInfo.key = mod.cap_key;
+                    if (mod.secondary_cap_key) rewardInfo.secondaryKey = mod.secondary_cap_key;
+                }
+
+                // Pending unlocks for retroactive modules
+                if (allowPotential && !allowCurrent && retroactive && mod.req_mission_key) {
+                    const pendingNative = amount * rate;
+                    if (pendingNative > 0) {
+                        pendingUnlocks.push({
+                            reqKey: mod.req_mission_key,
+                            reqSpend: mod.req_mission_spend || 0,
+                            pendingNative,
+                            cashRate: (conversionDB.find(c => c.src === card.currency) || { cash_rate: 0 }).cash_rate,
+                            capMode: mod.cap_mode || "reward",
+                            capKey: mod.cap_key || null,
+                            capLimit: mod.cap_limit || null,
+                            secondaryCapKey: mod.secondary_cap_key || null,
+                            secondaryCapLimit: mod.secondary_cap_limit || null
+                        });
+                    }
                 }
             }
-            if (mod.type === "guru_capped" && hit) totalRate += rate;
-        });
-
-        // Extract reward tracking info if exists
-        let rewardTrackingKey = null;
-        let secondaryRewardTrackingKey = null;
-        let generatedReward = 0;
-        if (card.rewardInfo) {
-            rewardTrackingKey = card.rewardInfo.key;
-            secondaryRewardTrackingKey = card.rewardInfo.secondaryKey;
-            generatedReward = card.rewardInfo.val;
-            delete card.rewardInfo; // Clean up
-        }
-
-        // ... (Mission Tags Logic 保持不變) ...
-        missionTags.forEach(tag => {
-            let label = tag.desc, cls = tag.id === 'winter_promo' ? 'text-red-500' : 'text-purple-600';
-            const emTotal = userProfile.usage["em_q1_total"] || 0;
-            const winterTotal = userProfile.usage["winter_total"] || 0;
-            if (tag.eligible) {
-                // [NEW] Redundancy Check: If breakdown already mentions this mission as "Not Met", skip the generic tracker line.
-                // This prevents: "Basic... + Bonus (Not Met) + Tracker (Accumulating)"
-                // [NEW] Redundancy Check: Fix emoji mismatch
-                // Strip emojis from tag.desc (e.g. "🌏 EM推廣" -> "EM推廣")
-                const cleanTagDesc = tag.desc.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
-
-                // Check if breakdown contains this cleaned name AND a Lock icon (indicating it's the warned version)
-                const alreadyWarned = breakdown.some(b => b.includes(cleanTagDesc) && b.includes("🔒"));
-
-                if (alreadyWarned) {
-                    return;
-                }
-
-                let isCapped = false;
-                if (tag.id === 'em_promo') { if ((userProfile.usage["em_q1_eligible"] || 0) * 0.015 >= 225) isCapped = true; if (isCapped) { label = "🚫 EM推廣(爆Cap)"; cls = "text-gray-400"; } else if (emTotal < 12000) { label = "🔒 EM推廣(累積中)"; cls = "text-gray-400"; } }
-                if (tag.id === 'winter_promo') { const e = userProfile.usage["winter_eligible"] || 0; let max = 0, r = 0; if (winterTotal >= 40000) { max = 800; r = 0.06 } else if (winterTotal >= 20000) { max = 250; r = 0.03 } if (max > 0 && (e * r) >= max) isCapped = true; if (isCapped) { label = "🚫 冬日賞(爆Cap)"; cls = "text-gray-400"; } else if (winterTotal < 20000) { label = "🔒 冬日賞(累積中)"; cls = "text-gray-400"; } }
-                breakdown.push(`<span class="${cls} font-bold text-[10px]">${label}</span>`);
-            } else {
-                let show = false;
-                if (tag.id === 'em_promo' && emTotal < 12000) show = true;
-                if (tag.id === 'winter_promo' && winterTotal < 40000) show = true;
-                if (show) breakdown.push(`<span class="text-gray-400 text-[10px]">🎯 計入${tag.desc}門檻</span>`);
+            if (mod.type === "guru_capped" && hit) {
+                totalRate += rate;
+                totalRatePotential += rate;
             }
         });
 
-        const conv = conversionDB.find(c => c.src === card.currency);
-        const native = amount * totalRate;
+    // Extract reward tracking info if exists
+    let rewardTrackingKey = null;
+    let secondaryRewardTrackingKey = null;
+    let generatedReward = 0;
+    if (rewardInfo) {
+        rewardTrackingKey = rewardInfo.key;
+        secondaryRewardTrackingKey = rewardInfo.secondaryKey;
+        generatedReward = rewardInfo.val;
+    }
 
-        // Calculate both values for sorting
-        const estMiles = native * conv.miles_rate;
-        const estCash = native * conv.cash_rate;
+    // ... (Mission Tags Logic 保持不變) ...
+    missionTags.forEach(tag => {
+        let label = tag.desc, cls = tag.id === 'winter_promo' ? 'text-red-500' : 'text-purple-600';
+        const emTotal = userProfile.usage["em_q1_total"] || 0;
+        const winterTotal = userProfile.usage["winter_total"] || 0;
+        if (tag.eligible) {
+            // [NEW] Redundancy Check: If breakdown already mentions this mission as "Not Met", skip the generic tracker line.
+            // This prevents: "Basic... + Bonus (Not Met) + Tracker (Accumulating)"
+            // [NEW] Redundancy Check: Fix emoji mismatch
+            // Strip emojis from tag.desc (e.g. "🌏 EM推廣" -> "EM推廣")
+            const cleanTagDesc = tag.desc.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
 
-        let valStr = "", unitStr = "";
+            // Check if breakdown contains this cleaned name AND a Lock icon (indicating it's the warned version)
+            const alreadyWarned = breakdown.some(b => b.includes(cleanTagDesc) && b.includes("🔒"));
 
-        if (displayMode === 'miles') {
-            if (conv.miles_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
-            else { valStr = Math.floor(estMiles).toLocaleString(); unitStr = "里"; }
+            if (alreadyWarned) {
+                return;
+            }
+
+            let isCapped = false;
+            if (tag.id === 'em_promo') { if ((userProfile.usage["em_q1_eligible"] || 0) * 0.015 >= 225) isCapped = true; if (isCapped) { label = "🚫 EM推廣(爆Cap)"; cls = "text-gray-400"; } else if (emTotal < 12000) { label = "🔒 EM推廣(累積中)"; cls = "text-gray-400"; } }
+            if (tag.id === 'winter_promo') { const e = userProfile.usage["winter_eligible"] || 0; let max = 0, r = 0; if (winterTotal >= 40000) { max = 800; r = 0.06 } else if (winterTotal >= 20000) { max = 250; r = 0.03 } if (max > 0 && (e * r) >= max) isCapped = true; if (isCapped) { label = "🚫 冬日賞(爆Cap)"; cls = "text-gray-400"; } else if (winterTotal < 20000) { label = "🔒 冬日賞(累積中)"; cls = "text-gray-400"; } }
+            breakdown.push(`<span class="${cls} font-bold text-[10px]">${label}</span>`);
         } else {
-            if (conv.cash_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
-            else { valStr = Math.floor(estCash).toLocaleString(); unitStr = "HKD"; }
+            let show = false;
+            if (tag.id === 'em_promo' && emTotal < 12000) show = true;
+            if (tag.id === 'winter_promo' && winterTotal < 40000) show = true;
+            if (show) breakdown.push(`<span class="text-gray-400 text-[10px]">🎯 計入${tag.desc}門檻</span>`);
         }
-
-        results.push({
-            cardId: card.id, // [NEW] For tracking per-card spending
-            cardName: card.name, amount, displayVal: valStr, displayUnit: unitStr,
-            estValue: estCash, // Legacy support if needed
-            estMiles: estMiles, // For sorting
-            estCash: estCash,   // For sorting
-            breakdown, trackingKey, guruRC, missionTags, category,
-            rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, // [UPDATED] Passed for commitTransaction
-            redemptionConfig: card.redemption,
-            nativeVal: native
-        });
     });
-    // End of Module Loop
+
+    const conv = conversionDB.find(c => c.src === card.currency);
+    const native = amount * totalRate;
+    const nativePotential = amount * totalRatePotential;
+
+    // Calculate both values for sorting
+    const estMiles = native * conv.miles_rate;
+    const estCash = native * conv.cash_rate;
+    const foreignFee = (card.fcf && isForeignCategory(category)) ? amount * card.fcf : 0;
+    const estCashNet = estCash - foreignFee;
+    const estMilesPotential = nativePotential * conv.miles_rate;
+    const estCashPotential = nativePotential * conv.cash_rate;
+
+    let valStr = "", unitStr = "";
+
+    let valStrPotential = "", unitStrPotential = "";
+
+    if (displayMode === 'miles') {
+        if (conv.miles_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
+        else { valStr = Math.floor(estMiles).toLocaleString(); unitStr = "里"; }
+        if (conv.miles_rate === 0) { valStrPotential = "---"; unitStrPotential = "(不支援)"; }
+        else { valStrPotential = Math.floor(estMilesPotential).toLocaleString(); unitStrPotential = "里"; }
+    } else {
+        if (conv.cash_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
+        else { valStr = Math.floor(estCash).toLocaleString(); unitStr = "HKD"; }
+        if (conv.cash_rate === 0) { valStrPotential = "---"; unitStrPotential = "(不支援)"; }
+        else { valStrPotential = Math.floor(estCashPotential).toLocaleString(); unitStrPotential = "HKD"; }
+    }
+
+    return {
+        cardId: card.id, // [NEW] For tracking per-card spending
+        cardName: card.name, amount, displayVal: valStr, displayUnit: unitStr,
+        displayValPotential: valStrPotential, displayUnitPotential: unitStrPotential,
+        estValue: estCash, // Legacy support if needed
+        estMiles: estMiles, // For sorting
+        estCash: estCash,   // For sorting
+        estCashNet: estCashNet, // For sorting with fee deduction
+        estMilesPotential: estMilesPotential,
+        estCashPotential: estCashPotential,
+        breakdown, trackingKey, guruRC, missionTags, category,
+        rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, // [UPDATED] Passed for commitTransaction
+        redemptionConfig: card.redemption,
+        nativeVal: native,
+        nativeValPotential: nativePotential,
+        pendingUnlocks
+    };
+}
+
+function calculateResults(amount, category, displayMode, userProfile, txDate, isHoliday, options = {}) {
+    let results = [];
+    const deductFcf = !!options.deductFcfForRanking;
+
+    userProfile.ownedCards.forEach(cardId => {
+        const card = cardsDB.find(c => c.id === cardId);
+        if (!card) return;
+        const res = buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday);
+        if (res) results.push(res);
+    });
 
     // Return extended results
     return results.sort((a, b) => {
         if (displayMode === 'miles') {
             return b.estMiles - a.estMiles; // Sort by Miles descending
         } else {
+            if (deductFcf) return b.estCashNet - a.estCashNet;
             return b.estCash - a.estCash;   // Sort by Cash descending
         }
     });
 }
 
-function commitTransaction(data) {
-    const { amount, trackingKey, estValue, guruRC, missionTags, category, breakdown } = data; // Added breakdown to check logic if needed
-
-    userProfile.stats.totalSpend += amount;
-    userProfile.stats.totalVal += estValue;
-    userProfile.stats.txCount += 1;
-
-    // [NEW] Track Spending by Card ID (for Thresholds)
-    if (data.cardId) {
-        const key = `spend_${data.cardId}`;
-        userProfile.usage[key] = (userProfile.usage[key] || 0) + amount;
-    }
-
-    // Spending-based Cap Update
-    // If cap_mode was reward, trackingKey might still be passed if we want to track spending too, 
-    // but usually we want to track the REWARD amount for reward caps.
-    // In my logic above, I used the same `trackingKey` variable. 
-    // Issue: If it's reward mode, we need to know HOW MUCH REWARD was generated to add to the cap.
-    // The `data` object needs to contain the `generatedReward` if we are in reward mode.
-    // Let's re-verify `calculateResults` modifications. 
-    // Wait, I updated `calculateResults` to calculate rate, but didn't pass `generatedReward` explicitly out in `results`.
-    // I need to patch `calculateResults` to store `generatedReward` for the winning modules or ALL modules? 
-    // `calculateResults` iterates ALL cards. `commitTransaction` is called for ONE card (the user clicks).
-    // The `data` passed to `commitTransaction` is one item from `results`.
-
-    // Let's refine `calculateResults` to include `rewardUpdates` array or similar.
-    // For now, I will modify `commitTransaction` to re-calculate? No, that's redundant.
-    // I need to modify `calculateResults` again to properly capture the reward amount to be committed.
-
-    // ... Actually, let's look at `commitTransaction` in the file.
-    // It uses `trackingKey`. 
-    // If I use `mod.cap_key` as `trackingKey`, `commitTransaction` currently does:
-    // userProfile.usage[trackingKey] = (userProfile.usage[trackingKey] || 0) + amount; <--- ADDS AMOUNT (Spending)
-
-    // THIS IS WRONG for Reward Caps.
-    // validation: I need to change `commitTransaction` to accept `rewardUpdates`.
-
-    // I will simplisticly assume if `rewardTrackingKey` is present, we add `generatedReward`.
-    // So I need to add `rewardTrackingKey` and `generatedReward` to `results` in `calculateResults`.
-
-    // Retrying the edit for `calculateResults` to include these fields in the `results` push, 
-    // AND `commitTransaction` to handle them.
-
-    if (data.rewardTrackingKey && data.generatedReward > 0) {
-        userProfile.usage[data.rewardTrackingKey] = (userProfile.usage[data.rewardTrackingKey] || 0) + data.generatedReward;
-    } else if (trackingKey) {
-        // Standard Spending Cap
-        userProfile.usage[trackingKey] = (userProfile.usage[trackingKey] || 0) + amount;
-    }
-
-    if (guruRC > 0) userProfile.usage["guru_rc_used"] = (userProfile.usage["guru_rc_used"] || 0) + guruRC;
-    const level = parseInt(userProfile.settings.guru_level);
-    // Track all overseas spending for Guru upgrade progress
-    const isOverseas = ['overseas', 'overseas_jkt', 'overseas_tw', 'overseas_cn', 'overseas_other'].includes(category);
-    if (level > 0 && isOverseas) userProfile.usage["guru_spend_accum"] = (userProfile.usage["guru_spend_accum"] || 0) + amount;
-
-    missionTags.forEach(tag => {
-        if (tag.id === "winter_promo") {
-            userProfile.usage["winter_total"] = (userProfile.usage["winter_total"] || 0) + amount;
-            if (tag.eligible) userProfile.usage["winter_eligible"] = (userProfile.usage["winter_eligible"] || 0) + amount;
-        }
-        if (tag.id === "em_promo") {
-            userProfile.usage["em_q1_total"] = (userProfile.usage["em_q1_total"] || 0) + amount;
-            if (tag.eligible) userProfile.usage["em_q1_eligible"] = (userProfile.usage["em_q1_eligible"] || 0) + amount;
-        }
-    });
-    saveUserData();
-    return "";
-}
-
-function upgradeGuruLevel() {
-    let current = parseInt(userProfile.settings.guru_level);
-    if (current < 3) userProfile.settings.guru_level = current + 1;
-    userProfile.usage["guru_spend_accum"] = 0; userProfile.usage["guru_rc_used"] = 0;
-    saveUserData();
-    return `成功升級！`;
-}
 
