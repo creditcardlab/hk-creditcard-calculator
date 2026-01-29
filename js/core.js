@@ -74,6 +74,8 @@ let userProfile = {
         guru_level: 0,
         em_promo_enabled: false,
         winter_promo_enabled: false,
+        winter_tier1_threshold: 20000,
+        winter_tier2_threshold: 40000,
         red_hot_rewards_enabled: true,
         red_hot_allocation: { dining: 5, world: 0, home: 0, enjoyment: 0, style: 0 },
         boc_amazing_enabled: false,      // 狂賞派 + 狂賞飛
@@ -92,6 +94,11 @@ function loadUserData() {
         let loaded = JSON.parse(s);
         userProfile = { ...userProfile, ...loaded };
         if (!userProfile.settings) userProfile.settings = {};
+        if (userProfile.settings.winter_tier1_threshold === undefined) userProfile.settings.winter_tier1_threshold = 20000;
+        if (userProfile.settings.winter_tier2_threshold === undefined) userProfile.settings.winter_tier2_threshold = 40000;
+        if (userProfile.settings.winter_tier2_threshold < userProfile.settings.winter_tier1_threshold) {
+            userProfile.settings.winter_tier2_threshold = userProfile.settings.winter_tier1_threshold;
+        }
         if (!userProfile.settings.red_hot_allocation) userProfile.settings.red_hot_allocation = { dining: 5, world: 0, home: 0, enjoyment: 0, style: 0 };
         if (!userProfile.stats) userProfile.stats = { totalSpend: 0, totalVal: 0, txCount: 0 };
         if (!userProfile.usage) userProfile.usage = {};
@@ -248,7 +255,7 @@ function checkValidity(mod, txDate, isHoliday) {
     return true;
 }
 
-function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday) {
+function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline) {
     const resolvedCategory = resolveCategory(card.id, category);
     const rules = DATA && DATA.rules;
     const prefix = card.id.split('_')[0];
@@ -402,7 +409,13 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                     totalRatePotential += res.rate;
                 }
             }
-            else if (mod.type === "mission_tracker") { if (userProfile.settings[mod.setting_key]) missionTags.push({ id: mod.mission_id, eligible: isCategoryMatch(mod.match, category), desc: mod.desc }); }
+            else if (mod.type === "mission_tracker") {
+                if (userProfile.settings[mod.setting_key]) {
+                    const match = isCategoryMatch(mod.match, category);
+                    const eligible = match && (typeof mod.eligible_check === 'function' ? mod.eligible_check(category, { isOnline: !!isOnline }) : true);
+                    missionTags.push({ id: mod.mission_id, eligible, desc: mod.desc });
+                }
+            }
             else if (mod.type === "category" && isCategoryMatch(mod.match, category)) {
                 if (mod.cap_limit) {
                     if (applyCurrent) trackingKey = mod.cap_key;
@@ -592,11 +605,12 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
 function calculateResults(amount, category, displayMode, userProfile, txDate, isHoliday, options = {}) {
     let results = [];
     const deductFcf = !!options.deductFcfForRanking;
+    const isOnline = !!options.isOnline;
 
     userProfile.ownedCards.forEach(cardId => {
         const card = cardsDB.find(c => c.id === cardId);
         if (!card) return;
-        const res = buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday);
+        const res = buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline);
         if (res) results.push(res);
     });
 

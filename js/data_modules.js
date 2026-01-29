@@ -26,7 +26,7 @@ const modulesDB = {
         // User said: "Math.floor(pot) / 225". Limit is $225 RC.
         // 1.5% of $15,000 = $225. So Cap is indeed $225 Reward.
     },
-    "winter_tracker": { type: "mission_tracker", setting_key: "winter_promo_enabled", match: ["dining", "overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other", "travel"], desc: "❄️ 冬日賞", mission_id: "winter_promo", promo_end: "2026-02-28", valid_to: "2026-02-28" },
+    "winter_tracker": { type: "mission_tracker", setting_key: "winter_promo_enabled", match: ["dining", "overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], desc: "❄️ 冬日賞", mission_id: "winter_promo", promo_end: "2026-02-28", valid_to: "2026-02-28", eligible_check: (cat, ctx) => !ctx || !ctx.isOnline },
     "travel_guru_v2": { type: "guru_capped", category: "overseas", config: { 1: { rate: 0.03, cap_rc: 500, desc: "GO級 (+3%)" }, 2: { rate: 0.04, cap_rc: 1200, desc: "GING級 (+4%)" }, 3: { rate: 0.06, cap_rc: 2200, desc: "GURU級 (+6%)" } }, usage_key: "guru_rc_used" },
 
     // --- SC ---

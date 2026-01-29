@@ -1,5 +1,14 @@
 // js/ui.js - V10.10 (Fix Winter Promo Reward Bar)
 
+function escapeHtml(input) {
+    return String(input)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 // Helper: Calculate days remaining
 function getDaysLeft(dateStr) {
     if (!dateStr) return null;
@@ -50,6 +59,25 @@ function getQuarterEndStr() {
     const m = String(endMonth + 1).padStart(2, '0');
     const d = String(lastDay.getDate()).padStart(2, '0');
     return `${year}-${m}-${d}`;
+}
+
+function getMonthTotals(transactions) {
+    if (!Array.isArray(transactions)) return { spend: 0, reward: 0, count: 0 };
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = now.getMonth();
+    let spend = 0;
+    let reward = 0;
+    let count = 0;
+    transactions.forEach(tx => {
+        const d = tx.date ? new Date(tx.date) : null;
+        if (!d || Number.isNaN(d.getTime())) return;
+        if (d.getFullYear() !== y || d.getMonth() !== m) return;
+        spend += Number(tx.amount) || 0;
+        reward += Number(tx.rebateVal) || 0;
+        count += 1;
+    });
+    return { spend, reward, count };
 }
 
 // Helper: Render Warning Card (Yellow/Black for Not Registered)
@@ -197,7 +225,20 @@ function createProgressCard(config) {
         sectionsHtml = sections.map(sec => {
             const barColor = sec.barColor || t.bar;
             // Support split bar (e.g. Winter Promo Lv1/Lv2 markers)
-            const markersHtml = sec.markers ? `<div class="flex justify-between text-[8px] text-gray-400 mt-0.5 px-1">${sec.markers}</div>` : '';
+            let markersHtml = '';
+            if (sec.markers) {
+                if (Array.isArray(sec.markers) && sec.markers.length > 0 && typeof sec.markers[0] === 'object') {
+                    const items = sec.markers.map(m => {
+                        const pos = Math.max(0, Math.min(100, Number(m.pos) || 0));
+                        const align = pos === 0 ? 'left' : (pos === 100 ? 'right' : 'center');
+                        const translate = align === 'center' ? 'translateX(-50%)' : (align === 'right' ? 'translateX(-100%)' : 'translateX(0)');
+                        return `<span style="left:${pos}%; transform:${translate}" class="absolute text-[8px] text-gray-400">${m.label}</span>`;
+                    }).join('');
+                    markersHtml = `<div class="relative h-3 mt-0.5 px-1">${items}</div>`;
+                } else {
+                    markersHtml = `<div class="flex justify-between text-[8px] text-gray-400 mt-0.5 px-1">${sec.markers}</div>`;
+                }
+            }
             const subTextHtml = sec.subText ? `<div class="text-[10px] text-right mt-1">${sec.subText}</div>` : '';
 
             return `<div>
@@ -251,7 +292,11 @@ function renderDashboard(userProfile) {
     const monthEndStr = getMonthEndStr();
     const quarterEndStr = getQuarterEndStr();
     const renderedCaps = new Set();
-    let html = `<div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white p-5 rounded-2xl shadow-lg mb-4"><div class="flex justify-between items-start"><div><h2 class="text-blue-100 text-xs font-bold uppercase tracking-wider">本月總簽賬</h2><div class="text-3xl font-bold mt-1">$${userProfile.stats.totalSpend.toLocaleString()}</div></div><div class="text-right"><h2 class="text-blue-100 text-xs font-bold uppercase tracking-wider">預估總回贈</h2><div class="text-xl font-bold mt-1 text-yellow-300">≈ $${Math.floor(userProfile.stats.totalVal).toLocaleString()}</div></div></div><div class="mt-4 pt-4 border-t border-blue-400/30 flex justify-between text-xs text-blue-100"><span>已記錄 ${userProfile.stats.txCount} 筆</span><span onclick="handleReset()" class="cursor-pointer hover:text-white underline">重置</span></div></div>`;
+    const monthTotals = getMonthTotals(userProfile.transactions);
+    const totalSpend = monthTotals.spend;
+    const totalVal = monthTotals.reward;
+    const txCount = monthTotals.count;
+    let html = `<div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white p-5 rounded-2xl shadow-lg mb-4"><div class="flex justify-between items-start"><div><h2 class="text-blue-100 text-xs font-bold uppercase tracking-wider">本月總簽賬</h2><div class="text-3xl font-bold mt-1">$${totalSpend.toLocaleString()}</div></div><div class="text-right"><h2 class="text-blue-100 text-xs font-bold uppercase tracking-wider">預估總回贈</h2><div class="text-xl font-bold mt-1 text-yellow-300">≈ $${Math.floor(totalVal).toLocaleString()}</div></div></div><div class="mt-4 pt-4 border-t border-blue-400/30 flex justify-between text-xs text-blue-100"><span>已記錄 ${txCount} 筆</span></div></div>`;
 
     // 1. Travel Guru
     const level = parseInt(userProfile.settings.guru_level);
@@ -259,8 +304,8 @@ function renderDashboard(userProfile) {
         const upgConfig = { 1: { next: "GING級", target: 30000 }, 2: { next: "GURU級", target: 70000 }, 3: { next: "保級", target: 70000 } };
         const rebateConfig = { 1: { cap: 500 }, 2: { cap: 1200 }, 3: { cap: 2200 } };
         const curUpg = upgConfig[level]; const curRebate = rebateConfig[level];
-        const spendAccum = userProfile.usage["guru_spend_accum"] || 0;
-        const rcUsed = userProfile.usage["guru_rc_used"] || 0;
+        const spendAccum = Number(userProfile.usage["guru_spend_accum"]) || 0;
+        const rcUsed = Number(userProfile.usage["guru_rc_used"]) || 0;
         const upgPct = Math.min(100, (spendAccum / curUpg.target) * 100);
         const rebatePct = Math.min(100, (rcUsed / curRebate.cap) * 100);
         const isMaxed = rcUsed >= curRebate.cap;
@@ -300,6 +345,10 @@ function renderDashboard(userProfile) {
             const sections = [];
             let missionUnlockTarget = null;
             let missionUnlockValue = null;
+            const isWinterPromo = promo.id === "winter_promo";
+            const winterTier1 = Math.max(0, Number(userProfile.settings.winter_tier1_threshold) || 0);
+            const winterTier2Raw = Math.max(0, Number(userProfile.settings.winter_tier2_threshold) || 0);
+            const winterTier2 = Math.max(winterTier1, winterTier2Raw);
 
             const getModule = (key) => (key && modulesDB && modulesDB[key]) ? modulesDB[key] : null;
             const getCapFromModule = (key) => {
@@ -310,26 +359,55 @@ function renderDashboard(userProfile) {
             promo.sections.forEach(sec => {
                 if (sec.type === "mission") {
                     let spend = 0;
-                    if (sec.usageKeys) spend = sec.usageKeys.reduce((s, k) => s + (userProfile.usage[k] || 0), 0);
-                    else spend = userProfile.usage[sec.usageKey] || 0;
-                    missionUnlockTarget = sec.target;
+                    if (sec.usageKeys) spend = sec.usageKeys.reduce((s, k) => s + (Number(userProfile.usage[k]) || 0), 0);
+                    else spend = Number(userProfile.usage[sec.usageKey]) || 0;
+                    const target = isWinterPromo ? winterTier2 : sec.target;
+                    missionUnlockTarget = target;
                     missionUnlockValue = spend;
-                    const pct = Math.min(100, (spend / sec.target) * 100);
-                    const unlocked = spend >= sec.target;
-                    const markers = sec.markers ? sec.markers.map(m => `<span>${m.toLocaleString()}</span>`).join('') : null;
+                    const pct = target > 0 ? Math.min(100, (spend / target) * 100) : 0;
+                    const unlocked = spend >= target;
+                    let markers = null;
+                    const markersSrc = isWinterPromo ? [winterTier1, winterTier2] : sec.markers;
+                    if (markersSrc) {
+                        const list = Array.isArray(markersSrc) ? markersSrc.slice() : [];
+                        if (list.length > 0 && list[0] !== 0) list.unshift(0);
+                        markers = list.map(m => `<span>${m.toLocaleString()}</span>`).join('');
+                    }
 
                     sections.push({
                         label: sec.label || "🎯 任務進度",
-                        valueText: `$${spend.toLocaleString()} / $${sec.target.toLocaleString()}`,
-                        progress: pct,
-                        barColor: unlocked ? "bg-blue-500" : "bg-gray-400 opacity-50",
-                        subText: unlocked ? `<span class="text-green-600 font-bold">✅ 已達標</span>` : `<span class="text-gray-400">🔒尚欠 $${(sec.target - spend).toLocaleString()}</span>`,
+                        valueText: `$${spend.toLocaleString()} / $${target.toLocaleString()}`,
+                        progress: isWinterPromo ? 100 : pct,
+                        barColor: isWinterPromo ? "bg-gray-200" : (unlocked ? "bg-blue-500" : "bg-gray-400 opacity-50"),
+                        overlay: isWinterPromo ? (() => {
+                            const t1 = winterTier1;
+                            const t2 = Math.max(t1, winterTier2);
+                            const totalCap = t2 || 1;
+                            const seg1Width = (t1 / totalCap) * 100;
+                            const seg2Width = 100 - seg1Width;
+                            const seg1Fill = t1 > 0 ? Math.min(1, spend / t1) * seg1Width : 0;
+                            const seg2Fill = t2 > t1 ? Math.min(1, Math.max(0, spend - t1) / (t2 - t1)) * seg2Width : 0;
+                            const seg1WidthSafe = Math.max(0, Math.min(100, seg1Width));
+                            const seg2WidthSafe = Math.max(0, Math.min(100, seg2Width));
+                            return `<div class="absolute inset-0">
+                                <div class="absolute inset-0 flex">
+                                    <div style="width:${seg1WidthSafe}%" class="h-3"></div>
+                                    <div style="width:${seg2WidthSafe}%" class="bg-gray-200 h-3"></div>
+                                </div>
+                                <div class="absolute inset-0 flex">
+                                    <div style="width:${seg1Fill}%" class="bg-blue-500 h-3"></div>
+                                    <div style="width:${seg2Fill}%" class="bg-blue-400 h-3"></div>
+                                </div>
+                                <div class="absolute top-0 bottom-0" style="left:${seg1WidthSafe}%; width:1px; background:rgba(0,0,0,0.08)"></div>
+                            </div>`;
+                        })() : null,
+                        subText: unlocked ? `<span class="text-green-600 font-bold">✅ 已達標</span>` : `<span class="text-gray-400">🔒尚欠 $${Math.max(0, target - spend).toLocaleString()}</span>`,
                         markers: markers
                     });
                 }
 
                 if (sec.type === "cap_rate") {
-                    const used = userProfile.usage[sec.usageKey] || 0;
+                    const used = Number(userProfile.usage[sec.usageKey]) || 0;
                     let capVal = sec.cap;
                     if (sec.capModule) {
                         const capInfo = getCapFromModule(sec.capModule);
@@ -352,28 +430,85 @@ function renderDashboard(userProfile) {
                 }
 
                 if (sec.type === "tier_cap") {
-                    const total = userProfile.usage[sec.totalKey] || 0;
-                    const eligibleVal = userProfile.usage[sec.eligibleKey] || 0;
-                    let cap = sec.tiers[0].cap;
-                    let reward = Math.min(sec.tiers[0].cap, eligibleVal * sec.tiers[0].rate);
-                    if (total >= sec.tiers[1].threshold) {
-                        cap = sec.tiers[1].cap;
-                        reward = Math.min(sec.tiers[1].cap, eligibleVal * sec.tiers[1].rate);
-                    } else if (total >= sec.tiers[0].threshold) {
-                        cap = sec.tiers[0].cap;
-                        reward = Math.min(sec.tiers[0].cap, eligibleVal * sec.tiers[0].rate);
+                    const total = Number(userProfile.usage[sec.totalKey]) || 0;
+                    const eligibleVal = Number(userProfile.usage[sec.eligibleKey]) || 0;
+                    const tiers = (isWinterPromo && Array.isArray(sec.tiers) && sec.tiers.length >= 2) ? [
+                        { ...sec.tiers[0], threshold: winterTier1 },
+                        { ...sec.tiers[1], threshold: winterTier2 }
+                    ] : sec.tiers;
+                    let cap = tiers[0].cap;
+                    let reward = 0;
+                    if (total >= tiers[1].threshold) {
+                        cap = tiers[1].cap;
+                        reward = Math.min(tiers[1].cap, eligibleVal * tiers[1].rate);
+                    } else if (total >= tiers[0].threshold) {
+                        cap = tiers[0].cap;
+                        reward = Math.min(tiers[0].cap, eligibleVal * tiers[0].rate);
                     }
-                    const pct = Math.min(100, (reward / cap) * 100);
-                    const unlocked = total >= sec.tiers[0].threshold;
+                    const pct = Math.min(100, cap > 0 ? (reward / cap) * 100 : 0);
+                    const unlocked = total >= tiers[0].threshold;
                     const barCls = unlocked ? (reward >= cap ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
+                    let overlay = null;
+                    let subText = unlocked ? (reward >= cap ? '⚠️ 已達等級上限' : '✅ 賺取中') : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> 待解鎖: ${Math.floor(reward)} RC</span>`;
+                    let cap1 = null;
+                    let cap2 = null;
+                    let rewardLocked = false;
+
+                    if (isWinterPromo) {
+                        cap1 = tiers[0].cap || 0;
+                        cap2 = Math.max(cap1, tiers[1].cap || 0);
+                        const capTotal = cap2 || 1;
+                        const seg1Width = (cap1 / capTotal) * 100;
+                        const seg2Width = 100 - seg1Width;
+                        const rewardTier1 = Math.min(cap1, eligibleVal * tiers[0].rate);
+                        const rewardTier2 = Math.min(cap2, eligibleVal * tiers[1].rate);
+                        const t1 = tiers[0].threshold || 0;
+                        const t2 = Math.max(t1, tiers[1].threshold || 0);
+                        const tier1Unlocked = total >= t1;
+                        const tier2Unlocked = total >= t2;
+                        rewardLocked = !tier1Unlocked;
+                        const seg1Fill = tier1Unlocked && cap1 > 0 ? Math.min(1, rewardTier1 / cap1) * seg1Width : 0;
+                        const seg2Fill = tier2Unlocked && cap2 > cap1 ? Math.min(1, Math.max(0, rewardTier2 - cap1) / (cap2 - cap1)) * seg2Width : 0;
+                        const seg1WidthSafe = Math.max(0, Math.min(100, seg1Width));
+                        const seg2WidthSafe = Math.max(0, Math.min(100, seg2Width));
+                        overlay = `<div class="absolute inset-0">
+                            ${rewardLocked ? '' : `<div class="absolute inset-0 flex">
+                                <div style="width:${seg1WidthSafe}%" class="h-3"></div>
+                                <div style="width:${seg2WidthSafe}%" class="bg-gray-200 h-3"></div>
+                            </div>`}
+                            <div class="absolute inset-0 flex">
+                                <div style="width:${seg1Fill}%" class="bg-green-500 h-3"></div>
+                                <div style="width:${seg2Fill}%" class="bg-green-600 h-3"></div>
+                            </div>
+                            ${rewardLocked ? '' : `<div class="absolute top-0 bottom-0" style="left:${seg1WidthSafe}%; width:1px; background:rgba(0,0,0,0.08)"></div>`}
+                            ${rewardLocked ? `<div class="absolute inset-0 flex items-center justify-center text-gray-500 text-xs"><i class="fas fa-lock"></i></div>` : ''}
+                        </div>`;
+
+                        if (total >= t2) {
+                            subText = '✅ 已達 Tier 2';
+                        } else if (total >= t1) {
+                            subText = `<span class="text-gray-500">🔒 Tier 2 待解鎖：${Math.floor(rewardTier2).toLocaleString()} / ${tiers[1].cap}</span>`;
+                        } else {
+                            subText = `<span class="text-gray-400">🔒 未達 Tier 1</span>`;
+                        }
+                    }
 
                     sections.push({
                         label: sec.label || "💰 回贈進度",
                         valueText: `${Math.floor(reward)} / ${cap}`,
-                        progress: pct,
-                        striped: true,
-                        barColor: barCls,
-                        subText: unlocked ? (reward >= cap ? '⚠️ 已達等級上限' : '✅ 賺取中') : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> 待解鎖: ${Math.floor(reward)} RC</span>`
+                        progress: isWinterPromo ? 100 : pct,
+                        striped: !isWinterPromo,
+                        barColor: isWinterPromo ? (rewardLocked ? "bg-gray-300" : "bg-gray-200") : barCls,
+                        overlay: overlay,
+                        subText: subText,
+                        markers: isWinterPromo ? (() => {
+                            const total = cap2 || 1;
+                            return [
+                                { label: "0", pos: 0 },
+                                { label: cap1.toLocaleString(), pos: (cap1 / total) * 100 },
+                                { label: cap2.toLocaleString(), pos: 100 }
+                            ];
+                        })() : null
                     });
                 }
 
@@ -387,7 +522,7 @@ function renderDashboard(userProfile) {
                             capKey = capInfo.capKey || capKey;
                         }
                     }
-                    const used = userProfile.usage[capKey] || 0;
+                    const used = Number(userProfile.usage[capKey]) || 0;
                     const pct = Math.min(100, (used / capVal) * 100);
                     const unlocked = missionUnlockTarget ? (missionUnlockValue >= missionUnlockTarget) : true;
                     const unit = sec.unit || '';
@@ -442,7 +577,7 @@ function renderDashboard(userProfile) {
 
             renderedCaps.add(mod.cap_key);
 
-            const rawUsage = userProfile.usage[mod.cap_key] || 0;
+            const rawUsage = Number(userProfile.usage[mod.cap_key]) || 0;
             const isRewardCap = mod.cap_mode === 'reward';
             const currentVal = isRewardCap ? rawUsage : rawUsage * (mod.rate || 0);
             const maxVal = isRewardCap ? mod.cap_limit : mod.cap_limit * (mod.rate || 0);
@@ -459,7 +594,7 @@ function renderDashboard(userProfile) {
             const sections = [];
 
             if (mod.req_mission_spend && mod.req_mission_key) {
-                const thresholdSpend = userProfile.usage[mod.req_mission_key] || 0;
+                const thresholdSpend = Number(userProfile.usage[mod.req_mission_key]) || 0;
                 const thresholdPct = Math.min(100, (thresholdSpend / mod.req_mission_spend) * 100);
                 const thresholdMet = thresholdSpend >= mod.req_mission_spend;
                 sections.push({
@@ -495,6 +630,8 @@ function renderDashboard(userProfile) {
 
 function renderCalculatorResults(results, currentMode) {
     let html = "";
+    const onlineToggle = document.getElementById('tx-online');
+    const isOnline = onlineToggle ? !!onlineToggle.checked : false;
 
     results.forEach((res, index) => {
         // Prepare Rebate Text (User specific request)
@@ -545,7 +682,8 @@ function renderCalculatorResults(results, currentMode) {
             secondaryRewardTrackingKey: res.secondaryRewardTrackingKey,
             generatedReward: res.generatedReward,
             resultText: resultText,
-            pendingUnlocks: res.pendingUnlocks || []
+            pendingUnlocks: res.pendingUnlocks || [],
+            isOnline
         }));
         let displayVal = res.displayVal;
         let displayUnit = res.displayUnit;
@@ -688,6 +826,16 @@ function renderSettings(userProfile) {
     html += `<div class="mb-4 border p-3 rounded-xl bg-gray-50"><div class="flex justify-between items-center mb-2"><label class="text-xs font-bold text-red-600">已登記「最紅自主獎賞」</label><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-rh-enabled" class="sr-only peer" ${rhEnabled ? 'checked' : ''} onchange="toggleSetting('red_hot_rewards_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-red-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"></div></label></div><div id="rh-allocator-container" class="${rhEnabled ? '' : 'hidden'} space-y-2 transition-all"><div class="text-[10px] text-gray-400 mb-2">分配 5X 獎賞錢 (總和: <span id="rh-total" class="text-blue-600">5</span>/5)</div>${renderAllocatorRow("dining", "賞滋味 (Dining)", userProfile.settings.red_hot_allocation.dining)}${renderAllocatorRow("world", "賞世界 (World)", userProfile.settings.red_hot_allocation.world)}${renderAllocatorRow("enjoyment", "賞享受 (Enjoyment)", userProfile.settings.red_hot_allocation.enjoyment)}${renderAllocatorRow("home", "賞家居 (Home)", userProfile.settings.red_hot_allocation.home)}${renderAllocatorRow("style", "賞購物 (Style)", userProfile.settings.red_hot_allocation.style)}</div></div>`;
 
     html += `<div class="flex justify-between items-center bg-red-50 p-2 rounded border border-red-100"><span>冬日賞 2026</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-winter" class="sr-only peer" ${userProfile.settings.winter_promo_enabled ? 'checked' : ''} onchange="toggleSetting('winter_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-red-500"></div></label></div>`;
+    html += `<div class="grid grid-cols-2 gap-2 text-xs bg-red-50/50 border border-red-100 rounded-lg p-2">
+        <div>
+            <label class="block text-red-700 font-bold mb-1">Tier 1 門檻</label>
+            <input id="st-winter-tier1" type="number" min="0" class="w-full p-2 rounded bg-white border border-red-100" value="${Number(userProfile.settings.winter_tier1_threshold) || 0}" onchange="saveWinterThresholds()">
+        </div>
+        <div>
+            <label class="block text-red-700 font-bold mb-1">Tier 2 門檻</label>
+            <input id="st-winter-tier2" type="number" min="0" class="w-full p-2 rounded bg-white border border-red-100" value="${Number(userProfile.settings.winter_tier2_threshold) || 0}" onchange="saveWinterThresholds()">
+        </div>
+    </div>`;
     html += `<div class="flex justify-between items-center bg-blue-50 p-2 rounded border border-blue-100"><span>BOC 狂賞派 + 狂賞飛</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-boc-amazing" class="sr-only peer" ${userProfile.settings.boc_amazing_enabled ? 'checked' : ''} onchange="toggleSetting('boc_amazing_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-blue-600"></div></label></div>`;
     html += `<div class="flex justify-between items-center bg-gray-100 p-2 rounded border border-gray-300"><span>DBS Black $2/里推廣</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-dbs-black" class="sr-only peer" ${userProfile.settings.dbs_black_promo_enabled ? 'checked' : ''} onchange="toggleSetting('dbs_black_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-gray-800"></div></label></div>`;
     html += `<div class="flex justify-between items-center bg-gray-200 p-2 rounded border border-gray-300"><span>MMPower +FUN Dollars</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-mmpower" class="sr-only peer" ${userProfile.settings.mmpower_promo_enabled ? 'checked' : ''} onchange="toggleSetting('mmpower_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-gray-800"></div></label></div>`;
@@ -704,7 +852,10 @@ function renderSettings(userProfile) {
     if (rhEnabled) updateAllocationTotal();
 }
 
-function renderAllocatorRow(key, label, value) { return `<div class="flex justify-between items-center bg-white p-2 rounded border"><span class="text-xs font-bold text-gray-700">${label}</span><div class="flex items-center gap-3"><button class="w-6 h-6 bg-gray-200 rounded text-gray-600 font-bold" onclick="changeAllocation('${key}', -1)">-</button><span class="text-sm font-mono w-4 text-center" id="alloc-${key}">${value}</span><button class="w-6 h-6 bg-gray-200 rounded text-gray-600 font-bold" onclick="changeAllocation('${key}', 1)">+</button></div></div>`; }
+function renderAllocatorRow(key, label, value) {
+    const safeValue = Number(value) || 0;
+    return `<div class="flex justify-between items-center bg-white p-2 rounded border"><span class="text-xs font-bold text-gray-700">${label}</span><div class="flex items-center gap-3"><button class="w-6 h-6 bg-gray-200 rounded text-gray-600 font-bold" onclick="changeAllocation('${key}', -1)">-</button><span class="text-sm font-mono w-4 text-center" id="alloc-${key}">${safeValue}</span><button class="w-6 h-6 bg-gray-200 rounded text-gray-600 font-bold" onclick="changeAllocation('${key}', 1)">+</button></div></div>`;
+}
 function changeAllocation(key, delta) {
     const current = userProfile.settings.red_hot_allocation[key];
     const total = Object.values(userProfile.settings.red_hot_allocation).reduce((a, b) => a + b, 0);
@@ -746,28 +897,32 @@ window.renderLedger = function (transactions) {
             if (c) cardName = c.name;
         }
 
+        const amountNum = Number(tx.amount) || 0;
+        const rebateText = escapeHtml(tx.rebateText || "");
+        const safeDateStr = escapeHtml(dateStr);
+        const safeCardName = escapeHtml(cardName);
+
         html += `
             <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
                 <div class="flex-1">
                     <div class="flex items-center gap-2 mb-1">
-                        <span class="text-xs font-bold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">${dateStr}</span>
-                        <span class="text-xs text-gray-500 truncate max-w-[120px]">${cardName}</span>
+                        <span class="text-xs font-bold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">${safeDateStr}</span>
+                        <span class="text-xs text-gray-500 truncate max-w-[120px]">${safeCardName}</span>
                     </div>
                      <div class="text-sm font-bold text-gray-800">
                         ${(() => {
-                // Try to look up category name
                 const def = CATEGORY_DEF.find(d => d.v === tx.category);
-                // If found, use title (simplified?) or full title. Let's use simplified part if possible or just full title.
-                // The titles are like "🍱 餐飲 (Dining)", maybe just take the part before (.
-                // Actually user said "顯示中文類別", so full title is fine, or maybe cleaner.
-                // Let's us full title for now as it contains the icon.
-                return def ? def.t.split(' (')[0] : (tx.desc || tx.category);
+                const label = def ? def.t.split(' (')[0] : (tx.desc || tx.category);
+                return escapeHtml(label);
             })()}
                     </div>
                 </div>
-                <div class="text-right">
-                    <div class="text-base font-bold">$${tx.amount.toLocaleString()}</div>
-                    <div class="text-xs text-green-600 font-medium">+${tx.rebateText}</div>
+                <div class="text-right flex items-center gap-2">
+                    <div>
+                        <div class="text-base font-bold">$${escapeHtml(amountNum.toLocaleString())}</div>
+                        <div class="text-xs text-green-600 font-medium">+${rebateText}</div>
+                    </div>
+                    <button onclick="handleDeleteTx(${tx.id})" class="text-xs text-gray-400 hover:text-red-500 px-2 py-1 rounded border border-gray-200">刪除</button>
                 </div>
             </div>`;
     });

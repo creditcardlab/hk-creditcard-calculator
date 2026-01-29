@@ -9,6 +9,7 @@ function init() {
     loadUserData();
     if (!userProfile.usage["guru_spend_accum"]) userProfile.usage["guru_spend_accum"] = 0;
     if (userProfile.settings.deduct_fcf_ranking === undefined) userProfile.settings.deduct_fcf_ranking = false;
+    migrateWinterUsage();
     resetRedMonthlyCaps();
 
     // Initial Render
@@ -21,6 +22,28 @@ function init() {
             if (typeof runCalc === 'function') runCalc();
         });
     }
+}
+
+function migrateWinterUsage() {
+    if (!userProfile.usage) userProfile.usage = {};
+    if (userProfile.usage.winter_recalc_v2) return;
+    let total = 0;
+    let eligible = 0;
+    if (Array.isArray(userProfile.transactions)) {
+        userProfile.transactions.forEach(tx => {
+            const amt = Number(tx.amount) || 0;
+            const cat = tx.category;
+            const isOnline = !!tx.isOnline;
+            if (!isOnline && isCategoryMatch(["dining", "overseas"], cat)) {
+                total += amt;
+                eligible += amt;
+            }
+        });
+    }
+    userProfile.usage.winter_total = total;
+    userProfile.usage.winter_eligible = eligible;
+    userProfile.usage.winter_recalc_v2 = true;
+    saveUserData();
 }
 
 function resetRedMonthlyCaps() {
@@ -40,6 +63,8 @@ function resetRedMonthlyCaps() {
 // loadUserData and saveUserData are inherited from core.js (V9.2) to match new data structure
 
 function refreshUI() {
+    rebuildUsageAndStatsFromTransactions();
+    saveUserData();
     renderSettings(userProfile);
     renderDashboard(userProfile)
 
@@ -89,6 +114,8 @@ window.toggleMode = function (m) {
 window.runCalc = function () {
     const amt = parseFloat(document.getElementById('amount').value) || 0;
     const cat = document.getElementById('category').value;
+    const onlineToggle = document.getElementById('tx-online');
+    const isOnline = onlineToggle ? !!onlineToggle.checked : false;
     let txDate = document.getElementById('tx-date').value;
 
     // Fallback: If date is empty, use Today
@@ -112,7 +139,8 @@ window.runCalc = function () {
 
     // Calls core.js function
     const results = calculateResults(amt, cat, currentMode, userProfile, txDate, isHoliday, {
-        deductFcfForRanking: !!userProfile.settings.deduct_fcf_ranking && currentMode === 'cash'
+        deductFcfForRanking: !!userProfile.settings.deduct_fcf_ranking && currentMode === 'cash',
+        isOnline
     });
 
     // Calls ui.js function
@@ -128,15 +156,6 @@ window.handleRecord = function (n, d) {
     window.switchTab('dashboard');
 }
 
-window.handleReset = function () {
-    if (confirm("重置本月數據？")) {
-        userProfile.usage = {};
-        userProfile.stats = { totalSpend: 0, totalVal: 0, txCount: 0 };
-        saveUserData();
-        refreshUI();
-    }
-}
-
 window.handleGuruUpgrade = function () {
     if (confirm("恭喜達標！確定要升級嗎？\n(這將會重置目前的累積簽賬和回贈額度，開始新的一級)")) {
         const msg = upgradeGuruLevel();
@@ -145,10 +164,114 @@ window.handleGuruUpgrade = function () {
     }
 }
 
+function rebuildUsageAndStatsFromTransactions() {
+    const prevUsage = userProfile.usage || {};
+    userProfile.usage = {};
+    userProfile.stats = { totalSpend: 0, totalVal: 0, txCount: 0 };
+    if (prevUsage.red_cap_month) userProfile.usage.red_cap_month = prevUsage.red_cap_month;
+    if (prevUsage.winter_recalc_v2) userProfile.usage.winter_recalc_v2 = prevUsage.winter_recalc_v2;
+
+    if (!Array.isArray(userProfile.transactions)) return;
+    const txs = [...userProfile.transactions].reverse();
+    txs.forEach(tx => {
+        const amount = Number(tx.amount) || 0;
+        const category = tx.category;
+        const cardId = tx.cardId;
+        const isOnline = !!tx.isOnline;
+        const txDate = tx.date ? new Date(tx.date).toISOString().slice(0, 10) : "";
+        const isHoliday = (typeof HolidayManager !== 'undefined' && HolidayManager.isHoliday) ? HolidayManager.isHoliday(txDate) : false;
+
+        userProfile.stats.totalSpend += amount;
+        userProfile.stats.totalVal += Number(tx.rebateVal) || 0;
+        userProfile.stats.txCount += 1;
+
+        if (cardId) {
+            userProfile.usage[`spend_${cardId}`] = (userProfile.usage[`spend_${cardId}`] || 0) + amount;
+        }
+
+        const isOverseas = ['overseas', 'overseas_jkt', 'overseas_tw', 'overseas_cn', 'overseas_other'].includes(category);
+        if (parseInt(userProfile.settings.guru_level) > 0 && isOverseas) {
+            userProfile.usage["guru_spend_accum"] = (userProfile.usage["guru_spend_accum"] || 0) + amount;
+        }
+
+        const card = cardsDB.find(c => c.id === cardId);
+        if (!card) return;
+        const res = buildCardResult(card, amount, category, 'cash', userProfile, txDate, isHoliday, isOnline);
+        if (!res) return;
+
+        if (res.rewardTrackingKey && res.generatedReward > 0) {
+            userProfile.usage[res.rewardTrackingKey] = (userProfile.usage[res.rewardTrackingKey] || 0) + res.generatedReward;
+            if (res.secondaryRewardTrackingKey) {
+                userProfile.usage[res.secondaryRewardTrackingKey] = (userProfile.usage[res.secondaryRewardTrackingKey] || 0) + res.generatedReward;
+            }
+        } else if (res.trackingKey) {
+            userProfile.usage[res.trackingKey] = (userProfile.usage[res.trackingKey] || 0) + amount;
+        }
+
+        if (res.guruRC > 0) {
+            userProfile.usage["guru_rc_used"] = (userProfile.usage["guru_rc_used"] || 0) + res.guruRC;
+        }
+
+        res.missionTags.forEach(tag => {
+            if (tag.id === "winter_promo") {
+                const winterEligible = !isOnline && isCategoryMatch(["dining", "overseas"], category);
+                if (winterEligible) {
+                    userProfile.usage["winter_total"] = (userProfile.usage["winter_total"] || 0) + amount;
+                    userProfile.usage["winter_eligible"] = (userProfile.usage["winter_eligible"] || 0) + amount;
+                }
+            }
+            if (tag.id === "em_promo") {
+                userProfile.usage["em_q1_total"] = (userProfile.usage["em_q1_total"] || 0) + amount;
+                if (tag.eligible) userProfile.usage["em_q1_eligible"] = (userProfile.usage["em_q1_eligible"] || 0) + amount;
+            }
+        });
+
+        trackMissionSpend(cardId, category, amount, isOnline);
+    });
+
+    if (!userProfile.usage.red_cap_month) {
+        const now = new Date();
+        userProfile.usage.red_cap_month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    }
+    userProfile.usage.winter_recalc_v2 = true;
+}
+
+window.handleDeleteTx = function (id) {
+    if (!confirm("刪除這筆記帳？")) return;
+    if (!Array.isArray(userProfile.transactions)) return;
+    userProfile.transactions = userProfile.transactions.filter(t => t.id !== id);
+    rebuildUsageAndStatsFromTransactions();
+    saveUserData();
+    refreshUI();
+    renderLedger(userProfile.transactions);
+}
+
 // --- DATA MODIFIERS ---
 
+function trackMissionSpend(cardId, category, amount, isOnline) {
+    if (!cardId || typeof cardsDB === 'undefined' || typeof modulesDB === 'undefined') return;
+    const card = cardsDB.find(c => c.id === cardId);
+    if (!card || !Array.isArray(card.modules)) return;
+
+    card.modules.forEach(modId => {
+        const mod = modulesDB[modId];
+        if (!mod || mod.type !== "mission_tracker" || !mod.req_mission_key) return;
+        if (mod.setting_key && userProfile.settings[mod.setting_key] === false) return;
+
+        let eligible = true;
+        if (typeof mod.eligible_check === 'function') {
+            eligible = !!mod.eligible_check(category, { isOnline: !!isOnline });
+        } else if (Array.isArray(mod.match)) {
+            eligible = isCategoryMatch(mod.match, category);
+        }
+
+        if (!eligible) return;
+        userProfile.usage[mod.req_mission_key] = (userProfile.usage[mod.req_mission_key] || 0) + amount;
+    });
+}
+
 function commitTransaction(data) {
-    const { amount, trackingKey, estValue, guruRC, missionTags, category, cardId, rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, pendingUnlocks } = data;
+    const { amount, trackingKey, estValue, guruRC, missionTags, category, cardId, rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, pendingUnlocks, isOnline } = data;
 
     userProfile.stats.totalSpend += amount;
     userProfile.stats.totalVal += estValue;
@@ -167,6 +290,8 @@ function commitTransaction(data) {
     if (cardId) {
         userProfile.usage[`spend_${cardId}`] = (userProfile.usage[`spend_${cardId}`] || 0) + amount;
     }
+    // Track mission spends (e.g. sim non-online tracker) attached to the current card
+    trackMissionSpend(cardId, category, amount, isOnline);
     if (guruRC > 0) userProfile.usage["guru_rc_used"] = (userProfile.usage["guru_rc_used"] || 0) + guruRC;
 
     const level = parseInt(userProfile.settings.guru_level);
@@ -177,8 +302,11 @@ function commitTransaction(data) {
     let alertMsg = "";
     missionTags.forEach(tag => {
         if (tag.id === "winter_promo") {
-            userProfile.usage["winter_total"] = (userProfile.usage["winter_total"] || 0) + amount;
-            if (tag.eligible) userProfile.usage["winter_eligible"] = (userProfile.usage["winter_eligible"] || 0) + amount;
+            const winterEligible = !isOnline && isCategoryMatch(["dining", "overseas"], category);
+            if (winterEligible) {
+                userProfile.usage["winter_total"] = (userProfile.usage["winter_total"] || 0) + amount;
+                userProfile.usage["winter_eligible"] = (userProfile.usage["winter_eligible"] || 0) + amount;
+            }
             alertMsg += "\n❄️ 冬日賞累積更新";
         }
         if (tag.id === "em_promo") {
@@ -195,6 +323,7 @@ function commitTransaction(data) {
         date: new Date().toISOString(),
         cardId: cardId || 'unknown',
         category: category,
+        isOnline: !!isOnline,
         amount: amount,
         rebateVal: estValue,
         rebateText: data.resultText || (estValue > 0 ? `$${estValue.toFixed(2)}` : 'No Reward'),
@@ -302,6 +431,21 @@ window.saveDrop = function (k, v) {
     refreshUI();
 }
 
+window.saveWinterThresholds = function () {
+    const t1El = document.getElementById('st-winter-tier1');
+    const t2El = document.getElementById('st-winter-tier2');
+    let tier1 = t1El ? parseInt(t1El.value, 10) : 0;
+    let tier2 = t2El ? parseInt(t2El.value, 10) : 0;
+    if (!Number.isFinite(tier1) || tier1 < 0) tier1 = 0;
+    if (!Number.isFinite(tier2) || tier2 < 0) tier2 = 0;
+    if (tier2 < tier1) tier2 = tier1;
+
+    userProfile.settings.winter_tier1_threshold = tier1;
+    userProfile.settings.winter_tier2_threshold = tier2;
+    saveUserData();
+    refreshUI();
+}
+
 // --- DATA MANAGEMENT ---
 
 window.exportData = function () {
@@ -354,6 +498,12 @@ window.importData = function (event) {
 
             // Restore data
             userProfile = { ...userProfile, ...importedData };
+            if (!userProfile.settings) userProfile.settings = {};
+            if (userProfile.settings.winter_tier1_threshold === undefined) userProfile.settings.winter_tier1_threshold = 20000;
+            if (userProfile.settings.winter_tier2_threshold === undefined) userProfile.settings.winter_tier2_threshold = 40000;
+            if (userProfile.settings.winter_tier2_threshold < userProfile.settings.winter_tier1_threshold) {
+                userProfile.settings.winter_tier2_threshold = userProfile.settings.winter_tier1_threshold;
+            }
             saveUserData();
             refreshUI();
 
