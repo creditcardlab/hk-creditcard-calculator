@@ -327,14 +327,34 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
 
     // Check for Replacer Module first (Optimization)
     // This replacerModule is for category-specific 'replace' mode modules
-    const replacerModuleCurrent = activeModules.find(mid => {
+    let replacerModuleCurrentId = activeModules.find(mid => {
         const m = modulesDB[mid];
         return isReplacerEligible(m, amount, resolvedCategory, userProfile, false);
     });
-    const replacerModulePotential = activeModules.find(mid => {
+    let replacerModulePotentialId = activeModules.find(mid => {
         const m = modulesDB[mid];
         return isReplacerEligible(m, amount, resolvedCategory, userProfile, true);
     });
+    let replacerModuleCurrent = replacerModuleCurrentId ? modulesDB[replacerModuleCurrentId] : null;
+    let replacerModulePotential = replacerModulePotentialId ? modulesDB[replacerModulePotentialId] : null;
+
+    function replaceModuleCapped(mod) {
+        if (!mod || !mod.cap_limit || !mod.cap_key) return false;
+        if (mod.cap_mode === 'reward') {
+            const capCheck = checkCap(mod.cap_key, mod.cap_limit);
+            let isMaxed = capCheck.isMaxed;
+            if (mod.secondary_cap_key && mod.secondary_cap_limit) {
+                const secCap = checkCap(mod.secondary_cap_key, mod.secondary_cap_limit);
+                if (secCap.isMaxed) isMaxed = true;
+            }
+            return isMaxed;
+        }
+        const capCheck = checkCap(mod.cap_key, mod.cap_limit);
+        return capCheck.isMaxed;
+    }
+
+    if (replaceModuleCapped(replacerModuleCurrent)) replacerModuleCurrent = null;
+    if (replaceModuleCapped(replacerModulePotential)) replacerModulePotential = null;
 
     // ... (Module Logic 保持 V10.7 不變) ...
     activeModules.forEach(modID => {

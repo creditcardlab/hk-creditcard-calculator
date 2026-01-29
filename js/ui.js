@@ -516,7 +516,8 @@ function renderDashboard(userProfile) {
     if (c) c.innerHTML = "";
 
     const monitors = [
-        { id: 'hsbc_red', key: 'red_online_cap', name: 'Red 網購 (4%)', limit: 10000, rate: 0.04, color: 'bg-pink-500', reset: formatResetDate(monthEndStr) },
+        { id: 'hsbc_red', key: 'red_online_cap', name: 'Red 網購 (4%)', type: 'reward_cap', limit: 400, rate: 0.04, color: 'bg-pink-500', reset: formatResetDate(monthEndStr), unit: 'RC' },
+        { id: 'hsbc_red', key: 'red_designated_cap', name: 'Red 指定商戶 (7.6%)', type: 'reward_cap', limit: 100, rate: 0.076, color: 'bg-pink-500', reset: formatResetDate(monthEndStr), unit: 'RC' },
         { id: 'hsbc_gold_student', key: 'student_tuition_cap', name: '學生學費', type: 'reward_cap', limit: 200, rate: 0.024, color: 'bg-green-500', reset: formatPromoDate('2026-03-31') }, // Use Dynamic Promo Date
         { id: 'sc_smart', key: 'sc_smart_cap', name: 'Smart 指定 (5%)', limit: 60000, rate: 0.05, color: 'bg-emerald-500', reset: formatResetDate(monthEndStr) },
         { id: 'citi_octopus', key: 'citi_oct_transport_cap', name: 'Citi Octopus (15%)', limit: 2000, rate: 0.15, color: 'bg-orange-500', reset: formatResetDate(monthEndStr) },
@@ -543,8 +544,44 @@ function renderDashboard(userProfile) {
         { id: 'wewa', key: 'wewa_annual_cap', name: 'WeWa 旅遊 (4%)', type: 'reward_cap', limit: 2000, rate: 0.04, color: 'bg-yellow-500', reset: formatPromoDate('2026-12-31') },
         { id: 'earnmore', key: 'earnmore_annual_spend', name: 'EarnMORE (2%)', limit: 150000, rate: 0.02, color: 'bg-blue-400', reset: formatPromoDate('2026-12-31') }
     ];
+    // Add dynamic monitors for any remaining caps on owned cards
+    const monitorKeySet = new Set(monitors.map(m => m.key));
+    userProfile.ownedCards.forEach(cardId => {
+        const card = cardsDB.find(c => c.id === cardId);
+        if (!card || !Array.isArray(card.modules)) return;
+        card.modules.forEach(modId => {
+            const mod = modulesDB[modId];
+            if (!mod || !mod.cap_limit || !mod.cap_key) return;
+            if (monitorKeySet.has(mod.cap_key)) return;
+            monitorKeySet.add(mod.cap_key);
+
+            let unit = '$';
+            if (card.redemption && card.redemption.unit) unit = card.redemption.unit;
+            else if (card.currency === 'CASH_Direct' || card.currency === 'Fun_Dollars') unit = '元';
+
+            monitors.push({
+                id: cardId,
+                key: mod.cap_key,
+                name: `${card.name} ${mod.desc}`,
+                type: mod.cap_mode === 'reward' ? 'reward_cap' : undefined,
+                limit: mod.cap_limit,
+                rate: mod.rate || 0,
+                color: 'bg-gray-500',
+                unit: unit,
+                reset: formatResetDate(monthEndStr),
+                settingKey: mod.setting_key,
+                threshold: mod.req_mission_spend,
+                thresholdKey: mod.req_mission_key
+            });
+        });
+    });
+
     monitors.forEach(m => {
         if (userProfile.ownedCards.includes(m.id)) {
+            if (m.settingKey && userProfile.settings[m.settingKey] === false) {
+                html += renderWarningCard(m.name, "fas fa-exclamation-triangle", "需登記以顯示進度", m.settingKey);
+                return;
+            }
             const rawUsage = userProfile.usage[m.key] || 0;
             let currentVal = 0;
             let maxVal = 0;
@@ -567,7 +604,7 @@ function renderDashboard(userProfile) {
             // Adjust unit prefix for '分' or '元'
             // If unit is '$' or '元', prefix is '$', suffix is empty? 
             // If unit is '分', prefix empty, suffix '分'
-            const displayUnit = (unit === '分') ? '分' : ((unit === '元' || unit === '$') ? '' : unit);
+            const displayUnit = (unit === '分' || unit === 'RC') ? unit : ((unit === '元' || unit === '$') ? '' : unit);
             const displayPrefix = (unit === '元' || unit === '$') ? '$' : '';
 
             // Render with optional threshold bar for Amazing Rewards

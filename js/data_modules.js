@@ -13,9 +13,8 @@ const modulesDB = {
     "em_designated": { type: "category", match: ["streaming", "em_designated_spend"], rate: 0.025, desc: "指定 $2/里 (2.5%)", mode: "replace" },
     "em_grocery_low": { type: "category", match: ["grocery"], rate: 0.004, desc: "超市 (0.4%)", mode: "replace" },
     "red_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
-    "red_online": { type: "category", match: ["online"], rate: 0.04, desc: "網購 (4%)", mode: "replace", cap_limit: 10000, cap_key: "red_online_cap" },
-    "red_designated_bonus": { type: "category", match: ["red_designated"], rate: 0.076, desc: "指定商戶加碼 (7.6%)", cap_limit: 1250, cap_key: "red_designated_cap" },
-    "red_category_bonus": { type: "category", match: ["grocery", "overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.01, desc: "超市/海外 (1%)", mode: "replace" },
+    "red_online": { type: "category", match: ["online"], rate: 0.04, desc: "網購 +3.6% (4%)", mode: "replace", cap_mode: "reward", cap_limit: 400, cap_key: "red_online_cap" },
+    "red_designated_bonus": { type: "category", match: ["red_designated"], rate: 0.076, desc: "指定商戶 +7.6% (8%)", cap_mode: "reward", cap_limit: 100, cap_key: "red_designated_cap" },
     "em_overseas_mission": { type: "mission_tracker", setting_key: "em_promo_enabled", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], desc: "🌏 EM推廣", mission_id: "em_promo", promo_end: "2026-03-31", valid_to: "2026-03-31" },
     // [NEW] Actual Calculation Module for EveryMile Promo
     // Base 1% + Bonus 1.5% = 2.5% ($2/mile). Req $12,000 spend.

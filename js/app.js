@@ -9,6 +9,7 @@ function init() {
     loadUserData();
     if (!userProfile.usage["guru_spend_accum"]) userProfile.usage["guru_spend_accum"] = 0;
     if (userProfile.settings.deduct_fcf_ranking === undefined) userProfile.settings.deduct_fcf_ranking = false;
+    resetRedMonthlyCaps();
 
     // Initial Render
     refreshUI();
@@ -19,6 +20,18 @@ function init() {
         HolidayManager.init().then(() => {
             if (typeof runCalc === 'function') runCalc();
         });
+    }
+}
+
+function resetRedMonthlyCaps() {
+    if (!userProfile.usage) userProfile.usage = {};
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    if (userProfile.usage.red_cap_month !== monthKey) {
+        delete userProfile.usage.red_online_cap;
+        delete userProfile.usage.red_designated_cap;
+        userProfile.usage.red_cap_month = monthKey;
+        saveUserData();
     }
 }
 
