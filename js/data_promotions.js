@@ -1,0 +1,180 @@
+// js/data_promotions.js - V1 (Promotion Definitions)
+
+const PROMO_REGISTRY = {
+    em_promo: {
+        settingKey: "em_promo_enabled",
+        warningTitle: "EveryMile 海外推廣",
+        warningDesc: "需登記以賺取額外回贈"
+    },
+    winter_promo: {
+        settingKey: "winter_promo_enabled",
+        warningTitle: "最紅冬日賞",
+        warningDesc: "需登記以賺取額外回贈"
+    },
+    boc_amazing: {
+        settingKey: "boc_amazing_enabled",
+        warningTitle: "狂賞派",
+        warningDesc: "需登記以賺取回贈"
+    },
+    boc_amazing_fly: {
+        settingKey: "boc_amazing_enabled",
+        warningTitle: "狂賞飛",
+        warningDesc: "需登記以賺取回贈"
+    },
+    mmpower_promo: {
+        settingKey: "mmpower_promo_enabled",
+        warningTitle: "MMPower",
+        warningDesc: "需登記以賺取回贈"
+    },
+    travel_plus_promo: {
+        settingKey: "travel_plus_promo_enabled",
+        warningTitle: "Travel+",
+        warningDesc: "需登記以賺取回贈"
+    },
+    fubon_in_promo: {
+        settingKey: "fubon_in_promo_enabled",
+        warningTitle: "Fubon iN",
+        warningDesc: "需登記以賺取回贈"
+    },
+    dbs_black_promo: {
+        settingKey: "dbs_black_promo_enabled",
+        warningTitle: "DBS Black",
+        warningDesc: "需登記以賺取回贈"
+    },
+    sim_promo: {
+        settingKey: "sim_promo_enabled",
+        warningTitle: "sim Credit",
+        warningDesc: "需登記以賺取回贈"
+    }
+};
+
+const PROMOTIONS = [
+    {
+        id: "em_promo",
+        name: "EveryMile 海外",
+        icon: "fas fa-plane",
+        theme: "purple",
+        badge: { type: "promo_end", moduleKey: "em_overseas_mission", field: "promo_end" },
+        cards: ["hsbc_everymile"],
+        sections: [
+            { type: "mission", label: "🎯 任務進度", usageKey: "em_q1_total", target: 12000 },
+            { type: "cap_rate", label: "💰 回贈進度", usageKey: "em_q1_eligible", rate: 0.015, cap: 225, unit: "RC", unlockKey: "em_q1_total", unlockTarget: 12000 }
+        ],
+        capKeys: ["em_promo_cap"]
+    },
+    {
+        id: "winter_promo",
+        name: "最紅冬日賞",
+        icon: "fas fa-gift",
+        theme: "red",
+        badge: { type: "promo_end", moduleKey: "winter_tracker", field: "promo_end" },
+        cards: ["hsbc_vs", "hsbc_red", "hsbc_pulse", "hsbc_unionpay_std", "hsbc_easy", "hsbc_gold_student", "hsbc_gold", "hsbc_premier"],
+        sections: [
+            { type: "mission", label: "🎯 任務進度", usageKey: "winter_total", target: 40000, markers: [20000, 40000] },
+            {
+                type: "tier_cap",
+                label: "💰 回贈進度",
+                totalKey: "winter_total",
+                eligibleKey: "winter_eligible",
+                tiers: [
+                    { threshold: 20000, rate: 0.03, cap: 250 },
+                    { threshold: 40000, rate: 0.06, cap: 800 }
+                ],
+                unit: ""
+            }
+        ]
+    },
+    {
+        id: "boc_amazing",
+        name: "狂賞派",
+        icon: "fas fa-fire",
+        theme: "blue",
+        badge: { type: "month_end" },
+        cards: ["boc_cheers_vi", "boc_cheers_vs"],
+        sections: [
+            { type: "mission", label: "🎯 任務進度", usageKeys: ["spend_boc_cheers_vi", "spend_boc_cheers_vs"], target: 6000 },
+            { type: "cap", label: "💰 回贈上限 (平日)", capKey: "boc_amazing_local_weekday_cap", cap: 120, unit: "元", unlockTarget: 6000 },
+            { type: "cap", label: "💰 回贈上限 (紅日)", capKey: "boc_amazing_local_holiday_cap", cap: 300, unit: "元", unlockTarget: 6000 },
+            { type: "cap", label: "💰 網購回贈上限 (平日)", capKey: "boc_amazing_online_weekday_cap", cap: 60, unit: "元", unlockTarget: 6000 },
+            { type: "cap", label: "💰 網購回贈上限 (紅日)", capKey: "boc_amazing_online_holiday_cap", cap: 200, unit: "元", unlockTarget: 6000 }
+        ],
+        capKeys: ["boc_amazing_local_weekday_cap", "boc_amazing_local_holiday_cap", "boc_amazing_online_weekday_cap", "boc_amazing_online_holiday_cap"]
+    },
+    {
+        id: "boc_amazing_fly",
+        name: "狂賞飛 (外幣) 季度任務",
+        icon: "fas fa-plane",
+        theme: "blue",
+        badge: { type: "quarter_end" },
+        cards: ["boc_cheers_vi", "boc_cheers_vs"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬門檻", usageKeys: ["spend_boc_cheers_vi", "spend_boc_cheers_vs"], target: 5000 },
+            { type: "cap", label: "💰 回贈上限 (中澳)", capKey: "boc_amazing_fly_cn_cap", cap: 60000, unit: "分", unlockTarget: 5000 },
+            { type: "cap", label: "💰 回贈上限 (其他)", capKey: "boc_amazing_fly_other_cap", cap: 60000, unit: "分", unlockTarget: 5000 }
+        ],
+        capKeys: ["boc_amazing_fly_cn_cap", "boc_amazing_fly_other_cap"]
+    },
+    {
+        id: "mmpower_promo",
+        name: "MMPower +FUN Dollars",
+        icon: "fas fa-bolt",
+        theme: "gray",
+        badge: { type: "month_end" },
+        cards: ["hangseng_mmpower"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬門檻", usageKey: "spend_hangseng_mmpower", target: 5000 },
+            { type: "cap", label: "💰 回贈進度", capKey: "mmpower_reward_cap", cap: 500, unit: "+FUN", unlockTarget: 5000 }
+        ],
+        capKeys: ["mmpower_reward_cap"]
+    },
+    {
+        id: "travel_plus_promo",
+        name: "Travel+ 外幣回贈",
+        icon: "fas fa-plane-departure",
+        theme: "purple",
+        badge: { type: "month_end" },
+        cards: ["hangseng_travel_plus"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬門檻", usageKey: "spend_hangseng_travel_plus", target: 7575 },
+            { type: "cap", label: "💰 回贈進度", capKey: "travel_plus_reward_cap", cap: 500, unit: "+FUN", unlockTarget: 7575 }
+        ],
+        capKeys: ["travel_plus_reward_cap"]
+    },
+    {
+        id: "fubon_in_promo",
+        name: "Fubon iN 網購",
+        icon: "fas fa-shopping-cart",
+        theme: "purple",
+        badge: { type: "promo_end", staticDate: "2026-06-30" },
+        cards: ["fubon_in_platinum"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬門檻", usageKey: "spend_fubon_in_platinum", target: 1000 },
+            { type: "cap", label: "💰 回贈進度", capKey: "fubon_in_bonus_cap", cap: 62500, unit: "分", unlockTarget: 1000 }
+        ],
+        capKeys: ["fubon_in_bonus_cap"]
+    },
+    {
+        id: "dbs_black_promo",
+        name: "Black World 海外",
+        icon: "fas fa-globe",
+        theme: "gray",
+        badge: { type: "promo_end", staticDate: "2026-12-31" },
+        cards: ["dbs_black"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬門檻", usageKey: "spend_dbs_black", target: 20000 }
+        ]
+    },
+    {
+        id: "sim_promo",
+        name: "sim 網購",
+        icon: "fas fa-credit-card",
+        theme: "blue",
+        badge: { type: "month_end" },
+        cards: ["sim_credit"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬門檻", usageKey: "sim_non_online_spend", target: 500 },
+            { type: "cap", label: "💰 回贈進度", capKey: "sim_online_cap", cap: 200, unit: "元", unlockTarget: 500 }
+        ],
+        capKeys: ["sim_online_cap"]
+    }
+];

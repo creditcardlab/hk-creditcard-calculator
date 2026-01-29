@@ -284,298 +284,126 @@ function renderDashboard(userProfile) {
         });
     }
 
-    // 2. EveryMile Promo
-    if (userProfile.ownedCards.includes('hsbc_everymile')) {
-        if (!userProfile.settings.em_promo_enabled) {
-            html += renderWarningCard("EveryMile 海外推廣", "fas fa-plane", "需登記以賺取額外回贈", "em_promo_enabled");
-        } else {
-            const endDate = modulesDB["em_overseas_mission"].promo_end;
-            const subTitle = formatPromoDate(endDate);
-            const total = userProfile.usage["em_q1_total"] || 0;
-            const eligible = userProfile.usage["em_q1_eligible"] || 0;
-            const isUnlocked = total >= 12000;
-            const missionPct = Math.min(100, (total / 12000) * 100);
-            const pot = Math.min(225, eligible * 0.015);
-            const rewardPct = Math.min(100, (pot / 225) * 100);
-            const barCls = isUnlocked ? (pot >= 225 ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
+    // Promotions (data-driven)
+    if (typeof PROMOTIONS !== 'undefined') {
+        PROMOTIONS.forEach(promo => {
+            const eligible = promo.cards.some(id => userProfile.ownedCards.includes(id));
+            if (!eligible) return;
 
-            html += createProgressCard({
-                title: "EveryMile 海外", icon: "fas fa-plane", theme: "purple",
-                badge: subTitle,
-                sections: [
-                    { label: "🎯 任務進度", valueText: `$${total.toLocaleString()} / $12,000`, progress: missionPct, barColor: "bg-purple-500" },
-                    { label: "💰 回贈進度", valueText: `${Math.floor(pot)} / 225 RC(EM)`, progress: rewardPct, barColor: barCls, striped: true }
-                ]
-            });
-            renderedCaps.add("em_promo_cap");
-        }
-    }
-
-    // 3. Winter Promo (Check if any eligible card owned)
-    const hsbcWinterCards = ['hsbc_vs', 'hsbc_red', 'hsbc_pulse', 'hsbc_unionpay_std', 'hsbc_easy', 'hsbc_gold_student', 'hsbc_gold', 'hsbc_premier'];
-    const hasEligibleCard = userProfile.ownedCards.some(card => hsbcWinterCards.includes(card));
-
-    if (hasEligibleCard) {
-        if (!userProfile.settings.winter_promo_enabled) {
-            html += renderWarningCard("最紅冬日賞", "fas fa-gift", "需登記以賺取額外回贈", "winter_promo_enabled");
-        } else {
-            const endDate = modulesDB["winter_tracker"].promo_end;
-            const subTitle = formatPromoDate(endDate);
-            // 任務進度
-            const total = userProfile.usage["winter_total"] || 0;
-            const missionPct = Math.min(100, (total / 40000) * 100);
-            const l1 = total >= 20000, l2 = total >= 40000;
-
-            // 回贈計算邏輯
-            const eligible = userProfile.usage["winter_eligible"] || 0;
-            let pot = 0, cap = 250;
-            if (l2) { pot = Math.min(800, eligible * 0.06); cap = 800; }
-            else { pot = Math.min(250, eligible * 0.03); cap = 250; }
-
-            const rewardPct = Math.min(100, (pot / cap) * 100);
-            const max = pot >= cap;
-            const txt = (l1 || l2) ? (max ? `<span class="text-red-500 font-bold">⚠️ 已達等級上限</span>` : `<span class="text-green-600 font-bold">✅ 賺取中</span>`) : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> 待解鎖: ${Math.floor(pot)} RC</span>`;
-            const barCls = (l1 || l2) ? (max ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
-
-            html += createProgressCard({
-                title: "最紅冬日賞", icon: "fas fa-gift", theme: "red",
-                badge: subTitle,
-                sections: [
-                    {
-                        label: "🎯 任務進度", valueText: `$${total.toLocaleString()}`, progress: missionPct, barColor: "bg-red-500",
-                        markers: `<span>Start</span><span class="${l1 ? 'text-red-600 font-bold' : ''}">Lv1 ($20,000)</span><span class="${l2 ? 'text-red-600 font-bold' : ''}">Lv2 ($40,000)</span>`,
-                        overlay: `<div class="absolute top-0 left-1/2 w-0.5 h-3 bg-white opacity-50"></div>`
-                    },
-                    {
-                        label: "💰 回贈進度", valueText: `${Math.floor(pot)} / ${cap}`, progress: rewardPct, barColor: barCls, striped: true,
-                        subText: txt
-                    }
-                ]
-            });
-        }
-    }
-
-    // 4. Monthly Spending Missions
-    const missionCards = [
-        // MMPower
-        {
-            id: 'hangseng_mmpower', name: 'MMPower +FUN Dollars', target: 5000,
-            rewardKey: 'mmpower_reward_cap', rewardCap: 500, rewardUnit: '+FUN',
-            icon: 'fas fa-bolt', theme: 'gray', settingKey: 'mmpower_promo_enabled',
-            badge: formatResetDate(monthEndStr)
-        },
-        // Travel+
-        {
-            id: 'hangseng_travel_plus', name: 'Travel+ 外幣回贈', target: 7575,
-            rewardKey: 'travel_plus_reward_cap', rewardCap: 500, rewardUnit: '+FUN',
-            icon: 'fas fa-plane-departure', theme: 'purple', settingKey: 'travel_plus_promo_enabled',
-            badge: formatResetDate(monthEndStr)
-        },
-        // BOC Amazing Fly (狂賞飛)
-        {
-            ids: ['boc_cheers_vi', 'boc_cheers_vs'], name: '狂賞飛 (外幣) 季度任務', target: 5000,
-            rewardKey: 'boc_amazing_fly_cn_cap', rewardCap: 60000, rewardUnit: '分',
-            secondaryCap: { key: 'boc_amazing_fly_other_cap', limit: 60000, text: '回贈上限 (其他)', unit: '分' },
-            icon: 'fas fa-plane', theme: 'blue', rewardText: '回贈上限 (中澳)', settingKey: 'boc_amazing_enabled',
-            badge: formatResetDate(quarterEndStr),
-            spendKeyById: { boc_cheers_vi: 'spend_boc_cheers_vi', boc_cheers_vs: 'spend_boc_cheers_vs' }
-        },
-        // Fubon iN
-        {
-            id: 'fubon_in_platinum', name: 'Fubon iN 網購', target: 1000,
-            rewardKey: 'fubon_in_bonus_cap', rewardCap: 62500, rewardUnit: '分',
-            icon: 'fas fa-shopping-cart', theme: 'purple', settingKey: 'fubon_in_promo_enabled',
-            badge: formatPromoDate("2026-06-30")
-        },
-        // DBS Black
-        {
-            id: 'dbs_black', name: 'Black World 海外', target: 20000,
-            rewardKey: 'dbs_black_promo_cap', rewardCap: 0, rewardUnit: '里', // No cap per se, but req mission
-            icon: 'fas fa-globe', theme: "gray", settingKey: 'dbs_black_promo_enabled',
-            badge: formatPromoDate("2026-12-31")
-        },
-        // sim Credit
-        {
-            id: 'sim_credit', name: 'sim 網購', target: 500,
-            rewardKey: 'sim_online_cap', rewardCap: 200, rewardUnit: '元',
-            icon: 'fas fa-credit-card', theme: 'blue', settingKey: 'sim_promo_enabled',
-            badge: formatResetDate(monthEndStr)
-        }
-    ];
-
-    // 4a. BOC Amazing Rewards (single mission + two caps)
-    const hasBocCheers = userProfile.ownedCards.includes('boc_cheers_vi') || userProfile.ownedCards.includes('boc_cheers_vs');
-    if (hasBocCheers) {
-        renderedCaps.add('boc_amazing_local_weekday_cap');
-        renderedCaps.add('boc_amazing_local_holiday_cap');
-        renderedCaps.add('boc_amazing_online_weekday_cap');
-        renderedCaps.add('boc_amazing_online_holiday_cap');
-    }
-    if (hasBocCheers) {
-        if (userProfile.settings.boc_amazing_enabled === false) {
-            html += renderWarningCard("狂賞派", "fas fa-fire", "需登記以賺取回贈", "boc_amazing_enabled");
-        } else {
-            const spendKey = 'spend_boc_cheers_vi';
-            const spend = userProfile.usage[spendKey] || 0;
-            const target = 6000; // 120/0.02 = 6000
-            const pct = Math.min(100, (spend / target) * 100);
-            const unlocked = spend >= target;
-
-            const weekdayUsed = userProfile.usage['boc_amazing_local_weekday_cap'] || 0;
-            const holidayUsed = userProfile.usage['boc_amazing_local_holiday_cap'] || 0;
-            const onlineWeekdayUsed = userProfile.usage['boc_amazing_online_weekday_cap'] || 0;
-            const onlineHolidayUsed = userProfile.usage['boc_amazing_online_holiday_cap'] || 0;
-
-            const weekdayPct = Math.min(100, (weekdayUsed / 120) * 100);
-            const holidayPct = Math.min(100, (holidayUsed / 300) * 100);
-            const onlineWeekdayPct = Math.min(100, (onlineWeekdayUsed / 60) * 100);
-            const onlineHolidayPct = Math.min(100, (onlineHolidayUsed / 200) * 100);
-
-            html += createProgressCard({
-                title: "狂賞派", icon: "fas fa-fire", theme: "blue", badge: formatResetDate(monthEndStr),
-                sections: [
-                    {
-                        label: "🎯 任務進度",
-                        valueText: `$${spend.toLocaleString()} / $${target.toLocaleString()}`,
-                        progress: pct,
-                        barColor: unlocked ? "bg-blue-500" : "bg-gray-400 opacity-50",
-                        subText: unlocked ? `<span class="text-green-600 font-bold">✅ 已達標</span>` : `<span class="text-gray-400">🔒尚欠 $${(target - spend).toLocaleString()}</span>`
-                    },
-                    {
-                        label: "💰 回贈上限 (平日)",
-                        valueText: `$${Math.floor(weekdayUsed).toLocaleString()} / $120`,
-                        progress: weekdayPct,
-                        striped: true,
-                        barColor: weekdayUsed >= 120 ? "bg-red-500" : (unlocked ? "bg-green-500" : "bg-gray-400 opacity-50"),
-                        subText: weekdayUsed >= 120 ? '⚠️ 已爆 Cap' : (unlocked ? `尚餘 $${Math.max(0, 120 - weekdayUsed).toLocaleString()}` : '🔒 需達到簽賬門檻')
-                    },
-                    {
-                        label: "💰 回贈上限 (紅日)",
-                        valueText: `$${Math.floor(holidayUsed).toLocaleString()} / $300`,
-                        progress: holidayPct,
-                        striped: true,
-                        barColor: holidayUsed >= 300 ? "bg-red-500" : (unlocked ? "bg-green-500" : "bg-gray-400 opacity-50"),
-                        subText: holidayUsed >= 300 ? '⚠️ 已爆 Cap' : (unlocked ? `尚餘 $${Math.max(0, 300 - holidayUsed).toLocaleString()}` : '🔒 需達到簽賬門檻')
-                    },
-                    {
-                        label: "💰 網購回贈上限 (平日)",
-                        valueText: `$${Math.floor(onlineWeekdayUsed).toLocaleString()} / $60`,
-                        progress: onlineWeekdayPct,
-                        striped: true,
-                        barColor: onlineWeekdayUsed >= 60 ? "bg-red-500" : (unlocked ? "bg-green-500" : "bg-gray-400 opacity-50"),
-                        subText: onlineWeekdayUsed >= 60 ? '⚠️ 已爆 Cap' : (unlocked ? `尚餘 $${Math.max(0, 60 - onlineWeekdayUsed).toLocaleString()}` : '🔒 需達到簽賬門檻')
-                    },
-                    {
-                        label: "💰 網購回贈上限 (紅日)",
-                        valueText: `$${Math.floor(onlineHolidayUsed).toLocaleString()} / $200`,
-                        progress: onlineHolidayPct,
-                        striped: true,
-                        barColor: onlineHolidayUsed >= 200 ? "bg-red-500" : (unlocked ? "bg-green-500" : "bg-gray-400 opacity-50"),
-                        subText: onlineHolidayUsed >= 200 ? '⚠️ 已爆 Cap' : (unlocked ? `尚餘 $${Math.max(0, 200 - onlineHolidayUsed).toLocaleString()}` : '🔒 需達到簽賬門檻')
-                    }
-                ]
-            });
-        }
-    }
-
-    missionCards.forEach(mc => {
-        const ownedIds = mc.ids ? mc.ids.filter(id => userProfile.ownedCards.includes(id)) : (userProfile.ownedCards.includes(mc.id) ? [mc.id] : []);
-        if (ownedIds.length > 0) {
-            if (mc.rewardKey && renderedCaps.has(mc.rewardKey)) return;
-            // Check Setting Key (Warning Logic)
-            if (mc.settingKey && userProfile.settings[mc.settingKey] === false) {
-                html += renderWarningCard(mc.name, mc.icon, "需登記以賺取回贈", mc.settingKey);
-                return; // Skip rendering the progress card
-            }
-
-            let spendKey = mc.usageKey || `spend_${mc.id}`;
-            if (mc.spendKeyById) {
-                const pickId = ownedIds[0];
-                spendKey = mc.spendKeyById[pickId] || spendKey;
-            }
-            const spend = userProfile.usage[spendKey] || 0;
-            const pct = Math.min(100, (spend / mc.target) * 100);
-            const isUnlocked = spend >= mc.target;
-
-            let statusText = isUnlocked ? `<span class="text-green-600 font-bold">✅ 已達標</span>` : `<span class="text-gray-400">🔒尚欠 $${(mc.target - spend).toLocaleString()}</span>`;
-            let spendBarClass = isUnlocked ? "" : "bg-gray-400 opacity-50"; // Let theme default handle unlocked color, or override
-
-            // DBS Black Adjustment
-            if (mc.id === 'dbs_black') {
-                statusText = isUnlocked ? `<span class="text-green-600 font-bold">✅ 已升級 $2/里</span>` : `<span class="text-gray-500">🔒 $4/里 (尚欠 $${(mc.target - spend).toLocaleString()})</span>`;
+            const reg = (typeof PROMO_REGISTRY !== 'undefined') ? PROMO_REGISTRY[promo.id] : null;
+            if (reg && reg.settingKey && userProfile.settings[reg.settingKey] === false) {
+                html += renderWarningCard(reg.warningTitle || promo.name, promo.icon, reg.warningDesc || "需登記以賺取回贈", reg.settingKey);
+                if (promo.capKeys) promo.capKeys.forEach(k => renderedCaps.add(k));
+                return;
             }
 
             const sections = [];
+            let missionUnlockTarget = null;
+            let missionUnlockValue = null;
 
-            // 1. Spending Goal
-            sections.push({
-                label: "🎯 簽賬門檻",
-                valueText: `$${spend.toLocaleString()} / $${mc.target.toLocaleString()}`,
-                progress: pct,
-                barColor: spendBarClass, // If empty, defaults to theme
-                subText: statusText
+            promo.sections.forEach(sec => {
+                if (sec.type === "mission") {
+                    let spend = 0;
+                    if (sec.usageKeys) spend = sec.usageKeys.reduce((s, k) => s + (userProfile.usage[k] || 0), 0);
+                    else spend = userProfile.usage[sec.usageKey] || 0;
+                    missionUnlockTarget = sec.target;
+                    missionUnlockValue = spend;
+                    const pct = Math.min(100, (spend / sec.target) * 100);
+                    const unlocked = spend >= sec.target;
+                    const markers = sec.markers ? sec.markers.map(m => `<span>${m.toLocaleString()}</span>`).join('') : null;
+
+                    sections.push({
+                        label: sec.label || "🎯 任務進度",
+                        valueText: `$${spend.toLocaleString()} / $${sec.target.toLocaleString()}`,
+                        progress: pct,
+                        barColor: unlocked ? "bg-blue-500" : "bg-gray-400 opacity-50",
+                        subText: unlocked ? `<span class="text-green-600 font-bold">✅ 已達標</span>` : `<span class="text-gray-400">🔒尚欠 $${(sec.target - spend).toLocaleString()}</span>`,
+                        markers: markers
+                    });
+                }
+
+                if (sec.type === "cap_rate") {
+                    const used = userProfile.usage[sec.usageKey] || 0;
+                    const reward = Math.min(sec.cap, used * sec.rate);
+                    const pct = Math.min(100, (reward / sec.cap) * 100);
+                    const unlocked = missionUnlockValue !== null ? missionUnlockValue >= sec.unlockTarget : true;
+                    const barCls = unlocked ? (reward >= sec.cap ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
+                    const unit = sec.unit || "";
+
+                    sections.push({
+                        label: sec.label || "💰 回贈進度",
+                        valueText: `${Math.floor(reward).toLocaleString()} / ${sec.cap} ${unit}`.trim(),
+                        progress: pct,
+                        striped: true,
+                        barColor: barCls,
+                        subText: unlocked ? (reward >= sec.cap ? '⚠️ 已爆 Cap' : '✅ 賺取中') : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> 待解鎖: ${Math.floor(reward)} ${unit}</span>`
+                    });
+                }
+
+                if (sec.type === "tier_cap") {
+                    const total = userProfile.usage[sec.totalKey] || 0;
+                    const eligibleVal = userProfile.usage[sec.eligibleKey] || 0;
+                    let cap = sec.tiers[0].cap;
+                    let reward = Math.min(sec.tiers[0].cap, eligibleVal * sec.tiers[0].rate);
+                    if (total >= sec.tiers[1].threshold) {
+                        cap = sec.tiers[1].cap;
+                        reward = Math.min(sec.tiers[1].cap, eligibleVal * sec.tiers[1].rate);
+                    } else if (total >= sec.tiers[0].threshold) {
+                        cap = sec.tiers[0].cap;
+                        reward = Math.min(sec.tiers[0].cap, eligibleVal * sec.tiers[0].rate);
+                    }
+                    const pct = Math.min(100, (reward / cap) * 100);
+                    const unlocked = total >= sec.tiers[0].threshold;
+                    const barCls = unlocked ? (reward >= cap ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
+
+                    sections.push({
+                        label: sec.label || "💰 回贈進度",
+                        valueText: `${Math.floor(reward)} / ${cap}`,
+                        progress: pct,
+                        striped: true,
+                        barColor: barCls,
+                        subText: unlocked ? (reward >= cap ? '⚠️ 已達等級上限' : '✅ 賺取中') : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> 待解鎖: ${Math.floor(reward)} RC</span>`
+                    });
+                }
+
+                if (sec.type === "cap") {
+                    const used = userProfile.usage[sec.capKey] || 0;
+                    const pct = Math.min(100, (used / sec.cap) * 100);
+                    const unlocked = missionUnlockTarget ? (missionUnlockValue >= missionUnlockTarget) : true;
+                    const unit = sec.unit || '';
+                    const prefix = unit ? '' : '$';
+
+                    sections.push({
+                        label: sec.label || "💰 回贈進度",
+                        valueText: `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${sec.cap.toLocaleString()}${unit}`,
+                        progress: pct,
+                        striped: true,
+                        barColor: used >= sec.cap ? "bg-red-500" : (unlocked ? "bg-green-500" : "bg-gray-400 opacity-50"),
+                        subText: used >= sec.cap ? '⚠️ 已爆 Cap' : (unlocked ? `尚餘 ${prefix}${Math.max(0, sec.cap - used).toLocaleString()}${unit}` : '🔒 需達到簽賬門檻')
+                    });
+                    renderedCaps.add(sec.capKey);
+                }
             });
 
-            // 2. Primary Reward Cap
-            if (mc.rewardKey) {
-                renderedCaps.add(mc.rewardKey);
-                const rewardUsed = userProfile.usage[mc.rewardKey] || 0;
-                const rewardPct = Math.min(100, (rewardUsed / mc.rewardCap) * 100);
-                const isMaxed = rewardUsed >= mc.rewardCap;
-                const remaining = Math.max(0, mc.rewardCap - rewardUsed);
+            if (promo.capKeys) promo.capKeys.forEach(k => renderedCaps.add(k));
 
-                const unit = mc.rewardUnit || '';
-                const prefix = unit ? '' : '$';
-                const rewardLabel = mc.rewardText || "回贈進度";
-
-                // SubText Logic
-                let subText = `尚餘 ${prefix}${Math.ceil(remaining).toLocaleString()}${unit}`;
-                if (isMaxed) subText = '⚠️ 已爆 Cap';
-                else if (!isUnlocked) subText = '🔒 需達到簽賬門檻';
-
-                sections.push({
-                    label: `💰 ${rewardLabel}`,
-                    valueText: `${prefix}${Math.floor(rewardUsed).toLocaleString()}${unit} / ${prefix}${mc.rewardCap.toLocaleString()}${unit}`,
-                    progress: rewardPct,
-                    striped: true,
-                    // If locked, show Gray bar to indicate "Potential/Pending". If unlocked, Green. If maxed, Red.
-                    barColor: isMaxed ? "bg-red-500" : (isUnlocked ? "bg-green-500" : "bg-gray-400 opacity-50"),
-                    subText: subText
-                });
-            }
-
-            // 3. Secondary Cap
-            if (mc.secondaryCap) {
-                if (!renderedCaps.has(mc.secondaryCap.key)) {
-                    renderedCaps.add(mc.secondaryCap.key);
-                const secUsed = userProfile.usage[mc.secondaryCap.key] || 0;
-                const secPct = Math.min(100, (secUsed / mc.secondaryCap.limit) * 100);
-                const secMaxed = secUsed >= mc.secondaryCap.limit;
-                const remaining = Math.max(0, mc.secondaryCap.limit - secUsed);
-
-                const unit = mc.secondaryCap.unit || '';
-                const prefix = unit ? '' : '$';
-
-                sections.push({
-                    label: `💰 ${mc.secondaryCap.text}`,
-                    valueText: `${prefix}${Math.floor(secUsed).toLocaleString()}${unit} / ${prefix}${mc.secondaryCap.limit.toLocaleString()}${unit}`,
-                    progress: secPct,
-                    striped: true,
-                    barColor: secMaxed ? "bg-red-500" : (isUnlocked ? "bg-green-500" : null),
-                    subText: secMaxed ? '⚠️ 已爆 Cap' : `尚餘 ${prefix}${Math.ceil(remaining).toLocaleString()}${unit}`
-                });
+            let badgeText = "";
+            if (promo.badge) {
+                if (promo.badge.type === "month_end") badgeText = formatResetDate(monthEndStr);
+                if (promo.badge.type === "quarter_end") badgeText = formatResetDate(quarterEndStr);
+                if (promo.badge.type === "promo_end" && promo.badge.moduleKey) {
+                    const mod = modulesDB[promo.badge.moduleKey];
+                    if (mod && mod[promo.badge.field]) badgeText = formatPromoDate(mod[promo.badge.field]);
+                    if (promo.badge.staticDate) badgeText = formatPromoDate(promo.badge.staticDate);
                 }
             }
 
-            // Cap Monitors - Reset Text Logic
-            let badgeText = mc.badge || formatResetDate(monthEndStr);
-
             html += createProgressCard({
-                title: mc.name, icon: mc.icon, theme: mc.theme, badge: badgeText,
+                title: promo.name, icon: promo.icon, theme: promo.theme, badge: badgeText,
                 sections: sections
             });
-        }
-    });
+        });
+    }
 
     // 5. Remaining Caps as Promotion Cards (no separate cap monitors)
     userProfile.ownedCards.forEach(cardId => {
