@@ -6,7 +6,7 @@ const cardsDB = [
     {
         id: "hsbc_everymile", name: "HSBC EveryMile", currency: "HSBC_RC_EM", type: "master", fcf: 0.0195,
         // [UPDATED] Added em_overseas_bonus for Calculator
-        modules: ["em_base", "em_designated", "em_overseas_mission", "em_overseas_bonus", "travel_guru_v2"],
+        modules: ["em_base", "em_designated", "em_grocery_low", "em_overseas_mission", "em_overseas_bonus", "travel_guru_v2"],
         redemption: { unit: "RC", min: 40, fee: "免費", ratio: "1 RC = 20 里" }
     },
     {
@@ -216,6 +216,7 @@ const modulesDB = {
     "pulse_china_bonus": { type: "category", match: ["china_consumption"], rate: 0.02, desc: "內地/澳門手機支付 (+2%)" },
     "em_base": { type: "always", rate: 0.01, desc: "基本 (1%)" },
     "em_designated": { type: "category", match: ["transport", "streaming", "em_designated_spend"], rate: 0.025, desc: "指定 $2/里 (2.5%)", mode: "replace" },
+    "em_grocery_low": { type: "category", match: ["grocery"], rate: 0.004, desc: "超市 (0.4%)", mode: "replace" },
     "red_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
     "red_online": { type: "category", match: ["online"], rate: 0.04, desc: "網購 (4%)", mode: "replace", cap_limit: 10000, cap_key: "red_online_cap" },
     "red_designated_bonus": { type: "category", match: ["red_designated"], rate: 0.076, desc: "指定商戶加碼 (7.6%)", cap_limit: 1250, cap_key: "red_designated_cap" },

@@ -266,6 +266,10 @@ function checkValidity(mod, txDate, isHoliday) {
 
 function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday) {
     const resolvedCategory = resolveCategory(card.id, category);
+    const isHsbcWalletZero = card.id.startsWith('hsbc') && (category === 'alipay' || category === 'wechat');
+
+    const conv = conversionDB.find(c => c.src === card.currency);
+    if (!conv) return null;
 
     let totalRate = 0;
     let totalRatePotential = 0;
@@ -275,6 +279,52 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     let trackingKey = null;
     let rewardInfo = null;
     let pendingUnlocks = [];
+
+    if (isHsbcWalletZero) {
+        let valStr = "", unitStr = "";
+        let valStrPotential = "", unitStrPotential = "";
+        if (displayMode === 'miles') {
+            if (conv.miles_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
+            else { valStr = "0"; unitStr = "里"; }
+            if (conv.miles_rate === 0) { valStrPotential = "---"; unitStrPotential = "(不支援)"; }
+            else { valStrPotential = "0"; unitStrPotential = "里"; }
+        } else {
+            if (conv.cash_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
+            else { valStr = "0"; unitStr = "HKD"; }
+            if (conv.cash_rate === 0) { valStrPotential = "---"; unitStrPotential = "(不支援)"; }
+            else { valStrPotential = "0"; unitStrPotential = "HKD"; }
+        }
+
+        return {
+            cardId: card.id,
+            cardName: card.name,
+            amount,
+            displayVal: valStr,
+            displayUnit: unitStr,
+            displayValPotential: valStrPotential,
+            displayUnitPotential: unitStrPotential,
+            estValue: 0,
+            estMiles: 0,
+            estCash: 0,
+            estCashNet: 0,
+            estMilesPotential: 0,
+            estCashPotential: 0,
+            breakdown: ["Alipay/WeChat 0%"],
+            trackingKey: null,
+            guruRC: 0,
+            missionTags: [],
+            category,
+            rewardTrackingKey: null,
+            secondaryRewardTrackingKey: null,
+            generatedReward: 0,
+            redemptionConfig: card.redemption,
+            supportsMiles: conv.miles_rate !== 0,
+            supportsCash: conv.cash_rate !== 0,
+            nativeVal: 0,
+            nativeValPotential: 0,
+            pendingUnlocks: []
+        };
+    }
 
     // [Module Logic]
     if (!card.modules || !Array.isArray(card.modules)) return null;
@@ -481,7 +531,6 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         }
     });
 
-    const conv = conversionDB.find(c => c.src === card.currency);
     const native = amount * totalRate;
     const nativePotential = amount * totalRatePotential;
 
