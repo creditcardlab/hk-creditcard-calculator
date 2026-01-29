@@ -46,6 +46,14 @@ const DATA_RULES = {
     }
 };
 
+DATA_RULES.categoryHierarchy = {
+    "overseas_cn": ["overseas"],
+    "overseas_jkt": ["overseas"],
+    "overseas_tw": ["overseas"],
+    "overseas_other": ["overseas"],
+    "travel_plus_tier1": ["overseas"]
+};
+
 const DATA = {
     cards: cardsDB,
     modules: modulesDB,

@@ -58,7 +58,7 @@ const PROMOTIONS = [
         cards: ["hsbc_everymile"],
         sections: [
             { type: "mission", label: "🎯 任務進度", usageKey: "em_q1_total", target: 12000 },
-            { type: "cap_rate", label: "💰 回贈進度", usageKey: "em_q1_eligible", rate: 0.015, cap: 225, unit: "RC", unlockKey: "em_q1_total", unlockTarget: 12000 }
+            { type: "cap_rate", label: "💰 回贈進度", usageKey: "em_q1_eligible", rate: 0.015, capModule: "em_overseas_bonus", unit: "RC", unlockKey: "em_q1_total", unlockTarget: 12000 }
         ],
         capKeys: ["em_promo_cap"]
     },
@@ -93,10 +93,10 @@ const PROMOTIONS = [
         cards: ["boc_cheers_vi", "boc_cheers_vs"],
         sections: [
             { type: "mission", label: "🎯 任務進度", usageKeys: ["spend_boc_cheers_vi", "spend_boc_cheers_vs"], target: 6000 },
-            { type: "cap", label: "💰 回贈上限 (平日)", capKey: "boc_amazing_local_weekday_cap", cap: 120, unit: "元", unlockTarget: 6000 },
-            { type: "cap", label: "💰 回贈上限 (紅日)", capKey: "boc_amazing_local_holiday_cap", cap: 300, unit: "元", unlockTarget: 6000 },
-            { type: "cap", label: "💰 網購回贈上限 (平日)", capKey: "boc_amazing_online_weekday_cap", cap: 60, unit: "元", unlockTarget: 6000 },
-            { type: "cap", label: "💰 網購回贈上限 (紅日)", capKey: "boc_amazing_online_holiday_cap", cap: 200, unit: "元", unlockTarget: 6000 }
+            { type: "cap", label: "💰 回贈上限 (平日)", capModule: "boc_amazing_weekday", unit: "元", unlockTarget: 6000 },
+            { type: "cap", label: "💰 回贈上限 (紅日)", capModule: "boc_amazing_holiday", unit: "元", unlockTarget: 6000 },
+            { type: "cap", label: "💰 網購回贈上限 (平日)", capModule: "boc_amazing_online_weekday", unit: "元", unlockTarget: 6000 },
+            { type: "cap", label: "💰 網購回贈上限 (紅日)", capModule: "boc_amazing_online_holiday", unit: "元", unlockTarget: 6000 }
         ],
         capKeys: ["boc_amazing_local_weekday_cap", "boc_amazing_local_holiday_cap", "boc_amazing_online_weekday_cap", "boc_amazing_online_holiday_cap"]
     },
@@ -109,8 +109,8 @@ const PROMOTIONS = [
         cards: ["boc_cheers_vi", "boc_cheers_vs"],
         sections: [
             { type: "mission", label: "🎯 簽賬門檻", usageKeys: ["spend_boc_cheers_vi", "spend_boc_cheers_vs"], target: 5000 },
-            { type: "cap", label: "💰 回贈上限 (中澳)", capKey: "boc_amazing_fly_cn_cap", cap: 60000, unit: "分", unlockTarget: 5000 },
-            { type: "cap", label: "💰 回贈上限 (其他)", capKey: "boc_amazing_fly_other_cap", cap: 60000, unit: "分", unlockTarget: 5000 }
+            { type: "cap", label: "💰 回贈上限 (中澳)", capModule: "boc_amazing_fly_cn", unit: "分", unlockTarget: 5000 },
+            { type: "cap", label: "💰 回贈上限 (其他)", capModule: "boc_amazing_fly_other", unit: "分", unlockTarget: 5000 }
         ],
         capKeys: ["boc_amazing_fly_cn_cap", "boc_amazing_fly_other_cap"]
     },
@@ -123,7 +123,7 @@ const PROMOTIONS = [
         cards: ["hangseng_mmpower"],
         sections: [
             { type: "mission", label: "🎯 簽賬門檻", usageKey: "spend_hangseng_mmpower", target: 5000 },
-            { type: "cap", label: "💰 回贈進度", capKey: "mmpower_reward_cap", cap: 500, unit: "+FUN", unlockTarget: 5000 }
+            { type: "cap", label: "💰 回贈進度", capModule: "mmpower_overseas_bonus", unit: "+FUN", unlockTarget: 5000 }
         ],
         capKeys: ["mmpower_reward_cap"]
     },
@@ -136,7 +136,7 @@ const PROMOTIONS = [
         cards: ["hangseng_travel_plus"],
         sections: [
             { type: "mission", label: "🎯 簽賬門檻", usageKey: "spend_hangseng_travel_plus", target: 7575 },
-            { type: "cap", label: "💰 回贈進度", capKey: "travel_plus_reward_cap", cap: 500, unit: "+FUN", unlockTarget: 7575 }
+            { type: "cap", label: "💰 回贈進度", capModule: "travel_plus_tier1_bonus", unit: "+FUN", unlockTarget: 7575 }
         ],
         capKeys: ["travel_plus_reward_cap"]
     },
@@ -149,7 +149,7 @@ const PROMOTIONS = [
         cards: ["fubon_in_platinum"],
         sections: [
             { type: "mission", label: "🎯 簽賬門檻", usageKey: "spend_fubon_in_platinum", target: 1000 },
-            { type: "cap", label: "💰 回贈進度", capKey: "fubon_in_bonus_cap", cap: 62500, unit: "分", unlockTarget: 1000 }
+            { type: "cap", label: "💰 回贈進度", capModule: "fubon_in_online", unit: "分", unlockTarget: 1000 }
         ],
         capKeys: ["fubon_in_bonus_cap"]
     },
@@ -173,7 +173,7 @@ const PROMOTIONS = [
         cards: ["sim_credit"],
         sections: [
             { type: "mission", label: "🎯 簽賬門檻", usageKey: "sim_non_online_spend", target: 500 },
-            { type: "cap", label: "💰 回贈進度", capKey: "sim_online_cap", cap: 200, unit: "元", unlockTarget: 500 }
+            { type: "cap", label: "💰 回贈進度", capModule: "sim_online", unit: "元", unlockTarget: 500 }
         ],
         capKeys: ["sim_online_cap"]
     }

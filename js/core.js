@@ -152,14 +152,12 @@ function resolveCategory(cardId, inputCategory) {
     return inputCategory;
 }
 
-const CATEGORY_HIERARCHY = {
+const CATEGORY_HIERARCHY = (DATA && DATA.rules && DATA.rules.categoryHierarchy) ? DATA.rules.categoryHierarchy : {
     "overseas_cn": ["overseas"],
     "overseas_jkt": ["overseas"],
     "overseas_tw": ["overseas"],
     "overseas_other": ["overseas"],
-    "travel_plus_tier1": ["overseas"],
-    // Can expand for local spending too if needed
-    // "dining": ["local_spending"],
+    "travel_plus_tier1": ["overseas"]
 };
 
 function isCategoryMatch(moduleMatches, category) {

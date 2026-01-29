@@ -301,6 +301,12 @@ function renderDashboard(userProfile) {
             let missionUnlockTarget = null;
             let missionUnlockValue = null;
 
+            const getModule = (key) => (key && modulesDB && modulesDB[key]) ? modulesDB[key] : null;
+            const getCapFromModule = (key) => {
+                const m = getModule(key);
+                return m && m.cap_limit ? { cap: m.cap_limit, capKey: m.cap_key || null } : null;
+            };
+
             promo.sections.forEach(sec => {
                 if (sec.type === "mission") {
                     let spend = 0;
@@ -324,19 +330,24 @@ function renderDashboard(userProfile) {
 
                 if (sec.type === "cap_rate") {
                     const used = userProfile.usage[sec.usageKey] || 0;
-                    const reward = Math.min(sec.cap, used * sec.rate);
-                    const pct = Math.min(100, (reward / sec.cap) * 100);
+                    let capVal = sec.cap;
+                    if (sec.capModule) {
+                        const capInfo = getCapFromModule(sec.capModule);
+                        if (capInfo && capInfo.cap) capVal = capInfo.cap;
+                    }
+                    const reward = Math.min(capVal, used * sec.rate);
+                    const pct = Math.min(100, (reward / capVal) * 100);
                     const unlocked = missionUnlockValue !== null ? missionUnlockValue >= sec.unlockTarget : true;
-                    const barCls = unlocked ? (reward >= sec.cap ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
+                    const barCls = unlocked ? (reward >= capVal ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
                     const unit = sec.unit || "";
 
                     sections.push({
                         label: sec.label || "💰 回贈進度",
-                        valueText: `${Math.floor(reward).toLocaleString()} / ${sec.cap} ${unit}`.trim(),
+                        valueText: `${Math.floor(reward).toLocaleString()} / ${capVal} ${unit}`.trim(),
                         progress: pct,
                         striped: true,
                         barColor: barCls,
-                        subText: unlocked ? (reward >= sec.cap ? '⚠️ 已爆 Cap' : '✅ 賺取中') : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> 待解鎖: ${Math.floor(reward)} ${unit}</span>`
+                        subText: unlocked ? (reward >= capVal ? '⚠️ 已爆 Cap' : '✅ 賺取中') : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> 待解鎖: ${Math.floor(reward)} ${unit}</span>`
                     });
                 }
 
@@ -367,21 +378,30 @@ function renderDashboard(userProfile) {
                 }
 
                 if (sec.type === "cap") {
-                    const used = userProfile.usage[sec.capKey] || 0;
-                    const pct = Math.min(100, (used / sec.cap) * 100);
+                    let capKey = sec.capKey;
+                    let capVal = sec.cap;
+                    if (sec.capModule) {
+                        const capInfo = getCapFromModule(sec.capModule);
+                        if (capInfo) {
+                            capVal = capInfo.cap;
+                            capKey = capInfo.capKey || capKey;
+                        }
+                    }
+                    const used = userProfile.usage[capKey] || 0;
+                    const pct = Math.min(100, (used / capVal) * 100);
                     const unlocked = missionUnlockTarget ? (missionUnlockValue >= missionUnlockTarget) : true;
                     const unit = sec.unit || '';
                     const prefix = unit ? '' : '$';
 
                     sections.push({
                         label: sec.label || "💰 回贈進度",
-                        valueText: `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${sec.cap.toLocaleString()}${unit}`,
+                        valueText: `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${capVal.toLocaleString()}${unit}`,
                         progress: pct,
                         striped: true,
-                        barColor: used >= sec.cap ? "bg-red-500" : (unlocked ? "bg-green-500" : "bg-gray-400 opacity-50"),
-                        subText: used >= sec.cap ? '⚠️ 已爆 Cap' : (unlocked ? `尚餘 ${prefix}${Math.max(0, sec.cap - used).toLocaleString()}${unit}` : '🔒 需達到簽賬門檻')
+                        barColor: used >= capVal ? "bg-red-500" : (unlocked ? "bg-green-500" : "bg-gray-400 opacity-50"),
+                        subText: used >= capVal ? '⚠️ 已爆 Cap' : (unlocked ? `尚餘 ${prefix}${Math.max(0, capVal - used).toLocaleString()}${unit}` : '🔒 需達到簽賬門檻')
                     });
-                    renderedCaps.add(sec.capKey);
+                    if (capKey) renderedCaps.add(capKey);
                 }
             });
 
