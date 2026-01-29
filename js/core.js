@@ -118,50 +118,36 @@ function calculateGuru(mod, amount, level, category) {
 }
 
 function getRedHotCategory(inputCategory) {
-    if (typeof redHotCategories === 'undefined') return null;
-    for (const [rhCat, validInputs] of Object.entries(redHotCategories)) {
+    if (typeof DATA === 'undefined' || !DATA.redHotCategories) return null;
+    for (const [rhCat, validInputs] of Object.entries(DATA.redHotCategories)) {
         if (validInputs.includes(inputCategory)) return rhCat;
     }
     return null;
 }
 
-// Simplified resolveCategory
-// Most logic now handled by CATEGORY_HIERARCHY in isCategoryMatch
 function resolveCategory(cardId, inputCategory) {
-    if (inputCategory === 'citysuper') {
-        if (cardId.startsWith('hsbc')) return 'style';
-        if (cardId === 'mox_credit') return 'grocery';
-        return 'grocery';
+    const rules = DATA && DATA.rules;
+    if (!rules) return inputCategory;
+
+    const prefix = cardId.split('_')[0];
+    const aliasRule = rules.categoryAliases && rules.categoryAliases[inputCategory];
+    if (aliasRule) {
+        if (aliasRule.byCardId && aliasRule.byCardId[cardId]) return aliasRule.byCardId[cardId];
+        if (aliasRule.byPrefix && aliasRule.byPrefix[prefix]) return aliasRule.byPrefix[prefix];
+        if (aliasRule.default) return aliasRule.default;
     }
 
-    // Live Fresh Preference Matching - MUST execute BEFORE overseas aliasing
-    if (cardId === 'dbs_live_fresh') {
-        const pref = userProfile.settings.live_fresh_pref;
-        if (pref && pref !== 'none') {
-            if (pref === 'online_foreign' && inputCategory.includes('overseas')) return 'live_fresh_selected';
-            if (pref === 'travel' && (inputCategory === 'travel' || inputCategory === 'entertainment' || inputCategory === 'streaming' || inputCategory === 'cathay_hkexpress')) return 'live_fresh_selected';
-            if (pref === 'fashion' && (inputCategory === 'apparel' || inputCategory === 'health_beauty' || inputCategory === 'online')) return 'live_fresh_selected';
-            if (pref === 'charity' && (inputCategory === 'charity' || inputCategory === 'general')) return 'live_fresh_selected';
+    const cardRule = rules.cardCategoryOverrides && rules.cardCategoryOverrides[cardId];
+    if (cardRule) {
+        if (cardRule.preferenceKey && cardRule.preferences) {
+            const pref = userProfile.settings[cardRule.preferenceKey];
+            const prefRule = pref && cardRule.preferences[pref];
+            if (prefRule && Array.isArray(prefRule.matches)) {
+                if (prefRule.matches.includes(inputCategory)) return prefRule.mapTo;
+            }
         }
+        if (cardRule.map && cardRule.map[inputCategory]) return cardRule.map[inputCategory];
     }
-
-    // Specific card mappings (Pulse, Travel+)
-    // Ideally this should be in data.js, but keeping here for now to avoid major data migration
-    // But we remove the generic 'overseas' fallback because hierarchy handles it now
-
-    if (inputCategory === 'overseas_cn') {
-        if (cardId === 'hsbc_pulse') return 'china_consumption';
-        if (cardId === 'hangseng_travel_plus') return 'travel_plus_tier1';
-    }
-
-    if (inputCategory === 'overseas_jkt' || inputCategory === 'overseas_tw') {
-        if (cardId === 'hangseng_travel_plus') return 'travel_plus_tier1';
-    }
-
-    // For Travel+, we need to ensure Japanese/Korean/Thai/Taiwan spending matches Tier 1
-    // The hierarchy handles "overseas_jktt" -> "overseas" for generic cards
-    // But Travel+ needs "overseas_jktt" -> "travel_plus_tier1"
-    // The above check handles it.
 
     return inputCategory;
 }
@@ -266,7 +252,10 @@ function checkValidity(mod, txDate, isHoliday) {
 
 function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday) {
     const resolvedCategory = resolveCategory(card.id, category);
-    const isHsbcWalletZero = card.id.startsWith('hsbc') && (category === 'alipay' || category === 'wechat');
+    const rules = DATA && DATA.rules;
+    const prefix = card.id.split('_')[0];
+    const zeroCats = rules && rules.zeroRewardByCardPrefix && rules.zeroRewardByCardPrefix[prefix];
+    const isZeroCategory = Array.isArray(zeroCats) && zeroCats.includes(category);
 
     const conv = conversionDB.find(c => c.src === card.currency);
     if (!conv) return null;
@@ -280,7 +269,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     let rewardInfo = null;
     let pendingUnlocks = [];
 
-    if (isHsbcWalletZero) {
+    if (isZeroCategory) {
         let valStr = "", unitStr = "";
         let valStrPotential = "", unitStrPotential = "";
         if (displayMode === 'miles') {
