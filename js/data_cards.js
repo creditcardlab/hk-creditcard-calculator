@@ -191,6 +191,32 @@ const cardsDB = [
     { id: "earnmore", name: "EarnMORE 銀聯", currency: "CASH_Direct", type: "unionpay", fcf: 0, modules: ["earnmore_base"] },
     { id: "mox_credit", name: "Mox Credit", currency: "CASH_Direct", type: "master", fcf: 0.0195, modules: ["mox_base", "mox_task_bonus", "mox_supermarket"] },
 
+    // --- BEA 東亞 ---
+    {
+        id: "bea_goal", name: "BEA GOAL", currency: "CASH_Direct", type: "master", fcf: 0.0195,
+        modules: ["bea_goal_mission", "bea_goal_base", "bea_goal_travel_transport", "bea_goal_entertainment", "bea_goal_online_mobile"]
+    },
+    {
+        id: "bea_world", name: "BEA World Mastercard", currency: "BEA_Points", type: "master", fcf: 0.0195,
+        modules: ["bea_world_mission", "bea_world_base", "bea_world_bonus"],
+        redemption: { unit: "BEA分", min: 0, fee: "無", ratio: "250分 = $1" }
+    },
+    {
+        id: "bea_world_privilege", name: "BEA 顯卓理財 World Mastercard", currency: "BEA_Points", type: "master", fcf: 0.0195,
+        modules: ["bea_world_mission", "bea_world_base", "bea_world_bonus"],
+        redemption: { unit: "BEA分", min: 0, fee: "無", ratio: "250分 = $1" }
+    },
+    {
+        id: "bea_ititanium", name: "BEA i-Titanium", currency: "BEA_iDollar", type: "visa", fcf: 0.0195,
+        modules: ["bea_ititanium_mission", "bea_ititanium_base", "bea_ititanium_online_mobile"],
+        redemption: { unit: "i-Dollar", min: 0, fee: "無", ratio: "1 i-Dollar = $1" }
+    },
+    {
+        id: "bea_unionpay_diamond", name: "BEA 銀聯雙幣鑽石", currency: "BEA_Points", type: "unionpay", fcf: 0,
+        modules: ["bea_unionpay_base", "bea_unionpay_rmb", "bea_unionpay_fx", "bea_unionpay_dining", "bea_unionpay_local"],
+        redemption: { unit: "BEA分", min: 0, fee: "無", ratio: "250分 = $1" }
+    },
+
 ];
 
 // ... (redHotCategories & modulesDB 保持不變) ...

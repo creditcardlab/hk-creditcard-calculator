@@ -161,6 +161,7 @@ function resolveCategory(cardId, inputCategory) {
 
 const CATEGORY_HIERARCHY = (DATA && DATA.rules && DATA.rules.categoryHierarchy) ? DATA.rules.categoryHierarchy : {
     "overseas_cn": ["overseas"],
+    "overseas_mo": ["overseas"],
     "overseas_jkt": ["overseas"],
     "overseas_tw": ["overseas"],
     "overseas_other": ["overseas"],
@@ -255,7 +256,7 @@ function checkValidity(mod, txDate, isHoliday) {
     return true;
 }
 
-function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline) {
+function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay) {
     const resolvedCategory = resolveCategory(card.id, category);
     const rules = DATA && DATA.rules;
     const prefix = card.id.split('_')[0];
@@ -410,13 +411,16 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                 }
             }
             else if (mod.type === "mission_tracker") {
-                if (userProfile.settings[mod.setting_key]) {
-                    const match = isCategoryMatch(mod.match, category);
+                if (userProfile.settings[mod.setting_key] !== false) {
+                    const match = mod.match ? isCategoryMatch(mod.match, category) : true;
                     const eligible = match && (typeof mod.eligible_check === 'function' ? mod.eligible_check(category, { isOnline: !!isOnline }) : true);
                     missionTags.push({ id: mod.mission_id, eligible, desc: mod.desc });
                 }
             }
-            else if (mod.type === "category" && isCategoryMatch(mod.match, category)) {
+            else if (mod.type === "category") {
+                const matchOk = mod.match ? isCategoryMatch(mod.match, category) : true;
+                if (!matchOk) return;
+                if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, { isOnline: !!isOnline, isMobilePay: !!isMobilePay })) return;
                 if (mod.cap_limit) {
                     if (applyCurrent) trackingKey = mod.cap_key;
 
@@ -606,11 +610,12 @@ function calculateResults(amount, category, displayMode, userProfile, txDate, is
     let results = [];
     const deductFcf = !!options.deductFcfForRanking;
     const isOnline = !!options.isOnline;
+    const isMobilePay = !!options.isMobilePay;
 
     userProfile.ownedCards.forEach(cardId => {
         const card = cardsDB.find(c => c.id === cardId);
         if (!card) return;
-        const res = buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline);
+        const res = buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay);
         if (res) results.push(res);
     });
 

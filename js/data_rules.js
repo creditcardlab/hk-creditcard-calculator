@@ -48,6 +48,7 @@ const DATA_RULES = {
 
 DATA_RULES.categoryHierarchy = {
     "overseas_cn": ["overseas"],
+    "overseas_mo": ["overseas"],
     "overseas_jkt": ["overseas"],
     "overseas_tw": ["overseas"],
     "overseas_other": ["overseas"],

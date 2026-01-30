@@ -120,7 +120,7 @@ const modulesDB = {
         min_spend: 300, cap_mode: "reward", cap_limit: 150, cap_key: "dbs_live_fresh_cap" // Cap 150 DBS$
     },
     "dbs_live_fresh_online_foreign": {
-        type: "category", match: ["overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.01, desc: "網上外幣 (1%)", mode: "replace"
+        type: "category", match: ["overseas_jkt", "overseas_tw", "overseas_cn", "overseas_mo", "overseas_other"], rate: 0.01, desc: "網上外幣 (1%)", mode: "replace"
         // 只限外幣網上簽賬（海外交易），非自選類別時適用
     },
     "dbs_live_fresh_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
@@ -171,7 +171,7 @@ const modulesDB = {
     },
     // Tier 2 Foreign (Other Overseas): 5% Total => 4.6% Bonus.
     "travel_plus_tier2_bonus": {
-        type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.046, desc: "T+其他外幣 (4.6%)",
+        type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_mo", "overseas_other"], rate: 0.046, desc: "T+其他外幣 (4.6%)",
         mode: "add", setting_key: "travel_plus_promo_enabled",
         cap_mode: "reward", cap_limit: 500, cap_key: "travel_plus_reward_cap",
         req_mission_spend: 6000, req_mission_key: "spend_hangseng_travel_plus"
@@ -320,7 +320,7 @@ const modulesDB = {
         cap_mode: "reward", cap_limit: 15000, cap_key: "boc_chill_cap"
     },
     "boc_chill_online_overseas": {
-        type: "category", match: ["online", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"],
+        type: "category", match: ["online", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_mo", "overseas_other"],
         rate: 5, desc: "網購/海外 5X積分 (5%)", mode: "replace",
         cap_mode: "reward", cap_limit: 15000, cap_key: "boc_chill_cap"
     },
@@ -431,6 +431,64 @@ const modulesDB = {
     "earnmore_base": {
         type: "always", rate: 0.02, desc: "全線 2%",
         cap_mode: "spending", cap_limit: 150000, cap_key: "earnmore_annual_spend"
+    },
+
+    // --- BEA 東亞 ---
+    "bea_goal_mission": { type: "mission_tracker", desc: "BEA GOAL 月簽門檻", mission_id: "bea_goal", req_mission_key: "bea_goal_mission" },
+    "bea_goal_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
+    "bea_goal_travel_transport": {
+        type: "category", match: ["travel", "transport"], rate: 0.06, desc: "旅遊/交通 6%",
+        mode: "replace", cap_mode: "reward", cap_limit: 200, cap_key: "bea_goal_cap",
+        req_mission_spend: 2000, req_mission_key: "bea_goal_mission"
+    },
+    "bea_goal_entertainment": {
+        type: "category", match: ["entertainment"], rate: 0.05, desc: "娛樂 5%",
+        mode: "replace", cap_mode: "reward", cap_limit: 200, cap_key: "bea_goal_cap",
+        req_mission_spend: 2000, req_mission_key: "bea_goal_mission"
+    },
+    "bea_goal_online_mobile": {
+        type: "category", match: ["online"], rate: 0.04, desc: "網購/手機支付 4%",
+        mode: "replace", cap_mode: "reward", cap_limit: 200, cap_key: "bea_goal_cap",
+        req_mission_spend: 2000, req_mission_key: "bea_goal_mission",
+        eligible_check: (cat, ctx) => !!(ctx && (ctx.isOnline || ctx.isMobilePay))
+    },
+
+    "bea_world_mission": { type: "mission_tracker", desc: "BEA World 月簽門檻", mission_id: "bea_world", req_mission_key: "bea_world_mission" },
+    "bea_world_base": { type: "always", rate: 1, desc: "基本 1X" },
+    "bea_world_bonus": {
+        type: "category",
+        match: ["dining", "overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other", "online", "telecom", "apparel", "gym", "medical"],
+        rate: 12.5,
+        desc: "指定類別 12.5X",
+        mode: "replace", cap_mode: "reward", cap_limit: 115000, cap_key: "bea_world_cap",
+        req_mission_spend: 4000, req_mission_key: "bea_world_mission"
+    },
+
+    "bea_ititanium_mission": { type: "mission_tracker", desc: "BEA i-Titanium 月簽門檻", mission_id: "bea_ititanium", req_mission_key: "bea_ititanium_mission" },
+    "bea_ititanium_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
+    "bea_ititanium_online_mobile": {
+        type: "category", match: ["online"], rate: 0.036, desc: "網購/手機支付 3.6%",
+        mode: "replace", cap_mode: "reward", cap_limit: 300, cap_key: "bea_ititanium_cap",
+        req_mission_spend: 2000, req_mission_key: "bea_ititanium_mission",
+        eligible_check: (cat, ctx) => !!(ctx && (ctx.isOnline || ctx.isMobilePay))
+    },
+
+    "bea_unionpay_base": { type: "always", rate: 1, desc: "基本 1X" },
+    "bea_unionpay_rmb": {
+        type: "category", match: ["overseas_cn"], rate: 12, desc: "人民幣簽賬 12X",
+        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap"
+    },
+    "bea_unionpay_fx": {
+        type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_other"], rate: 10, desc: "外幣簽賬 10X",
+        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap"
+    },
+    "bea_unionpay_dining": {
+        type: "category", match: ["dining"], rate: 3, desc: "本地食肆 3X",
+        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap"
+    },
+    "bea_unionpay_local": {
+        type: "category", match: ["general"], rate: 2, desc: "本地零售 2X",
+        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap"
     }
 
 };

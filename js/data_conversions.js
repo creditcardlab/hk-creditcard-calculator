@@ -20,3 +20,5 @@ const bocPointsConversion = { src: "BOC_Points", miles_rate: 1 / 15, cash_rate: 
 conversionDB.push(bocPointsConversion);// BOC Points added
 conversionDB.push({ src: "AE_MR", miles_rate: 1 / 18, cash_rate: 1 / 300 }); // 18分=1里 | 300分=$1
 conversionDB.push({ src: "Fubon_Points", miles_rate: 1 / 15, cash_rate: 1 / 200 }); // 15分=1里 | 200分=$1
+conversionDB.push({ src: "BEA_Points", miles_rate: 0, cash_rate: 1 / 250 }); // 250分=$1
+conversionDB.push({ src: "BEA_iDollar", miles_rate: 0, cash_rate: 1 }); // i-Dollar = $1

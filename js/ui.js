@@ -119,7 +119,8 @@ const CATEGORY_DEF = [
     // Split Overseas Category - 3 Way
     { v: "overseas_jkt", t: "🇯🇵🇰🇷🇹🇭 海外 (日韓泰)" },
     { v: "overseas_tw", t: "🇹🇼 海外 (台灣)" },
-    { v: "overseas_cn", t: "🇨🇳🇲🇴 海外 (內地澳門)" },
+    { v: "overseas_cn", t: "🇨🇳 海外 (內地)" },
+    { v: "overseas_mo", t: "🇲🇴 海外 (澳門)" },
     { v: "overseas_other", t: "🌎 海外 (其他)" },
     { v: "alipay", t: "📱 Alipay / WeChat Pay" },
     { v: "gym", t: "🏋️ 健身/運動服飾" },
@@ -631,7 +632,9 @@ function renderDashboard(userProfile) {
 function renderCalculatorResults(results, currentMode) {
     let html = "";
     const onlineToggle = document.getElementById('tx-online');
+    const mobileToggle = document.getElementById('tx-mobile');
     const isOnline = onlineToggle ? !!onlineToggle.checked : false;
+    const isMobilePay = mobileToggle ? !!mobileToggle.checked : false;
 
     results.forEach((res, index) => {
         // Prepare Rebate Text (User specific request)
@@ -683,7 +686,8 @@ function renderCalculatorResults(results, currentMode) {
             generatedReward: res.generatedReward,
             resultText: resultText,
             pendingUnlocks: res.pendingUnlocks || [],
-            isOnline
+            isOnline,
+            isMobilePay
         }));
         let displayVal = res.displayVal;
         let displayUnit = res.displayUnit;
@@ -771,8 +775,9 @@ function renderSettings(userProfile) {
         { name: "🏛️ BOC 中銀", filter: id => id.startsWith('boc_') },
         { name: "🏛️ American Express", filter: id => id.startsWith('ae_') },
         { name: "🏦 Fubon 富邦", filter: id => id.startsWith('fubon_') },
+        { name: "🏦 BEA 東亞", filter: id => id.startsWith('bea_') },
         { name: "💳 sim / AEON / WeWa", filter: id => id.startsWith('sim_') || id.startsWith('aeon_') || id.startsWith('wewa') || id.startsWith('earnmore') || id.startsWith('mox_') },
-        { name: "💎 Others 其他", filter: id => !id.startsWith('hsbc_') && !id.startsWith('sc_') && !id.startsWith('citi_') && !id.startsWith('dbs_') && !id.startsWith('hangseng_') && !id.startsWith('boc_') && !id.startsWith('ae_') && !id.startsWith('fubon_') && !id.startsWith('sim_') && !id.startsWith('aeon_') && !id.startsWith('wewa') && !id.startsWith('earnmore') && !id.startsWith('mox_') }
+        { name: "💎 Others 其他", filter: id => !id.startsWith('hsbc_') && !id.startsWith('sc_') && !id.startsWith('citi_') && !id.startsWith('dbs_') && !id.startsWith('hangseng_') && !id.startsWith('boc_') && !id.startsWith('ae_') && !id.startsWith('fubon_') && !id.startsWith('bea_') && !id.startsWith('sim_') && !id.startsWith('aeon_') && !id.startsWith('wewa') && !id.startsWith('earnmore') && !id.startsWith('mox_') }
     ];
 
     // Data Management Section
@@ -934,7 +939,11 @@ window.renderLedger = function (transactions) {
 window.handleClearHistory = function () {
     if (confirm("確定要清除所有記帳記錄嗎？此操作無法復原。")) {
         userProfile.transactions = [];
+        if (typeof clearUsageAndStats === 'function') {
+            clearUsageAndStats();
+        }
         saveUserData();
+        refreshUI();
         renderLedger([]);
     }
 }
