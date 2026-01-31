@@ -12,6 +12,7 @@ function init() {
     migrateWinterUsage();
     resetRedMonthlyCaps();
     resetBeaMonthlyCaps();
+    resetMonthlyCaps();
 
     // Initial Render
     refreshUI();
@@ -75,6 +76,22 @@ function resetBeaMonthlyCaps() {
     }
 }
 
+function resetMonthlyCaps() {
+    if (!userProfile.usage) userProfile.usage = {};
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    if (userProfile.usage.monthly_cap_month !== monthKey) {
+        [
+            "boc_sogo_mobile_cap",
+            "wewa_mobile_pay_cap",
+            "wewa_mobile_mission",
+            "bea_goal_mobile_cap"
+        ].forEach(k => delete userProfile.usage[k]);
+        userProfile.usage.monthly_cap_month = monthKey;
+        saveUserData();
+    }
+}
+
 // --- CORE ACTIONS ---
 
 // loadUserData and saveUserData are inherited from core.js (V9.2) to match new data structure
@@ -108,6 +125,7 @@ function clearUsageAndStats() {
     userProfile.usage = {};
     if (prevUsage.red_cap_month) userProfile.usage.red_cap_month = prevUsage.red_cap_month;
     if (prevUsage.bea_month) userProfile.usage.bea_month = prevUsage.bea_month;
+    if (prevUsage.monthly_cap_month) userProfile.usage.monthly_cap_month = prevUsage.monthly_cap_month;
     if (prevUsage.winter_recalc_v2) userProfile.usage.winter_recalc_v2 = prevUsage.winter_recalc_v2;
     userProfile.stats = { totalSpend: 0, totalVal: 0, txCount: 0 };
 }
@@ -144,8 +162,9 @@ window.runCalc = function () {
     const cat = document.getElementById('category').value;
     const onlineToggle = document.getElementById('tx-online');
     const isOnline = onlineToggle ? !!onlineToggle.checked : false;
-    const mobileToggle = document.getElementById('tx-mobile');
-    const isMobilePay = mobileToggle ? !!mobileToggle.checked : false;
+    const paymentSelect = document.getElementById('tx-payment');
+    const paymentMethod = paymentSelect ? paymentSelect.value : "physical";
+    const isMobilePay = paymentMethod !== "physical";
     let txDate = document.getElementById('tx-date').value;
 
     // Fallback: If date is empty, use Today
@@ -171,7 +190,8 @@ window.runCalc = function () {
     const results = calculateResults(amt, cat, currentMode, userProfile, txDate, isHoliday, {
         deductFcfForRanking: !!userProfile.settings.deduct_fcf_ranking && currentMode === 'cash',
         isOnline,
-        isMobilePay
+        isMobilePay,
+        paymentMethod
     });
 
     // Calls ui.js function
@@ -201,6 +221,7 @@ function rebuildUsageAndStatsFromTransactions() {
     userProfile.stats = { totalSpend: 0, totalVal: 0, txCount: 0 };
     if (prevUsage.red_cap_month) userProfile.usage.red_cap_month = prevUsage.red_cap_month;
     if (prevUsage.bea_month) userProfile.usage.bea_month = prevUsage.bea_month;
+    if (prevUsage.monthly_cap_month) userProfile.usage.monthly_cap_month = prevUsage.monthly_cap_month;
     if (prevUsage.winter_recalc_v2) userProfile.usage.winter_recalc_v2 = prevUsage.winter_recalc_v2;
 
     if (!Array.isArray(userProfile.transactions)) return;
@@ -210,7 +231,8 @@ function rebuildUsageAndStatsFromTransactions() {
         const category = tx.category;
         const cardId = tx.cardId;
         const isOnline = !!tx.isOnline;
-        const isMobilePay = !!tx.isMobilePay;
+        const paymentMethod = tx.paymentMethod || (tx.isMobilePay ? "mobile" : "physical");
+        const isMobilePay = paymentMethod !== "physical";
         const txDate = tx.date ? new Date(tx.date).toISOString().slice(0, 10) : "";
         const isHoliday = (typeof HolidayManager !== 'undefined' && HolidayManager.isHoliday) ? HolidayManager.isHoliday(txDate) : false;
 
@@ -229,7 +251,7 @@ function rebuildUsageAndStatsFromTransactions() {
 
         const card = cardsDB.find(c => c.id === cardId);
         if (!card) return;
-        const res = buildCardResult(card, amount, category, 'cash', userProfile, txDate, isHoliday, isOnline, isMobilePay);
+        const res = buildCardResult(card, amount, category, 'cash', userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod);
         if (!res) return;
 
         if (res.rewardTrackingKey && res.generatedReward > 0) {
@@ -259,7 +281,7 @@ function rebuildUsageAndStatsFromTransactions() {
             }
         });
 
-        trackMissionSpend(cardId, category, amount, isOnline, isMobilePay);
+        trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod);
     });
 
     if (!userProfile.usage.red_cap_month) {
@@ -281,7 +303,7 @@ window.handleDeleteTx = function (id) {
 
 // --- DATA MODIFIERS ---
 
-function trackMissionSpend(cardId, category, amount, isOnline, isMobilePay) {
+function trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod) {
     if (!cardId || typeof cardsDB === 'undefined' || typeof modulesDB === 'undefined') return;
     const card = cardsDB.find(c => c.id === cardId);
     if (!card || !Array.isArray(card.modules)) return;
@@ -293,11 +315,11 @@ function trackMissionSpend(cardId, category, amount, isOnline, isMobilePay) {
 
         let eligible = true;
         if (typeof mod.eligible_check === 'function') {
-            eligible = !!mod.eligible_check(category, { isOnline: !!isOnline, isMobilePay: !!isMobilePay });
+            eligible = !!mod.eligible_check(category, { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod });
         } else if (!mod.match) {
             eligible = true;
         } else if (Array.isArray(mod.match)) {
-            eligible = isCategoryMatch(mod.match, category);
+            eligible = isCategoryOrOnlineMatch(mod.match, category, isOnline);
         }
 
         if (!eligible) return;
@@ -306,7 +328,9 @@ function trackMissionSpend(cardId, category, amount, isOnline, isMobilePay) {
 }
 
 function commitTransaction(data) {
-    const { amount, trackingKey, estValue, guruRC, missionTags, category, cardId, rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, pendingUnlocks, isOnline, isMobilePay } = data;
+    const { amount, trackingKey, estValue, guruRC, missionTags, category, cardId, rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, pendingUnlocks, isOnline } = data;
+    const paymentMethod = data.paymentMethod || (data.isMobilePay ? "mobile" : "physical");
+    const isMobilePay = paymentMethod !== "physical";
 
     userProfile.stats.totalSpend += amount;
     userProfile.stats.totalVal += estValue;
@@ -326,7 +350,7 @@ function commitTransaction(data) {
         userProfile.usage[`spend_${cardId}`] = (userProfile.usage[`spend_${cardId}`] || 0) + amount;
     }
     // Track mission spends (e.g. sim non-online tracker) attached to the current card
-    trackMissionSpend(cardId, category, amount, isOnline, isMobilePay);
+    trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod);
     if (guruRC > 0) userProfile.usage["guru_rc_used"] = (userProfile.usage["guru_rc_used"] || 0) + guruRC;
 
     const level = parseInt(userProfile.settings.guru_level);
@@ -360,6 +384,7 @@ function commitTransaction(data) {
         category: category,
         isOnline: !!isOnline,
         isMobilePay: !!isMobilePay,
+        paymentMethod: paymentMethod,
         amount: amount,
         rebateVal: estValue,
         rebateText: data.resultText || (estValue > 0 ? `$${estValue.toFixed(2)}` : 'No Reward'),

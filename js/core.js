@@ -182,6 +182,15 @@ function isCategoryMatch(moduleMatches, category) {
     return false;
 }
 
+function isCategoryOrOnlineMatch(moduleMatches, category, isOnline) {
+    if (!Array.isArray(moduleMatches) || moduleMatches.length === 0) return false;
+    const hasOnline = moduleMatches.includes('online');
+    const filteredMatches = hasOnline ? moduleMatches.filter(match => match !== 'online') : moduleMatches;
+    const categoryMatch = filteredMatches.length > 0 ? isCategoryMatch(filteredMatches, category) : false;
+    const onlineMatch = hasOnline && !!isOnline;
+    return categoryMatch || onlineMatch;
+}
+
 function isForeignCategory(category) {
     return category && (category.startsWith('overseas') || category === 'foreign' || category === 'travel_plus_tier1');
 }
@@ -197,8 +206,11 @@ function isRetroactive(mod) {
     return !!(mod.req_mission_spend && mod.req_mission_key);
 }
 
-function isReplacerEligible(mod, amount, resolvedCategory, userProfile, includeLocked) {
-    if (!mod || mod.type !== 'category' || !isCategoryMatch(mod.match, resolvedCategory) || mod.mode !== 'replace') return false;
+function isReplacerEligible(mod, amount, resolvedCategory, userProfile, includeLocked, ctx) {
+    if (!mod || mod.type !== 'category' || mod.mode !== 'replace') return false;
+    const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, ctx && ctx.isOnline) : true;
+    if (!matchOk) return false;
+    if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, ctx || {})) return false;
     if (mod.min_single_spend && amount < mod.min_single_spend) return false;
     if (mod.min_spend && amount < mod.min_spend) return false;
 
@@ -256,7 +268,7 @@ function checkValidity(mod, txDate, isHoliday) {
     return true;
 }
 
-function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay) {
+function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod) {
     const resolvedCategory = resolveCategory(card.id, category);
     const rules = DATA && DATA.rules;
     const prefix = card.id.split('_')[0];
@@ -333,13 +345,14 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
 
     // Check for Replacer Module first (Optimization)
     // This replacerModule is for category-specific 'replace' mode modules
+    const ctx = { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod };
     let replacerModuleCurrentId = activeModules.find(mid => {
         const m = modulesDB[mid];
-        return isReplacerEligible(m, amount, resolvedCategory, userProfile, false);
+        return isReplacerEligible(m, amount, resolvedCategory, userProfile, false, ctx);
     });
     let replacerModulePotentialId = activeModules.find(mid => {
         const m = modulesDB[mid];
-        return isReplacerEligible(m, amount, resolvedCategory, userProfile, true);
+        return isReplacerEligible(m, amount, resolvedCategory, userProfile, true, ctx);
     });
     let replacerModuleCurrent = replacerModuleCurrentId ? modulesDB[replacerModuleCurrentId] : null;
     let replacerModulePotential = replacerModulePotentialId ? modulesDB[replacerModulePotentialId] : null;
@@ -412,15 +425,15 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             }
             else if (mod.type === "mission_tracker") {
                 if (userProfile.settings[mod.setting_key] !== false) {
-                    const match = mod.match ? isCategoryMatch(mod.match, category) : true;
-                    const eligible = match && (typeof mod.eligible_check === 'function' ? mod.eligible_check(category, { isOnline: !!isOnline }) : true);
+                    const match = mod.match ? isCategoryOrOnlineMatch(mod.match, category, isOnline) : true;
+                    const eligible = match && (typeof mod.eligible_check === 'function' ? mod.eligible_check(category, { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod }) : true);
                     missionTags.push({ id: mod.mission_id, eligible, desc: mod.desc });
                 }
             }
             else if (mod.type === "category") {
-                const matchOk = mod.match ? isCategoryMatch(mod.match, category) : true;
+                const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, category, isOnline) : true;
                 if (!matchOk) return;
-                if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, { isOnline: !!isOnline, isMobilePay: !!isMobilePay })) return;
+                if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod })) return;
                 if (mod.cap_limit) {
                     if (applyCurrent) trackingKey = mod.cap_key;
 
@@ -611,11 +624,12 @@ function calculateResults(amount, category, displayMode, userProfile, txDate, is
     const deductFcf = !!options.deductFcfForRanking;
     const isOnline = !!options.isOnline;
     const isMobilePay = !!options.isMobilePay;
+    const paymentMethod = options.paymentMethod || (isMobilePay ? "mobile" : "physical");
 
     userProfile.ownedCards.forEach(cardId => {
         const card = cardsDB.find(c => c.id === cardId);
         if (!card) return;
-        const res = buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay);
+        const res = buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod);
         if (res) results.push(res);
     });
 

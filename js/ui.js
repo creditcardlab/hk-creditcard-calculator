@@ -115,7 +115,6 @@ function toggleCollapsible(id) {
 const CATEGORY_DEF = [
     { v: "general", t: "🛒 本地零售 (Local Retail)" },
     { v: "dining", t: "🍱 餐飲 (Dining)" },
-    { v: "online", t: "💻 網上購物 (Online)" },
     // Split Overseas Category - 3 Way
     { v: "overseas_jkt", t: "🇯🇵🇰🇷🇹🇭 海外 (日韓泰)" },
     { v: "overseas_tw", t: "🇹🇼 海外 (台灣)" },
@@ -632,9 +631,10 @@ function renderDashboard(userProfile) {
 function renderCalculatorResults(results, currentMode) {
     let html = "";
     const onlineToggle = document.getElementById('tx-online');
-    const mobileToggle = document.getElementById('tx-mobile');
     const isOnline = onlineToggle ? !!onlineToggle.checked : false;
-    const isMobilePay = mobileToggle ? !!mobileToggle.checked : false;
+    const paymentSelect = document.getElementById('tx-payment');
+    const paymentMethod = paymentSelect ? paymentSelect.value : "physical";
+    const isMobilePay = paymentMethod !== "physical";
 
     results.forEach((res, index) => {
         // Prepare Rebate Text (User specific request)
@@ -687,7 +687,8 @@ function renderCalculatorResults(results, currentMode) {
             resultText: resultText,
             pendingUnlocks: res.pendingUnlocks || [],
             isOnline,
-            isMobilePay
+            isMobilePay,
+            paymentMethod
         }));
         let displayVal = res.displayVal;
         let displayUnit = res.displayUnit;

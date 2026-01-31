@@ -66,8 +66,15 @@
                             網上交易
                         </label>
                         <label class="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-full">
-                            <input id="tx-mobile" type="checkbox" class="accent-blue-600" onchange="runCalc()">
-                            手機支付
+                            支付方式
+                            <select id="tx-payment" class="bg-white border border-gray-200 rounded-lg px-2 py-1 text-[11px]" onchange="runCalc()">
+                                <option value="physical">實體卡</option>
+                                <option value="apple_pay">Apple Pay</option>
+                                <option value="google_pay">Google Pay</option>
+                                <option value="samsung_pay">Samsung Pay</option>
+                                <option value="unionpay_cloud">雲閃付</option>
+                                <option value="omycard">OmyCard</option>
+                            </select>
                         </label>
                     </div>
                 </div>

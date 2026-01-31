@@ -335,6 +335,12 @@ const modulesDB = {
         type: "category", match: ["go_merchant"], rate: 5, desc: "Go商戶 5X積分 (5%)",
         mode: "replace", cap_mode: "reward", cap_limit: 10000, cap_key: "boc_go_merchant_cap"
     },
+    "boc_sogo_mobile_pay": {
+        type: "category", rate: 0.054, desc: "手機支付 5.4%",
+        mode: "replace", cap_mode: "reward", cap_limit: 2000, cap_key: "boc_sogo_mobile_cap",
+        eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "google_pay", "samsung_pay", "mobile"].includes(ctx.paymentMethod))
+    },
+
 
     // --- American Express Modules ---
     "ae_explorer_base": { type: "always", rate: 3, desc: "基本 3X" },
@@ -428,6 +434,17 @@ const modulesDB = {
         type: "category", match: ["travel", "entertainment", "apparel" /*Theme park?*/], rate: 0.036, desc: "旅遊/玩樂 +3.6% (4%)",
         mode: "add", cap_mode: "reward", cap_limit: 2000, cap_key: "wewa_annual_cap"
     },
+    "wewa_mobile_mission": {
+        type: "mission_tracker", req_mission_key: "wewa_mobile_mission",
+        desc: "WeWa 每月簽賬門檻", mission_id: "wewa_mobile",
+        eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "omycard", "mobile"].includes(ctx.paymentMethod))
+    },
+    "wewa_mobile_pay": {
+        type: "category", rate: 0.04, desc: "手機支付 4%",
+        mode: "replace", cap_mode: "spending", cap_limit: 5556, cap_key: "wewa_mobile_pay_cap",
+        req_mission_spend: 1500, req_mission_key: "wewa_mobile_mission",
+        eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "omycard", "mobile"].includes(ctx.paymentMethod))
+    },
     "earnmore_base": {
         type: "always", rate: 0.02, desc: "全線 2%",
         cap_mode: "spending", cap_limit: 150000, cap_key: "earnmore_annual_spend"
@@ -447,10 +464,10 @@ const modulesDB = {
         req_mission_spend: 2000, req_mission_key: "bea_goal_mission"
     },
     "bea_goal_online_mobile": {
-        type: "category", match: ["online"], rate: 0.04, desc: "網購/手機支付 4%",
-        mode: "replace", cap_mode: "reward", cap_limit: 200, cap_key: "bea_goal_cap",
+        type: "category", rate: 0.044, desc: "手機支付 4.4%",
+        mode: "replace", cap_mode: "spending", cap_limit: 5000, cap_key: "bea_goal_mobile_cap",
         req_mission_spend: 2000, req_mission_key: "bea_goal_mission",
-        eligible_check: (cat, ctx) => !!(ctx && (ctx.isOnline || ctx.isMobilePay))
+        eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "google_pay", "mobile"].includes(ctx.paymentMethod))
     },
 
     "bea_world_mission": { type: "mission_tracker", desc: "BEA World 月簽門檻", mission_id: "bea_world", req_mission_key: "bea_world_mission" },
@@ -467,7 +484,7 @@ const modulesDB = {
     "bea_ititanium_mission": { type: "mission_tracker", desc: "BEA i-Titanium 月簽門檻", mission_id: "bea_ititanium", req_mission_key: "bea_ititanium_mission" },
     "bea_ititanium_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
     "bea_ititanium_online_mobile": {
-        type: "category", match: ["online"], rate: 0.036, desc: "網購/手機支付 3.6%",
+        type: "category", rate: 0.036, desc: "網購/手機支付 3.6%",
         mode: "replace", cap_mode: "reward", cap_limit: 300, cap_key: "bea_ititanium_cap",
         req_mission_spend: 2000, req_mission_key: "bea_ititanium_mission",
         eligible_check: (cat, ctx) => !!(ctx && (ctx.isOnline || ctx.isMobilePay))

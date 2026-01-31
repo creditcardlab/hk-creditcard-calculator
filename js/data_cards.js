@@ -129,6 +129,10 @@ const cardsDB = [
         }
     },
 
+    {
+        id: "boc_sogo", name: "中銀 Sogo Visa Signature", currency: "CASH_Direct", type: "visa", fcf: 0.0195,
+        modules: ["boc_sogo_mobile_pay"]
+    },
     // --- American Express Series ---
     {
         id: "ae_explorer", name: "AE Explorer", currency: "AE_MR", type: "ae", fcf: 0.02,
@@ -185,7 +189,7 @@ const cardsDB = [
     },
     {
         id: "wewa", name: "安信 WeWa UnionPay", currency: "CASH_Direct", type: "unionpay", fcf: 0,
-        modules: ["wewa_base", "wewa_bonus"],
+        modules: ["wewa_base", "wewa_bonus", "wewa_mobile_mission", "wewa_mobile_pay"],
         redemption: { unit: "現金", min: 0, fee: "免費", ratio: "旅遊/主題公園 4%" }
     },
     { id: "earnmore", name: "EarnMORE 銀聯", currency: "CASH_Direct", type: "unionpay", fcf: 0, modules: ["earnmore_base"] },
