@@ -111,50 +111,26 @@ function toggleCollapsible(id) {
     }
 }
 
-// Shared Category Definitions
-const CATEGORY_DEF = [
-    { v: "general", t: "🛒 本地零售 (Local Retail)" },
-    { v: "dining", t: "🍱 餐飲 (Dining)" },
-    // Split Overseas Category - 3 Way
-    { v: "overseas_jkt", t: "🇯🇵🇰🇷🇹🇭 海外 (日韓泰)" },
-    { v: "overseas_tw", t: "🇹🇼 海外 (台灣)" },
-    { v: "overseas_cn", t: "🇨🇳 海外 (內地)" },
-    { v: "overseas_mo", t: "🇲🇴 海外 (澳門)" },
-    { v: "overseas_other", t: "🌎 海外 (其他)" },
-    { v: "alipay", t: "📱 Alipay / WeChat Pay" },
-    { v: "gym", t: "🏋️ 健身/運動服飾" },
-    { v: "medical", t: "👨‍⚕️ 醫療服務" },
-    { v: "transport", t: "🚌 交通 (Transport)" },
-    { v: "grocery", t: "🥦 超市 (Grocery)" },
-    { v: "travel", t: "🧳 旅遊商戶 (Travel)" },
-    { v: "entertainment", t: "🎬 娛樂/電影 (Entertainment)" },
-    { v: "apparel", t: "👕 服飾/百貨 (Apparel/Dept)" },
-    { v: "health_beauty", t: "💄 美妝/護理 (Beauty/Watsons)" },
-    { v: "telecom", t: "📱 電訊/電器 (Telecom/Elec)" },
-    // Dynamic/Card-specific
-    { v: "moneyback_merchant", t: "🅿️ 易賞錢商戶 (百佳/屈臣氏/豐澤)", req: 'hsbc_easy' },
-    { v: "tuition", t: "🎓 學費 (Tuition)", req: 'hsbc_gold_student' },
-    { v: "red_designated", t: "🌹 Red 指定商戶 (8%)", req: 'hsbc_red' },
-    { v: "em_designated_spend", t: "🚋 EveryMile 指定 ($2/里)", req: 'hsbc_everymile' },
-    { v: "smart_designated", t: "🛍️ Smart 指定商戶 (5%)", req: 'sc_smart' },
-    { v: "cathay_hkexpress", t: "🛫 國泰/HK Express ($2/里)", req: (cards) => cards.some(id => id.startsWith('sc_cathay')) },
-    { v: "citi_club_merchant", t: "🛍️ The Club 指定商戶 (4%)", req: 'citi_club' },
-    { v: "chill_merchant", t: "🎬 Chill商戶 (影視/咖啡/Uniqlo)", req: 'boc_chill' },
-    { v: "go_merchant", t: "🚀 Go商戶", req: 'boc_go_diamond' }
-];
+function getCategoryList(ownedCards) {
+    if (typeof categoriesDB === 'undefined') return [];
+    return Object.entries(categoriesDB)
+        .map(([id, c]) => ({ id, ...c }))
+        .filter(c => !c.hidden)
+        .filter(c => {
+            if (!c.req) return true;
+            if (typeof c.req === 'function') return c.req(ownedCards);
+            return ownedCards.includes(c.req);
+        })
+        .sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
+}
 
 function updateCategoryDropdown(ownedCards) {
     const select = document.getElementById('category');
     const currentVal = select.value;
 
-    let options = CATEGORY_DEF.filter(cat => {
-        if (!cat.req) return true;
-        if (typeof cat.req === 'function') return cat.req(ownedCards);
-        return ownedCards.includes(cat.req);
-    });
-
-    select.innerHTML = options.map(o => `<option value="${o.v}">${o.t}</option>`).join('');
-    if (options.some(o => o.v === currentVal)) select.value = currentVal;
+    const options = getCategoryList(ownedCards);
+    select.innerHTML = options.map(o => `<option value="${o.id}">${o.label}</option>`).join('');
+    if (options.some(o => o.id === currentVal)) select.value = currentVal;
     else select.value = "general";
 
     toggleCategoryHelp();
@@ -917,8 +893,8 @@ window.renderLedger = function (transactions) {
                     </div>
                      <div class="text-sm font-bold text-gray-800">
                         ${(() => {
-                const def = CATEGORY_DEF.find(d => d.v === tx.category);
-                const label = def ? def.t.split(' (')[0] : (tx.desc || tx.category);
+                const def = (typeof categoriesDB !== 'undefined') ? categoriesDB[tx.category] : null;
+                const label = def ? def.label.split(' (')[0] : (tx.desc || tx.category);
                 return escapeHtml(label);
             })()}
                     </div>

@@ -474,7 +474,7 @@ const modulesDB = {
     "bea_world_base": { type: "always", rate: 1, desc: "基本 1X" },
     "bea_world_bonus": {
         type: "category",
-        match: ["dining", "overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other", "online", "telecom", "apparel", "gym", "medical"],
+        match: ["dining", "overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other", "online", "electronics", "apparel", "gym", "medical"],
         rate: 12.5,
         desc: "指定類別 12.5X",
         mode: "replace", cap_mode: "reward", cap_limit: 115000, cap_key: "bea_world_cap",
