@@ -41,6 +41,8 @@ const modulesDB = {
     "sc_smart_base": { type: "always", rate: 0.0055, desc: "基本 0.55%" },
     "sc_smart_designated": { type: "category", match: ["smart_designated"], rate: 0.05, desc: "指定商戶 5%", mode: "replace", cap_limit: 60000, cap_key: "sc_smart_cap" },
 
+"sc_cathay_overseas_private": { type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 0.3334, desc: "Private: Overseas $2/mi" },
+
     // --- Citi ---
     "citi_pm_base": { type: "always", rate: 1.5, desc: "基本 1.5X ($8/里)" },
     "citi_pm_overseas": { type: "category", match: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"], rate: 3, desc: "海外 3X ($4/里)", mode: "replace" },

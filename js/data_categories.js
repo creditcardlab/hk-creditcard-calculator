@@ -51,6 +51,8 @@ const categoriesDB = {
     wechat: { label: "💬 WeChat Pay", hidden: true },
     gas: { label: "⛽ 油站", hidden: true },
 
+    live_fresh_selected: { label: "DBS Live Fresh Selected", hidden: true },
+
     // Card-specific / UI gated
     moneyback_merchant: { label: "🏠 指定商戶 (易賞錢)", order: 100, red_hot: "home", req: "hsbc_easy" },
     tuition: { label: "🎓 學費", order: 101, req: "hsbc_gold_student" },

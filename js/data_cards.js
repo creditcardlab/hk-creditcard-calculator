@@ -13,7 +13,7 @@ const cardsDB = [
         modules: ["vs_base", "vs_red_hot_bonus", "red_hot_variable", "travel_guru_v2", "winter_tracker"],
         redemption: { unit: "RC", min: 40, fee: "免費", ratio: "1 RC = 10 里" }
     },
-    { id: "hsbc_red", name: "HSBC Red Card", currency: "HSBC_RC", type: "master", fcf: 0.0195, modules: ["red_base", "red_online", "red_designated_bonus", "red_category_bonus", "travel_guru_v2", "winter_tracker"] },
+    { id: "hsbc_red", name: "HSBC Red Card", currency: "HSBC_RC", type: "master", fcf: 0.0195, modules: ["red_base", "red_online", "red_designated_bonus", "travel_guru_v2", "winter_tracker"] },
     { id: "hsbc_pulse", name: "HSBC Pulse 銀聯鑽石", currency: "HSBC_RC", type: "unionpay", fcf: 0, modules: ["hsbc_std_base", "red_hot_variable", "pulse_china_bonus", "travel_guru_v2", "winter_tracker"] },
     { id: "hsbc_unionpay_std", name: "HSBC 銀聯雙幣 (標準)", currency: "HSBC_RC", type: "unionpay", fcf: 0, modules: ["hsbc_std_base", "red_hot_variable", "travel_guru_v2", "winter_tracker"] },
     { id: "hsbc_easy", name: "HSBC Easy Card (白金)", currency: "HSBC_RC", type: "visa", fcf: 0.0195, modules: ["hsbc_std_base", "red_hot_variable", "easy_moneyback_bonus", "travel_guru_v2", "winter_tracker"] },
