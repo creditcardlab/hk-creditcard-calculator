@@ -10,9 +10,8 @@ function init() {
     if (!userProfile.usage["guru_spend_accum"]) userProfile.usage["guru_spend_accum"] = 0;
     if (userProfile.settings.deduct_fcf_ranking === undefined) userProfile.settings.deduct_fcf_ranking = false;
     migrateWinterUsage();
-    resetRedMonthlyCaps();
-    resetBeaMonthlyCaps();
-    resetMonthlyCaps();
+    resetCountersForPeriod("month");
+    validateUsageRegistry();
 
     // Initial Render
     refreshUI();
@@ -48,48 +47,66 @@ function migrateWinterUsage() {
     saveUserData();
 }
 
-function resetRedMonthlyCaps() {
-    if (!userProfile.usage) userProfile.usage = {};
+function getMonthKey() {
     const now = new Date();
-    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    if (userProfile.usage.red_cap_month !== monthKey) {
-        delete userProfile.usage.red_online_cap;
-        delete userProfile.usage.red_designated_cap;
-        userProfile.usage.red_cap_month = monthKey;
-        saveUserData();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function getCountersRegistry() {
+    return (typeof COUNTERS_REGISTRY !== "undefined") ? COUNTERS_REGISTRY : {};
+}
+
+function migrateCounterPeriods() {
+    if (!userProfile.usage) userProfile.usage = {};
+    if (!userProfile.usage._counter_periods) userProfile.usage._counter_periods = {};
+    if (!userProfile.usage._counter_periods.month) {
+        const legacyMonth = userProfile.usage.monthly_cap_month || userProfile.usage.red_cap_month || userProfile.usage.bea_month;
+        if (legacyMonth) userProfile.usage._counter_periods.month = legacyMonth;
     }
+}
+
+function resetCountersForPeriod(period) {
+    if (!userProfile.usage) userProfile.usage = {};
+    migrateCounterPeriods();
+    const currentKey = period === "month" ? getMonthKey() : null;
+    if (!currentKey) return;
+    const storedKey = (userProfile.usage._counter_periods || {})[period];
+    if (storedKey === currentKey) return;
+
+    const registry = getCountersRegistry();
+    Object.keys(registry).forEach((k) => {
+        if (registry[k].period === period) delete userProfile.usage[k];
+    });
+    userProfile.usage._counter_periods[period] = currentKey;
+    saveUserData();
+}
+
+function validateUsageRegistry() {
+    const registry = getCountersRegistry();
+    const usage = userProfile.usage || {};
+    const internalKeys = new Set([
+        "_counter_periods",
+        "monthly_cap_month",
+        "red_cap_month",
+        "bea_month",
+        "winter_recalc_v2"
+    ]);
+    const unknown = Object.keys(usage).filter(k => !internalKeys.has(k) && !registry[k]);
+    if (unknown.length) {
+        console.warn("[warn] usage keys missing from COUNTERS_REGISTRY:", unknown.join(", "));
+    }
+}
+
+function resetRedMonthlyCaps() {
+    resetCountersForPeriod("month");
 }
 
 function resetBeaMonthlyCaps() {
-    if (!userProfile.usage) userProfile.usage = {};
-    const now = new Date();
-    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    if (userProfile.usage.bea_month !== monthKey) {
-        [
-            "bea_goal_cap", "bea_goal_mission",
-            "bea_world_cap", "bea_world_mission",
-            "bea_ititanium_cap", "bea_ititanium_mission",
-            "bea_unionpay_cap"
-        ].forEach(k => delete userProfile.usage[k]);
-        userProfile.usage.bea_month = monthKey;
-        saveUserData();
-    }
+    resetCountersForPeriod("month");
 }
 
 function resetMonthlyCaps() {
-    if (!userProfile.usage) userProfile.usage = {};
-    const now = new Date();
-    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    if (userProfile.usage.monthly_cap_month !== monthKey) {
-        [
-            "boc_sogo_mobile_cap",
-            "wewa_mobile_pay_cap",
-            "wewa_mobile_mission",
-            "bea_goal_mobile_cap"
-        ].forEach(k => delete userProfile.usage[k]);
-        userProfile.usage.monthly_cap_month = monthKey;
-        saveUserData();
-    }
+    resetCountersForPeriod("month");
 }
 
 // --- CORE ACTIONS ---
@@ -123,6 +140,7 @@ function refreshUI() {
 function clearUsageAndStats() {
     const prevUsage = userProfile.usage || {};
     userProfile.usage = {};
+    if (prevUsage._counter_periods) userProfile.usage._counter_periods = prevUsage._counter_periods;
     if (prevUsage.red_cap_month) userProfile.usage.red_cap_month = prevUsage.red_cap_month;
     if (prevUsage.bea_month) userProfile.usage.bea_month = prevUsage.bea_month;
     if (prevUsage.monthly_cap_month) userProfile.usage.monthly_cap_month = prevUsage.monthly_cap_month;
