@@ -113,6 +113,221 @@ function saveUserData() {
 
 function checkCap(key, limit) { const u = userProfile.usage[key] || 0; return { used: u, remaining: Math.max(0, limit - u), isMaxed: u >= limit }; }
 
+function buildPromoStatus(promo, userProfile, modulesDB) {
+    if (!promo || !userProfile) return null;
+    const eligible = Array.isArray(promo.cards) && promo.cards.some(id => (userProfile.ownedCards || []).includes(id));
+    if (!eligible) return { eligible: false };
+
+    const sections = [];
+    const renderedCaps = new Set();
+    let missionUnlockTarget = null;
+    let missionUnlockValue = null;
+
+    const isWinterPromo = promo.id === "winter_promo";
+    const winterTier1 = Math.max(0, Number(userProfile.settings && userProfile.settings.winter_tier1_threshold) || 0);
+    const winterTier2Raw = Math.max(0, Number(userProfile.settings && userProfile.settings.winter_tier2_threshold) || 0);
+    const winterTier2 = Math.max(winterTier1, winterTier2Raw);
+
+    const getModule = (key) => (key && modulesDB && modulesDB[key]) ? modulesDB[key] : null;
+    const getCapFromModule = (key) => {
+        const m = getModule(key);
+        return m && m.cap_limit ? { cap: m.cap_limit, capKey: m.cap_key || null } : null;
+    };
+
+    (promo.sections || []).forEach(sec => {
+        if (sec.type === "mission") {
+            let spend = 0;
+            if (sec.usageKeys) spend = sec.usageKeys.reduce((s, k) => s + (Number(userProfile.usage[k]) || 0), 0);
+            else spend = Number(userProfile.usage[sec.usageKey]) || 0;
+            const target = isWinterPromo ? winterTier2 : sec.target;
+            missionUnlockTarget = target;
+            missionUnlockValue = spend;
+            const pct = target > 0 ? Math.min(100, (spend / target) * 100) : 0;
+            const unlocked = spend >= target;
+            let markers = null;
+            const markersSrc = isWinterPromo ? [winterTier1, winterTier2] : sec.markers;
+            if (markersSrc) {
+                const list = Array.isArray(markersSrc) ? markersSrc.slice() : [];
+                if (list.length > 0 && list[0] !== 0) list.unshift(0);
+                markers = list.map(m => `<span>${m.toLocaleString()}</span>`).join('');
+            }
+
+            sections.push({
+                label: sec.label || "Mission Progress",
+                valueText: `$${spend.toLocaleString()} / $${target.toLocaleString()}`,
+                progress: isWinterPromo ? 100 : pct,
+                barColor: isWinterPromo ? "bg-gray-200" : (unlocked ? "bg-blue-500" : "bg-gray-400 opacity-50"),
+                overlay: isWinterPromo ? (() => {
+                    const t1 = winterTier1;
+                    const t2 = Math.max(t1, winterTier2);
+                    const totalCap = t2 || 1;
+                    const seg1Width = (t1 / totalCap) * 100;
+                    const seg2Width = 100 - seg1Width;
+                    const seg1Fill = t1 > 0 ? Math.min(1, spend / t1) * seg1Width : 0;
+                    const seg2Fill = t2 > t1 ? Math.min(1, Math.max(0, spend - t1) / (t2 - t1)) * seg2Width : 0;
+                    const seg1WidthSafe = Math.max(0, Math.min(100, seg1Width));
+                    const seg2WidthSafe = Math.max(0, Math.min(100, seg2Width));
+                    return `<div class="absolute inset-0">
+                        <div class="absolute inset-0 flex">
+                            <div style="width:${seg1WidthSafe}%" class="h-3"></div>
+                            <div style="width:${seg2WidthSafe}%" class="bg-gray-200 h-3"></div>
+                        </div>
+                        <div class="absolute inset-0 flex">
+                            <div style="width:${seg1Fill}%" class="bg-blue-500 h-3"></div>
+                            <div style="width:${seg2Fill}%" class="bg-blue-400 h-3"></div>
+                        </div>
+                        <div class="absolute top-0 bottom-0" style="left:${seg1WidthSafe}%; width:1px; background:rgba(0,0,0,0.08)"></div>
+                    </div>`;
+                })() : null,
+                subText: unlocked ? `<span class="text-green-600 font-bold">Unlocked</span>` : `<span class="text-gray-400">Remaining $${Math.max(0, target - spend).toLocaleString()}</span>`,
+                markers: markers
+            });
+        }
+
+        if (sec.type === "cap_rate") {
+            const used = Number(userProfile.usage[sec.usageKey]) || 0;
+            let capVal = sec.cap;
+            if (sec.capModule) {
+                const capInfo = getCapFromModule(sec.capModule);
+                if (capInfo && capInfo.cap) capVal = capInfo.cap;
+            }
+            const reward = Math.min(capVal, used * sec.rate);
+            const pct = Math.min(100, (reward / capVal) * 100);
+            const unlocked = missionUnlockValue !== null ? missionUnlockValue >= sec.unlockTarget : true;
+            const barCls = unlocked ? (reward >= capVal ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
+            const unit = sec.unit || "";
+
+            sections.push({
+                label: sec.label || "Reward Progress",
+                valueText: `${Math.floor(reward).toLocaleString()} / ${capVal} ${unit}`.trim(),
+                progress: pct,
+                striped: true,
+                barColor: barCls,
+                subText: unlocked ? (reward >= capVal ? "Capped" : "In Progress") : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> Locked ${Math.floor(reward)} ${unit}</span>`
+            });
+        }
+
+        if (sec.type === "tier_cap") {
+            const total = Number(userProfile.usage[sec.totalKey]) || 0;
+            const eligibleVal = Number(userProfile.usage[sec.eligibleKey]) || 0;
+            const tiers = (isWinterPromo && Array.isArray(sec.tiers) && sec.tiers.length >= 2) ? [
+                { ...sec.tiers[0], threshold: winterTier1 },
+                { ...sec.tiers[1], threshold: winterTier2 }
+            ] : sec.tiers;
+            let cap = tiers[0].cap;
+            let reward = 0;
+            if (total >= tiers[1].threshold) {
+                cap = tiers[1].cap;
+                reward = Math.min(tiers[1].cap, eligibleVal * tiers[1].rate);
+            } else if (total >= tiers[0].threshold) {
+                cap = tiers[0].cap;
+                reward = Math.min(tiers[0].cap, eligibleVal * tiers[0].rate);
+            }
+            const pct = Math.min(100, cap > 0 ? (reward / cap) * 100 : 0);
+            const unlocked = total >= tiers[0].threshold;
+            const barCls = unlocked ? (reward >= cap ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
+            let overlay = null;
+            let subText = unlocked ? (reward >= cap ? "Capped" : "In Progress") : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> Locked ${Math.floor(reward)} RC</span>`;
+            let cap1 = null;
+            let cap2 = null;
+            let rewardLocked = false;
+
+            if (isWinterPromo) {
+                cap1 = tiers[0].cap || 0;
+                cap2 = Math.max(cap1, tiers[1].cap || 0);
+                const capTotal = cap2 || 1;
+                const seg1Width = (cap1 / capTotal) * 100;
+                const seg2Width = 100 - seg1Width;
+                const rewardTier1 = Math.min(cap1, eligibleVal * tiers[0].rate);
+                const rewardTier2 = Math.min(cap2, eligibleVal * tiers[1].rate);
+                const t1 = tiers[0].threshold || 0;
+                const t2 = Math.max(t1, tiers[1].threshold || 0);
+                const tier1Unlocked = total >= t1;
+                const tier2Unlocked = total >= t2;
+                rewardLocked = !tier1Unlocked;
+                const seg1Fill = tier1Unlocked && cap1 > 0 ? Math.min(1, rewardTier1 / cap1) * seg1Width : 0;
+                const seg2Fill = tier2Unlocked && cap2 > cap1 ? Math.min(1, Math.max(0, rewardTier2 - cap1) / (cap2 - cap1)) * seg2Width : 0;
+                const seg1WidthSafe = Math.max(0, Math.min(100, seg1Width));
+                const seg2WidthSafe = Math.max(0, Math.min(100, seg2Width));
+                overlay = `<div class="absolute inset-0">
+                    ${rewardLocked ? '' : `<div class="absolute inset-0 flex">
+                        <div style="width:${seg1WidthSafe}%" class="h-3"></div>
+                        <div style="width:${seg2WidthSafe}%" class="bg-gray-200 h-3"></div>
+                    </div>`}
+                    <div class="absolute inset-0 flex">
+                        <div style="width:${seg1Fill}%" class="bg-green-500 h-3"></div>
+                        <div style="width:${seg2Fill}%" class="bg-green-600 h-3"></div>
+                    </div>
+                    ${rewardLocked ? '' : `<div class="absolute top-0 bottom-0" style="left:${seg1WidthSafe}%; width:1px; background:rgba(0,0,0,0.08)"></div>`}
+                    ${rewardLocked ? `<div class="absolute inset-0 flex items-center justify-center text-gray-500 text-xs"><i class="fas fa-lock"></i></div>` : ''}
+                </div>`;
+
+                if (total >= t2) {
+                    subText = "Tier 2";
+                } else if (total >= t1) {
+                    subText = `<span class="text-gray-500">Tier 2 Locked ${Math.floor(rewardTier2).toLocaleString()} / ${tiers[1].cap}</span>`;
+                } else {
+                    subText = `<span class="text-gray-400">Tier 1 Locked</span>`;
+                }
+            }
+
+            sections.push({
+                label: sec.label || "Reward Progress",
+                valueText: `${Math.floor(reward)} / ${cap}`,
+                progress: isWinterPromo ? 100 : pct,
+                striped: !isWinterPromo,
+                barColor: isWinterPromo ? (rewardLocked ? "bg-gray-300" : "bg-gray-200") : barCls,
+                overlay: overlay,
+                subText: subText,
+                markers: isWinterPromo ? (() => {
+                    const total = cap2 || 1;
+                    return [
+                        { label: "0", pos: 0 },
+                        { label: cap1.toLocaleString(), pos: (cap1 / total) * 100 },
+                        { label: cap2.toLocaleString(), pos: 100 }
+                    ];
+                })() : null
+            });
+        }
+
+        if (sec.type === "cap") {
+            let capKey = sec.capKey;
+            let capVal = sec.cap;
+            if (sec.capModule) {
+                const capInfo = getCapFromModule(sec.capModule);
+                if (capInfo) {
+                    capVal = capInfo.cap;
+                    capKey = capInfo.capKey || capKey;
+                }
+            }
+            const used = Number(userProfile.usage[capKey]) || 0;
+            const pct = Math.min(100, (used / capVal) * 100);
+            const unlocked = missionUnlockTarget ? (missionUnlockValue >= missionUnlockTarget) : true;
+            const unit = sec.unit || '';
+            const prefix = unit ? '' : '$';
+
+            sections.push({
+                label: sec.label || "Reward Progress",
+                valueText: `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${capVal.toLocaleString()}${unit}`,
+                progress: pct,
+                striped: true,
+                barColor: used >= capVal ? "bg-red-500" : (unlocked ? "bg-green-500" : "bg-gray-400 opacity-50"),
+                subText: used >= capVal ? "Capped" : (unlocked ? `Remaining ${prefix}${Math.max(0, capVal - used).toLocaleString()}${unit}` : "Locked")
+            });
+            if (capKey) renderedCaps.add(capKey);
+        }
+    });
+
+    if (promo.capKeys) promo.capKeys.forEach(k => renderedCaps.add(k));
+
+    return {
+        eligible: true,
+        sections: sections,
+        renderedCaps: Array.from(renderedCaps),
+        capKeys: promo.capKeys || []
+    };
+}
+
 function calculateGuru(mod, amount, level, category) {
     if (level <= 0 || !isCategoryMatch([mod.category], category)) return { rate: 0, desc: "", generatedRC: 0 };
     const conf = mod.config[level];

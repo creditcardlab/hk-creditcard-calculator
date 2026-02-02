@@ -308,8 +308,8 @@ function renderDashboard(userProfile) {
     // Promotions (data-driven)
     if (typeof PROMOTIONS !== 'undefined') {
         PROMOTIONS.forEach(promo => {
-            const eligible = promo.cards.some(id => userProfile.ownedCards.includes(id));
-            if (!eligible) return;
+            const status = (typeof buildPromoStatus === "function") ? buildPromoStatus(promo, userProfile, modulesDB) : null;
+            if (!status || !status.eligible) return;
 
             const reg = (typeof PROMO_REGISTRY !== 'undefined') ? PROMO_REGISTRY[promo.id] : null;
             if (reg && reg.settingKey && userProfile.settings[reg.settingKey] === false) {
@@ -318,7 +318,8 @@ function renderDashboard(userProfile) {
                 return;
             }
 
-            const sections = [];
+            let sections = status.sections || [];
+            if (!status.sections) {
             let missionUnlockTarget = null;
             let missionUnlockValue = null;
             const isWinterPromo = promo.id === "winter_promo";
@@ -517,6 +518,10 @@ function renderDashboard(userProfile) {
             });
 
             if (promo.capKeys) promo.capKeys.forEach(k => renderedCaps.add(k));
+            } else {
+                if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
+                if (status.capKeys) status.capKeys.forEach(k => renderedCaps.add(k));
+            }
 
             let badgeText = "";
             if (promo.badge) {
