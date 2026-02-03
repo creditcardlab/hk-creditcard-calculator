@@ -15,6 +15,8 @@ function init() {
     if (userProfile.settings.deduct_fcf_ranking === undefined) userProfile.settings.deduct_fcf_ranking = false;
     migrateWinterUsage();
     resetCountersForPeriod("month");
+    resetCountersForPeriod("quarter");
+    resetCountersForPeriod("promo");
     validateUsageRegistry();
 
     // Initial Render
@@ -60,28 +62,71 @@ function getCountersRegistry() {
     return (typeof DATA !== "undefined" && DATA.countersRegistry) ? DATA.countersRegistry : {};
 }
 
+function resolveAnchorForEntry(entry, key) {
+    const defaults = (typeof DATA !== "undefined" && DATA.periodDefaults) ? DATA.periodDefaults : {};
+    const overrides = (userProfile.settings && userProfile.settings.periodOverrides) ? userProfile.settings.periodOverrides : {};
+    let override = null;
+    if (entry && entry.refType === "module" && overrides.modules && overrides.modules[entry.refId]) {
+        override = overrides.modules[entry.refId];
+    }
+    if (entry && entry.refType === "promo" && overrides.promos && overrides.promos[entry.refId]) {
+        override = overrides.promos[entry.refId];
+    }
+    const base = override || entry.anchorRef || (entry.periodType ? defaults[entry.periodType] : null) || null;
+    if (!base) return null;
+    const normalized = { ...base };
+    if (!normalized.type) normalized.type = entry.periodType;
+    if (entry && entry.refType === "promo" && entry.refId) normalized.promoId = entry.refId;
+    return normalized;
+}
+
 function migrateCounterPeriods() {
     if (!userProfile.usage) userProfile.usage = {};
     if (!userProfile.usage._counter_periods) userProfile.usage._counter_periods = {};
-    if (!userProfile.usage._counter_periods.month) {
+    const periods = userProfile.usage._counter_periods;
+    if (!periods.month) {
         const legacyMonth = userProfile.usage.monthly_cap_month || userProfile.usage.red_cap_month || userProfile.usage.bea_month;
-        if (legacyMonth) userProfile.usage._counter_periods.month = legacyMonth;
+        if (legacyMonth) periods.month = legacyMonth;
+    }
+    if (!periods.byKey) {
+        periods.byKey = {};
+        const legacyMonth = periods.month;
+        if (legacyMonth) {
+            const registry = getCountersRegistry();
+            Object.keys(registry).forEach((key) => {
+                const entry = registry[key];
+                if (!entry || entry.periodType !== "month") return;
+                const anchor = resolveAnchorForEntry(entry, key);
+                const bucketKey = legacyMonthToBucketKey(legacyMonth, anchor);
+                if (bucketKey) periods.byKey[key] = bucketKey;
+            });
+        }
     }
 }
 
 function resetCountersForPeriod(period) {
     if (!userProfile.usage) userProfile.usage = {};
     migrateCounterPeriods();
-    const currentKey = period === "month" ? getMonthKey() : null;
-    if (!currentKey) return;
-    const storedKey = (userProfile.usage._counter_periods || {})[period];
-    if (storedKey === currentKey) return;
-
     const registry = getCountersRegistry();
-    Object.keys(registry).forEach((k) => {
-        if (registry[k].period === period) delete userProfile.usage[k];
+    const byKey = (userProfile.usage._counter_periods || {}).byKey || {};
+    const today = new Date();
+
+    const keys = Object.keys(registry).filter((k) => registry[k] && registry[k].periodType === period);
+    if (keys.length === 0) return;
+
+    keys.forEach((key) => {
+        const entry = registry[key];
+        const anchor = resolveAnchorForEntry(entry, key);
+        const bucketKey = getBucketKey(today, period, anchor, anchor && anchor.promoId);
+        if (!bucketKey) return;
+        if (byKey[key] !== bucketKey) {
+            delete userProfile.usage[key];
+            byKey[key] = bucketKey;
+        }
     });
-    userProfile.usage._counter_periods[period] = currentKey;
+
+    if (!userProfile.usage._counter_periods) userProfile.usage._counter_periods = {};
+    userProfile.usage._counter_periods.byKey = byKey;
     saveUserData();
 }
 

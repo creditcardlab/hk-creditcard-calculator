@@ -13,8 +13,8 @@ const modulesDB = {
     "em_designated": { type: "category", match: ["streaming", "em_designated_spend"], rate: 0.025, desc: "指定 $2/里 (2.5%)", mode: "replace" },
     "em_grocery_low": { type: "category", match: ["grocery"], rate: 0.004, desc: "超市 (0.4%)", mode: "replace" },
     "red_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
-    "red_online": { type: "category", match: ["online"], rate: 0.04, desc: "網購 +3.6% (4%)", mode: "replace", cap_mode: "reward", cap_limit: 400, cap_key: "red_online_cap" },
-    "red_designated_bonus": { type: "category", match: ["red_designated"], rate: 0.076, desc: "指定商戶 +7.6% (8%)", cap_mode: "reward", cap_limit: 100, cap_key: "red_designated_cap" },
+    "red_online": { type: "category", match: ["online"], rate: 0.04, desc: "網購 +3.6% (4%)", mode: "replace", cap_mode: "reward", cap_limit: 400, cap_key: "red_online_cap", cap: { key: "red_online_cap", period: "month" } },
+    "red_designated_bonus": { type: "category", match: ["red_designated"], rate: 0.076, desc: "指定商戶 +7.6% (8%)", cap_mode: "reward", cap_limit: 100, cap_key: "red_designated_cap", cap: { key: "red_designated_cap", period: "month" } },
     "em_overseas_mission": { type: "mission_tracker", setting_key: "em_promo_enabled", match: ["overseas"], desc: "🌏 EM推廣", mission_id: "em_promo", promo_end: "2026-03-31", valid_to: "2026-03-31" },
     // [NEW] Actual Calculation Module for EveryMile Promo
     // Base 1% + Bonus 1.5% = 2.5% ($2/mile). Req $12,000 spend.
@@ -339,7 +339,7 @@ const modulesDB = {
     },
     "boc_sogo_mobile_pay": {
         type: "category", rate: 0.054, desc: "手機支付 5.4%",
-        mode: "replace", cap_mode: "reward", cap_limit: 2000, cap_key: "boc_sogo_mobile_cap",
+        mode: "replace", cap_mode: "reward", cap_limit: 2000, cap_key: "boc_sogo_mobile_cap", cap: { key: "boc_sogo_mobile_cap", period: "month" },
         eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "google_pay", "samsung_pay", "mobile"].includes(ctx.paymentMethod))
     },
 
@@ -437,13 +437,13 @@ const modulesDB = {
         mode: "add", cap_mode: "reward", cap_limit: 2000, cap_key: "wewa_annual_cap"
     },
     "wewa_mobile_mission": {
-        type: "mission_tracker", req_mission_key: "wewa_mobile_mission",
+        type: "mission_tracker", req_mission_key: "wewa_mobile_mission", counter: { key: "wewa_mobile_mission", period: "month" },
         desc: "WeWa 每月簽賬門檻", mission_id: "wewa_mobile",
         eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "omycard", "mobile"].includes(ctx.paymentMethod))
     },
     "wewa_mobile_pay": {
         type: "category", rate: 0.04, desc: "手機支付 4%",
-        mode: "replace", cap_mode: "spending", cap_limit: 5556, cap_key: "wewa_mobile_pay_cap",
+        mode: "replace", cap_mode: "spending", cap_limit: 5556, cap_key: "wewa_mobile_pay_cap", cap: { key: "wewa_mobile_pay_cap", period: "month" },
         req_mission_spend: 1500, req_mission_key: "wewa_mobile_mission",
         eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "omycard", "mobile"].includes(ctx.paymentMethod))
     },
@@ -453,41 +453,41 @@ const modulesDB = {
     },
 
     // --- BEA 東亞 ---
-    "bea_goal_mission": { type: "mission_tracker", desc: "BEA GOAL 月簽門檻", mission_id: "bea_goal", req_mission_key: "bea_goal_mission" },
+    "bea_goal_mission": { type: "mission_tracker", desc: "BEA GOAL 月簽門檻", mission_id: "bea_goal", req_mission_key: "bea_goal_mission", counter: { key: "bea_goal_mission", period: "month" } },
     "bea_goal_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
     "bea_goal_travel_transport": {
         type: "category", match: ["travel", "transport"], rate: 0.06, desc: "旅遊/交通 6%",
-        mode: "replace", cap_mode: "reward", cap_limit: 200, cap_key: "bea_goal_cap",
+        mode: "replace", cap_mode: "reward", cap_limit: 200, cap_key: "bea_goal_cap", cap: { key: "bea_goal_cap", period: "month" },
         req_mission_spend: 2000, req_mission_key: "bea_goal_mission"
     },
     "bea_goal_entertainment": {
         type: "category", match: ["entertainment"], rate: 0.05, desc: "娛樂 5%",
-        mode: "replace", cap_mode: "reward", cap_limit: 200, cap_key: "bea_goal_cap",
+        mode: "replace", cap_mode: "reward", cap_limit: 200, cap_key: "bea_goal_cap", cap: { key: "bea_goal_cap", period: "month" },
         req_mission_spend: 2000, req_mission_key: "bea_goal_mission"
     },
     "bea_goal_online_mobile": {
         type: "category", rate: 0.044, desc: "手機支付 4.4%",
-        mode: "replace", cap_mode: "spending", cap_limit: 5000, cap_key: "bea_goal_mobile_cap",
+        mode: "replace", cap_mode: "spending", cap_limit: 5000, cap_key: "bea_goal_mobile_cap", cap: { key: "bea_goal_mobile_cap", period: "month" },
         req_mission_spend: 2000, req_mission_key: "bea_goal_mission",
         eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "google_pay", "mobile"].includes(ctx.paymentMethod))
     },
 
-    "bea_world_mission": { type: "mission_tracker", desc: "BEA World 月簽門檻", mission_id: "bea_world", req_mission_key: "bea_world_mission" },
+    "bea_world_mission": { type: "mission_tracker", desc: "BEA World 月簽門檻", mission_id: "bea_world", req_mission_key: "bea_world_mission", counter: { key: "bea_world_mission", period: "month" } },
     "bea_world_base": { type: "always", rate: 1, desc: "基本 1X" },
     "bea_world_bonus": {
         type: "category",
         match: ["dining", "overseas", "online", "electronics", "apparel", "gym", "medical"],
         rate: 12.5,
         desc: "指定類別 12.5X",
-        mode: "replace", cap_mode: "reward", cap_limit: 115000, cap_key: "bea_world_cap",
+        mode: "replace", cap_mode: "reward", cap_limit: 115000, cap_key: "bea_world_cap", cap: { key: "bea_world_cap", period: "month" },
         req_mission_spend: 4000, req_mission_key: "bea_world_mission"
     },
 
-    "bea_ititanium_mission": { type: "mission_tracker", desc: "BEA i-Titanium 月簽門檻", mission_id: "bea_ititanium", req_mission_key: "bea_ititanium_mission" },
+    "bea_ititanium_mission": { type: "mission_tracker", desc: "BEA i-Titanium 月簽門檻", mission_id: "bea_ititanium", req_mission_key: "bea_ititanium_mission", counter: { key: "bea_ititanium_mission", period: "month" } },
     "bea_ititanium_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
     "bea_ititanium_online_mobile": {
         type: "category", rate: 0.036, desc: "網購/手機支付 3.6%",
-        mode: "replace", cap_mode: "reward", cap_limit: 300, cap_key: "bea_ititanium_cap",
+        mode: "replace", cap_mode: "reward", cap_limit: 300, cap_key: "bea_ititanium_cap", cap: { key: "bea_ititanium_cap", period: "month" },
         req_mission_spend: 2000, req_mission_key: "bea_ititanium_mission",
         eligible_check: (cat, ctx) => !!(ctx && (ctx.isOnline || ctx.isMobilePay))
     },
@@ -495,19 +495,19 @@ const modulesDB = {
     "bea_unionpay_base": { type: "always", rate: 1, desc: "基本 1X" },
     "bea_unionpay_rmb": {
         type: "category", match: ["overseas_cn"], rate: 12, desc: "人民幣簽賬 12X",
-        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap"
+        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap", cap: { key: "bea_unionpay_cap", period: "month" }
     },
     "bea_unionpay_fx": {
         type: "category", match: ["overseas"], rate: 10, desc: "外幣簽賬 10X",
-        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap"
+        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap", cap: { key: "bea_unionpay_cap", period: "month" }
     },
     "bea_unionpay_dining": {
         type: "category", match: ["dining"], rate: 3, desc: "本地食肆 3X",
-        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap"
+        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap", cap: { key: "bea_unionpay_cap", period: "month" }
     },
     "bea_unionpay_local": {
         type: "category", match: ["general"], rate: 2, desc: "本地零售 2X",
-        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap"
+        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap", cap: { key: "bea_unionpay_cap", period: "month" }
     }
 
 };

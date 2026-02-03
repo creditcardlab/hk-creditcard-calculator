@@ -38,7 +38,8 @@ function bootAppContext() {
     "data_promotions.js",
     "data_counters.js",
     "data_index.js",
-    "core.js"
+    "core.js",
+    "periods.js"
   ].map((file) => path.resolve(ROOT, "js", file));
 
   scripts.forEach(loadScript);
@@ -147,6 +148,7 @@ function main() {
   const raw = fs.readFileSync(CASES_PATH, "utf8");
   const payload = JSON.parse(raw);
   const cases = payload.cases || [];
+  const periodCases = payload.period_cases || [];
 
   const shouldUpdate = process.argv.includes("--update");
 
@@ -195,6 +197,32 @@ function main() {
     fs.writeFileSync(CASES_PATH, JSON.stringify(next, null, 2));
     console.log(`\nUpdated expected results for ${updatedCases.length} cases.`);
     return;
+  }
+
+  if (periodCases.length > 0) {
+    periodCases.forEach((c) => {
+      const periodType = c.periodType;
+      const anchor = c.anchor || null;
+      const id = periodType === "promo" ? (c.promoId || "promo") : (c.id || "period");
+      const date = c.date;
+      const bucketKey = getBucketKey(date, periodType, anchor, id);
+      const didReset = c.prevBucketKey !== bucketKey;
+
+      const mismatches = [];
+      if (c.expectedBucketKey !== bucketKey) {
+        mismatches.push(`bucket expected ${c.expectedBucketKey}, got ${bucketKey}`);
+      }
+      if (c.expectReset !== didReset) {
+        mismatches.push(`reset expected ${c.expectReset}, got ${didReset}`);
+      }
+
+      if (mismatches.length > 0) {
+        failures += 1;
+        console.log(`❌ ${c.id}: ${mismatches.join("; ")}`);
+      } else {
+        console.log(`✅ ${c.id}`);
+      }
+    });
   }
 
   if (failures > 0) {

@@ -784,5 +784,35 @@
         }
       }
     }
+  ],
+  "period_cases": [
+    {
+      "id": "period_001_month_start_day",
+      "periodType": "month",
+      "anchor": { "type": "month", "startDay": 20 },
+      "date": "2026-02-21",
+      "prevBucketKey": "2026-01-20",
+      "expectedBucketKey": "2026-02-20",
+      "expectReset": true
+    },
+    {
+      "id": "period_002_quarter_boundary",
+      "periodType": "quarter",
+      "anchor": { "type": "quarter", "startMonth": 1, "startDay": 1 },
+      "date": "2026-04-01",
+      "prevBucketKey": "2026-01-01",
+      "expectedBucketKey": "2026-04-01",
+      "expectReset": true
+    },
+    {
+      "id": "period_003_promo_end",
+      "periodType": "promo",
+      "anchor": { "type": "promo", "startDate": "2025-12-01", "endDate": "2026-02-01" },
+      "promoId": "winter_promo",
+      "date": "2026-02-02",
+      "prevBucketKey": "promo:winter_promo@2025-12-01",
+      "expectedBucketKey": "promo:winter_promo@2025-12-01:ended",
+      "expectReset": true
+    }
   ]
 }

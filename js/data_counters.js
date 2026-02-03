@@ -3,10 +3,17 @@
 function buildCountersRegistry(data) {
     const registry = {};
 
-    const addKey = (key, source, period) => {
+    const addKey = (key, source, periodType, anchorRef, priority, refType, refId) => {
         if (!key) return;
-        if (!registry[key]) {
-            registry[key] = { period: period || "none", source: source || "" };
+        const next = {
+            periodType: periodType || "none",
+            anchorRef: anchorRef || null,
+            source: source || "",
+            refType: refType || null,
+            refId: refId || null
+        };
+        if (!registry[key] || (priority || 0) > (registry[key].priority || 0)) {
+            registry[key] = { ...next, priority: priority || 0 };
         }
     };
 
@@ -17,10 +24,19 @@ function buildCountersRegistry(data) {
     if (modules) {
         Object.keys(modules).forEach((k) => {
             const mod = modules[k] || {};
-            addKey(mod.cap_key, `module:${k}.cap_key`);
-            addKey(mod.secondary_cap_key, `module:${k}.secondary_cap_key`);
-            addKey(mod.usage_key, `module:${k}.usage_key`);
-            addKey(mod.req_mission_key, `module:${k}.req_mission_key`);
+            addKey(mod.cap_key, `module:${k}.cap_key`, "none", null, 0, "module", k);
+            addKey(mod.secondary_cap_key, `module:${k}.secondary_cap_key`, "none", null, 0, "module", k);
+            addKey(mod.usage_key, `module:${k}.usage_key`, "none", null, 0, "module", k);
+            addKey(mod.req_mission_key, `module:${k}.req_mission_key`, "none", null, 0, "module", k);
+
+            if (mod.cap && mod.cap.period) {
+                const capKey = mod.cap.key || mod.cap_key;
+                addKey(capKey, `module:${k}.cap`, mod.cap.period, mod.cap.anchor || null, 2, "module", k);
+            }
+            if (mod.counter && mod.counter.period) {
+                const counterKey = mod.counter.key || mod.req_mission_key || mod.usage_key;
+                addKey(counterKey, `module:${k}.counter`, mod.counter.period, mod.counter.anchor || null, 2, "module", k);
+            }
         });
     }
 
@@ -28,41 +44,23 @@ function buildCountersRegistry(data) {
     if (promotions) {
         (promotions || []).forEach((p) => {
             const promoId = p && p.id ? p.id : "promo";
-            (p.capKeys || []).forEach((k) => addKey(k, `promo:${promoId}.capKeys`));
+            const promoPeriod = p.period || null;
+            const promoAnchor = promoPeriod ? { ...promoPeriod, promoId } : null;
+            const promoPriority = promoPeriod ? 1 : 0;
+            (p.capKeys || []).forEach((k) => addKey(k, `promo:${promoId}.capKeys`, promoPeriod ? promoPeriod.type : "none", promoAnchor, promoPriority, "promo", promoId));
             (p.sections || []).forEach((s, i) => {
                 const secId = `${promoId}.section${i + 1}`;
-                if (s.usageKey) addKey(s.usageKey, `${secId}.usageKey`);
-                if (Array.isArray(s.usageKeys)) s.usageKeys.forEach((k) => addKey(k, `${secId}.usageKeys`));
-                if (s.unlockKey) addKey(s.unlockKey, `${secId}.unlockKey`);
-                if (s.totalKey) addKey(s.totalKey, `${secId}.totalKey`);
-                if (s.eligibleKey) addKey(s.eligibleKey, `${secId}.eligibleKey`);
+                if (s.usageKey) addKey(s.usageKey, `${secId}.usageKey`, promoPeriod ? promoPeriod.type : "none", promoAnchor, promoPriority, "promo", promoId);
+                if (Array.isArray(s.usageKeys)) s.usageKeys.forEach((k) => addKey(k, `${secId}.usageKeys`, promoPeriod ? promoPeriod.type : "none", promoAnchor, promoPriority, "promo", promoId));
+                if (s.unlockKey) addKey(s.unlockKey, `${secId}.unlockKey`, promoPeriod ? promoPeriod.type : "none", promoAnchor, promoPriority, "promo", promoId);
+                if (s.totalKey) addKey(s.totalKey, `${secId}.totalKey`, promoPeriod ? promoPeriod.type : "none", promoAnchor, promoPriority, "promo", promoId);
+                if (s.eligibleKey) addKey(s.eligibleKey, `${secId}.eligibleKey`, promoPeriod ? promoPeriod.type : "none", promoAnchor, promoPriority, "promo", promoId);
             });
         });
     }
 
-    // Manual period overrides (match current reset behavior)
-    const monthlyKeys = [
-        "red_online_cap",
-        "red_designated_cap",
-        "bea_goal_cap",
-        "bea_goal_mission",
-        "bea_world_cap",
-        "bea_world_mission",
-        "bea_ititanium_cap",
-        "bea_ititanium_mission",
-        "bea_unionpay_cap",
-        "boc_sogo_mobile_cap",
-        "wewa_mobile_pay_cap",
-        "wewa_mobile_mission",
-        "bea_goal_mobile_cap"
-    ];
-    monthlyKeys.forEach((k) => {
-        if (!registry[k]) registry[k] = { period: "month", source: "manual:monthly" };
-        else registry[k].period = "month";
-    });
-
     // Misc usage keys not captured in data files
-    addKey("guru_spend_accum", "manual:misc", "none");
+    addKey("guru_spend_accum", "manual:misc", "none", null, 0, null, null);
 
     return registry;
 }

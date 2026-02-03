@@ -8,6 +8,7 @@ function validateData(data) {
 
     const errors = [];
     const warnings = [];
+    const strictPeriods = !!(data.debug && data.debug.strictPeriods);
 
     const addError = (msg) => {
         errors.push(msg);
@@ -23,6 +24,40 @@ function validateData(data) {
     const modules = data.modules || {};
     const categories = data.categories || {};
     const promotions = Array.isArray(data.promotions) ? data.promotions : [];
+    const defaults = data.periodDefaults || {};
+
+    const isValidDate = (dateStr) => {
+        if (!dateStr || typeof dateStr !== "string") return false;
+        const parts = dateStr.split("-").map(n => parseInt(n, 10));
+        if (parts.length !== 3 || parts.some(n => !Number.isFinite(n))) return false;
+        const [y, m, d] = parts;
+        const dt = new Date(y, m - 1, d);
+        return dt.getFullYear() === y && (dt.getMonth() + 1) === m && dt.getDate() === d;
+    };
+
+    const validateAnchor = (anchor, sourceLabel) => {
+        if (!anchor || !anchor.type) return;
+        if (anchor.type === "month") {
+            const day = Number(anchor.startDay ?? 1);
+            if (!(day >= 1 && day <= 28)) {
+                addError(`[data] ${sourceLabel} invalid month startDay: ${anchor.startDay}`);
+            }
+        } else if (anchor.type === "quarter") {
+            const day = Number(anchor.startDay ?? 1);
+            if (!(day >= 1 && day <= 28)) {
+                addError(`[data] ${sourceLabel} invalid quarter startDay: ${anchor.startDay}`);
+            }
+            const sm = Number(anchor.startMonth ?? 1);
+            if (![1, 4, 7, 10].includes(sm)) {
+                addError(`[data] ${sourceLabel} invalid quarter startMonth: ${anchor.startMonth}`);
+            }
+        } else if (anchor.type === "promo") {
+            if (!isValidDate(anchor.startDate)) addError(`[data] ${sourceLabel} invalid promo startDate: ${anchor.startDate}`);
+            if (anchor.endDate && !isValidDate(anchor.endDate)) addError(`[data] ${sourceLabel} invalid promo endDate: ${anchor.endDate}`);
+        } else {
+            addWarning(`[data] ${sourceLabel} unknown period type: ${anchor.type}`);
+        }
+    };
 
     // Build known usage keys (modules + manual list)
     const knownUsageKeys = new Set();
@@ -69,6 +104,40 @@ function validateData(data) {
                 addError(`[data] module ${modId} match category missing: ${catId}`);
             }
         });
+    });
+
+    // Period definitions on modules
+    Object.keys(modules).forEach((modId) => {
+        const mod = modules[modId] || {};
+        if (mod.cap && mod.cap.period) {
+            const anchor = mod.cap.anchor || defaults[mod.cap.period];
+            validateAnchor({ ...anchor, type: mod.cap.period }, `module:${modId}.cap`);
+        } else if (strictPeriods && mod.cap_key) {
+            // Only warn in strict mode: many caps are intentionally non-resettable.
+            addWarning(`[data] module ${modId} cap_key has no cap.period (defaults to none): ${mod.cap_key}`);
+        }
+        if (mod.counter && mod.counter.period) {
+            const anchor = mod.counter.anchor || defaults[mod.counter.period];
+            validateAnchor({ ...anchor, type: mod.counter.period }, `module:${modId}.counter`);
+        } else if (strictPeriods && mod.req_mission_key) {
+            // Only warn in strict mode: many mission keys are intended to be lifetime or promo-scoped.
+            addWarning(`[data] module ${modId} req_mission_key has no counter.period (defaults to none): ${mod.req_mission_key}`);
+        }
+    });
+
+    // Period definitions on promotions
+    promotions.forEach((promo) => {
+        if (!promo || !promo.id) return;
+        if (promo.period) {
+            validateAnchor(promo.period, `promo:${promo.id}.period`);
+            return;
+        }
+
+        // If UI badge implies a reset boundary, warn in strict mode when period metadata is missing.
+        const badgeType = promo.badge && promo.badge.type ? String(promo.badge.type) : "";
+        if (strictPeriods && (badgeType === "month_end" || badgeType === "quarter_end" || badgeType === "promo_end")) {
+            addWarning(`[data] promo ${promo.id} badge=${badgeType} but missing promo.period`);
+        }
     });
 
     // Promotions -> usage keys / cap modules

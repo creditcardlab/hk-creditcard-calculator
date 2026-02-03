@@ -39,7 +39,11 @@
         promotions: (typeof PROMOTIONS !== "undefined") ? PROMOTIONS : [],
         promoRegistry: (typeof PROMO_REGISTRY !== "undefined") ? PROMO_REGISTRY : {},
         rules: (typeof DATA_RULES !== "undefined") ? DATA_RULES : {},
-        redHotCategories
+        redHotCategories,
+        periodDefaults: {
+            month: { type: "month", startDay: 1 },
+            quarter: { type: "quarter", startMonth: 1, startDay: 1 }
+        }
     };
 
     if (typeof buildCountersRegistry === "function") {
