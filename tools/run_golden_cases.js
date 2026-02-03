@@ -33,11 +33,13 @@ function bootAppContext() {
     "data_cards.js",
     "data_categories.js",
     "data_modules.js",
+    "data_trackers.js",
     "data_conversions.js",
     "data_rules.js",
-    "data_promotions.js",
+    "data_campaigns.js",
     "data_counters.js",
     "data_index.js",
+    "engine_trackers.js",
     "core.js",
     "periods.js"
   ].map((file) => path.resolve(ROOT, "js", file));

@@ -24,6 +24,8 @@ function validateData(data) {
     const modules = data.modules || {};
     const categories = data.categories || {};
     const promotions = Array.isArray(data.promotions) ? data.promotions : [];
+    const campaigns = Array.isArray(data.campaigns) ? data.campaigns : [];
+    const trackers = data.trackers || {};
     const defaults = data.periodDefaults || {};
 
     const isValidDate = (dateStr) => {
@@ -73,6 +75,11 @@ function validateData(data) {
         addKnown(mod.req_mission_key);
     });
 
+    Object.keys(trackers).forEach((id) => {
+        const tracker = trackers[id] || {};
+        addKnown(tracker.req_mission_key);
+    });
+
     // Manual usage keys referenced in app/core logic
     [
         "guru_spend_accum",
@@ -88,8 +95,9 @@ function validateData(data) {
         if (!card || !card.id) return;
         if (!Array.isArray(card.modules)) return;
         card.modules.forEach((modId) => {
-            if (!modules[modId]) {
-                addError(`[data] card ${card.id} references missing module: ${modId}`);
+            // In Phase 5 we allow cards to reference both reward modules and tracker modules via a shared `modules` list.
+            if (!modules[modId] && !trackers[modId]) {
+                addError(`[data] card ${card.id} references missing module/tracker: ${modId}`);
             }
         });
     });
@@ -125,6 +133,17 @@ function validateData(data) {
         }
     });
 
+    // Period definitions on trackers
+    Object.keys(trackers).forEach((trackerId) => {
+        const tracker = trackers[trackerId] || {};
+        if (tracker.counter && tracker.counter.period) {
+            const anchor = tracker.counter.anchor || defaults[tracker.counter.period];
+            validateAnchor({ ...anchor, type: tracker.counter.period }, `tracker:${trackerId}.counter`);
+        } else if (strictPeriods && tracker.req_mission_key) {
+            addWarning(`[data] tracker ${trackerId} req_mission_key has no counter.period (defaults to none): ${tracker.req_mission_key}`);
+        }
+    });
+
     // Period definitions on promotions
     promotions.forEach((promo) => {
         if (!promo || !promo.id) return;
@@ -140,6 +159,30 @@ function validateData(data) {
         }
     });
 
+    campaigns.forEach((promo) => {
+        if (!promo || !promo.id) return;
+        if (promo.period) {
+            validateAnchor(promo.period, `campaign:${promo.id}.period`);
+            return;
+        }
+        const badgeType = promo.badge && promo.badge.type ? String(promo.badge.type) : "";
+        if (strictPeriods && (badgeType === "month_end" || badgeType === "quarter_end" || badgeType === "promo_end")) {
+            addWarning(`[data] campaign ${promo.id} badge=${badgeType} but missing campaign.period`);
+        }
+    });
+
+    // Trackers -> categories
+    Object.keys(trackers).forEach((trackerId) => {
+        const tracker = trackers[trackerId] || {};
+        if (!Array.isArray(tracker.match)) return;
+        tracker.match.forEach((catId) => {
+            if (catId === "online") return;
+            if (!categories[catId]) {
+                addError(`[data] tracker ${trackerId} match category missing: ${catId}`);
+            }
+        });
+    });
+
     // Promotions -> usage keys / cap modules
     promotions.forEach((promo) => {
         const promoId = promo && promo.id ? promo.id : "promo";
@@ -148,6 +191,40 @@ function validateData(data) {
             const label = `${promoId}.section${idx + 1}`;
             if (sec.capModule && !modules[sec.capModule]) {
                 addError(`[data] ${label} capModule missing: ${sec.capModule}`);
+            }
+            if (sec.usageKey && !knownUsageKeys.has(sec.usageKey)) {
+                addError(`[data] ${label} usageKey missing: ${sec.usageKey}`);
+            }
+            if (sec.totalKey && !knownUsageKeys.has(sec.totalKey)) {
+                addError(`[data] ${label} totalKey missing: ${sec.totalKey}`);
+            }
+            if (sec.eligibleKey && !knownUsageKeys.has(sec.eligibleKey)) {
+                addError(`[data] ${label} eligibleKey missing: ${sec.eligibleKey}`);
+            }
+            if (sec.unlockKey && !knownUsageKeys.has(sec.unlockKey)) {
+                addError(`[data] ${label} unlockKey missing: ${sec.unlockKey}`);
+            }
+            if (Array.isArray(sec.usageKeys)) {
+                sec.usageKeys.forEach((k) => {
+                    if (!knownUsageKeys.has(k)) {
+                        addError(`[data] ${label} usageKeys missing: ${k}`);
+                    }
+                });
+            }
+        });
+    });
+
+    // Campaigns -> usage keys / cap modules
+    campaigns.forEach((promo) => {
+        const promoId = promo && promo.id ? promo.id : "campaign";
+        const sections = Array.isArray(promo.sections) ? promo.sections : [];
+        sections.forEach((sec, idx) => {
+            const label = `${promoId}.section${idx + 1}`;
+            if (sec.capModule && !modules[sec.capModule]) {
+                addError(`[data] ${label} capModule missing: ${sec.capModule}`);
+            }
+            if (sec.rateModule && !modules[sec.rateModule]) {
+                addError(`[data] ${label} rateModule missing: ${sec.rateModule}`);
             }
             if (sec.usageKey && !knownUsageKeys.has(sec.usageKey)) {
                 addError(`[data] ${label} usageKey missing: ${sec.usageKey}`);

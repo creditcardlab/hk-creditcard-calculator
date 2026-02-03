@@ -594,6 +594,12 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         };
     }
 
+    // Trackers (mission tags)
+    if (typeof evaluateTrackers === "function") {
+        const trackerRes = evaluateTrackers(card.id, { category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday }, userProfile, DATA);
+        if (trackerRes && Array.isArray(trackerRes.missionTags)) missionTags = trackerRes.missionTags;
+    }
+
     // [Module Logic]
     if (!card.modules || !Array.isArray(card.modules)) return null;
 
@@ -682,13 +688,6 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                     guruRC = res.generatedRC;
                     totalRate += res.rate;
                     totalRatePotential += res.rate;
-                }
-            }
-            else if (mod.type === "mission_tracker") {
-                if (userProfile.settings[mod.setting_key] !== false) {
-                    const match = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline) : true;
-                    const eligible = match && (typeof mod.eligible_check === 'function' ? mod.eligible_check(category, { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod }) : true);
-                    missionTags.push({ id: mod.mission_id, eligible, desc: mod.desc });
                 }
             }
             else if (mod.type === "category") {

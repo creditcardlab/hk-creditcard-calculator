@@ -18,6 +18,8 @@ function buildCountersRegistry(data) {
     };
 
     const modules = data && data.modules ? data.modules : {};
+    const trackers = data && data.trackers ? data.trackers : {};
+    const campaigns = data && data.campaigns ? data.campaigns : [];
     const promotions = data && data.promotions ? data.promotions : [];
 
     // From modules
@@ -40,9 +42,23 @@ function buildCountersRegistry(data) {
         });
     }
 
+    // From trackers
+    if (trackers) {
+        Object.keys(trackers).forEach((k) => {
+            const t = trackers[k] || {};
+            addKey(t.req_mission_key, `tracker:${k}.req_mission_key`, "none", null, 0, "tracker", k);
+            if (t.counter && t.counter.period) {
+                const counterKey = t.counter.key || t.req_mission_key;
+                addKey(counterKey, `tracker:${k}.counter`, t.counter.period, t.counter.anchor || null, 2, "tracker", k);
+            }
+        });
+    }
+
+    const campaignSource = campaigns && campaigns.length > 0 ? campaigns : promotions;
+
     // From promotions
-    if (promotions) {
-        (promotions || []).forEach((p) => {
+    if (campaignSource) {
+        (campaignSource || []).forEach((p) => {
             const promoId = p && p.id ? p.id : "promo";
             const promoPeriod = p.period || null;
             const promoAnchor = promoPeriod ? { ...promoPeriod, promoId } : null;

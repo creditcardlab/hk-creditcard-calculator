@@ -501,7 +501,7 @@ function renderDashboard(userProfile) {
                 if (promo.badge.type === "month_end") badgeText = formatResetDate(monthEndStr);
                 if (promo.badge.type === "quarter_end") badgeText = formatResetDate(quarterEndStr);
                 if (promo.badge.type === "promo_end" && promo.badge.moduleKey) {
-                    const mod = DATA.modules[promo.badge.moduleKey];
+                    const mod = DATA.modules[promo.badge.moduleKey] || (DATA.trackers && DATA.trackers[promo.badge.moduleKey]);
                     if (mod && mod[promo.badge.field]) badgeText = formatPromoDate(mod[promo.badge.field]);
                     if (promo.badge.staticDate) badgeText = formatPromoDate(promo.badge.staticDate);
                 }

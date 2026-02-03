@@ -15,7 +15,6 @@ const modulesDB = {
     "red_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
     "red_online": { type: "category", match: ["online"], rate: 0.04, desc: "網購 +3.6% (4%)", mode: "replace", cap_mode: "reward", cap_limit: 400, cap_key: "red_online_cap", cap: { key: "red_online_cap", period: "month" } },
     "red_designated_bonus": { type: "category", match: ["red_designated"], rate: 0.076, desc: "指定商戶 +7.6% (8%)", cap_mode: "reward", cap_limit: 100, cap_key: "red_designated_cap", cap: { key: "red_designated_cap", period: "month" } },
-    "em_overseas_mission": { type: "mission_tracker", setting_key: "em_promo_enabled", match: ["overseas"], desc: "🌏 EM推廣", mission_id: "em_promo", promo_end: "2026-03-31", valid_to: "2026-03-31" },
     // [NEW] Actual Calculation Module for EveryMile Promo
     // Base 1% + Bonus 1.5% = 2.5% ($2/mile). Req $12,000 spend.
     "em_overseas_bonus": {
@@ -26,7 +25,6 @@ const modulesDB = {
         // User said: "Math.floor(pot) / 225". Limit is $225 RC.
         // 1.5% of $15,000 = $225. So Cap is indeed $225 Reward.
     },
-    "winter_tracker": { type: "mission_tracker", setting_key: "winter_promo_enabled", match: ["dining", "overseas"], desc: "❄️ 冬日賞", mission_id: "winter_promo", promo_end: "2026-02-28", valid_to: "2026-02-28", eligible_check: (cat, ctx) => !ctx || !ctx.isOnline },
     "travel_guru_v2": { type: "guru_capped", category: "overseas", config: { 1: { rate: 0.03, cap_rc: 500, desc: "GO級 (+3%)" }, 2: { rate: 0.04, cap_rc: 1200, desc: "GING級 (+4%)" }, 3: { rate: 0.06, cap_rc: 2200, desc: "GURU級 (+6%)" } }, usage_key: "guru_rc_used" },
 
     // --- SC ---
@@ -401,12 +399,6 @@ const modulesDB = {
         mode: "add", setting_key: "sim_promo_enabled", req_mission_key: "sim_non_online_spend", req_mission_spend: 500,
         cap_mode: "reward", cap_limit: 200, cap_key: "sim_online_cap"
     },
-    "sim_non_online_tracker": {
-        type: "mission_tracker", req_mission_key: "sim_non_online_spend",
-        match: ["general", "dining", "nfc_payment", "overseas", "alipay", "wechat", "payme", "oepay", "grocery", "sportswear", "medical", "transport", "travel", "entertainment", "apparel", "health_beauty", "telecom", "other", "moneyback_merchant", "tuition", "chill_merchant", "go_merchant"],
-        desc: "Sim Credit 非網購 ($500)", mission_id: "sim_non_online",
-        eligible_check: (cat) => cat !== 'online' && cat !== 'online_foreign'
-    },
 
     // --- Mox Credit ---
     "mox_base": { type: "always", rate: 0.01, desc: "基本 1%" },
@@ -436,11 +428,6 @@ const modulesDB = {
         type: "category", match: ["travel", "entertainment", "apparel" /*Theme park?*/], rate: 0.036, desc: "旅遊/玩樂 +3.6% (4%)",
         mode: "add", cap_mode: "reward", cap_limit: 2000, cap_key: "wewa_annual_cap"
     },
-    "wewa_mobile_mission": {
-        type: "mission_tracker", req_mission_key: "wewa_mobile_mission", counter: { key: "wewa_mobile_mission", period: "month" },
-        desc: "WeWa 每月簽賬門檻", mission_id: "wewa_mobile",
-        eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "omycard", "mobile"].includes(ctx.paymentMethod))
-    },
     "wewa_mobile_pay": {
         type: "category", rate: 0.04, desc: "手機支付 4%",
         mode: "replace", cap_mode: "spending", cap_limit: 5556, cap_key: "wewa_mobile_pay_cap", cap: { key: "wewa_mobile_pay_cap", period: "month" },
@@ -453,7 +440,6 @@ const modulesDB = {
     },
 
     // --- BEA 東亞 ---
-    "bea_goal_mission": { type: "mission_tracker", desc: "BEA GOAL 月簽門檻", mission_id: "bea_goal", req_mission_key: "bea_goal_mission", counter: { key: "bea_goal_mission", period: "month" } },
     "bea_goal_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
     "bea_goal_travel_transport": {
         type: "category", match: ["travel", "transport"], rate: 0.06, desc: "旅遊/交通 6%",
@@ -472,7 +458,6 @@ const modulesDB = {
         eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "google_pay", "mobile"].includes(ctx.paymentMethod))
     },
 
-    "bea_world_mission": { type: "mission_tracker", desc: "BEA World 月簽門檻", mission_id: "bea_world", req_mission_key: "bea_world_mission", counter: { key: "bea_world_mission", period: "month" } },
     "bea_world_base": { type: "always", rate: 1, desc: "基本 1X" },
     "bea_world_bonus": {
         type: "category",
@@ -483,7 +468,6 @@ const modulesDB = {
         req_mission_spend: 4000, req_mission_key: "bea_world_mission"
     },
 
-    "bea_ititanium_mission": { type: "mission_tracker", desc: "BEA i-Titanium 月簽門檻", mission_id: "bea_ititanium", req_mission_key: "bea_ititanium_mission", counter: { key: "bea_ititanium_mission", period: "month" } },
     "bea_ititanium_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
     "bea_ititanium_online_mobile": {
         type: "category", rate: 0.036, desc: "網購/手機支付 3.6%",

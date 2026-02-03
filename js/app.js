@@ -348,7 +348,7 @@ function rebuildUsageAndStatsFromTransactions() {
             }
         });
 
-        trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod);
+        trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday);
     });
 
     if (!userProfile.usage.red_cap_month) {
@@ -370,28 +370,14 @@ window.handleDeleteTx = function (id) {
 
 // --- DATA MODIFIERS ---
 
-function trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod) {
-    if (!cardId || typeof DATA === 'undefined' || !DATA.cards || !DATA.modules) return;
-    const card = DATA.cards.find(c => c.id === cardId);
-    if (!card || !Array.isArray(card.modules)) return;
-    const resolvedCategory = resolveCategory(cardId, category);
-
-    card.modules.forEach(modId => {
-        const mod = DATA.modules[modId];
-        if (!mod || mod.type !== "mission_tracker" || !mod.req_mission_key) return;
-        if (mod.setting_key && userProfile.settings[mod.setting_key] === false) return;
-
-        let eligible = true;
-        if (typeof mod.eligible_check === 'function') {
-            eligible = !!mod.eligible_check(resolvedCategory, { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod });
-        } else if (!mod.match) {
-            eligible = true;
-        } else if (Array.isArray(mod.match)) {
-            eligible = isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline);
-        }
-
-        if (!eligible) return;
-        userProfile.usage[mod.req_mission_key] = (userProfile.usage[mod.req_mission_key] || 0) + amount;
+function trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday) {
+    if (!cardId || typeof DATA === 'undefined' || !DATA.cards) return;
+    if (typeof evaluateTrackers !== "function") return;
+    const res = evaluateTrackers(cardId, { category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday }, userProfile, DATA);
+    if (!res || !Array.isArray(res.effects)) return;
+    res.effects.forEach((effect) => {
+        if (!effect || !effect.key) return;
+        userProfile.usage[effect.key] = (userProfile.usage[effect.key] || 0) + effect.amount;
     });
 }
 
