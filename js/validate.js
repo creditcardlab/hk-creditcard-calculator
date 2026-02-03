@@ -21,6 +21,7 @@ function validateData(data) {
     };
 
     const cards = Array.isArray(data.cards) ? data.cards : [];
+    const cardsRaw = Array.isArray(data.cardsRaw) ? data.cardsRaw : null;
     const modules = data.modules || {};
     const categories = data.categories || {};
     const promotions = Array.isArray(data.promotions) ? data.promotions : [];
@@ -90,12 +91,39 @@ function validateData(data) {
         "em_q1_eligible"
     ].forEach(addKnown);
 
-    // Cards -> modules
+    // Cards -> reward modules / trackers
     cards.forEach((card) => {
         if (!card || !card.id) return;
-        if (!Array.isArray(card.modules)) return;
+        if (Array.isArray(card.rewardModules)) {
+            card.rewardModules.forEach((modId) => {
+                if (!modules[modId]) {
+                    addError(`[data] card ${card.id} rewardModules missing: ${modId}`);
+                }
+            });
+        }
+        if (Array.isArray(card.trackers)) {
+            card.trackers.forEach((trackerId) => {
+                if (!trackers[trackerId]) {
+                    addError(`[data] card ${card.id} trackers missing: ${trackerId}`);
+                }
+            });
+        }
+    });
+
+    // Legacy cards.modules (compat)
+    // Keep supporting old cards that still use `modules`, but avoid noisy warnings in non-strict mode.
+    let legacyWarned = false;
+    const legacyCards = cardsRaw || cards;
+    legacyCards.forEach((card) => {
+        if (!card || !card.id) return;
+        const hasLegacy = Array.isArray(card.modules);
+        const hasNew = Array.isArray(card.rewardModules) || Array.isArray(card.trackers);
+        if (!hasLegacy || hasNew) return;
+        if (strictPeriods && !legacyWarned) {
+            addWarning("[data] cards use legacy modules; migrate to rewardModules/trackers.");
+            legacyWarned = true;
+        }
         card.modules.forEach((modId) => {
-            // In Phase 5 we allow cards to reference both reward modules and tracker modules via a shared `modules` list.
             if (!modules[modId] && !trackers[modId]) {
                 addError(`[data] card ${card.id} references missing module/tracker: ${modId}`);
             }
