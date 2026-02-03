@@ -268,6 +268,11 @@ function getSectionUi(sec, theme) {
                 .map(n => Number(n))
                 .filter(n => Number.isFinite(n));
         }
+
+        // Avoid "random border" look by not rendering separators at the bar edges.
+        ui.separatorPositions = Array.from(new Set(ui.separatorPositions))
+            .filter(pos => pos > 0 && pos < 100)
+            .sort((a, b) => a - b);
     }
 
     return ui;
@@ -304,9 +309,11 @@ function renderPromoSections(sections, theme) {
         const progress = Number.isFinite(sec.progress) ? sec.progress : 0;
 
         const ui = getSectionUi(sec, theme);
-        if (sec.overlayModel && sec.overlayModel.type === "winter_reward" && sec.lockedReason && sec.state === "locked") {
+        if (sec.overlayModel && sec.overlayModel.type === "winter_reward" && sec.lockedReason && sec.state !== "capped") {
+            // Winter tier bars can be "active" but still have a meaningful lockedReason
+            // (e.g. "Tier 2 Locked ..."). Prefer showing it over generic Remaining/In Progress.
             ui.subText = sec.lockedReason;
-            ui.subTextClass = "text-gray-400";
+            ui.subTextClass = (sec.state === "locked") ? "text-gray-400" : "text-gray-500";
         }
 
         const barHtml = renderProgressBar({
