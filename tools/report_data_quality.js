@@ -183,7 +183,6 @@ function main() {
 
   const lines = [];
   lines.push(`# Data Quality Report`);
-  lines.push(`Generated: ${new Date().toISOString()}`);
   lines.push(``);
   lines.push(`## Counts`);
   lines.push(`- Cards: ${cards.length}`);

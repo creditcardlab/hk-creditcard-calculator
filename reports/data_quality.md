@@ -1,5 +1,4 @@
 # Data Quality Report
-Generated: 2026-02-03T21:19:53.296Z
 
 ## Counts
 - Cards: 49
