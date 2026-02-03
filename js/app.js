@@ -354,20 +354,6 @@ function rebuildUsageAndStatsFromTransactions() {
             userProfile.usage["guru_rc_used"] = (userProfile.usage["guru_rc_used"] || 0) + res.guruRC;
         }
 
-        res.missionTags.forEach(tag => {
-            if (tag.id === "winter_promo") {
-                const winterEligible = !isOnline && isCategoryMatch(["dining", "overseas"], category);
-                if (winterEligible) {
-                    userProfile.usage["winter_total"] = (userProfile.usage["winter_total"] || 0) + amount;
-                    userProfile.usage["winter_eligible"] = (userProfile.usage["winter_eligible"] || 0) + amount;
-                }
-            }
-            if (tag.id === "em_promo") {
-                userProfile.usage["em_q1_total"] = (userProfile.usage["em_q1_total"] || 0) + amount;
-                if (tag.eligible) userProfile.usage["em_q1_eligible"] = (userProfile.usage["em_q1_eligible"] || 0) + amount;
-            }
-        });
-
         trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday);
     });
 
@@ -436,20 +422,11 @@ function commitTransaction(data) {
     if (level > 0 && isOverseas) userProfile.usage["guru_spend_accum"] = (userProfile.usage["guru_spend_accum"] || 0) + amount;
 
     let alertMsg = "";
+    // Mission progress keys are now updated via tracker effects (trackMissionSpend).
+    // Keep alerts based on missionTags (only when eligible actually counts).
     missionTags.forEach(tag => {
-        if (tag.id === "winter_promo") {
-            const winterEligible = !isOnline && isCategoryMatch(["dining", "overseas"], category);
-            if (winterEligible) {
-                userProfile.usage["winter_total"] = (userProfile.usage["winter_total"] || 0) + amount;
-                userProfile.usage["winter_eligible"] = (userProfile.usage["winter_eligible"] || 0) + amount;
-            }
-            alertMsg += "\n❄️ 冬日賞累積更新";
-        }
-        if (tag.id === "em_promo") {
-            userProfile.usage["em_q1_total"] = (userProfile.usage["em_q1_total"] || 0) + amount;
-            if (tag.eligible) userProfile.usage["em_q1_eligible"] = (userProfile.usage["em_q1_eligible"] || 0) + amount;
-            alertMsg += "\n🌏 EM推廣累積更新";
-        }
+        if (tag.id === "winter_promo" && tag.eligible) alertMsg += "\n❄️ 冬日賞累積更新";
+        if (tag.id === "em_promo" && tag.eligible) alertMsg += "\n🌏 EM推廣累積更新";
     });
 
     // Record Transaction History

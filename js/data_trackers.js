@@ -2,8 +2,32 @@
 
 const trackersDB = {
     // --- HSBC ---
-    "em_overseas_mission": { type: "mission_tracker", setting_key: "em_promo_enabled", match: ["overseas"], desc: "🌏 EM推廣", mission_id: "em_promo", promo_end: "2026-03-31", valid_to: "2026-03-31" },
-    "winter_tracker": { type: "mission_tracker", setting_key: "winter_promo_enabled", match: ["dining", "overseas"], desc: "❄️ 冬日賞", mission_id: "winter_promo", promo_end: "2026-02-28", valid_to: "2026-02-28", eligible_check: (cat, ctx) => !ctx || !ctx.isOnline },
+    "em_overseas_mission": {
+        type: "mission_tracker",
+        setting_key: "em_promo_enabled",
+        match: ["overseas"],
+        desc: "🌏 EM推廣",
+        mission_id: "em_promo",
+        promo_end: "2026-03-31",
+        valid_to: "2026-03-31",
+        // Keep app.js free of special-cases: tracker defines which usage keys to increment.
+        effects_on_match: [{ key: "em_q1_total", amount: "tx_amount" }],
+        effects_on_eligible: [{ key: "em_q1_eligible", amount: "tx_amount" }]
+    },
+    "winter_tracker": {
+        type: "mission_tracker",
+        setting_key: "winter_promo_enabled",
+        match: ["dining", "overseas"],
+        desc: "❄️ 冬日賞",
+        mission_id: "winter_promo",
+        promo_end: "2026-02-28",
+        valid_to: "2026-02-28",
+        eligible_check: (cat, ctx) => !ctx || !ctx.isOnline,
+        effects_on_eligible: [
+            { key: "winter_total", amount: "tx_amount" },
+            { key: "winter_eligible", amount: "tx_amount" }
+        ]
+    },
 
     // --- sim Credit ---
     "sim_non_online_tracker": {

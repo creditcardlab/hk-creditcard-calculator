@@ -627,7 +627,9 @@ function renderCalculatorResults(results, currentMode) {
         const allowFeeNet = showFeeEquation && res.supportsCash;
         const cardConfig = DATA.cards.find(c => c.id === res.cardId);
         // Check if category implies foreign currency
-        const isForeign = res.category.startsWith('overseas') || res.category === 'foreign' || res.category === 'travel_plus_tier1';
+        const isForeign = (typeof isForeignCategory === "function")
+            ? isForeignCategory(res.category)
+            : (res.category.startsWith('overseas') || res.category === 'foreign' || res.category === 'travel_plus_tier1');
 
         if (cardConfig && cardConfig.fcf > 0 && isForeign) {
             const fee = res.amount * cardConfig.fcf;

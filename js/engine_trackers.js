@@ -14,6 +14,18 @@ function evaluateTrackers(cardId, ctx, userProfile, data) {
     const missionTags = [];
     const effects = [];
 
+    const pushEffectList = (list) => {
+        if (!Array.isArray(list)) return;
+        list.forEach((e) => {
+            if (!e || !e.key) return;
+            let amt = 0;
+            if (e.amount === "tx_amount" || e.amount === undefined || e.amount === null) amt = ctx.amount;
+            else amt = Number(e.amount) || 0;
+            if (!amt) return;
+            effects.push({ key: e.key, amount: amt });
+        });
+    };
+
     trackerIds.forEach((trackerId) => {
         const tracker = data.trackers[trackerId];
         if (!tracker || tracker.type !== "mission_tracker") return;
@@ -33,8 +45,13 @@ function evaluateTrackers(cardId, ctx, userProfile, data) {
 
         missionTags.push({ id: tracker.mission_id, eligible, desc: tracker.desc });
 
-        if (eligible && tracker.req_mission_key) {
-            effects.push({ key: tracker.req_mission_key, amount: ctx.amount });
+        if (match) pushEffectList(tracker.effects_on_match);
+        if (eligible) {
+            pushEffectList(tracker.effects_on_eligible);
+            // Legacy behavior: req_mission_key increments on eligible.
+            if (tracker.req_mission_key) {
+                effects.push({ key: tracker.req_mission_key, amount: ctx.amount });
+            }
         }
     });
 

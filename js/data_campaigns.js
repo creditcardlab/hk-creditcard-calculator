@@ -77,8 +77,8 @@ const CAMPAIGNS = [
                 totalKey: "winter_total",
                 eligibleKey: "winter_eligible",
                 tiers: [
-                    { threshold: 20000, cap: 250 },
-                    { threshold: 40000, cap: 800 }
+                    { threshold: 20000, cap: 250, rate: 0.03 },
+                    { threshold: 40000, cap: 800, rate: 0.06 }
                 ],
                 unit: ""
             }
