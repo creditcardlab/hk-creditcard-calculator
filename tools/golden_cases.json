@@ -471,7 +471,7 @@
       },
       "expected": {
         "topCardId": "hsbc_gold_student",
-        "topValue": 239.992,
+        "topValue": 240,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,

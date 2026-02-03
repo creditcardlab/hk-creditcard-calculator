@@ -164,7 +164,6 @@ function renderPromoOverlay(overlayModel) {
                 <div style="width:${seg2Fill}%" class="bg-green-600 h-3"></div>
             </div>
             ${rewardLocked ? '' : `<div class="absolute top-0 bottom-0" style="left:${seg1WidthSafe}%; width:1px; background:rgba(0,0,0,0.08)"></div>`}
-            ${rewardLocked ? `<div class="absolute inset-0 flex items-center justify-center text-gray-500 text-xs"><i class="fas fa-lock"></i></div>` : ''}
         </div>`;
     }
 
@@ -196,77 +195,179 @@ function renderPromoMarkers(markers) {
     return "";
 }
 
+function clampPercent(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return 0;
+    return Math.max(0, Math.min(100, num));
+}
+
+function normalizeProgressLabel(kind, label) {
+    const raw = (label || "").trim();
+    if (!raw) {
+        if (kind === "mission") return "任務門檻";
+        if (kind === "cap" || kind === "cap_rate" || kind === "tier_cap") return "回贈上限";
+        return "";
+    }
+
+    const first = raw.codePointAt(0);
+    // If the label starts with emoji/symbols, assume it's intentionally customized.
+    if (first && first > 0x1f000) return raw;
+
+    if (raw === "Mission Progress") return "任務門檻";
+    if (raw === "Reward Progress") return "回贈上限";
+    if (raw === "回贈進度") return "回贈上限";
+    if (raw === "💰 回贈進度") return "💰 回贈上限";
+    if (raw === "🎯 門檻任務") return "🎯 任務門檻";
+    return raw;
+}
+
+function getSectionUi(sec, theme) {
+    const state = sec.state || "active";
+    const kind = sec.kind || "cap";
+    const meta = sec.meta || {};
+    const hasOverlay = !!sec.overlayModel;
+
+    const ui = {
+        trackClass: "pc-track",
+        fillClass: theme && theme.bar ? theme.bar : "bg-green-500",
+        striped: false,
+        showLock: state === "locked",
+        lockClass: "pc-lock",
+        showTierSeparators: false,
+        separatorPositions: [],
+        separatorClass: "pc-sep",
+        subText: "",
+        subTextClass: "text-gray-500"
+    };
+
+    if (kind === "mission") {
+        // Mission progress is informational; do not render lock overlay even if unmet.
+        ui.showLock = false;
+        ui.striped = false;
+
+        const met = !!meta.unlocked;
+        if (hasOverlay) {
+            ui.fillClass = "bg-gray-200";
+        } else {
+            ui.fillClass = met ? "bg-green-500" : "bg-blue-500";
+        }
+
+        if (met) {
+            ui.subText = meta.unlockedText || "已達標";
+            ui.subTextClass = "text-green-600 font-bold";
+        } else {
+            ui.subText = sec.lockedReason || "進行中";
+            ui.subTextClass = "text-gray-500";
+        }
+
+        return ui;
+    }
+
+    if (state === "locked") {
+        ui.trackClass = "pc-track pc-track-locked";
+        ui.fillClass = "bg-gray-300";
+        ui.striped = false;
+        ui.subText = sec.lockedReason || "未解鎖";
+        ui.subTextClass = "text-gray-400";
+    } else if (state === "capped") {
+        ui.fillClass = "bg-red-500";
+        ui.striped = false;
+        ui.subText = "已封頂";
+        ui.subTextClass = "text-red-500";
+    } else {
+        if (typeof meta.remaining === "number") {
+            const prefix = meta.prefix || "";
+            const unit = meta.unit || "";
+            ui.subText = `尚餘 ${prefix}${Math.max(0, Math.floor(meta.remaining)).toLocaleString()}${unit}`;
+        } else {
+            ui.subText = "進行中";
+        }
+        ui.subTextClass = "text-gray-500";
+    }
+
+    if (hasOverlay) {
+        ui.fillClass = state === "locked" ? "bg-gray-300" : "bg-gray-200";
+        ui.striped = false;
+    }
+
+    if (state === "active") {
+        ui.striped = (kind === "cap" || kind === "tier_cap") && !hasOverlay;
+    }
+
+    if (kind === "tier_cap") {
+        ui.showTierSeparators = true;
+        if (Array.isArray(sec.markers) && sec.markers.length > 0 && typeof sec.markers[0] === "object") {
+            ui.separatorPositions = sec.markers
+                .map(m => Number(m.pos))
+                .filter(n => Number.isFinite(n));
+        } else if (meta && Array.isArray(meta.tierBreaks)) {
+            ui.separatorPositions = meta.tierBreaks
+                .map(n => Number(n))
+                .filter(n => Number.isFinite(n));
+        }
+
+        // Avoid "random border" look by not rendering separators at the bar edges.
+        ui.separatorPositions = Array.from(new Set(ui.separatorPositions))
+            .filter(pos => pos > 0 && pos < 100)
+            .sort((a, b) => a - b);
+    }
+
+    return ui;
+}
+
+function renderProgressBar({ progress, state, ui, overlayModel }) {
+    const width = overlayModel ? 100 : clampPercent(progress);
+    const fillClass = `pc-fill ${ui.fillClass}${ui.striped ? " progress-stripe" : ""}`;
+    const overlay = renderPromoOverlay(overlayModel);
+    const separators = ui.showTierSeparators && Array.isArray(ui.separatorPositions)
+        ? ui.separatorPositions.map(pos => {
+            const safe = clampPercent(pos);
+            return `<div class="${ui.separatorClass}" style="left:${safe}%"></div>`;
+        }).join("")
+        : "";
+    const lockHtml = ui.showLock ? `<div class="${ui.lockClass}"><i class="fas fa-lock"></i></div>` : "";
+
+    return `<div class="${ui.trackClass}">
+        <div class="${fillClass}" style="width:${width}%"></div>
+        ${separators}
+        ${overlay}
+        ${lockHtml}
+    </div>`;
+}
+
 function renderPromoSections(sections, theme) {
     if (!sections) return "";
     return sections.map(sec => {
         if (!sec) return "";
         if (!sec.kind) return "";
 
-        const label = escapeHtml(sec.label || "");
+        const label = escapeHtml(normalizeProgressLabel(sec.kind, sec.label));
         const valueText = escapeHtml(sec.valueText || "");
         const progress = Number.isFinite(sec.progress) ? sec.progress : 0;
-        const state = sec.state || "active";
 
-        let barColor = theme.bar;
-        let striped = false;
-        let subText = "";
-        let subTextClass = "text-gray-500";
-
-        if (sec.kind === "mission") {
-            barColor = state === "locked" ? "bg-gray-400 opacity-50" : "bg-blue-500";
-            subText = state === "locked" ? (sec.lockedReason || "") : "Unlocked";
-            subTextClass = state === "locked" ? "text-gray-400" : "text-green-600 font-bold";
-            if (sec.overlayModel && sec.overlayModel.type === "winter_mission") {
-                barColor = "bg-gray-200";
-            }
-        } else {
-            striped = sec.kind !== "tier_cap" || !(sec.meta && sec.meta.isWinterPromo);
-            if (state === "locked") {
-                barColor = "bg-gray-400 opacity-50";
-                subText = sec.lockedReason || "Locked";
-                subTextClass = "text-gray-400";
-            } else if (state === "capped") {
-                barColor = "bg-red-500";
-                subText = "Capped";
-                subTextClass = "text-red-500";
-            } else {
-                barColor = "bg-green-500";
-                if (sec.meta && typeof sec.meta.remaining === "number") {
-                    const prefix = sec.meta.prefix || "";
-                    const unit = sec.meta.unit || "";
-                    subText = `Remaining ${prefix}${Math.max(0, Math.floor(sec.meta.remaining)).toLocaleString()}${unit}`;
-                } else {
-                    subText = "In Progress";
-                }
-                subTextClass = "text-gray-500";
-            }
-
-            if (sec.overlayModel && sec.overlayModel.type === "winter_reward") {
-                barColor = state === "locked" ? "bg-gray-300" : "bg-gray-200";
-                striped = false;
-                if (sec.lockedReason) {
-                    subText = sec.lockedReason;
-                    subTextClass = "text-gray-400";
-                } else if (state !== "capped") {
-                    subText = "In Progress";
-                    subTextClass = "text-gray-500";
-                }
-            }
+        const ui = getSectionUi(sec, theme);
+        if (sec.overlayModel && sec.overlayModel.type === "winter_reward" && sec.lockedReason && sec.state !== "capped") {
+            // Winter tier bars can be "active" but still have a meaningful lockedReason
+            // (e.g. "Tier 2 Locked ..."). Prefer showing it over generic Remaining/In Progress.
+            ui.subText = sec.lockedReason;
+            ui.subTextClass = (sec.state === "locked") ? "text-gray-400" : "text-gray-500";
         }
 
-        const overlay = renderPromoOverlay(sec.overlayModel);
+        const barHtml = renderProgressBar({
+            progress,
+            state: sec.state || "active",
+            ui,
+            overlayModel: sec.overlayModel
+        });
         const markersHtml = renderPromoMarkers(sec.markers);
-        const subTextHtml = subText ? `<div class="text-[10px] text-right mt-1 ${subTextClass}">${escapeHtml(subText)}</div>` : '';
+        const subTextHtml = ui.subText ? `<div class="text-[10px] text-right mt-1 ${ui.subTextClass}">${escapeHtml(ui.subText)}</div>` : '';
 
         return `<div>
             <div class="flex justify-between text-xs mb-1">
                 <span class="${theme.text} font-bold">${label}</span>
                 <span class="text-gray-500 font-mono">${valueText}</span>
             </div>
-            <div class="w-full bg-gray-100 rounded-full h-3 relative overflow-hidden">
-                <div class="${barColor} h-3 rounded-full transition-all duration-700 ${striped ? 'progress-stripe' : ''}" style="width: ${progress}%"></div>
-                ${overlay}
-            </div>
+            ${barHtml}
             ${markersHtml}
             ${subTextHtml}
         </div>`;
@@ -466,10 +567,10 @@ function renderDashboard(userProfile) {
 	                    valueText: `$${spendAccum.toLocaleString()} / $${curUpg.target.toLocaleString()}`,
 	                    progress: upgPct,
 	                    state: "active",
-	                    lockedReason: null,
+	                    lockedReason: spendAccum >= curUpg.target ? null : `尚差 $${Math.max(0, curUpg.target - spendAccum).toLocaleString()}`,
 	                    markers: null,
 	                    overlayModel: null,
-	                    meta: { spendAccum, target: curUpg.target }
+	                    meta: { spendAccum, target: curUpg.target, unlocked: spendAccum >= curUpg.target, unlockedText: "可升級" }
 	                },
 	                {
 	                    kind: "cap",
@@ -555,12 +656,11 @@ function renderDashboard(userProfile) {
             const pct = Math.min(100, (currentVal / maxVal) * 100);
             const remaining = Math.max(0, maxVal - currentVal);
 
-            let unit = '$';
-            if (card.redemption && card.redemption.unit) unit = card.redemption.unit;
-            else if (card.currency === 'CASH_Direct' || card.currency === 'Fun_Dollars') unit = '元';
-
-            const displayUnit = (unit === '分' || unit === 'RC') ? unit : ((unit === '元' || unit === '$') ? '' : unit);
-            const displayPrefix = (unit === '元' || unit === '$') ? '$' : '';
+            let unit = '';
+            if (card.redemption && card.redemption.unit) unit = String(card.redemption.unit);
+            const isCurrencyUnit = (unit === "" || unit === "$" || unit === "HKD" || unit === "元" || unit === "HK$");
+            const displayPrefix = isCurrencyUnit ? '$' : '';
+            const displayUnit = isCurrencyUnit ? '' : unit;
 
 	            const sections = [];
 	            let unlockMet = true;
@@ -572,11 +672,11 @@ function renderDashboard(userProfile) {
 	                unlockMet = thresholdMet;
 	                sections.push({
 	                    kind: "mission",
-	                    label: "🎯 門檻任務",
+	                    label: "🎯 任務門檻",
 	                    valueText: `$${thresholdSpend.toLocaleString()} / $${mod.req_mission_spend.toLocaleString()}`,
 	                    progress: thresholdPct,
-	                    state: thresholdMet ? "active" : "locked",
-	                    lockedReason: thresholdMet ? null : `尚欠 $${(mod.req_mission_spend - thresholdSpend).toLocaleString()}`,
+	                    state: "active",
+	                    lockedReason: thresholdMet ? null : `尚差 $${Math.max(0, mod.req_mission_spend - thresholdSpend).toLocaleString()}`,
 	                    markers: null,
 	                    overlayModel: null,
 	                    meta: { spend: thresholdSpend, target: mod.req_mission_spend, unlocked: thresholdMet }
@@ -586,11 +686,11 @@ function renderDashboard(userProfile) {
 	            const rewardState = currentVal >= maxVal ? "capped" : (unlockMet ? "active" : "locked");
 	            sections.push({
 	                kind: "cap",
-	                label: "💰 回贈進度",
+	                label: "💰 回贈上限",
 	                valueText: `${displayPrefix}${Math.floor(currentVal).toLocaleString()}${displayUnit} / ${displayPrefix}${Math.floor(maxVal).toLocaleString()}${displayUnit}`,
 	                progress: pct,
 	                state: rewardState,
-	                lockedReason: unlockMet ? null : "Locked",
+	                lockedReason: unlockMet ? null : "未解鎖",
 	                markers: null,
 	                overlayModel: null,
 	                meta: {
@@ -625,23 +725,27 @@ function renderCalculatorResults(results, currentMode) {
     const isMobilePay = paymentMethod !== "physical";
 
     results.forEach((res, index) => {
-        // Prepare Rebate Text (User specific request)
-        // Miles -> "400里", Cash -> "$40", RC -> "400 RC"
-        let resultText = "";
-        const u = res.displayUnit;
-        const v = res.displayVal;
+	        const unsupportedMode = currentMode === "miles" ? !res.supportsMiles : !res.supportsCash;
 
-        if (v === '---') {
-            resultText = '---';
-        } else if (u === 'Miles' || u === '里') {
-            resultText = `${v}里`;
-        } else if (u === 'RC') {
-            resultText = `${v} RC`;
-        } else if (u === '$' || u === 'HKD' || u === '元') {
-            resultText = `$${v}`;
-        } else {
-            resultText = `${v} ${u}`; // Fallback
-        }
+            const formatValueText = (val, unit) => {
+                const v = String(val ?? "");
+                const u = String(unit ?? "");
+                if (u === "$") return `$${v}`;
+                if (u === "里") return `${v}里`;
+                if (u === "RC") return `${v} RC`;
+                if (u === "分") return `${v}分`;
+                // Fallback: keep old behavior.
+                if (u === "HKD" || u === "元") return `$${v}`;
+                return u ? `${v} ${u}` : v;
+            };
+
+	        // Prepare Rebate Text (User specific request)
+	        // Miles -> "400里", Cash -> "$40", RC -> "400 RC"
+	        let resultText = "";
+	        const u = res.displayUnit;
+	        const v = res.displayVal;
+
+	        resultText = formatValueText(v, u);
 
         // Foreign Currency Fee Logic
         let feeNetValue = null;
@@ -669,23 +773,24 @@ function renderCalculatorResults(results, currentMode) {
 
         const txDateInput = document.getElementById('tx-date');
         const txDate = txDateInput ? txDateInput.value : "";
-        const dataStr = encodeURIComponent(JSON.stringify({
-            amount: res.amount, trackingKey: res.trackingKey, estValue: res.estValue,
-            guruRC: res.guruRC, missionTags: res.missionTags, category: res.category,
-            cardId: res.cardId,
-            rewardTrackingKey: res.rewardTrackingKey,
-            secondaryRewardTrackingKey: res.secondaryRewardTrackingKey,
-            generatedReward: res.generatedReward,
-            resultText: resultText,
-            pendingUnlocks: res.pendingUnlocks || [],
-            isOnline,
-            isMobilePay,
-            paymentMethod,
-            txDate
-        }));
-        let displayVal = res.displayVal;
-        let displayUnit = res.displayUnit;
-        let valClass = res.displayVal === '---' ? 'text-gray-400 font-medium' : 'text-red-600 font-bold';
+	        const dataStr = encodeURIComponent(JSON.stringify({
+	            amount: res.amount, trackingKey: res.trackingKey, estValue: res.estValue,
+	            guruRC: res.guruRC, missionTags: res.missionTags, category: res.category,
+	            cardId: res.cardId,
+	            rewardTrackingKey: res.rewardTrackingKey,
+	            secondaryRewardTrackingKey: res.secondaryRewardTrackingKey,
+	            generatedReward: res.generatedReward,
+	            resultText: resultText,
+	            unsupportedMode,
+	            pendingUnlocks: res.pendingUnlocks || [],
+	            isOnline,
+	            isMobilePay,
+	            paymentMethod,
+	            txDate
+	        }));
+	        let displayVal = res.displayVal;
+	        let displayUnit = res.displayUnit;
+	        let valClass = unsupportedMode ? 'text-gray-400 font-medium' : 'text-red-600 font-bold';
 
         if (allowFeeNet && hasFee && feeNetValue !== null) {
             displayVal = feeNetValue;
@@ -693,37 +798,41 @@ function renderCalculatorResults(results, currentMode) {
             valClass = 'text-blue-600 font-bold';
         }
 
-        let mainValHtml = `<div class="text-xl ${valClass}">${displayVal} <span class="text-xs text-gray-400">${displayUnit}</span></div>`;
-        let potentialHtml = "";
-        if (res.displayValPotential && res.displayValPotential !== res.displayVal && res.displayValPotential !== "---") {
-            let potentialVal = res.displayValPotential;
-            let potentialUnit = res.displayUnitPotential;
+	        let mainValHtml = `<div class="text-xl ${valClass}">${escapeHtml(formatValueText(displayVal, displayUnit))}</div>`;
+	        if (unsupportedMode) {
+	            mainValHtml += `<div class="text-[10px] text-gray-400 mt-0.5">不支援此模式</div>`;
+	        }
+	        let potentialHtml = "";
+	        if (res.displayValPotential && res.displayValPotential !== res.displayVal) {
+	            let potentialVal = res.displayValPotential;
+	            let potentialUnit = res.displayUnitPotential;
             if (allowFeeNet && hasFee && feeNetPotential !== null) {
                 potentialVal = feeNetPotential;
                 potentialUnit = "HKD";
             }
-            potentialHtml = `<div class="text-[10px] text-gray-500 mt-0.5">🔓 解鎖後：${potentialVal} ${potentialUnit}</div>`;
-        }
+	            potentialHtml = `<div class="text-[10px] text-gray-500 mt-0.5">🔓 解鎖後：${escapeHtml(formatValueText(potentialVal, potentialUnit))}</div>`;
+	        }
         let redemptionHtml = "";
         if (potentialHtml && !res.redemptionConfig) {
             mainValHtml += potentialHtml;
         }
 
-        if (res.redemptionConfig) {
-            const rd = res.redemptionConfig;
-            if (res.displayVal !== '---') {
-                mainValHtml = `
-                    <div class="text-xl ${valClass}">${displayVal} <span class="text-xs text-gray-400">${displayUnit}</span></div>
-                    <div class="text-xs text-gray-500 mt-0.5 font-mono">(${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit})</div>
-                    ${potentialHtml}
-                `;
-            } else {
-                mainValHtml = `
-                    <div class="text-xl text-gray-400 font-medium">---</div>
-                    <div class="text-xs text-gray-500 mt-0.5 font-mono">${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit}</div>
-                    ${potentialHtml}
-                `;
-            }
+	        if (res.redemptionConfig) {
+	            const rd = res.redemptionConfig;
+	            if (!unsupportedMode) {
+	                mainValHtml = `
+	                    <div class="text-xl ${valClass}">${displayVal} <span class="text-xs text-gray-400">${displayUnit}</span></div>
+	                    <div class="text-xs text-gray-500 mt-0.5 font-mono">(${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit})</div>
+	                    ${potentialHtml}
+	                `;
+	            } else {
+	                mainValHtml = `
+	                    <div class="text-xl ${valClass}">0 <span class="text-xs text-gray-400">${displayUnit}</span></div>
+	                    <div class="text-[10px] text-gray-400 mt-0.5">不支援此模式</div>
+	                    <div class="text-xs text-gray-500 mt-0.5 font-mono">${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit}</div>
+	                    ${potentialHtml}
+	                `;
+	            }
 
             redemptionHtml = `
                 <div class="mt-1 flex justify-end">
@@ -734,10 +843,10 @@ function renderCalculatorResults(results, currentMode) {
                 </div>`;
         }
 
-        // Add top result styling for top 3
-        const isTop = index < 3 && res.displayVal !== '---';
-        const topClass = isTop ? ' top-result relative' : '';
-        const topBadge = index === 0 && res.displayVal !== '---' ? '<span class="top-result-badge">🏆 最佳</span>' : '';
+	        // Add top result styling for top 3
+	        const isTop = index < 3 && !unsupportedMode;
+	        const topClass = isTop ? ' top-result relative' : '';
+	        const topBadge = index === 0 && !unsupportedMode ? '<span class="top-result-badge">🏆 最佳</span>' : '';
 
         html += `<div class="card-enter bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start cursor-pointer hover:bg-blue-50 mb-3${topClass}" onclick="handleRecord('${res.cardName}','${dataStr}')">
             ${topBadge}
@@ -901,7 +1010,9 @@ window.renderLedger = function (transactions) {
         }
 
         const amountNum = Number(tx.amount) || 0;
-        const rebateText = escapeHtml(tx.rebateText || "");
+        const rawRebateText = String(tx.rebateText || "").trim();
+        const safeRebateText = (rawRebateText && /\d/.test(rawRebateText)) ? rawRebateText : "$0";
+        const rebateText = escapeHtml(safeRebateText);
         const safeDateStr = escapeHtml(dateStr);
         const safeCardName = escapeHtml(cardName);
 

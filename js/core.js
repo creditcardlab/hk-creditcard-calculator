@@ -103,6 +103,14 @@ function loadUserData() {
         if (!userProfile.stats) userProfile.stats = { totalSpend: 0, totalVal: 0, txCount: 0 };
         if (!userProfile.usage) userProfile.usage = {};
         if (!userProfile.transactions) userProfile.transactions = [];
+
+        // Migration: tuition cap used to track spending (cap_limit=8333) and now tracks reward ($200).
+        // If we detect an old large value, convert it to reward units using the module rate (2.4%).
+        const tuitionKey = "student_tuition_cap";
+        const tuitionVal = Number(userProfile.usage[tuitionKey]) || 0;
+        if (tuitionVal > 200.5) {
+            userProfile.usage[tuitionKey] = tuitionVal * 0.024;
+        }
     }
     saveUserData();
 }
@@ -152,41 +160,56 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
                 markers = list;
             }
 
-            sections.push({
-                kind: "mission",
-                label: sec.label || "Mission Progress",
-                valueText: `$${spend.toLocaleString()} / $${target.toLocaleString()}`,
-                progress: isWinterPromo ? 100 : pct,
-                state: unlocked ? "unlocked" : "locked",
-                markers,
-                overlayModel: isWinterPromo ? { type: "winter_mission", tier1: winterTier1, tier2: winterTier2, spend } : null,
-                lockedReason: unlocked ? null : `Remaining $${Math.max(0, target - spend).toLocaleString()}`,
-                meta: { spend, target, unlocked, isWinterPromo }
-            });
+	            sections.push({
+	                kind: "mission",
+	                label: sec.label || "任務門檻",
+	                valueText: `$${spend.toLocaleString()} / $${target.toLocaleString()}`,
+	                progress: isWinterPromo ? 100 : pct,
+	                // Mission is informational progress; reward sections handle lock/cap gating.
+	                state: "active",
+	                markers,
+	                overlayModel: isWinterPromo ? { type: "winter_mission", tier1: winterTier1, tier2: winterTier2, spend } : null,
+	                lockedReason: unlocked ? null : `尚差 $${Math.max(0, target - spend).toLocaleString()}`,
+	                meta: { spend, target, unlocked, isWinterPromo }
+	            });
         }
 
-        if (sec.type === "cap_rate") {
-            const used = Number(userProfile.usage[sec.usageKey]) || 0;
-            let capVal = sec.cap;
-            if (sec.capModule) {
-                const capInfo = getCapFromModule(sec.capModule);
-                if (capInfo && capInfo.cap) capVal = capInfo.cap;
-            }
-            const reward = Math.min(capVal, used * sec.rate);
-            const pct = Math.min(100, (reward / capVal) * 100);
-            const unlocked = missionUnlockValue !== null ? missionUnlockValue >= sec.unlockTarget : true;
-            const unit = sec.unit || "";
-            const state = unlocked ? (reward >= capVal ? "capped" : "active") : "locked";
-            const lockedReason = !unlocked ? `Locked ${Math.floor(reward).toLocaleString()} ${unit}`.trim() : null;
+	        if (sec.type === "cap_rate") {
+	            const used = Number(userProfile.usage[sec.usageKey]) || 0;
+	            let capVal = sec.cap;
+	            if (sec.capModule) {
+	                const capInfo = getCapFromModule(sec.capModule);
+	                if (capInfo && capInfo.cap) capVal = capInfo.cap;
+	            }
+	            let rate = Number(sec.rate);
+	            if (!Number.isFinite(rate) && sec.rateModule) {
+	                const rm = getModule(sec.rateModule);
+	                if (rm && Number.isFinite(Number(rm.rate))) rate = Number(rm.rate);
+	            }
+	            if (!Number.isFinite(rate) && sec.capModule) {
+	                const rm = getModule(sec.capModule);
+	                if (rm && Number.isFinite(Number(rm.rate))) rate = Number(rm.rate);
+	            }
+	            if (!Number.isFinite(rate)) rate = 0;
 
-            sections.push({
-                kind: "cap_rate",
-                label: sec.label || "Reward Progress",
-                valueText: `${Math.floor(reward).toLocaleString()} / ${capVal} ${unit}`.trim(),
-                progress: pct,
-                state,
-                lockedReason,
-                meta: {
+	            const reward = Math.min(capVal, used * rate);
+	            const pct = Math.min(100, (reward / capVal) * 100);
+	            const unlocked = missionUnlockValue !== null ? missionUnlockValue >= sec.unlockTarget : true;
+	            const unit = sec.unit || "";
+	            const isCurrencyUnit = (unit === "" || unit === "$" || unit === "HKD" || unit === "元" || unit === "HK$");
+	            const prefix = isCurrencyUnit ? "$" : "";
+	            const suffix = isCurrencyUnit ? "" : (unit ? ` ${unit}` : "");
+	            const state = unlocked ? (reward >= capVal ? "capped" : "active") : "locked";
+	            const lockedReason = !unlocked ? "未解鎖" : null;
+
+	            sections.push({
+	                kind: "cap_rate",
+	                label: sec.label || "回贈上限",
+	                valueText: `${prefix}${Math.floor(reward).toLocaleString()}${suffix} / ${prefix}${capVal.toLocaleString()}${suffix}`.trim(),
+	                progress: pct,
+	                state,
+	                lockedReason,
+	                meta: {
                     reward,
                     cap: capVal,
                     unit,
@@ -248,24 +271,24 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
                     { label: cap2.toLocaleString(), pos: 100 }
                 ];
 
-                if (total >= t2) {
-                    lockedReason = null;
-                } else if (total >= t1) {
-                    lockedReason = `Tier 2 Locked ${Math.floor(rewardTier2).toLocaleString()} / ${tiers[1].cap}`;
-                } else {
-                    lockedReason = "Tier 1 Locked";
-                }
-            }
+	                if (total >= t2) {
+	                    lockedReason = null;
+	                } else if (total >= t1) {
+	                    lockedReason = `第 2 階未解鎖：${Math.floor(rewardTier2).toLocaleString()} / ${tiers[1].cap}`;
+	                } else {
+	                    lockedReason = "第 1 階未解鎖";
+	                }
+	            }
 
-            sections.push({
-                kind: "tier_cap",
-                label: sec.label || "Reward Progress",
-                valueText: `${Math.floor(reward)} / ${cap}`,
-                progress: isWinterPromo ? 100 : pct,
-                state,
-                markers,
-                overlayModel,
-                lockedReason,
+	            sections.push({
+	                kind: "tier_cap",
+	                label: sec.label || "回贈上限",
+	                valueText: `$${Math.floor(reward).toLocaleString()} / $${cap.toLocaleString()}`,
+	                progress: isWinterPromo ? 100 : pct,
+	                state,
+	                markers,
+	                overlayModel,
+	                lockedReason,
                 meta: {
                     reward,
                     cap,
@@ -276,41 +299,43 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
             });
         }
 
-        if (sec.type === "cap") {
-            let capKey = sec.capKey;
-            let capVal = sec.cap;
-            if (sec.capModule) {
-                const capInfo = getCapFromModule(sec.capModule);
-                if (capInfo) {
-                    capVal = capInfo.cap;
-                    capKey = capInfo.capKey || capKey;
-                }
-            }
-            const used = Number(userProfile.usage[capKey]) || 0;
-            const pct = Math.min(100, (used / capVal) * 100);
-            const unlocked = missionUnlockTarget ? (missionUnlockValue >= missionUnlockTarget) : true;
-            const unit = sec.unit || '';
-            const prefix = unit ? '' : '$';
-            const state = used >= capVal ? "capped" : (unlocked ? "active" : "locked");
+	        if (sec.type === "cap") {
+	            let capKey = sec.capKey;
+	            let capVal = sec.cap;
+	            if (sec.capModule) {
+	                const capInfo = getCapFromModule(sec.capModule);
+	                if (capInfo) {
+	                    capVal = capInfo.cap;
+	                    capKey = capInfo.capKey || capKey;
+	                }
+	            }
+	            const used = Number(userProfile.usage[capKey]) || 0;
+	            const pct = Math.min(100, (used / capVal) * 100);
+	            const unlocked = missionUnlockTarget ? (missionUnlockValue >= missionUnlockTarget) : true;
+	            const unitRaw = sec.unit || '';
+	            const isCurrencyUnit = (unitRaw === "" || unitRaw === "$" || unitRaw === "HKD" || unitRaw === "元" || unitRaw === "HK$");
+	            const prefix = isCurrencyUnit ? '$' : (unitRaw ? '' : '$');
+	            const unit = isCurrencyUnit ? '' : unitRaw;
+	            const state = used >= capVal ? "capped" : (unlocked ? "active" : "locked");
 
-            sections.push({
-                kind: "cap",
-                label: sec.label || "Reward Progress",
-                valueText: `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${capVal.toLocaleString()}${unit}`,
-                progress: pct,
-                state,
-                lockedReason: unlocked ? null : "Locked",
-                meta: {
-                    used,
-                    cap: capVal,
-                    unit,
-                    prefix,
-                    remaining: Math.max(0, capVal - used),
-                    unlocked
-                }
-            });
-            if (capKey) renderedCaps.add(capKey);
-        }
+	            sections.push({
+	                kind: "cap",
+	                label: sec.label || "回贈上限",
+	                valueText: `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${capVal.toLocaleString()}${unit}`,
+	                progress: pct,
+	                state,
+	                lockedReason: unlocked ? null : "未解鎖",
+	                meta: {
+	                    used,
+	                    cap: capVal,
+	                    unit,
+	                    prefix,
+	                    remaining: Math.max(0, capVal - used),
+	                    unlocked
+	                }
+	            });
+	            if (capKey) renderedCaps.add(capKey);
+	        }
     });
 
     if (promo.capKeys) promo.capKeys.forEach(k => renderedCaps.add(k));
@@ -551,16 +576,13 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     if (isZeroCategory) {
         let valStr = "", unitStr = "";
         let valStrPotential = "", unitStrPotential = "";
+        const unsupportedMode = (displayMode === "miles") ? (conv.miles_rate === 0) : (conv.cash_rate === 0);
         if (displayMode === 'miles') {
-            if (conv.miles_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
-            else { valStr = "0"; unitStr = "里"; }
-            if (conv.miles_rate === 0) { valStrPotential = "---"; unitStrPotential = "(不支援)"; }
-            else { valStrPotential = "0"; unitStrPotential = "里"; }
+            valStr = "0"; unitStr = "里";
+            valStrPotential = "0"; unitStrPotential = "里";
         } else {
-            if (conv.cash_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
-            else { valStr = "0"; unitStr = "HKD"; }
-            if (conv.cash_rate === 0) { valStrPotential = "---"; unitStrPotential = "(不支援)"; }
-            else { valStrPotential = "0"; unitStrPotential = "HKD"; }
+            valStr = "0"; unitStr = "$";
+            valStrPotential = "0"; unitStrPotential = "$";
         }
 
         return {
@@ -588,6 +610,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             redemptionConfig: card.redemption,
             supportsMiles: conv.miles_rate !== 0,
             supportsCash: conv.cash_rate !== 0,
+            unsupportedMode,
             nativeVal: 0,
             nativeValPotential: 0,
             pendingUnlocks: []
@@ -878,17 +901,18 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
 
     const supportsMiles = conv.miles_rate !== 0;
     const supportsCash = conv.cash_rate !== 0;
+    const unsupportedMode = (displayMode === "miles") ? !supportsMiles : !supportsCash;
 
     if (displayMode === 'miles') {
-        if (conv.miles_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
-        else { valStr = Math.floor(estMiles).toLocaleString(); unitStr = "里"; }
-        if (conv.miles_rate === 0) { valStrPotential = "---"; unitStrPotential = "(不支援)"; }
-        else { valStrPotential = Math.floor(estMilesPotential).toLocaleString(); unitStrPotential = "里"; }
+        valStr = supportsMiles ? Math.floor(estMiles).toLocaleString() : "0";
+        unitStr = "里";
+        valStrPotential = supportsMiles ? Math.floor(estMilesPotential).toLocaleString() : "0";
+        unitStrPotential = "里";
     } else {
-        if (conv.cash_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
-        else { valStr = Math.floor(estCash).toLocaleString(); unitStr = "HKD"; }
-        if (conv.cash_rate === 0) { valStrPotential = "---"; unitStrPotential = "(不支援)"; }
-        else { valStrPotential = Math.floor(estCashPotential).toLocaleString(); unitStrPotential = "HKD"; }
+        valStr = supportsCash ? Math.floor(estCash).toLocaleString() : "0";
+        unitStr = "$";
+        valStrPotential = supportsCash ? Math.floor(estCashPotential).toLocaleString() : "0";
+        unitStrPotential = "$";
     }
 
     return {
@@ -906,6 +930,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         redemptionConfig: card.redemption,
         supportsMiles,
         supportsCash,
+        unsupportedMode,
         nativeVal: native,
         nativeValPotential: nativePotential,
         pendingUnlocks

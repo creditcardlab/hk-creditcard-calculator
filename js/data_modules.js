@@ -7,7 +7,8 @@ const modulesDB = {
     "red_hot_variable": { type: "red_hot_allocation", rate_per_x: 0.004, desc: "最紅自主", setting_key: "red_hot_rewards_enabled" },
     "vs_red_hot_bonus": { type: "red_hot_fixed_bonus", multiplier: 3, rate_per_x: 0.004, desc: "VS專屬賞 (1.2%)" },
     "easy_moneyback_bonus": { type: "category", match: ["moneyback_merchant"], rate: 0.024, desc: "易賞錢6倍 (約2.4%)" },
-    "student_tuition_bonus": { type: "category", match: ["tuition"], rate: 0.024, desc: "學費回贈 (2.4%)", cap_limit: 8333, cap_key: "student_tuition_cap" },
+    // Reward cap is $200. Use reward-based cap to avoid 8333 * 2.4% => 199.992 rounding artifacts.
+    "student_tuition_bonus": { type: "category", match: ["tuition"], rate: 0.024, desc: "學費回贈 (2.4%)", cap_mode: "reward", cap_limit: 200, cap_key: "student_tuition_cap" },
     "pulse_china_bonus": { type: "category", match: ["china_consumption"], rate: 0.02, desc: "內地/澳門手機支付 (+2%)" },
     "em_base": { type: "always", rate: 0.01, desc: "基本 (1%)" },
     "em_designated": { type: "category", match: ["streaming", "em_designated_spend"], rate: 0.025, desc: "指定 $2/里 (2.5%)", mode: "replace" },

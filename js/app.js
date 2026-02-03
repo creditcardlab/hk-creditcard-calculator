@@ -431,6 +431,11 @@ function commitTransaction(data) {
 
     // Record Transaction History
     if (!userProfile.transactions) userProfile.transactions = [];
+    const rawResultText = String((data && data.resultText) || "").trim();
+    const safeResultText = (rawResultText && /\d/.test(rawResultText))
+        ? rawResultText
+        : (estValue > 0 ? `$${estValue.toFixed(2)}` : "$0");
+
     const tx = {
         id: Date.now(),
         date: new Date().toISOString(),
@@ -442,7 +447,7 @@ function commitTransaction(data) {
         paymentMethod: paymentMethod,
         amount: amount,
         rebateVal: estValue,
-        rebateText: data.resultText || (estValue > 0 ? `$${estValue.toFixed(2)}` : 'No Reward'),
+        rebateText: safeResultText,
         desc: data.program || 'Spending',
         pendingUnlocks: Array.isArray(pendingUnlocks) ? pendingUnlocks : []
     };
