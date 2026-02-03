@@ -571,8 +571,8 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             valStr = "0"; unitStr = "里";
             valStrPotential = "0"; unitStrPotential = "里";
         } else {
-            valStr = "0"; unitStr = "HKD";
-            valStrPotential = "0"; unitStrPotential = "HKD";
+            valStr = "0"; unitStr = "$";
+            valStrPotential = "0"; unitStrPotential = "$";
         }
 
         return {
@@ -900,9 +900,9 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         unitStrPotential = "里";
     } else {
         valStr = supportsCash ? Math.floor(estCash).toLocaleString() : "0";
-        unitStr = "HKD";
+        unitStr = "$";
         valStrPotential = supportsCash ? Math.floor(estCashPotential).toLocaleString() : "0";
-        unitStrPotential = "HKD";
+        unitStrPotential = "$";
     }
 
     return {

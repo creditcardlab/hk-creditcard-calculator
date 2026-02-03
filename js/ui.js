@@ -656,12 +656,11 @@ function renderDashboard(userProfile) {
             const pct = Math.min(100, (currentVal / maxVal) * 100);
             const remaining = Math.max(0, maxVal - currentVal);
 
-            let unit = '$';
-            if (card.redemption && card.redemption.unit) unit = card.redemption.unit;
-            else if (card.currency === 'CASH_Direct' || card.currency === 'Fun_Dollars') unit = '元';
-
-            const displayUnit = (unit === '分' || unit === 'RC') ? unit : ((unit === '元' || unit === '$') ? '' : unit);
-            const displayPrefix = (unit === '元' || unit === '$') ? '$' : '';
+            let unit = '';
+            if (card.redemption && card.redemption.unit) unit = String(card.redemption.unit);
+            const isCurrencyUnit = (unit === "" || unit === "$" || unit === "HKD" || unit === "元" || unit === "HK$");
+            const displayPrefix = isCurrencyUnit ? '$' : '';
+            const displayUnit = isCurrencyUnit ? '' : unit;
 
 	            const sections = [];
 	            let unlockMet = true;
@@ -725,8 +724,20 @@ function renderCalculatorResults(results, currentMode) {
     const paymentMethod = paymentSelect ? paymentSelect.value : "physical";
     const isMobilePay = paymentMethod !== "physical";
 
-	results.forEach((res, index) => {
+    results.forEach((res, index) => {
 	        const unsupportedMode = currentMode === "miles" ? !res.supportsMiles : !res.supportsCash;
+
+            const formatValueText = (val, unit) => {
+                const v = String(val ?? "");
+                const u = String(unit ?? "");
+                if (u === "$") return `$${v}`;
+                if (u === "里") return `${v}里`;
+                if (u === "RC") return `${v} RC`;
+                if (u === "分") return `${v}分`;
+                // Fallback: keep old behavior.
+                if (u === "HKD" || u === "元") return `$${v}`;
+                return u ? `${v} ${u}` : v;
+            };
 
 	        // Prepare Rebate Text (User specific request)
 	        // Miles -> "400里", Cash -> "$40", RC -> "400 RC"
@@ -734,15 +745,7 @@ function renderCalculatorResults(results, currentMode) {
 	        const u = res.displayUnit;
 	        const v = res.displayVal;
 
-	        if (u === 'Miles' || u === '里') {
-	            resultText = `${v}里`;
-	        } else if (u === 'RC') {
-	            resultText = `${v} RC`;
-	        } else if (u === '$' || u === 'HKD' || u === '元') {
-	            resultText = `$${v}`;
-        } else {
-            resultText = `${v} ${u}`; // Fallback
-        }
+	        resultText = formatValueText(v, u);
 
         // Foreign Currency Fee Logic
         let feeNetValue = null;
@@ -795,7 +798,7 @@ function renderCalculatorResults(results, currentMode) {
             valClass = 'text-blue-600 font-bold';
         }
 
-	        let mainValHtml = `<div class="text-xl ${valClass}">${displayVal} <span class="text-xs text-gray-400">${displayUnit}</span></div>`;
+	        let mainValHtml = `<div class="text-xl ${valClass}">${escapeHtml(formatValueText(displayVal, displayUnit))}</div>`;
 	        if (unsupportedMode) {
 	            mainValHtml += `<div class="text-[10px] text-gray-400 mt-0.5">不支援此模式</div>`;
 	        }
@@ -807,8 +810,8 @@ function renderCalculatorResults(results, currentMode) {
                 potentialVal = feeNetPotential;
                 potentialUnit = "HKD";
             }
-            potentialHtml = `<div class="text-[10px] text-gray-500 mt-0.5">🔓 解鎖後：${potentialVal} ${potentialUnit}</div>`;
-        }
+	            potentialHtml = `<div class="text-[10px] text-gray-500 mt-0.5">🔓 解鎖後：${escapeHtml(formatValueText(potentialVal, potentialUnit))}</div>`;
+	        }
         let redemptionHtml = "";
         if (potentialHtml && !res.redemptionConfig) {
             mainValHtml += potentialHtml;
