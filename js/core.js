@@ -291,22 +291,24 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
             });
         }
 
-        if (sec.type === "cap") {
-            let capKey = sec.capKey;
-            let capVal = sec.cap;
-            if (sec.capModule) {
-                const capInfo = getCapFromModule(sec.capModule);
-                if (capInfo) {
-                    capVal = capInfo.cap;
-                    capKey = capInfo.capKey || capKey;
-                }
-            }
-            const used = Number(userProfile.usage[capKey]) || 0;
-            const pct = Math.min(100, (used / capVal) * 100);
-            const unlocked = missionUnlockTarget ? (missionUnlockValue >= missionUnlockTarget) : true;
-            const unit = sec.unit || '';
-            const prefix = unit ? '' : '$';
-            const state = used >= capVal ? "capped" : (unlocked ? "active" : "locked");
+	        if (sec.type === "cap") {
+	            let capKey = sec.capKey;
+	            let capVal = sec.cap;
+	            if (sec.capModule) {
+	                const capInfo = getCapFromModule(sec.capModule);
+	                if (capInfo) {
+	                    capVal = capInfo.cap;
+	                    capKey = capInfo.capKey || capKey;
+	                }
+	            }
+	            const used = Number(userProfile.usage[capKey]) || 0;
+	            const pct = Math.min(100, (used / capVal) * 100);
+	            const unlocked = missionUnlockTarget ? (missionUnlockValue >= missionUnlockTarget) : true;
+	            const unitRaw = sec.unit || '';
+	            const isCurrencyUnit = (unitRaw === "" || unitRaw === "$" || unitRaw === "HKD" || unitRaw === "元" || unitRaw === "HK$");
+	            const prefix = isCurrencyUnit ? '$' : (unitRaw ? '' : '$');
+	            const unit = isCurrencyUnit ? '' : unitRaw;
+	            const state = used >= capVal ? "capped" : (unlocked ? "active" : "locked");
 
 	            sections.push({
 	                kind: "cap",
@@ -318,14 +320,14 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 	                meta: {
 	                    used,
 	                    cap: capVal,
-                    unit,
-                    prefix,
-                    remaining: Math.max(0, capVal - used),
-                    unlocked
-                }
-            });
-            if (capKey) renderedCaps.add(capKey);
-        }
+	                    unit,
+	                    prefix,
+	                    remaining: Math.max(0, capVal - used),
+	                    unlocked
+	                }
+	            });
+	            if (capKey) renderedCaps.add(capKey);
+	        }
     });
 
     if (promo.capKeys) promo.capKeys.forEach(k => renderedCaps.add(k));
