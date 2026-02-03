@@ -1,0 +1,3496 @@
+{
+  "campaignRegistry": {
+    "boc_amazing": {
+      "settingKey": "boc_amazing_enabled",
+      "warningDesc": "需登記以賺取回贈",
+      "warningTitle": "狂賞派"
+    },
+    "boc_amazing_fly": {
+      "settingKey": "boc_amazing_enabled",
+      "warningDesc": "需登記以賺取回贈",
+      "warningTitle": "狂賞飛"
+    },
+    "dbs_black_promo": {
+      "settingKey": "dbs_black_promo_enabled",
+      "warningDesc": "需登記以賺取回贈",
+      "warningTitle": "DBS Black"
+    },
+    "em_promo": {
+      "settingKey": "em_promo_enabled",
+      "warningDesc": "需登記以賺取額外回贈",
+      "warningTitle": "EveryMile 海外推廣"
+    },
+    "fubon_in_promo": {
+      "settingKey": "fubon_in_promo_enabled",
+      "warningDesc": "需登記以賺取回贈",
+      "warningTitle": "Fubon iN"
+    },
+    "mmpower_promo": {
+      "settingKey": "mmpower_promo_enabled",
+      "warningDesc": "需登記以賺取回贈",
+      "warningTitle": "MMPower"
+    },
+    "sim_promo": {
+      "settingKey": "sim_promo_enabled",
+      "warningDesc": "需登記以賺取回贈",
+      "warningTitle": "sim Credit"
+    },
+    "travel_plus_promo": {
+      "settingKey": "travel_plus_promo_enabled",
+      "warningDesc": "需登記以賺取回贈",
+      "warningTitle": "Travel+"
+    },
+    "winter_promo": {
+      "settingKey": "winter_promo_enabled",
+      "warningDesc": "需登記以賺取額外回贈",
+      "warningTitle": "最紅冬日賞"
+    }
+  },
+  "campaigns": [
+    {
+      "badge": {
+        "type": "month_end"
+      },
+      "capKeys": [
+        "boc_amazing_local_weekday_cap",
+        "boc_amazing_local_holiday_cap",
+        "boc_amazing_online_weekday_cap",
+        "boc_amazing_online_holiday_cap"
+      ],
+      "cards": [
+        "boc_cheers_vi",
+        "boc_cheers_vs"
+      ],
+      "icon": "fas fa-fire",
+      "id": "boc_amazing",
+      "name": "狂賞派",
+      "sections": [
+        {
+          "label": "🎯 任務進度",
+          "target": 6000,
+          "type": "mission",
+          "usageKeys": [
+            "spend_boc_cheers_vi",
+            "spend_boc_cheers_vs"
+          ]
+        },
+        {
+          "capModule": "boc_amazing_weekday",
+          "label": "💰 回贈上限 (平日)",
+          "type": "cap",
+          "unit": "元",
+          "unlockTarget": 6000
+        },
+        {
+          "capModule": "boc_amazing_holiday",
+          "label": "💰 回贈上限 (紅日)",
+          "type": "cap",
+          "unit": "元",
+          "unlockTarget": 6000
+        },
+        {
+          "capModule": "boc_amazing_online_weekday",
+          "label": "💰 網購回贈上限 (平日)",
+          "type": "cap",
+          "unit": "元",
+          "unlockTarget": 6000
+        },
+        {
+          "capModule": "boc_amazing_online_holiday",
+          "label": "💰 網購回贈上限 (紅日)",
+          "type": "cap",
+          "unit": "元",
+          "unlockTarget": 6000
+        }
+      ],
+      "theme": "blue"
+    },
+    {
+      "badge": {
+        "type": "quarter_end"
+      },
+      "capKeys": [
+        "boc_amazing_fly_cn_cap",
+        "boc_amazing_fly_other_cap"
+      ],
+      "cards": [
+        "boc_cheers_vi",
+        "boc_cheers_vs"
+      ],
+      "icon": "fas fa-plane",
+      "id": "boc_amazing_fly",
+      "name": "狂賞飛 (外幣) 季度任務",
+      "sections": [
+        {
+          "label": "🎯 簽賬門檻",
+          "target": 5000,
+          "type": "mission",
+          "usageKeys": [
+            "spend_boc_cheers_vi",
+            "spend_boc_cheers_vs"
+          ]
+        },
+        {
+          "capModule": "boc_amazing_fly_cn",
+          "label": "💰 回贈上限 (中澳)",
+          "type": "cap",
+          "unit": "分",
+          "unlockTarget": 5000
+        },
+        {
+          "capModule": "boc_amazing_fly_other",
+          "label": "💰 回贈上限 (其他)",
+          "type": "cap",
+          "unit": "分",
+          "unlockTarget": 5000
+        }
+      ],
+      "theme": "blue"
+    },
+    {
+      "badge": {
+        "type": "month_end"
+      },
+      "cards": [
+        "dbs_black"
+      ],
+      "icon": "fas fa-gem",
+      "id": "dbs_black_promo",
+      "name": "DBS Black $2/里推廣",
+      "sections": [
+        {
+          "label": "🎯 簽賬門檻",
+          "target": 20000,
+          "type": "mission",
+          "usageKey": "spend_dbs_black"
+        },
+        {
+          "capModule": "dbs_black_overseas_promo",
+          "label": "💰 回贈上限",
+          "type": "cap",
+          "unit": "里",
+          "unlockTarget": 20000
+        }
+      ],
+      "theme": "gray"
+    },
+    {
+      "badge": {
+        "field": "promo_end",
+        "moduleKey": "em_overseas_mission",
+        "type": "promo_end"
+      },
+      "capKeys": [
+        "em_promo_cap"
+      ],
+      "cards": [
+        "hsbc_everymile"
+      ],
+      "icon": "fas fa-plane",
+      "id": "em_promo",
+      "name": "EveryMile 海外",
+      "sections": [
+        {
+          "label": "🎯 任務進度",
+          "target": 12000,
+          "type": "mission",
+          "usageKey": "em_q1_total"
+        },
+        {
+          "capModule": "em_overseas_bonus",
+          "label": "💰 回贈進度",
+          "rateModule": "em_overseas_bonus",
+          "type": "cap_rate",
+          "unit": "RC",
+          "unlockKey": "em_q1_total",
+          "unlockTarget": 12000,
+          "usageKey": "em_q1_eligible"
+        }
+      ],
+      "theme": "purple"
+    },
+    {
+      "badge": {
+        "type": "month_end"
+      },
+      "capKeys": [
+        "fubon_in_bonus_cap"
+      ],
+      "cards": [
+        "fubon_in_platinum"
+      ],
+      "icon": "fas fa-bolt",
+      "id": "fubon_in_promo",
+      "name": "Fubon iN 網購20X",
+      "sections": [
+        {
+          "label": "🎯 簽賬門檻",
+          "target": 1000,
+          "type": "mission",
+          "usageKey": "spend_fubon_in_platinum"
+        },
+        {
+          "capModule": "fubon_in_online",
+          "label": "💰 回贈上限",
+          "type": "cap",
+          "unit": "分",
+          "unlockTarget": 1000
+        }
+      ],
+      "theme": "purple"
+    },
+    {
+      "badge": {
+        "type": "month_end"
+      },
+      "capKeys": [
+        "mmpower_reward_cap"
+      ],
+      "cards": [
+        "hangseng_mmpower"
+      ],
+      "icon": "fas fa-bolt",
+      "id": "mmpower_promo",
+      "name": "MMPower +FUN Dollars",
+      "sections": [
+        {
+          "label": "🎯 簽賬門檻",
+          "target": 5000,
+          "type": "mission",
+          "usageKey": "spend_hangseng_mmpower"
+        },
+        {
+          "capModule": "mmpower_overseas_bonus",
+          "label": "💰 回贈上限",
+          "type": "cap",
+          "unit": "元",
+          "unlockTarget": 5000
+        }
+      ],
+      "theme": "yellow"
+    },
+    {
+      "badge": {
+        "type": "month_end"
+      },
+      "capKeys": [
+        "sim_online_cap"
+      ],
+      "cards": [
+        "sim_credit"
+      ],
+      "icon": "fas fa-percent",
+      "id": "sim_promo",
+      "name": "sim 8% 網購推廣",
+      "sections": [
+        {
+          "label": "🎯 非網購門檻",
+          "target": 500,
+          "type": "mission",
+          "usageKey": "sim_non_online_spend"
+        },
+        {
+          "capModule": "sim_online",
+          "label": "💰 回贈上限",
+          "type": "cap",
+          "unit": "元",
+          "unlockTarget": 500
+        }
+      ],
+      "theme": "green"
+    },
+    {
+      "badge": {
+        "type": "month_end"
+      },
+      "capKeys": [
+        "travel_plus_reward_cap"
+      ],
+      "cards": [
+        "hangseng_travel_plus"
+      ],
+      "icon": "fas fa-plane",
+      "id": "travel_plus_promo",
+      "name": "Travel+ 外幣回贈",
+      "sections": [
+        {
+          "label": "🎯 簽賬門檻",
+          "target": 6000,
+          "type": "mission",
+          "usageKey": "spend_hangseng_travel_plus"
+        },
+        {
+          "capModule": "travel_plus_tier1_bonus",
+          "label": "💰 回贈上限",
+          "type": "cap",
+          "unit": "元",
+          "unlockTarget": 6000
+        }
+      ],
+      "theme": "purple"
+    },
+    {
+      "badge": {
+        "field": "promo_end",
+        "moduleKey": "winter_tracker",
+        "type": "promo_end"
+      },
+      "cards": [
+        "hsbc_vs",
+        "hsbc_red",
+        "hsbc_pulse",
+        "hsbc_unionpay_std",
+        "hsbc_easy",
+        "hsbc_gold_student",
+        "hsbc_gold",
+        "hsbc_premier"
+      ],
+      "icon": "fas fa-gift",
+      "id": "winter_promo",
+      "name": "最紅冬日賞",
+      "sections": [
+        {
+          "label": "🎯 任務進度",
+          "markers": [
+            20000,
+            40000
+          ],
+          "target": 40000,
+          "type": "mission",
+          "usageKey": "winter_total"
+        },
+        {
+          "eligibleKey": "winter_eligible",
+          "label": "💰 回贈進度",
+          "tiers": [
+            {
+              "cap": 250,
+              "rate": 0.03,
+              "threshold": 20000
+            },
+            {
+              "cap": 800,
+              "rate": 0.06,
+              "threshold": 40000
+            }
+          ],
+          "totalKey": "winter_total",
+          "type": "tier_cap",
+          "unit": ""
+        }
+      ],
+      "theme": "red"
+    }
+  ],
+  "cards": [
+    {
+      "currency": "CASH_Direct",
+      "fcf": 0.02,
+      "id": "ae_blue_cash",
+      "name": "AE Blue Cash",
+      "redemption": {
+        "fee": "免費",
+        "min": 0,
+        "ratio": "1.2% 回贈",
+        "unit": "現金"
+      },
+      "rewardModules": [
+        "ae_blue_cash_base"
+      ],
+      "trackers": [],
+      "type": "ae"
+    },
+    {
+      "currency": "AE_MR",
+      "fcf": 0.02,
+      "id": "ae_explorer",
+      "name": "AE Explorer",
+      "redemption": {
+        "fee": "免費",
+        "min": 0,
+        "ratio": "18分 = 1里 | 海外: 10.75X | 指定旅遊: 12X",
+        "unit": "積分"
+      },
+      "rewardModules": [
+        "ae_explorer_base",
+        "ae_explorer_overseas",
+        "ae_explorer_selected"
+      ],
+      "trackers": [],
+      "type": "ae"
+    },
+    {
+      "currency": "AE_MR",
+      "fcf": 0.02,
+      "id": "ae_platinum",
+      "name": "AE Platinum (細頭)",
+      "redemption": {
+        "fee": "免費",
+        "min": 0,
+        "ratio": "18分 = 1里 | Turbo: 2X | Accelerator: +5X/7X",
+        "unit": "積分"
+      },
+      "rewardModules": [
+        "ae_plat_base",
+        "ae_plat_overseas",
+        "ae_plat_travel",
+        "ae_plat_daily"
+      ],
+      "trackers": [],
+      "type": "ae"
+    },
+    {
+      "currency": "AE_MR",
+      "fcf": 0.02,
+      "id": "ae_platinum_credit",
+      "name": "AE Platinum Credit (大頭)",
+      "redemption": {
+        "fee": "免費",
+        "min": 0,
+        "ratio": "18分 = 1里 | 超市/油站: 6X (Double Points)",
+        "unit": "積分"
+      },
+      "rewardModules": [
+        "ae_pcc_base",
+        "ae_pcc_special"
+      ],
+      "trackers": [],
+      "type": "ae"
+    },
+    {
+      "currency": "CASH_Direct",
+      "fcf": 0.0195,
+      "id": "aeon_wakuwaku",
+      "name": "AEON WAKUWAKU",
+      "redemption": {
+        "fee": "免費",
+        "min": 0,
+        "ratio": "網購 6% | 日本 3%",
+        "unit": "現金"
+      },
+      "rewardModules": [
+        "aeon_waku_base",
+        "aeon_waku_online",
+        "aeon_waku_japan"
+      ],
+      "trackers": [],
+      "type": "master"
+    },
+    {
+      "currency": "CASH_Direct",
+      "fcf": 0.0195,
+      "id": "bea_goal",
+      "name": "BEA GOAL",
+      "rewardModules": [
+        "bea_goal_base",
+        "bea_goal_travel_transport",
+        "bea_goal_entertainment",
+        "bea_goal_online_mobile"
+      ],
+      "trackers": [
+        "bea_goal_mission"
+      ],
+      "type": "master"
+    },
+    {
+      "currency": "BEA_iDollar",
+      "fcf": 0.0195,
+      "id": "bea_ititanium",
+      "name": "BEA i-Titanium",
+      "redemption": {
+        "fee": "無",
+        "min": 0,
+        "ratio": "1 i-Dollar = $1",
+        "unit": "i-Dollar"
+      },
+      "rewardModules": [
+        "bea_ititanium_base",
+        "bea_ititanium_online_mobile"
+      ],
+      "trackers": [
+        "bea_ititanium_mission"
+      ],
+      "type": "visa"
+    },
+    {
+      "currency": "BEA_Points",
+      "fcf": 0,
+      "id": "bea_unionpay_diamond",
+      "name": "BEA 銀聯雙幣鑽石",
+      "redemption": {
+        "fee": "無",
+        "min": 0,
+        "ratio": "250分 = $1",
+        "unit": "BEA分"
+      },
+      "rewardModules": [
+        "bea_unionpay_base",
+        "bea_unionpay_rmb",
+        "bea_unionpay_fx",
+        "bea_unionpay_dining",
+        "bea_unionpay_local"
+      ],
+      "trackers": [],
+      "type": "unionpay"
+    },
+    {
+      "currency": "BEA_Points",
+      "fcf": 0.0195,
+      "id": "bea_world",
+      "name": "BEA World Mastercard",
+      "redemption": {
+        "fee": "無",
+        "min": 0,
+        "ratio": "250分 = $1",
+        "unit": "BEA分"
+      },
+      "rewardModules": [
+        "bea_world_base",
+        "bea_world_bonus"
+      ],
+      "trackers": [
+        "bea_world_mission"
+      ],
+      "type": "master"
+    },
+    {
+      "currency": "BEA_Points",
+      "fcf": 0.0195,
+      "id": "bea_world_privilege",
+      "name": "BEA 顯卓理財 World Mastercard",
+      "redemption": {
+        "fee": "無",
+        "min": 0,
+        "ratio": "250分 = $1",
+        "unit": "BEA分"
+      },
+      "rewardModules": [
+        "bea_world_base",
+        "bea_world_bonus"
+      ],
+      "trackers": [
+        "bea_world_mission"
+      ],
+      "type": "master"
+    },
+    {
+      "currency": "BOC_Points",
+      "fcf": 0.0195,
+      "id": "boc_cheers_vi",
+      "name": "中銀 Cheers Visa Infinite",
+      "redemption": {
+        "fee": "免手續費 ✅",
+        "min": 0,
+        "ratio": "15分 = 1里 | 餐飲: 10X (Cap 100k) | 旅遊/外幣: 10X (Cap 250k)",
+        "unit": "積分"
+      },
+      "rewardModules": [
+        "boc_cheers_base",
+        "boc_cheers_dining",
+        "boc_cheers_travel",
+        "boc_amazing_fly_cn",
+        "boc_amazing_fly_other",
+        "boc_cheers_overseas",
+        "boc_amazing_weekday",
+        "boc_amazing_holiday",
+        "boc_amazing_online_weekday",
+        "boc_amazing_online_holiday"
+      ],
+      "trackers": [],
+      "type": "visa"
+    },
+    {
+      "currency": "BOC_Points",
+      "fcf": 0.0195,
+      "id": "boc_cheers_vs",
+      "name": "中銀 Cheers Visa Signature",
+      "redemption": {
+        "fee": "免手續費 ✅",
+        "min": 0,
+        "ratio": "15分 = 1里 | 餐飲: 8X (Cap 60k) | 旅遊/外幣: 8X (Cap 150k)",
+        "unit": "積分"
+      },
+      "rewardModules": [
+        "boc_cheers_base",
+        "boc_cheers_dining_vs",
+        "boc_cheers_travel_vs",
+        "boc_amazing_fly_cn_vs",
+        "boc_amazing_fly_other_vs",
+        "boc_cheers_overseas_vs",
+        "boc_amazing_weekday_vs",
+        "boc_amazing_holiday_vs",
+        "boc_amazing_online_weekday_vs",
+        "boc_amazing_online_holiday_vs"
+      ],
+      "trackers": [],
+      "type": "visa"
+    },
+    {
+      "currency": "BOC_Points",
+      "fcf": 0.0195,
+      "id": "boc_chill",
+      "name": "中銀 Chill Card",
+      "redemption": {
+        "fee": "$50/5K里（最低$100，最高$300）",
+        "min": 0,
+        "ratio": "15分 = 1里 | Chill商戶: 10X | 網購/海外: 5X | 共用 15k分/月上限",
+        "unit": "積分"
+      },
+      "rewardModules": [
+        "boc_chill_base",
+        "boc_chill_merchant",
+        "boc_chill_online_overseas"
+      ],
+      "trackers": [],
+      "type": "master"
+    },
+    {
+      "currency": "BOC_Points",
+      "fcf": 0,
+      "id": "boc_go_diamond",
+      "name": "中銀 Go UnionPay Diamond",
+      "redemption": {
+        "fee": "$50/5K里（最低$100，最高$300）",
+        "min": 0,
+        "ratio": "15分 = 1里 | 手機支付: 4X (上限10k分/月) | Go商戶: 5X (上限10k分/月)",
+        "unit": "積分"
+      },
+      "rewardModules": [
+        "boc_go_base",
+        "boc_go_mobile",
+        "boc_go_merchant"
+      ],
+      "trackers": [],
+      "type": "unionpay"
+    },
+    {
+      "currency": "CASH_Direct",
+      "fcf": 0.0195,
+      "id": "boc_sogo",
+      "name": "中銀 Sogo Visa Signature",
+      "rewardModules": [
+        "boc_sogo_mobile_pay"
+      ],
+      "trackers": [],
+      "type": "visa"
+    },
+    {
+      "currency": "CASH_Direct",
+      "fcf": 0.0195,
+      "id": "citi_cashback",
+      "name": "Citi Cash Back",
+      "rewardModules": [
+        "citi_cb_base",
+        "citi_cb_special"
+      ],
+      "trackers": [],
+      "type": "visa"
+    },
+    {
+      "currency": "CLUB_PTS",
+      "fcf": 0.0195,
+      "id": "citi_club",
+      "name": "Citi The Club",
+      "rewardModules": [
+        "citi_club_base",
+        "citi_club_designated"
+      ],
+      "trackers": [],
+      "type": "master"
+    },
+    {
+      "currency": "CASH_Direct",
+      "fcf": 0.0195,
+      "id": "citi_octopus",
+      "name": "Citi Octopus 白金",
+      "rewardModules": [
+        "citi_octopus_base",
+        "citi_octopus_transport",
+        "citi_octopus_tunnel"
+      ],
+      "trackers": [],
+      "type": "visa"
+    },
+    {
+      "currency": "CITI_PM_PTS",
+      "fcf": 0.0195,
+      "id": "citi_pm",
+      "name": "Citi PremierMiles",
+      "redemption": {
+        "fee": "免費",
+        "min": 12000,
+        "ratio": "12分 = 1里",
+        "unit": "積分"
+      },
+      "rewardModules": [
+        "citi_pm_base",
+        "citi_pm_overseas"
+      ],
+      "trackers": [],
+      "type": "master"
+    },
+    {
+      "currency": "CITI_PM_PTS",
+      "fcf": 0.0195,
+      "id": "citi_prestige",
+      "name": "Citi Prestige",
+      "redemption": {
+        "fee": "免費",
+        "min": 12000,
+        "ratio": "12分 = 1里",
+        "unit": "積分"
+      },
+      "rewardModules": [
+        "citi_prestige_base",
+        "citi_prestige_overseas"
+      ],
+      "trackers": [],
+      "type": "master"
+    },
+    {
+      "currency": "CITI_R_PTS",
+      "fcf": 0.0195,
+      "id": "citi_rewards",
+      "name": "Citi Rewards",
+      "redemption": {
+        "fee": "HK$200/兌換",
+        "min": 18000,
+        "ratio": "15分 = 1里",
+        "unit": "積分"
+      },
+      "rewardModules": [
+        "citi_rewards_base",
+        "citi_rewards_mobile",
+        "citi_rewards_shopping"
+      ],
+      "trackers": [],
+      "type": "master"
+    },
+    {
+      "currency": "DBS_Dollar",
+      "fcf": 0.0195,
+      "id": "dbs_black",
+      "name": "DBS Black World",
+      "redemption": {
+        "fee": "免費 (Black專享)",
+        "min": 0,
+        "ratio": "DBS$48 = 1,000里",
+        "unit": "DBS$"
+      },
+      "rewardModules": [
+        "dbs_black_overseas_promo",
+        "dbs_black_overseas_std",
+        "dbs_black_base"
+      ],
+      "trackers": [],
+      "type": "master"
+    },
+    {
+      "currency": "COMPASS_Dollar",
+      "fcf": 0.0195,
+      "id": "dbs_compass",
+      "name": "DBS COMPASS VISA",
+      "redemption": {
+        "fee": "HK$100/5,000里",
+        "min": 0,
+        "ratio": "$100 CD = 1,000里 或 $1 CD = $1",
+        "unit": "CD"
+      },
+      "rewardModules": [
+        "dbs_compass_grocery_wed",
+        "dbs_compass_ewallet",
+        "dbs_compass_base"
+      ],
+      "trackers": [],
+      "type": "visa"
+    },
+    {
+      "currency": "DBS_Dollar_Others",
+      "fcf": 0.0195,
+      "id": "dbs_eminent",
+      "name": "DBS Eminent Visa",
+      "redemption": {
+        "fee": "HK$100/5,000里",
+        "min": 0,
+        "ratio": "DBS$72 = 1,000里 或 DBS$1 = $1",
+        "unit": "DBS$"
+      },
+      "rewardModules": [
+        "dbs_eminent_bonus",
+        "dbs_eminent_base"
+      ],
+      "trackers": [],
+      "type": "visa"
+    },
+    {
+      "currency": "DBS_Dollar_Others",
+      "fcf": 0.0195,
+      "id": "dbs_live_fresh",
+      "name": "DBS Live Fresh",
+      "redemption": {
+        "fee": "HK$100/5,000里",
+        "min": 0,
+        "ratio": "DBS$72 = 1,000里 或 DBS$1 = $1",
+        "unit": "DBS$"
+      },
+      "rewardModules": [
+        "dbs_live_fresh_selected",
+        "dbs_live_fresh_online_foreign",
+        "dbs_live_fresh_base"
+      ],
+      "trackers": [],
+      "type": "master"
+    },
+    {
+      "currency": "CASH_Direct",
+      "fcf": 0,
+      "id": "earnmore",
+      "name": "EarnMORE 銀聯",
+      "rewardModules": [
+        "earnmore_base"
+      ],
+      "trackers": [],
+      "type": "unionpay"
+    },
+    {
+      "currency": "Fubon_Points",
+      "fcf": 0.0195,
+      "id": "fubon_in_platinum",
+      "name": "Fubon iN Visa Platinum",
+      "redemption": {
+        "fee": "HK$50/5000里",
+        "min": 0,
+        "ratio": "15分 = 1里 | 250分 = $1",
+        "unit": "積分"
+      },
+      "rewardModules": [
+        "fubon_in_base",
+        "fubon_in_online"
+      ],
+      "trackers": [],
+      "type": "visa"
+    },
+    {
+      "currency": "Fubon_Points",
+      "fcf": 0.0195,
+      "id": "fubon_travel",
+      "name": "Fubon Platinum/Titanium",
+      "redemption": {
+        "fee": "HK$50/5000里",
+        "min": 0,
+        "ratio": "15分 = 1里 | 20X = $1.33/里",
+        "unit": "積分"
+      },
+      "rewardModules": [
+        "fubon_travel_base",
+        "fubon_travel_tw",
+        "fubon_travel_jpkr",
+        "fubon_travel_euro"
+      ],
+      "trackers": [],
+      "type": "master"
+    },
+    {
+      "currency": "YUU_Points",
+      "fcf": 0.0195,
+      "id": "hangseng_enjoy",
+      "name": "Hang Seng enJoy",
+      "redemption": {
+        "fee": "免費",
+        "min": 0,
+        "ratio": "200分 = $1",
+        "unit": "YUU"
+      },
+      "rewardModules": [
+        "enjoy_base",
+        "enjoy_dining",
+        "enjoy_retail"
+      ],
+      "trackers": [],
+      "type": "visa"
+    },
+    {
+      "currency": "Fun_Dollars",
+      "fcf": 0.0195,
+      "id": "hangseng_mmpower",
+      "name": "Hang Seng MMPower",
+      "redemption": {
+        "fee": "免費",
+        "min": 0,
+        "ratio": "$1 +FUN = $1",
+        "unit": "+FUN Dollar"
+      },
+      "rewardModules": [
+        "hangseng_base",
+        "mmpower_overseas_bonus",
+        "mmpower_online_bonus",
+        "mmpower_selected_bonus"
+      ],
+      "trackers": [],
+      "type": "master"
+    },
+    {
+      "currency": "Fun_Dollars",
+      "fcf": 0.0195,
+      "id": "hangseng_travel_plus",
+      "name": "Hang Seng Travel+",
+      "redemption": {
+        "fee": "免費",
+        "min": 0,
+        "ratio": "$1 +FUN = $1",
+        "unit": "+FUN Dollar"
+      },
+      "rewardModules": [
+        "hangseng_base",
+        "travel_plus_tier1_bonus",
+        "travel_plus_tier2_bonus",
+        "travel_plus_dining_bonus"
+      ],
+      "trackers": [],
+      "type": "visa"
+    },
+    {
+      "currency": "Fun_Dollars",
+      "fcf": 0.0195,
+      "id": "hangseng_university",
+      "name": "Hang Seng University",
+      "redemption": {
+        "fee": "免費",
+        "min": 0,
+        "ratio": "$1 +FUN = $1",
+        "unit": "+FUN Dollar"
+      },
+      "rewardModules": [
+        "hangseng_base",
+        "university_tuition"
+      ],
+      "trackers": [],
+      "type": "visa"
+    },
+    {
+      "currency": "HSBC_RC",
+      "fcf": 0.0195,
+      "id": "hsbc_easy",
+      "name": "HSBC Easy Card (白金)",
+      "rewardModules": [
+        "hsbc_std_base",
+        "red_hot_variable",
+        "easy_moneyback_bonus",
+        "travel_guru_v2"
+      ],
+      "trackers": [
+        "winter_tracker"
+      ],
+      "type": "visa"
+    },
+    {
+      "currency": "HSBC_RC_EM",
+      "fcf": 0.0195,
+      "id": "hsbc_everymile",
+      "name": "HSBC EveryMile",
+      "redemption": {
+        "fee": "免費",
+        "min": 40,
+        "ratio": "1 RC = 20 里",
+        "unit": "RC"
+      },
+      "rewardModules": [
+        "em_base",
+        "em_designated",
+        "em_grocery_low",
+        "em_overseas_bonus",
+        "travel_guru_v2"
+      ],
+      "trackers": [
+        "em_overseas_mission"
+      ],
+      "type": "master"
+    },
+    {
+      "currency": "HSBC_RC",
+      "fcf": 0.0195,
+      "id": "hsbc_gold",
+      "name": "HSBC 滙財金卡",
+      "rewardModules": [
+        "hsbc_std_base",
+        "red_hot_variable",
+        "travel_guru_v2"
+      ],
+      "trackers": [
+        "winter_tracker"
+      ],
+      "type": "visa"
+    },
+    {
+      "currency": "HSBC_RC",
+      "fcf": 0.0195,
+      "id": "hsbc_gold_student",
+      "name": "HSBC 金卡 (學生)",
+      "rewardModules": [
+        "hsbc_std_base",
+        "red_hot_variable",
+        "student_tuition_bonus",
+        "travel_guru_v2"
+      ],
+      "trackers": [
+        "winter_tracker"
+      ],
+      "type": "visa"
+    },
+    {
+      "currency": "HSBC_RC",
+      "fcf": 0.0195,
+      "id": "hsbc_premier",
+      "name": "HSBC Premier (卓越理財)",
+      "rewardModules": [
+        "hsbc_std_base",
+        "red_hot_variable",
+        "travel_guru_v2"
+      ],
+      "trackers": [
+        "winter_tracker"
+      ],
+      "type": "master"
+    },
+    {
+      "currency": "HSBC_RC",
+      "fcf": 0,
+      "id": "hsbc_pulse",
+      "name": "HSBC Pulse 銀聯鑽石",
+      "rewardModules": [
+        "hsbc_std_base",
+        "red_hot_variable",
+        "pulse_china_bonus",
+        "travel_guru_v2"
+      ],
+      "trackers": [
+        "winter_tracker"
+      ],
+      "type": "unionpay"
+    },
+    {
+      "currency": "HSBC_RC",
+      "fcf": 0.0195,
+      "id": "hsbc_red",
+      "name": "HSBC Red Card",
+      "rewardModules": [
+        "red_base",
+        "red_online",
+        "red_designated_bonus",
+        "travel_guru_v2"
+      ],
+      "trackers": [
+        "winter_tracker"
+      ],
+      "type": "master"
+    },
+    {
+      "currency": "HSBC_RC",
+      "fcf": 0,
+      "id": "hsbc_unionpay_std",
+      "name": "HSBC 銀聯雙幣 (標準)",
+      "rewardModules": [
+        "hsbc_std_base",
+        "red_hot_variable",
+        "travel_guru_v2"
+      ],
+      "trackers": [
+        "winter_tracker"
+      ],
+      "type": "unionpay"
+    },
+    {
+      "currency": "HSBC_RC",
+      "fcf": 0.0195,
+      "id": "hsbc_vs",
+      "name": "HSBC Visa Signature",
+      "redemption": {
+        "fee": "免費",
+        "min": 40,
+        "ratio": "1 RC = 10 里",
+        "unit": "RC"
+      },
+      "rewardModules": [
+        "vs_base",
+        "vs_red_hot_bonus",
+        "red_hot_variable",
+        "travel_guru_v2"
+      ],
+      "trackers": [
+        "winter_tracker"
+      ],
+      "type": "visa"
+    },
+    {
+      "currency": "CASH_Direct",
+      "fcf": 0.0195,
+      "id": "mox_credit",
+      "name": "Mox Credit",
+      "rewardModules": [
+        "mox_base",
+        "mox_task_bonus",
+        "mox_supermarket"
+      ],
+      "trackers": [],
+      "type": "master"
+    },
+    {
+      "currency": "AM_Direct",
+      "fcf": 0.0195,
+      "id": "sc_cathay_priority",
+      "name": "SC 國泰 (優先理財)",
+      "rewardModules": [
+        "sc_cathay_base",
+        "sc_cathay_dining_hotel",
+        "sc_cathay_overseas_priority",
+        "sc_cathay_airlines"
+      ],
+      "trackers": [],
+      "type": "master"
+    },
+    {
+      "currency": "AM_Direct",
+      "fcf": 0.0195,
+      "id": "sc_cathay_private",
+      "name": "SC 國泰 (優先私人)",
+      "rewardModules": [
+        "sc_cathay_base",
+        "sc_cathay_dining_hotel",
+        "sc_cathay_overseas_private",
+        "sc_cathay_airlines"
+      ],
+      "trackers": [],
+      "type": "master"
+    },
+    {
+      "currency": "AM_Direct",
+      "fcf": 0.0195,
+      "id": "sc_cathay_std",
+      "name": "SC 國泰 Mastercard",
+      "rewardModules": [
+        "sc_cathay_base",
+        "sc_cathay_dining_hotel",
+        "sc_cathay_overseas_std",
+        "sc_cathay_airlines"
+      ],
+      "trackers": [],
+      "type": "master"
+    },
+    {
+      "currency": "CASH_Direct",
+      "fcf": 0.0195,
+      "id": "sc_simply_cash",
+      "name": "SC Simply Cash Visa",
+      "rewardModules": [
+        "sc_simply_cash_base",
+        "sc_simply_cash_foreign"
+      ],
+      "trackers": [],
+      "type": "visa"
+    },
+    {
+      "currency": "CASH_Direct",
+      "fcf": 0,
+      "id": "sc_smart",
+      "name": "SC Smart Card",
+      "rewardModules": [
+        "sc_smart_base",
+        "sc_smart_designated"
+      ],
+      "trackers": [],
+      "type": "visa"
+    },
+    {
+      "currency": "CASH_Direct",
+      "fcf": 0.0195,
+      "id": "sim_credit",
+      "name": "sim Credit Card",
+      "redemption": {
+        "fee": "免費",
+        "min": 0,
+        "ratio": "網購 8% (需非網購$500)",
+        "unit": "現金"
+      },
+      "rewardModules": [
+        "sim_base",
+        "sim_online"
+      ],
+      "trackers": [
+        "sim_non_online_tracker"
+      ],
+      "type": "master"
+    },
+    {
+      "currency": "CASH_Direct",
+      "fcf": 0,
+      "id": "wewa",
+      "name": "安信 WeWa UnionPay",
+      "redemption": {
+        "fee": "免費",
+        "min": 0,
+        "ratio": "旅遊/主題公園 4%",
+        "unit": "現金"
+      },
+      "rewardModules": [
+        "wewa_base",
+        "wewa_bonus",
+        "wewa_mobile_pay"
+      ],
+      "trackers": [
+        "wewa_mobile_mission"
+      ],
+      "type": "unionpay"
+    }
+  ],
+  "categories": {
+    "airline": {
+      "hidden": true,
+      "label": "✈️ 航空公司"
+    },
+    "alipay": {
+      "label": "📱 Alipay / WeChat Pay",
+      "order": 9
+    },
+    "apparel": {
+      "label": "👗 服飾/百貨 (Apparel/Dept)",
+      "order": 16,
+      "red_hot": "style"
+    },
+    "cathay_hkexpress": {
+      "label": "✈️ CX/UO (HK Express)",
+      "order": 105,
+      "req": "[Function]"
+    },
+    "charity": {
+      "hidden": true,
+      "label": "❤️ 慈善"
+    },
+    "chill_merchant": {
+      "label": "🎟️ Chill 指定商戶",
+      "order": 107,
+      "req": "boc_chill"
+    },
+    "china_consumption": {
+      "hidden": true,
+      "label": "🇨🇳 中國/澳門消費",
+      "parent": "overseas",
+      "red_hot": "world"
+    },
+    "citi_club_merchant": {
+      "label": "🛍️ The Club 指定商戶 (4%)",
+      "order": 106,
+      "req": "citi_club"
+    },
+    "department_store": {
+      "hidden": true,
+      "label": "🏬 百貨公司",
+      "red_hot": "style"
+    },
+    "dining": {
+      "label": "🍽️ 餐飲 (Dining)",
+      "order": 2,
+      "red_hot": "dining"
+    },
+    "dining_enjoy": {
+      "hidden": true,
+      "label": "🍽️ enJoy 指定餐飲"
+    },
+    "electronics": {
+      "label": "🔌 電器/電子產品",
+      "order": 18,
+      "red_hot": "home"
+    },
+    "em_designated_spend": {
+      "label": "🌐 EveryMile 指定 ($2/里)",
+      "order": 103,
+      "req": "hsbc_everymile"
+    },
+    "entertainment": {
+      "label": "🎟️ 娛樂 (Entertainment)",
+      "order": 15,
+      "red_hot": "enjoyment"
+    },
+    "gas": {
+      "hidden": true,
+      "label": "⛽ 油站"
+    },
+    "general": {
+      "label": "一般 本地零售 (Local Retail)",
+      "order": 1
+    },
+    "go_merchant": {
+      "label": "🛍️ Go 指定商戶",
+      "order": 108,
+      "req": "boc_go_diamond"
+    },
+    "grocery": {
+      "label": "🧺 超市 (Grocery)",
+      "order": 13,
+      "red_hot": "home"
+    },
+    "gym": {
+      "label": "🏋️‍♂️ 健身/運動",
+      "order": 10
+    },
+    "health_beauty": {
+      "label": "💄 美容/藥妝 (Beauty/Watsons)",
+      "order": 17,
+      "red_hot": "style"
+    },
+    "hotel": {
+      "hidden": true,
+      "label": "🏨 酒店"
+    },
+    "live_fresh_selected": {
+      "hidden": true,
+      "label": "DBS Live Fresh Selected"
+    },
+    "medical": {
+      "label": "🏥 醫療/保健",
+      "order": 11
+    },
+    "moneyback_merchant": {
+      "label": "🏠 指定商戶 (易賞錢)",
+      "order": 100,
+      "red_hot": "home",
+      "req": "hsbc_easy"
+    },
+    "nfc_payment": {
+      "hidden": true,
+      "label": "📳 NFC/手機支付"
+    },
+    "oepay": {
+      "hidden": true,
+      "label": "💬 O!Pay"
+    },
+    "online": {
+      "hidden": true,
+      "label": "💻 網上購物 (Online)",
+      "order": 3
+    },
+    "online_foreign": {
+      "hidden": true,
+      "label": "🌐 網上外幣",
+      "parent": "overseas"
+    },
+    "other": {
+      "hidden": true,
+      "label": "❓ 其他"
+    },
+    "overseas": {
+      "hidden": true,
+      "label": "🌍 海外 (母類)",
+      "red_hot": "world"
+    },
+    "overseas_cn": {
+      "label": "🇨🇳 海外 (中國)",
+      "order": 6,
+      "parent": "overseas",
+      "red_hot": "world"
+    },
+    "overseas_jkt": {
+      "label": "🇯🇵🇰🇷🇹🇭 海外 (日韓泰)",
+      "order": 4,
+      "parent": "overseas",
+      "red_hot": "world"
+    },
+    "overseas_jktt": {
+      "hidden": true,
+      "label": "🇯🇵 海外 (日本-舊)",
+      "parent": "overseas"
+    },
+    "overseas_mo": {
+      "label": "🇲🇴 海外 (澳門)",
+      "order": 7,
+      "parent": "overseas",
+      "red_hot": "world"
+    },
+    "overseas_other": {
+      "label": "🌍 海外 (其他)",
+      "order": 8,
+      "parent": "overseas",
+      "red_hot": "world"
+    },
+    "overseas_tw": {
+      "label": "🇹🇼 海外 (台灣)",
+      "order": 5,
+      "parent": "overseas",
+      "red_hot": "world"
+    },
+    "payme": {
+      "hidden": true,
+      "label": "💬 PayMe"
+    },
+    "red_designated": {
+      "label": "🟥 Red 指定商戶 (8%)",
+      "order": 102,
+      "req": "hsbc_red"
+    },
+    "retail_enjoy": {
+      "hidden": true,
+      "label": "🛍️ enJoy 指定零售"
+    },
+    "smart_designated": {
+      "label": "💳 Smart 指定商戶 (5%)",
+      "order": 104,
+      "req": "sc_smart"
+    },
+    "sportswear": {
+      "hidden": true,
+      "label": "👟 運動服飾"
+    },
+    "streaming": {
+      "hidden": true,
+      "label": "🎬 串流/訂閱"
+    },
+    "supermarket": {
+      "hidden": true,
+      "label": "🛒 超級市場",
+      "red_hot": "home"
+    },
+    "telecom": {
+      "label": "📞 電訊繳費",
+      "order": 19,
+      "red_hot": "home"
+    },
+    "transport": {
+      "label": "🚇 交通 (Transport)",
+      "order": 12,
+      "red_hot": "enjoyment"
+    },
+    "travel": {
+      "label": "✈️ 旅遊 (Travel)",
+      "order": 14,
+      "red_hot": "enjoyment"
+    },
+    "travel_plus_tier1": {
+      "hidden": true,
+      "label": "✈️ Travel+ Tier1"
+    },
+    "tuition": {
+      "label": "🎓 學費",
+      "order": 101,
+      "req": "hsbc_gold_student"
+    },
+    "wechat": {
+      "hidden": true,
+      "label": "💬 WeChat Pay"
+    }
+  },
+  "countersRegistry": {
+    "ae_explorer_q_selected_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "ae_explorer_selected",
+      "refType": "module",
+      "source": "module:ae_explorer_selected.cap_key"
+    },
+    "ae_pcc_double_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "ae_pcc_special",
+      "refType": "module",
+      "source": "module:ae_pcc_special.cap_key"
+    },
+    "ae_plat_daily_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "ae_plat_daily",
+      "refType": "module",
+      "source": "module:ae_plat_daily.cap_key"
+    },
+    "ae_plat_overseas_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "ae_plat_overseas",
+      "refType": "module",
+      "source": "module:ae_plat_overseas.cap_key"
+    },
+    "ae_plat_travel_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "ae_plat_travel",
+      "refType": "module",
+      "source": "module:ae_plat_travel.cap_key"
+    },
+    "aeon_waku_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "aeon_waku_online",
+      "refType": "module",
+      "source": "module:aeon_waku_online.cap_key"
+    },
+    "bea_goal_cap": {
+      "anchorRef": null,
+      "periodType": "month",
+      "priority": 2,
+      "refId": "bea_goal_travel_transport",
+      "refType": "module",
+      "source": "module:bea_goal_travel_transport.cap"
+    },
+    "bea_goal_mission": {
+      "anchorRef": null,
+      "periodType": "month",
+      "priority": 2,
+      "refId": "bea_goal_mission",
+      "refType": "tracker",
+      "source": "tracker:bea_goal_mission.counter"
+    },
+    "bea_goal_mobile_cap": {
+      "anchorRef": null,
+      "periodType": "month",
+      "priority": 2,
+      "refId": "bea_goal_online_mobile",
+      "refType": "module",
+      "source": "module:bea_goal_online_mobile.cap"
+    },
+    "bea_ititanium_cap": {
+      "anchorRef": null,
+      "periodType": "month",
+      "priority": 2,
+      "refId": "bea_ititanium_online_mobile",
+      "refType": "module",
+      "source": "module:bea_ititanium_online_mobile.cap"
+    },
+    "bea_ititanium_mission": {
+      "anchorRef": null,
+      "periodType": "month",
+      "priority": 2,
+      "refId": "bea_ititanium_mission",
+      "refType": "tracker",
+      "source": "tracker:bea_ititanium_mission.counter"
+    },
+    "bea_unionpay_cap": {
+      "anchorRef": null,
+      "periodType": "month",
+      "priority": 2,
+      "refId": "bea_unionpay_rmb",
+      "refType": "module",
+      "source": "module:bea_unionpay_rmb.cap"
+    },
+    "bea_world_cap": {
+      "anchorRef": null,
+      "periodType": "month",
+      "priority": 2,
+      "refId": "bea_world_bonus",
+      "refType": "module",
+      "source": "module:bea_world_bonus.cap"
+    },
+    "bea_world_mission": {
+      "anchorRef": null,
+      "periodType": "month",
+      "priority": 2,
+      "refId": "bea_world_mission",
+      "refType": "tracker",
+      "source": "tracker:bea_world_mission.counter"
+    },
+    "boc_amazing_fly_cn_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_amazing_fly_cn",
+      "refType": "module",
+      "source": "module:boc_amazing_fly_cn.cap_key"
+    },
+    "boc_amazing_fly_other_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_amazing_fly_other",
+      "refType": "module",
+      "source": "module:boc_amazing_fly_other.cap_key"
+    },
+    "boc_amazing_local_holiday_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_amazing_holiday",
+      "refType": "module",
+      "source": "module:boc_amazing_holiday.cap_key"
+    },
+    "boc_amazing_local_weekday_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_amazing_weekday",
+      "refType": "module",
+      "source": "module:boc_amazing_weekday.cap_key"
+    },
+    "boc_amazing_online_holiday_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_amazing_online_holiday",
+      "refType": "module",
+      "source": "module:boc_amazing_online_holiday.cap_key"
+    },
+    "boc_amazing_online_weekday_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_amazing_online_weekday",
+      "refType": "module",
+      "source": "module:boc_amazing_online_weekday.cap_key"
+    },
+    "boc_cheers_dining_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_cheers_dining",
+      "refType": "module",
+      "source": "module:boc_cheers_dining.cap_key"
+    },
+    "boc_cheers_dining_cap_vs": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_cheers_dining_vs",
+      "refType": "module",
+      "source": "module:boc_cheers_dining_vs.cap_key"
+    },
+    "boc_cheers_total_cap_vi": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_cheers_dining",
+      "refType": "module",
+      "source": "module:boc_cheers_dining.secondary_cap_key"
+    },
+    "boc_cheers_total_cap_vs": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_cheers_dining_vs",
+      "refType": "module",
+      "source": "module:boc_cheers_dining_vs.secondary_cap_key"
+    },
+    "boc_cheers_travel_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_cheers_travel",
+      "refType": "module",
+      "source": "module:boc_cheers_travel.cap_key"
+    },
+    "boc_cheers_travel_cap_vs": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_cheers_travel_vs",
+      "refType": "module",
+      "source": "module:boc_cheers_travel_vs.cap_key"
+    },
+    "boc_chill_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_chill_merchant",
+      "refType": "module",
+      "source": "module:boc_chill_merchant.cap_key"
+    },
+    "boc_go_merchant_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_go_merchant",
+      "refType": "module",
+      "source": "module:boc_go_merchant.cap_key"
+    },
+    "boc_go_mobile_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_go_mobile",
+      "refType": "module",
+      "source": "module:boc_go_mobile.cap_key"
+    },
+    "boc_sogo_mobile_cap": {
+      "anchorRef": null,
+      "periodType": "month",
+      "priority": 2,
+      "refId": "boc_sogo_mobile_pay",
+      "refType": "module",
+      "source": "module:boc_sogo_mobile_pay.cap"
+    },
+    "citi_oct_transport_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "citi_octopus_transport",
+      "refType": "module",
+      "source": "module:citi_octopus_transport.cap_key"
+    },
+    "dbs_eminent_base_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "dbs_eminent_base",
+      "refType": "module",
+      "source": "module:dbs_eminent_base.cap_key"
+    },
+    "dbs_eminent_bonus_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "dbs_eminent_bonus",
+      "refType": "module",
+      "source": "module:dbs_eminent_bonus.cap_key"
+    },
+    "dbs_live_fresh_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "dbs_live_fresh_selected",
+      "refType": "module",
+      "source": "module:dbs_live_fresh_selected.cap_key"
+    },
+    "earnmore_annual_spend": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "earnmore_base",
+      "refType": "module",
+      "source": "module:earnmore_base.cap_key"
+    },
+    "em_promo_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "em_overseas_bonus",
+      "refType": "module",
+      "source": "module:em_overseas_bonus.cap_key"
+    },
+    "em_q1_eligible": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "em_promo",
+      "refType": "campaign",
+      "source": "em_promo.section2.usageKey"
+    },
+    "em_q1_total": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "em_overseas_bonus",
+      "refType": "module",
+      "source": "module:em_overseas_bonus.req_mission_key"
+    },
+    "fubon_in_bonus_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "fubon_in_online",
+      "refType": "module",
+      "source": "module:fubon_in_online.cap_key"
+    },
+    "guru_rc_used": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "travel_guru_v2",
+      "refType": "module",
+      "source": "module:travel_guru_v2.usage_key"
+    },
+    "guru_spend_accum": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": null,
+      "refType": null,
+      "source": "manual:misc"
+    },
+    "mmpower_reward_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "mmpower_overseas_bonus",
+      "refType": "module",
+      "source": "module:mmpower_overseas_bonus.cap_key"
+    },
+    "red_designated_cap": {
+      "anchorRef": null,
+      "periodType": "month",
+      "priority": 2,
+      "refId": "red_designated_bonus",
+      "refType": "module",
+      "source": "module:red_designated_bonus.cap"
+    },
+    "red_online_cap": {
+      "anchorRef": null,
+      "periodType": "month",
+      "priority": 2,
+      "refId": "red_online",
+      "refType": "module",
+      "source": "module:red_online.cap"
+    },
+    "sc_smart_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "sc_smart_designated",
+      "refType": "module",
+      "source": "module:sc_smart_designated.cap_key"
+    },
+    "sim_non_online_spend": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "sim_online",
+      "refType": "module",
+      "source": "module:sim_online.req_mission_key"
+    },
+    "sim_online_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "sim_online",
+      "refType": "module",
+      "source": "module:sim_online.cap_key"
+    },
+    "spend_boc_cheers_vi": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_cheers_dining",
+      "refType": "module",
+      "source": "module:boc_cheers_dining.req_mission_key"
+    },
+    "spend_boc_cheers_vs": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_cheers_dining_vs",
+      "refType": "module",
+      "source": "module:boc_cheers_dining_vs.req_mission_key"
+    },
+    "spend_boc_chill": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "boc_chill_merchant",
+      "refType": "module",
+      "source": "module:boc_chill_merchant.req_mission_key"
+    },
+    "spend_dbs_black": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "dbs_black_overseas_promo",
+      "refType": "module",
+      "source": "module:dbs_black_overseas_promo.req_mission_key"
+    },
+    "spend_fubon_in_platinum": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "fubon_in_online",
+      "refType": "module",
+      "source": "module:fubon_in_online.req_mission_key"
+    },
+    "spend_hangseng_mmpower": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "mmpower_overseas_bonus",
+      "refType": "module",
+      "source": "module:mmpower_overseas_bonus.req_mission_key"
+    },
+    "spend_hangseng_travel_plus": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "travel_plus_tier1_bonus",
+      "refType": "module",
+      "source": "module:travel_plus_tier1_bonus.req_mission_key"
+    },
+    "student_tuition_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "student_tuition_bonus",
+      "refType": "module",
+      "source": "module:student_tuition_bonus.cap_key"
+    },
+    "travel_plus_reward_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "travel_plus_tier1_bonus",
+      "refType": "module",
+      "source": "module:travel_plus_tier1_bonus.cap_key"
+    },
+    "university_tuition_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "university_tuition",
+      "refType": "module",
+      "source": "module:university_tuition.cap_key"
+    },
+    "wewa_annual_cap": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "wewa_bonus",
+      "refType": "module",
+      "source": "module:wewa_bonus.cap_key"
+    },
+    "wewa_mobile_mission": {
+      "anchorRef": null,
+      "periodType": "month",
+      "priority": 2,
+      "refId": "wewa_mobile_mission",
+      "refType": "tracker",
+      "source": "tracker:wewa_mobile_mission.counter"
+    },
+    "wewa_mobile_pay_cap": {
+      "anchorRef": null,
+      "periodType": "month",
+      "priority": 2,
+      "refId": "wewa_mobile_pay",
+      "refType": "module",
+      "source": "module:wewa_mobile_pay.cap"
+    },
+    "winter_eligible": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "winter_promo",
+      "refType": "campaign",
+      "source": "winter_promo.section2.eligibleKey"
+    },
+    "winter_total": {
+      "anchorRef": null,
+      "periodType": "none",
+      "priority": 0,
+      "refId": "winter_promo",
+      "refType": "campaign",
+      "source": "winter_promo.section1.usageKey"
+    }
+  },
+  "modules": {
+    "ae_blue_cash_base": {
+      "desc": "回贈 1.2%",
+      "rate": 0.012,
+      "type": "always"
+    },
+    "ae_explorer_base": {
+      "desc": "基本 3X",
+      "rate": 3,
+      "type": "always"
+    },
+    "ae_explorer_overseas": {
+      "desc": "海外/網上/旅遊 ($3.6/里)",
+      "match": [
+        "overseas",
+        "online",
+        "travel",
+        "airline"
+      ],
+      "mode": "replace",
+      "rate": 0.272,
+      "type": "category"
+    },
+    "ae_explorer_selected": {
+      "cap_key": "ae_explorer_q_selected_cap",
+      "cap_limit": 10000,
+      "cap_mode": "spending",
+      "desc": "指定 +9X",
+      "match": [
+        "travel",
+        "cathay_hkexpress",
+        "online",
+        "entertainment",
+        "electronics"
+      ],
+      "rate": 9,
+      "type": "category"
+    },
+    "ae_pcc_base": {
+      "desc": "基本 1X",
+      "rate": 1,
+      "type": "always"
+    },
+    "ae_pcc_special": {
+      "cap_key": "ae_pcc_double_cap",
+      "cap_limit": 30000,
+      "cap_mode": "reward",
+      "desc": "超市/油站 +5X",
+      "match": [
+        "grocery",
+        "gas"
+      ],
+      "rate": 5,
+      "type": "category"
+    },
+    "ae_plat_base": {
+      "desc": "Turbo 2X",
+      "rate": 2,
+      "type": "always"
+    },
+    "ae_plat_daily": {
+      "cap_key": "ae_plat_daily_cap",
+      "cap_limit": 15000,
+      "cap_mode": "spending",
+      "desc": "日常 +7X",
+      "match": [
+        "grocery",
+        "department_store"
+      ],
+      "rate": 7,
+      "type": "category"
+    },
+    "ae_plat_overseas": {
+      "cap_key": "ae_plat_overseas_cap",
+      "cap_limit": 15000,
+      "cap_mode": "spending",
+      "desc": "海外 +6X",
+      "match": [
+        "overseas"
+      ],
+      "rate": 6,
+      "type": "category"
+    },
+    "ae_plat_travel": {
+      "cap_key": "ae_plat_travel_cap",
+      "cap_limit": 15000,
+      "cap_mode": "spending",
+      "desc": "旅遊 +7X",
+      "match": [
+        "travel",
+        "cathay_hkexpress"
+      ],
+      "rate": 7,
+      "type": "category"
+    },
+    "aeon_waku_base": {
+      "desc": "基本 0.5%",
+      "rate": 0.005,
+      "type": "always"
+    },
+    "aeon_waku_japan": {
+      "cap_key": "aeon_waku_cap",
+      "cap_limit": 300,
+      "cap_mode": "reward",
+      "desc": "日本 +2.5% (3%)",
+      "match": [
+        "overseas_jktt"
+      ],
+      "mode": "add",
+      "rate": 0.025,
+      "type": "category"
+    },
+    "aeon_waku_online": {
+      "cap_key": "aeon_waku_cap",
+      "cap_limit": 300,
+      "cap_mode": "reward",
+      "desc": "網購 +5.5% (6%)",
+      "match": [
+        "online"
+      ],
+      "mode": "add",
+      "rate": 0.055,
+      "type": "category"
+    },
+    "bea_goal_base": {
+      "desc": "基本 0.4%",
+      "rate": 0.004,
+      "type": "always"
+    },
+    "bea_goal_entertainment": {
+      "cap": {
+        "key": "bea_goal_cap",
+        "period": "month"
+      },
+      "cap_key": "bea_goal_cap",
+      "cap_limit": 200,
+      "cap_mode": "reward",
+      "desc": "娛樂 5%",
+      "match": [
+        "entertainment"
+      ],
+      "mode": "replace",
+      "rate": 0.05,
+      "req_mission_key": "bea_goal_mission",
+      "req_mission_spend": 2000,
+      "type": "category"
+    },
+    "bea_goal_online_mobile": {
+      "cap": {
+        "key": "bea_goal_mobile_cap",
+        "period": "month"
+      },
+      "cap_key": "bea_goal_mobile_cap",
+      "cap_limit": 5000,
+      "cap_mode": "spending",
+      "desc": "手機支付 4.4%",
+      "eligible_check": "[Function]",
+      "mode": "replace",
+      "rate": 0.044,
+      "req_mission_key": "bea_goal_mission",
+      "req_mission_spend": 2000,
+      "type": "category"
+    },
+    "bea_goal_travel_transport": {
+      "cap": {
+        "key": "bea_goal_cap",
+        "period": "month"
+      },
+      "cap_key": "bea_goal_cap",
+      "cap_limit": 200,
+      "cap_mode": "reward",
+      "desc": "旅遊/交通 6%",
+      "match": [
+        "travel",
+        "transport"
+      ],
+      "mode": "replace",
+      "rate": 0.06,
+      "req_mission_key": "bea_goal_mission",
+      "req_mission_spend": 2000,
+      "type": "category"
+    },
+    "bea_ititanium_base": {
+      "desc": "基本 0.4%",
+      "rate": 0.004,
+      "type": "always"
+    },
+    "bea_ititanium_online_mobile": {
+      "cap": {
+        "key": "bea_ititanium_cap",
+        "period": "month"
+      },
+      "cap_key": "bea_ititanium_cap",
+      "cap_limit": 300,
+      "cap_mode": "reward",
+      "desc": "網購/手機支付 3.6%",
+      "eligible_check": "[Function]",
+      "mode": "replace",
+      "rate": 0.036,
+      "req_mission_key": "bea_ititanium_mission",
+      "req_mission_spend": 2000,
+      "type": "category"
+    },
+    "bea_unionpay_base": {
+      "desc": "基本 1X",
+      "rate": 1,
+      "type": "always"
+    },
+    "bea_unionpay_dining": {
+      "cap": {
+        "key": "bea_unionpay_cap",
+        "period": "month"
+      },
+      "cap_key": "bea_unionpay_cap",
+      "cap_limit": 100000,
+      "cap_mode": "reward",
+      "desc": "本地食肆 3X",
+      "match": [
+        "dining"
+      ],
+      "mode": "replace",
+      "rate": 3,
+      "type": "category"
+    },
+    "bea_unionpay_fx": {
+      "cap": {
+        "key": "bea_unionpay_cap",
+        "period": "month"
+      },
+      "cap_key": "bea_unionpay_cap",
+      "cap_limit": 100000,
+      "cap_mode": "reward",
+      "desc": "外幣簽賬 10X",
+      "match": [
+        "overseas"
+      ],
+      "mode": "replace",
+      "rate": 10,
+      "type": "category"
+    },
+    "bea_unionpay_local": {
+      "cap": {
+        "key": "bea_unionpay_cap",
+        "period": "month"
+      },
+      "cap_key": "bea_unionpay_cap",
+      "cap_limit": 100000,
+      "cap_mode": "reward",
+      "desc": "本地零售 2X",
+      "match": [
+        "general"
+      ],
+      "mode": "replace",
+      "rate": 2,
+      "type": "category"
+    },
+    "bea_unionpay_rmb": {
+      "cap": {
+        "key": "bea_unionpay_cap",
+        "period": "month"
+      },
+      "cap_key": "bea_unionpay_cap",
+      "cap_limit": 100000,
+      "cap_mode": "reward",
+      "desc": "人民幣簽賬 12X",
+      "match": [
+        "overseas_cn"
+      ],
+      "mode": "replace",
+      "rate": 12,
+      "type": "category"
+    },
+    "bea_world_base": {
+      "desc": "基本 1X",
+      "rate": 1,
+      "type": "always"
+    },
+    "bea_world_bonus": {
+      "cap": {
+        "key": "bea_world_cap",
+        "period": "month"
+      },
+      "cap_key": "bea_world_cap",
+      "cap_limit": 115000,
+      "cap_mode": "reward",
+      "desc": "指定類別 12.5X",
+      "match": [
+        "dining",
+        "overseas",
+        "online",
+        "electronics",
+        "apparel",
+        "gym",
+        "medical"
+      ],
+      "mode": "replace",
+      "rate": 12.5,
+      "req_mission_key": "bea_world_mission",
+      "req_mission_spend": 4000,
+      "type": "category"
+    },
+    "boc_amazing_fly_cn": {
+      "cap_key": "boc_amazing_fly_cn_cap",
+      "cap_limit": 60000,
+      "cap_mode": "reward",
+      "desc": "✈️ 狂賞飛 - 中澳 (+12X積分)",
+      "match": [
+        "overseas_cn"
+      ],
+      "rate": 12,
+      "req_mission_key": "spend_boc_cheers_vi",
+      "req_mission_spend": 5000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category"
+    },
+    "boc_amazing_fly_cn_vs": {
+      "cap_key": "boc_amazing_fly_cn_cap",
+      "cap_limit": 60000,
+      "cap_mode": "reward",
+      "desc": "✈️ 狂賞飛 - 中澳 (+12X積分)",
+      "match": [
+        "overseas_cn"
+      ],
+      "rate": 12,
+      "req_mission_key": "spend_boc_cheers_vs",
+      "req_mission_spend": 5000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category"
+    },
+    "boc_amazing_fly_other": {
+      "cap_key": "boc_amazing_fly_other_cap",
+      "cap_limit": 60000,
+      "cap_mode": "reward",
+      "desc": "✈️ 狂賞飛 - 其他 (+6X積分)",
+      "match": [
+        "overseas_jkt",
+        "overseas_tw",
+        "overseas_other"
+      ],
+      "rate": 6,
+      "req_mission_key": "spend_boc_cheers_vi",
+      "req_mission_spend": 5000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category"
+    },
+    "boc_amazing_fly_other_vs": {
+      "cap_key": "boc_amazing_fly_other_cap",
+      "cap_limit": 60000,
+      "cap_mode": "reward",
+      "desc": "✈️ 狂賞飛 - 其他 (+6X積分)",
+      "match": [
+        "overseas_jkt",
+        "overseas_tw",
+        "overseas_other"
+      ],
+      "rate": 6,
+      "req_mission_key": "spend_boc_cheers_vs",
+      "req_mission_spend": 5000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category"
+    },
+    "boc_amazing_holiday": {
+      "cap_key": "boc_amazing_local_holiday_cap",
+      "cap_limit": 300,
+      "cap_mode": "reward",
+      "desc": "🔥 狂賞派 (紅日/星期日 5%)",
+      "match": [
+        "dining",
+        "travel",
+        "entertainment",
+        "telecom",
+        "medical",
+        "apparel",
+        "hotel"
+      ],
+      "min_single_spend": 500,
+      "rate": 0.05,
+      "req_mission_key": "spend_boc_cheers_vi",
+      "req_mission_spend": 5000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category",
+      "valid_on_red_day": true
+    },
+    "boc_amazing_holiday_vs": {
+      "cap_key": "boc_amazing_local_holiday_cap",
+      "cap_limit": 300,
+      "cap_mode": "reward",
+      "desc": "🔥 狂賞派 (紅日/星期日 5%)",
+      "match": [
+        "dining",
+        "travel",
+        "entertainment",
+        "telecom",
+        "medical",
+        "apparel",
+        "hotel"
+      ],
+      "min_single_spend": 500,
+      "rate": 0.05,
+      "req_mission_key": "spend_boc_cheers_vs",
+      "req_mission_spend": 5000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category",
+      "valid_on_red_day": true
+    },
+    "boc_amazing_online_holiday": {
+      "cap_key": "boc_amazing_online_holiday_cap",
+      "cap_limit": 200,
+      "cap_mode": "reward",
+      "desc": "🔥 狂賞派網購 (紅日/星期日 5%)",
+      "match": [
+        "online"
+      ],
+      "rate": 0.05,
+      "req_mission_key": "spend_boc_cheers_vi",
+      "req_mission_spend": 5000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category",
+      "valid_on_red_day": true
+    },
+    "boc_amazing_online_holiday_vs": {
+      "cap_key": "boc_amazing_online_holiday_cap",
+      "cap_limit": 200,
+      "cap_mode": "reward",
+      "desc": "🔥 狂賞派網購 (紅日/星期日 5%)",
+      "match": [
+        "online"
+      ],
+      "rate": 0.05,
+      "req_mission_key": "spend_boc_cheers_vs",
+      "req_mission_spend": 5000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category",
+      "valid_on_red_day": true
+    },
+    "boc_amazing_online_weekday": {
+      "cap_key": "boc_amazing_online_weekday_cap",
+      "cap_limit": 60,
+      "cap_mode": "reward",
+      "desc": "🔥 狂賞派網購 (平日 2%)",
+      "match": [
+        "online"
+      ],
+      "rate": 0.02,
+      "req_mission_key": "spend_boc_cheers_vi",
+      "req_mission_spend": 5000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category",
+      "valid_on_red_day": false
+    },
+    "boc_amazing_online_weekday_vs": {
+      "cap_key": "boc_amazing_online_weekday_cap",
+      "cap_limit": 60,
+      "cap_mode": "reward",
+      "desc": "🔥 狂賞派網購 (平日 2%)",
+      "match": [
+        "online"
+      ],
+      "rate": 0.02,
+      "req_mission_key": "spend_boc_cheers_vs",
+      "req_mission_spend": 5000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category",
+      "valid_on_red_day": false
+    },
+    "boc_amazing_weekday": {
+      "cap_key": "boc_amazing_local_weekday_cap",
+      "cap_limit": 120,
+      "cap_mode": "reward",
+      "desc": "🔥 狂賞派 (平日 2%)",
+      "match": [
+        "dining",
+        "travel",
+        "entertainment",
+        "telecom",
+        "medical",
+        "apparel",
+        "hotel"
+      ],
+      "min_single_spend": 500,
+      "rate": 0.02,
+      "req_mission_key": "spend_boc_cheers_vi",
+      "req_mission_spend": 5000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category",
+      "valid_on_red_day": false
+    },
+    "boc_amazing_weekday_vs": {
+      "cap_key": "boc_amazing_local_weekday_cap",
+      "cap_limit": 120,
+      "cap_mode": "reward",
+      "desc": "🔥 狂賞派 (平日 2%)",
+      "match": [
+        "dining",
+        "travel",
+        "entertainment",
+        "telecom",
+        "medical",
+        "apparel",
+        "hotel"
+      ],
+      "min_single_spend": 500,
+      "rate": 0.02,
+      "req_mission_key": "spend_boc_cheers_vs",
+      "req_mission_spend": 5000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category",
+      "valid_on_red_day": false
+    },
+    "boc_cheers_base": {
+      "desc": "基本 (1X積分)",
+      "rate": 1,
+      "type": "always"
+    },
+    "boc_cheers_dining": {
+      "cap_key": "boc_cheers_dining_cap",
+      "cap_limit": 100000,
+      "cap_mode": "reward",
+      "desc": "餐飲 10X積分",
+      "match": [
+        "dining"
+      ],
+      "mode": "replace",
+      "rate": 10,
+      "req_mission_key": "spend_boc_cheers_vi",
+      "req_mission_spend": 5000,
+      "secondary_cap_key": "boc_cheers_total_cap_vi",
+      "secondary_cap_limit": 300000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category"
+    },
+    "boc_cheers_dining_vs": {
+      "cap_key": "boc_cheers_dining_cap_vs",
+      "cap_limit": 60000,
+      "cap_mode": "reward",
+      "desc": "餐飲 8X積分",
+      "match": [
+        "dining"
+      ],
+      "mode": "replace",
+      "rate": 8,
+      "req_mission_key": "spend_boc_cheers_vs",
+      "req_mission_spend": 5000,
+      "secondary_cap_key": "boc_cheers_total_cap_vs",
+      "secondary_cap_limit": 180000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category"
+    },
+    "boc_cheers_overseas": {
+      "cap_key": "boc_cheers_travel_cap",
+      "cap_limit": 250000,
+      "cap_mode": "reward",
+      "desc": "外幣 +9X積分",
+      "match": [
+        "overseas"
+      ],
+      "rate": 9,
+      "secondary_cap_key": "boc_cheers_total_cap_vi",
+      "secondary_cap_limit": 300000,
+      "type": "category"
+    },
+    "boc_cheers_overseas_vs": {
+      "cap_key": "boc_cheers_travel_cap_vs",
+      "cap_limit": 150000,
+      "cap_mode": "reward",
+      "desc": "外幣 +9X積分",
+      "match": [
+        "overseas"
+      ],
+      "rate": 9,
+      "secondary_cap_key": "boc_cheers_total_cap_vs",
+      "secondary_cap_limit": 180000,
+      "type": "category"
+    },
+    "boc_cheers_travel": {
+      "cap_key": "boc_cheers_travel_cap",
+      "cap_limit": 250000,
+      "cap_mode": "reward",
+      "desc": "旅遊 10X積分",
+      "match": [
+        "travel",
+        "cathay_hkexpress"
+      ],
+      "mode": "replace",
+      "rate": 10,
+      "req_mission_key": "spend_boc_cheers_vi",
+      "req_mission_spend": 5000,
+      "secondary_cap_key": "boc_cheers_total_cap_vi",
+      "secondary_cap_limit": 300000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category"
+    },
+    "boc_cheers_travel_vs": {
+      "cap_key": "boc_cheers_travel_cap_vs",
+      "cap_limit": 150000,
+      "cap_mode": "reward",
+      "desc": "旅遊 8X積分",
+      "match": [
+        "travel",
+        "cathay_hkexpress"
+      ],
+      "mode": "replace",
+      "rate": 8,
+      "req_mission_key": "spend_boc_cheers_vs",
+      "req_mission_spend": 5000,
+      "secondary_cap_key": "boc_cheers_total_cap_vs",
+      "secondary_cap_limit": 180000,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category"
+    },
+    "boc_chill_base": {
+      "desc": "基本 (0.5X積分)",
+      "rate": 0.5,
+      "type": "always"
+    },
+    "boc_chill_merchant": {
+      "cap_key": "boc_chill_cap",
+      "cap_limit": 15000,
+      "cap_mode": "reward",
+      "desc": "Chill商戶 10X積分 (10%) ⚠️ 需實體零售$1,500",
+      "match": [
+        "chill_merchant"
+      ],
+      "mode": "replace",
+      "rate": 10,
+      "req_mission_key": "spend_boc_chill",
+      "req_mission_spend": 1500,
+      "setting_key": "boc_amazing_enabled",
+      "type": "category"
+    },
+    "boc_chill_online_overseas": {
+      "cap_key": "boc_chill_cap",
+      "cap_limit": 15000,
+      "cap_mode": "reward",
+      "desc": "網購/海外 5X積分 (5%)",
+      "match": [
+        "online",
+        "overseas"
+      ],
+      "mode": "replace",
+      "rate": 5,
+      "type": "category"
+    },
+    "boc_go_base": {
+      "desc": "基本 (0.5X積分)",
+      "rate": 0.5,
+      "type": "always"
+    },
+    "boc_go_merchant": {
+      "cap_key": "boc_go_merchant_cap",
+      "cap_limit": 10000,
+      "cap_mode": "reward",
+      "desc": "Go商戶 5X積分 (5%)",
+      "match": [
+        "go_merchant"
+      ],
+      "mode": "replace",
+      "rate": 5,
+      "type": "category"
+    },
+    "boc_go_mobile": {
+      "cap_key": "boc_go_mobile_cap",
+      "cap_limit": 10000,
+      "cap_mode": "reward",
+      "desc": "手機支付 4X積分 (4%)",
+      "match": [
+        "alipay",
+        "wechat"
+      ],
+      "mode": "replace",
+      "rate": 4,
+      "type": "category"
+    },
+    "boc_sogo_mobile_pay": {
+      "cap": {
+        "key": "boc_sogo_mobile_cap",
+        "period": "month"
+      },
+      "cap_key": "boc_sogo_mobile_cap",
+      "cap_limit": 2000,
+      "cap_mode": "reward",
+      "desc": "手機支付 5.4%",
+      "eligible_check": "[Function]",
+      "mode": "replace",
+      "rate": 0.054,
+      "type": "category"
+    },
+    "citi_cb_base": {
+      "desc": "基本 (1%)",
+      "rate": 0.01,
+      "type": "always"
+    },
+    "citi_cb_special": {
+      "desc": "特選類別 (2%)",
+      "match": [
+        "dining",
+        "hotel",
+        "overseas"
+      ],
+      "mode": "replace",
+      "rate": 0.02,
+      "type": "category"
+    },
+    "citi_club_base": {
+      "desc": "基本 1%",
+      "rate": 0.05,
+      "type": "always"
+    },
+    "citi_club_designated": {
+      "desc": "Club商戶 4%",
+      "match": [
+        "citi_club_merchant"
+      ],
+      "mode": "replace",
+      "rate": 0.2,
+      "type": "category"
+    },
+    "citi_octopus_base": {
+      "desc": "基本 0.5%",
+      "rate": 0.005,
+      "type": "always"
+    },
+    "citi_octopus_transport": {
+      "cap_key": "citi_oct_transport_cap",
+      "cap_limit": 2000,
+      "desc": "交通 15% (需月簽$4k*)",
+      "match": [
+        "transport"
+      ],
+      "mode": "replace",
+      "rate": 0.15,
+      "type": "category"
+    },
+    "citi_octopus_tunnel": {
+      "desc": "隧道/泊車 5% (需月簽$10k)",
+      "match": [
+        "transport"
+      ],
+      "mode": "replace",
+      "rate": 0.05,
+      "type": "category"
+    },
+    "citi_pm_base": {
+      "desc": "基本 1.5X ($8/里)",
+      "rate": 1.5,
+      "type": "always"
+    },
+    "citi_pm_overseas": {
+      "desc": "海外 3X ($4/里)",
+      "match": [
+        "overseas"
+      ],
+      "mode": "replace",
+      "rate": 3,
+      "type": "category"
+    },
+    "citi_prestige_base": {
+      "desc": "基本 2X ($6/里)",
+      "rate": 2,
+      "type": "always"
+    },
+    "citi_prestige_overseas": {
+      "desc": "海外 3X ($4/里)",
+      "match": [
+        "overseas"
+      ],
+      "mode": "replace",
+      "rate": 3,
+      "type": "category"
+    },
+    "citi_rewards_base": {
+      "desc": "基本 1X積分",
+      "rate": 1,
+      "type": "always"
+    },
+    "citi_rewards_mobile": {
+      "desc": "手機支付 2.7X (HK$5.5/里)",
+      "match": [
+        "dining",
+        "grocery",
+        "transport",
+        "telecom",
+        "general",
+        "moneyback_merchant",
+        "smart_designated",
+        "citi_club_merchant"
+      ],
+      "mode": "replace",
+      "rate": 2.7,
+      "type": "category"
+    },
+    "citi_rewards_shopping": {
+      "desc": "購物/娛樂 8.1X (HK$1.85/里!)",
+      "match": [
+        "department_store",
+        "apparel",
+        "entertainment"
+      ],
+      "mode": "replace",
+      "rate": 8.1,
+      "type": "category"
+    },
+    "dbs_black_base": {
+      "desc": "本地 ($6/里)",
+      "rate": 0.008,
+      "type": "always"
+    },
+    "dbs_black_overseas_promo": {
+      "desc": "海外 ($2/里)",
+      "match": [
+        "overseas"
+      ],
+      "mode": "replace",
+      "rate": 0.024,
+      "req_mission_key": "spend_dbs_black",
+      "req_mission_spend": 20000,
+      "setting_key": "dbs_black_promo_enabled",
+      "type": "category"
+    },
+    "dbs_black_overseas_std": {
+      "desc": "海外 ($4/里)",
+      "match": [
+        "overseas"
+      ],
+      "mode": "replace",
+      "rate": 0.012,
+      "type": "category"
+    },
+    "dbs_compass_base": {
+      "desc": "基本 (0.4%)",
+      "rate": 0.004,
+      "type": "always"
+    },
+    "dbs_compass_ewallet": {
+      "desc": "電子錢包 (3%)",
+      "match": [
+        "alipay",
+        "wechat"
+      ],
+      "min_spend": 300,
+      "mode": "replace",
+      "rate": 0.03,
+      "type": "category"
+    },
+    "dbs_compass_grocery_wed": {
+      "desc": "超市 (8% 只限週三)",
+      "match": [
+        "grocery"
+      ],
+      "min_spend": 300,
+      "mode": "replace",
+      "rate": 0.08,
+      "type": "category"
+    },
+    "dbs_eminent_base": {
+      "cap_key": "dbs_eminent_base_cap",
+      "cap_limit": 20000,
+      "desc": "其他零售 (1%)",
+      "rate": 0.01,
+      "type": "always"
+    },
+    "dbs_eminent_bonus": {
+      "cap_key": "dbs_eminent_bonus_cap",
+      "cap_limit": 8000,
+      "desc": "指定類別 (5%)",
+      "match": [
+        "dining",
+        "gym",
+        "sportswear",
+        "medical"
+      ],
+      "min_spend": 300,
+      "mode": "replace",
+      "rate": 0.05,
+      "type": "category"
+    },
+    "dbs_live_fresh_base": {
+      "desc": "基本 (0.4%)",
+      "rate": 0.004,
+      "type": "always"
+    },
+    "dbs_live_fresh_online_foreign": {
+      "desc": "網上外幣 (1%)",
+      "match": [
+        "overseas"
+      ],
+      "mode": "replace",
+      "rate": 0.01,
+      "type": "category"
+    },
+    "dbs_live_fresh_selected": {
+      "cap_key": "dbs_live_fresh_cap",
+      "cap_limit": 150,
+      "cap_mode": "reward",
+      "desc": "自選類別 (5%) ⚠️ 只限網上",
+      "match": [
+        "live_fresh_selected"
+      ],
+      "min_spend": 300,
+      "mode": "replace",
+      "rate": 0.05,
+      "type": "category"
+    },
+    "earnmore_base": {
+      "cap_key": "earnmore_annual_spend",
+      "cap_limit": 150000,
+      "cap_mode": "spending",
+      "desc": "全線 2%",
+      "rate": 0.02,
+      "type": "always"
+    },
+    "easy_moneyback_bonus": {
+      "desc": "易賞錢6倍 (約2.4%)",
+      "match": [
+        "moneyback_merchant"
+      ],
+      "rate": 0.024,
+      "type": "category"
+    },
+    "em_base": {
+      "desc": "基本 (1%)",
+      "rate": 0.01,
+      "type": "always"
+    },
+    "em_designated": {
+      "desc": "指定 $2/里 (2.5%)",
+      "match": [
+        "streaming",
+        "em_designated_spend"
+      ],
+      "mode": "replace",
+      "rate": 0.025,
+      "type": "category"
+    },
+    "em_grocery_low": {
+      "desc": "超市 (0.4%)",
+      "match": [
+        "grocery"
+      ],
+      "mode": "replace",
+      "rate": 0.004,
+      "type": "category"
+    },
+    "em_overseas_bonus": {
+      "cap_key": "em_promo_cap",
+      "cap_limit": 225,
+      "cap_mode": "reward",
+      "desc": "EM推廣 (+1.5%)",
+      "match": [
+        "overseas"
+      ],
+      "mode": "add",
+      "rate": 0.015,
+      "req_mission_key": "em_q1_total",
+      "req_mission_spend": 12000,
+      "setting_key": "em_promo_enabled",
+      "type": "category"
+    },
+    "enjoy_base": {
+      "desc": "基本 (0.5%)",
+      "rate": 0.005,
+      "type": "always"
+    },
+    "enjoy_dining": {
+      "desc": "指定食肆 (+1.5%)",
+      "match": [
+        "dining_enjoy"
+      ],
+      "rate": 0.015,
+      "type": "category"
+    },
+    "enjoy_retail": {
+      "desc": "指定零售 (+1%)",
+      "match": [
+        "retail_enjoy"
+      ],
+      "rate": 0.01,
+      "type": "category"
+    },
+    "fubon_in_base": {
+      "desc": "基本 1X (0.4%)",
+      "rate": 1,
+      "type": "always"
+    },
+    "fubon_in_online": {
+      "cap_key": "fubon_in_bonus_cap",
+      "cap_limit": 62500,
+      "cap_mode": "reward",
+      "desc": "網購 +19X (8%)",
+      "match": [
+        "online"
+      ],
+      "mode": "add",
+      "rate": 19,
+      "req_mission_key": "spend_fubon_in_platinum",
+      "req_mission_spend": 1000,
+      "setting_key": "fubon_in_promo_enabled",
+      "type": "category"
+    },
+    "fubon_travel_base": {
+      "desc": "基本 1X",
+      "rate": 1,
+      "type": "always"
+    },
+    "fubon_travel_euro": {
+      "desc": "歐美 +4X (5X)",
+      "match": [
+        "overseas_other"
+      ],
+      "mode": "add",
+      "rate": 4,
+      "type": "category"
+    },
+    "fubon_travel_jpkr": {
+      "desc": "日韓泰 +9X (10X)",
+      "match": [
+        "overseas_jkt"
+      ],
+      "mode": "add",
+      "rate": 9,
+      "type": "category"
+    },
+    "fubon_travel_tw": {
+      "desc": "台灣 +19X (20X)",
+      "match": [
+        "overseas_tw"
+      ],
+      "mode": "add",
+      "rate": 19,
+      "type": "category"
+    },
+    "hangseng_base": {
+      "desc": "基本 (0.4%)",
+      "rate": 0.004,
+      "type": "always"
+    },
+    "hsbc_std_base": {
+      "desc": "基本 (0.4%)",
+      "rate": 0.004,
+      "type": "always"
+    },
+    "mmpower_online_bonus": {
+      "cap_key": "mmpower_reward_cap",
+      "cap_limit": 500,
+      "cap_mode": "reward",
+      "desc": "MMP+網購 (4.6%)",
+      "match": [
+        "online"
+      ],
+      "mode": "add",
+      "rate": 0.046,
+      "req_mission_key": "spend_hangseng_mmpower",
+      "req_mission_spend": 5000,
+      "setting_key": "mmpower_promo_enabled",
+      "type": "category"
+    },
+    "mmpower_overseas_bonus": {
+      "cap_key": "mmpower_reward_cap",
+      "cap_limit": 500,
+      "cap_mode": "reward",
+      "desc": "MMP+海外 (5.6%)",
+      "match": [
+        "overseas"
+      ],
+      "mode": "add",
+      "rate": 0.056,
+      "req_mission_key": "spend_hangseng_mmpower",
+      "req_mission_spend": 5000,
+      "setting_key": "mmpower_promo_enabled",
+      "type": "category"
+    },
+    "mmpower_selected_bonus": {
+      "cap_key": "mmpower_reward_cap",
+      "cap_limit": 500,
+      "cap_mode": "reward",
+      "desc": "MMP+自選 (0.6%)",
+      "match": [
+        "dining",
+        "electronics",
+        "entertainment"
+      ],
+      "mode": "add",
+      "rate": 0.006,
+      "req_mission_key": "spend_hangseng_mmpower",
+      "req_mission_spend": 5000,
+      "setting_key": "mmpower_promo_enabled",
+      "type": "category"
+    },
+    "mox_base": {
+      "desc": "基本 1%",
+      "rate": 0.01,
+      "type": "always"
+    },
+    "mox_supermarket": {
+      "desc": "超市 3%",
+      "match": [
+        "grocery",
+        "supermarket"
+      ],
+      "mode": "replace",
+      "rate": 0.03,
+      "type": "category"
+    },
+    "mox_task_bonus": {
+      "desc": "+1% (活期任務)",
+      "mode": "add",
+      "rate": 0.01,
+      "setting_key": "mox_deposit_task_enabled",
+      "type": "always"
+    },
+    "pulse_china_bonus": {
+      "desc": "內地/澳門手機支付 (+2%)",
+      "match": [
+        "china_consumption"
+      ],
+      "rate": 0.02,
+      "type": "category"
+    },
+    "red_base": {
+      "desc": "基本 (0.4%)",
+      "rate": 0.004,
+      "type": "always"
+    },
+    "red_designated_bonus": {
+      "cap": {
+        "key": "red_designated_cap",
+        "period": "month"
+      },
+      "cap_key": "red_designated_cap",
+      "cap_limit": 100,
+      "cap_mode": "reward",
+      "desc": "指定商戶 +7.6% (8%)",
+      "match": [
+        "red_designated"
+      ],
+      "rate": 0.076,
+      "type": "category"
+    },
+    "red_hot_variable": {
+      "desc": "最紅自主",
+      "rate_per_x": 0.004,
+      "setting_key": "red_hot_rewards_enabled",
+      "type": "red_hot_allocation"
+    },
+    "red_online": {
+      "cap": {
+        "key": "red_online_cap",
+        "period": "month"
+      },
+      "cap_key": "red_online_cap",
+      "cap_limit": 400,
+      "cap_mode": "reward",
+      "desc": "網購 +3.6% (4%)",
+      "match": [
+        "online"
+      ],
+      "mode": "replace",
+      "rate": 0.04,
+      "type": "category"
+    },
+    "sc_cathay_airlines": {
+      "desc": "CX/UO 加碼至 $2/里",
+      "match": [
+        "cathay_hkexpress"
+      ],
+      "rate": 0.3334,
+      "type": "category"
+    },
+    "sc_cathay_base": {
+      "desc": "基本 $6/里",
+      "rate": 0.1666,
+      "type": "always"
+    },
+    "sc_cathay_dining_hotel": {
+      "desc": "食肆/酒店 $4/里",
+      "match": [
+        "dining",
+        "hotel"
+      ],
+      "rate": 0.0834,
+      "type": "category"
+    },
+    "sc_cathay_overseas_priority": {
+      "desc": "優先理財: 海外 $3/里",
+      "match": [
+        "overseas"
+      ],
+      "rate": 0.1667,
+      "type": "category"
+    },
+    "sc_cathay_overseas_private": {
+      "desc": "Private: Overseas $2/mi",
+      "match": [
+        "overseas"
+      ],
+      "rate": 0.3334,
+      "type": "category"
+    },
+    "sc_cathay_overseas_std": {
+      "desc": "海外 $4/里",
+      "match": [
+        "overseas"
+      ],
+      "rate": 0.0834,
+      "type": "category"
+    },
+    "sc_cathay_private": {
+      "desc": "優先私人: 海外 $2/里",
+      "match": [
+        "overseas"
+      ],
+      "rate": 0.3334,
+      "type": "category"
+    },
+    "sc_simply_cash_base": {
+      "desc": "本地 1.5%",
+      "rate": 0.015,
+      "type": "always"
+    },
+    "sc_simply_cash_foreign": {
+      "desc": "外幣 2%",
+      "match": [
+        "overseas"
+      ],
+      "mode": "replace",
+      "rate": 0.02,
+      "type": "category"
+    },
+    "sc_smart_base": {
+      "desc": "基本 0.55%",
+      "rate": 0.0055,
+      "type": "always"
+    },
+    "sc_smart_designated": {
+      "cap_key": "sc_smart_cap",
+      "cap_limit": 60000,
+      "desc": "指定商戶 5%",
+      "match": [
+        "smart_designated"
+      ],
+      "mode": "replace",
+      "rate": 0.05,
+      "type": "category"
+    },
+    "sim_base": {
+      "desc": "基本 0.4%",
+      "rate": 0.004,
+      "type": "always"
+    },
+    "sim_online": {
+      "cap_key": "sim_online_cap",
+      "cap_limit": 200,
+      "cap_mode": "reward",
+      "desc": "網購 +7.6% (8%)",
+      "match": [
+        "online"
+      ],
+      "mode": "add",
+      "rate": 0.076,
+      "req_mission_key": "sim_non_online_spend",
+      "req_mission_spend": 500,
+      "setting_key": "sim_promo_enabled",
+      "type": "category"
+    },
+    "student_tuition_bonus": {
+      "cap_key": "student_tuition_cap",
+      "cap_limit": 8333,
+      "desc": "學費回贈 (2.4%)",
+      "match": [
+        "tuition"
+      ],
+      "rate": 0.024,
+      "type": "category"
+    },
+    "travel_guru_v2": {
+      "category": "overseas",
+      "config": {
+        "1": {
+          "cap_rc": 500,
+          "desc": "GO級 (+3%)",
+          "rate": 0.03
+        },
+        "2": {
+          "cap_rc": 1200,
+          "desc": "GING級 (+4%)",
+          "rate": 0.04
+        },
+        "3": {
+          "cap_rc": 2200,
+          "desc": "GURU級 (+6%)",
+          "rate": 0.06
+        }
+      },
+      "type": "guru_capped",
+      "usage_key": "guru_rc_used"
+    },
+    "travel_plus_dining_bonus": {
+      "cap_key": "travel_plus_reward_cap",
+      "cap_limit": 500,
+      "cap_mode": "reward",
+      "desc": "T+餐飲 (4.6%)",
+      "match": [
+        "dining"
+      ],
+      "mode": "add",
+      "rate": 0.046,
+      "req_mission_key": "spend_hangseng_travel_plus",
+      "req_mission_spend": 6000,
+      "setting_key": "travel_plus_promo_enabled",
+      "type": "category"
+    },
+    "travel_plus_tier1_bonus": {
+      "cap_key": "travel_plus_reward_cap",
+      "cap_limit": 500,
+      "cap_mode": "reward",
+      "desc": "T+指定外幣 (6.6%)",
+      "match": [
+        "travel_plus_tier1"
+      ],
+      "mode": "add",
+      "rate": 0.066,
+      "req_mission_key": "spend_hangseng_travel_plus",
+      "req_mission_spend": 6000,
+      "setting_key": "travel_plus_promo_enabled",
+      "type": "category"
+    },
+    "travel_plus_tier2_bonus": {
+      "cap_key": "travel_plus_reward_cap",
+      "cap_limit": 500,
+      "cap_mode": "reward",
+      "desc": "T+其他外幣 (4.6%)",
+      "match": [
+        "overseas"
+      ],
+      "mode": "add",
+      "rate": 0.046,
+      "req_mission_key": "spend_hangseng_travel_plus",
+      "req_mission_spend": 6000,
+      "setting_key": "travel_plus_promo_enabled",
+      "type": "category"
+    },
+    "university_tuition": {
+      "cap_key": "university_tuition_cap",
+      "cap_limit": 8333,
+      "desc": "大學學費 (2%)",
+      "match": [
+        "tuition"
+      ],
+      "rate": 0.02,
+      "type": "category"
+    },
+    "vs_base": {
+      "desc": "基本 (0.4%)",
+      "rate": 0.004,
+      "type": "always"
+    },
+    "vs_red_hot_bonus": {
+      "desc": "VS專屬賞 (1.2%)",
+      "multiplier": 3,
+      "rate_per_x": 0.004,
+      "type": "red_hot_fixed_bonus"
+    },
+    "wewa_base": {
+      "desc": "基本 0.4%",
+      "rate": 0.004,
+      "type": "always"
+    },
+    "wewa_bonus": {
+      "cap_key": "wewa_annual_cap",
+      "cap_limit": 2000,
+      "cap_mode": "reward",
+      "desc": "旅遊/玩樂 +3.6% (4%)",
+      "match": [
+        "travel",
+        "entertainment",
+        "apparel"
+      ],
+      "mode": "add",
+      "rate": 0.036,
+      "type": "category"
+    },
+    "wewa_mobile_pay": {
+      "cap": {
+        "key": "wewa_mobile_pay_cap",
+        "period": "month"
+      },
+      "cap_key": "wewa_mobile_pay_cap",
+      "cap_limit": 5556,
+      "cap_mode": "spending",
+      "desc": "手機支付 4%",
+      "eligible_check": "[Function]",
+      "mode": "replace",
+      "rate": 0.04,
+      "req_mission_key": "wewa_mobile_mission",
+      "req_mission_spend": 1500,
+      "type": "category"
+    }
+  },
+  "trackers": {
+    "bea_goal_mission": {
+      "counter": {
+        "key": "bea_goal_mission",
+        "period": "month"
+      },
+      "desc": "BEA GOAL 月簽門檻",
+      "mission_id": "bea_goal",
+      "req_mission_key": "bea_goal_mission",
+      "type": "mission_tracker"
+    },
+    "bea_ititanium_mission": {
+      "counter": {
+        "key": "bea_ititanium_mission",
+        "period": "month"
+      },
+      "desc": "BEA i-Titanium 月簽門檻",
+      "mission_id": "bea_ititanium",
+      "req_mission_key": "bea_ititanium_mission",
+      "type": "mission_tracker"
+    },
+    "bea_world_mission": {
+      "counter": {
+        "key": "bea_world_mission",
+        "period": "month"
+      },
+      "desc": "BEA World 月簽門檻",
+      "mission_id": "bea_world",
+      "req_mission_key": "bea_world_mission",
+      "type": "mission_tracker"
+    },
+    "em_overseas_mission": {
+      "desc": "🌏 EM推廣",
+      "effects_on_eligible": [
+        {
+          "amount": "tx_amount",
+          "key": "em_q1_eligible"
+        }
+      ],
+      "effects_on_match": [
+        {
+          "amount": "tx_amount",
+          "key": "em_q1_total"
+        }
+      ],
+      "match": [
+        "overseas"
+      ],
+      "mission_id": "em_promo",
+      "promo_end": "2026-03-31",
+      "setting_key": "em_promo_enabled",
+      "type": "mission_tracker",
+      "valid_to": "2026-03-31"
+    },
+    "sim_non_online_tracker": {
+      "desc": "Sim Credit 非網購 ($500)",
+      "eligible_check": "[Function]",
+      "match": [
+        "general",
+        "dining",
+        "nfc_payment",
+        "overseas",
+        "alipay",
+        "wechat",
+        "payme",
+        "oepay",
+        "grocery",
+        "sportswear",
+        "medical",
+        "transport",
+        "travel",
+        "entertainment",
+        "apparel",
+        "health_beauty",
+        "telecom",
+        "other",
+        "moneyback_merchant",
+        "tuition",
+        "chill_merchant",
+        "go_merchant"
+      ],
+      "mission_id": "sim_non_online",
+      "req_mission_key": "sim_non_online_spend",
+      "type": "mission_tracker"
+    },
+    "wewa_mobile_mission": {
+      "counter": {
+        "key": "wewa_mobile_mission",
+        "period": "month"
+      },
+      "desc": "WeWa 每月簽賬門檻",
+      "eligible_check": "[Function]",
+      "mission_id": "wewa_mobile",
+      "req_mission_key": "wewa_mobile_mission",
+      "type": "mission_tracker"
+    },
+    "winter_tracker": {
+      "desc": "❄️ 冬日賞",
+      "effects_on_eligible": [
+        {
+          "amount": "tx_amount",
+          "key": "winter_total"
+        },
+        {
+          "amount": "tx_amount",
+          "key": "winter_eligible"
+        }
+      ],
+      "eligible_check": "[Function]",
+      "match": [
+        "dining",
+        "overseas"
+      ],
+      "mission_id": "winter_promo",
+      "promo_end": "2026-02-28",
+      "setting_key": "winter_promo_enabled",
+      "type": "mission_tracker",
+      "valid_to": "2026-02-28"
+    }
+  }
+}

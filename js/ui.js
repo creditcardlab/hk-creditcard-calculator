@@ -164,7 +164,6 @@ function renderPromoOverlay(overlayModel) {
                 <div style="width:${seg2Fill}%" class="bg-green-600 h-3"></div>
             </div>
             ${rewardLocked ? '' : `<div class="absolute top-0 bottom-0" style="left:${seg1WidthSafe}%; width:1px; background:rgba(0,0,0,0.08)"></div>`}
-            ${rewardLocked ? `<div class="absolute inset-0 flex items-center justify-center text-gray-500 text-xs"><i class="fas fa-lock"></i></div>` : ''}
         </div>`;
     }
 
@@ -196,6 +195,104 @@ function renderPromoMarkers(markers) {
     return "";
 }
 
+function clampPercent(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return 0;
+    return Math.max(0, Math.min(100, num));
+}
+
+function getSectionUi(sec, theme) {
+    const state = sec.state || "active";
+    const kind = sec.kind || "cap";
+    const meta = sec.meta || {};
+    const hasOverlay = !!sec.overlayModel;
+
+    const ui = {
+        trackClass: "pc-track",
+        fillClass: theme && theme.bar ? theme.bar : "bg-green-500",
+        striped: false,
+        showLock: state === "locked",
+        lockClass: "pc-lock",
+        showTierSeparators: false,
+        separatorPositions: [],
+        separatorClass: "pc-sep",
+        subText: "",
+        subTextClass: "text-gray-500"
+    };
+
+    if (state === "locked") {
+        ui.trackClass = "pc-track pc-track-locked";
+        ui.fillClass = "bg-gray-300";
+        ui.striped = false;
+        ui.subText = sec.lockedReason || "Locked";
+        ui.subTextClass = "text-gray-400";
+    } else if (state === "capped") {
+        ui.fillClass = "bg-red-500";
+        ui.striped = false;
+        ui.subText = "Capped";
+        ui.subTextClass = "text-red-500";
+    } else {
+        if (kind === "mission") {
+            ui.fillClass = "bg-blue-500";
+            ui.subText = "Unlocked";
+            ui.subTextClass = "text-green-600 font-bold";
+        } else {
+            if (typeof meta.remaining === "number") {
+                const prefix = meta.prefix || "";
+                const unit = meta.unit || "";
+                ui.subText = `Remaining ${prefix}${Math.max(0, Math.floor(meta.remaining)).toLocaleString()}${unit}`;
+            } else {
+                ui.subText = "In Progress";
+            }
+            ui.subTextClass = "text-gray-500";
+        }
+    }
+
+    if (hasOverlay) {
+        ui.fillClass = state === "locked" ? "bg-gray-300" : "bg-gray-200";
+        ui.striped = false;
+    }
+
+    if (state === "active") {
+        ui.striped = (kind === "cap" || kind === "tier_cap") && !hasOverlay;
+    }
+
+    if (kind === "tier_cap") {
+        ui.showTierSeparators = true;
+        if (Array.isArray(sec.markers) && sec.markers.length > 0 && typeof sec.markers[0] === "object") {
+            ui.separatorPositions = sec.markers
+                .map(m => Number(m.pos))
+                .filter(n => Number.isFinite(n));
+        } else if (meta && Array.isArray(meta.tierBreaks)) {
+            ui.separatorPositions = meta.tierBreaks
+                .map(n => Number(n))
+                .filter(n => Number.isFinite(n));
+        }
+    }
+
+    return ui;
+}
+
+function renderProgressBar({ progress, state, ui, overlayModel }) {
+    const width = overlayModel ? 100 : clampPercent(progress);
+    const fillClass = `pc-fill ${ui.fillClass}${ui.striped ? " progress-stripe" : ""}`;
+    const overlay = renderPromoOverlay(overlayModel);
+    const separators = ui.showTierSeparators && Array.isArray(ui.separatorPositions)
+        ? ui.separatorPositions.map(pos => {
+            const safe = clampPercent(pos);
+            return `<div class="${ui.separatorClass}" style="left:${safe}%"></div>`;
+        }).join("")
+        : "";
+    const lockHtml = ui.showLock ? `<div class="${ui.lockClass}"><i class="fas fa-lock"></i></div>` : "";
+
+    return `<div class="${ui.trackClass}">
+        <div class="${fillClass}" style="width:${width}%"></div>
+        ${separators}
+        ${overlay}
+        ${lockHtml}
+    </div>`;
+}
+
 function renderPromoSections(sections, theme) {
     if (!sections) return "";
     return sections.map(sec => {
@@ -205,68 +302,28 @@ function renderPromoSections(sections, theme) {
         const label = escapeHtml(sec.label || "");
         const valueText = escapeHtml(sec.valueText || "");
         const progress = Number.isFinite(sec.progress) ? sec.progress : 0;
-        const state = sec.state || "active";
 
-        let barColor = theme.bar;
-        let striped = false;
-        let subText = "";
-        let subTextClass = "text-gray-500";
-
-        if (sec.kind === "mission") {
-            barColor = state === "locked" ? "bg-gray-400 opacity-50" : "bg-blue-500";
-            subText = state === "locked" ? (sec.lockedReason || "") : "Unlocked";
-            subTextClass = state === "locked" ? "text-gray-400" : "text-green-600 font-bold";
-            if (sec.overlayModel && sec.overlayModel.type === "winter_mission") {
-                barColor = "bg-gray-200";
-            }
-        } else {
-            striped = sec.kind !== "tier_cap" || !(sec.meta && sec.meta.isWinterPromo);
-            if (state === "locked") {
-                barColor = "bg-gray-400 opacity-50";
-                subText = sec.lockedReason || "Locked";
-                subTextClass = "text-gray-400";
-            } else if (state === "capped") {
-                barColor = "bg-red-500";
-                subText = "Capped";
-                subTextClass = "text-red-500";
-            } else {
-                barColor = "bg-green-500";
-                if (sec.meta && typeof sec.meta.remaining === "number") {
-                    const prefix = sec.meta.prefix || "";
-                    const unit = sec.meta.unit || "";
-                    subText = `Remaining ${prefix}${Math.max(0, Math.floor(sec.meta.remaining)).toLocaleString()}${unit}`;
-                } else {
-                    subText = "In Progress";
-                }
-                subTextClass = "text-gray-500";
-            }
-
-            if (sec.overlayModel && sec.overlayModel.type === "winter_reward") {
-                barColor = state === "locked" ? "bg-gray-300" : "bg-gray-200";
-                striped = false;
-                if (sec.lockedReason) {
-                    subText = sec.lockedReason;
-                    subTextClass = "text-gray-400";
-                } else if (state !== "capped") {
-                    subText = "In Progress";
-                    subTextClass = "text-gray-500";
-                }
-            }
+        const ui = getSectionUi(sec, theme);
+        if (sec.overlayModel && sec.overlayModel.type === "winter_reward" && sec.lockedReason && sec.state === "locked") {
+            ui.subText = sec.lockedReason;
+            ui.subTextClass = "text-gray-400";
         }
 
-        const overlay = renderPromoOverlay(sec.overlayModel);
+        const barHtml = renderProgressBar({
+            progress,
+            state: sec.state || "active",
+            ui,
+            overlayModel: sec.overlayModel
+        });
         const markersHtml = renderPromoMarkers(sec.markers);
-        const subTextHtml = subText ? `<div class="text-[10px] text-right mt-1 ${subTextClass}">${escapeHtml(subText)}</div>` : '';
+        const subTextHtml = ui.subText ? `<div class="text-[10px] text-right mt-1 ${ui.subTextClass}">${escapeHtml(ui.subText)}</div>` : '';
 
         return `<div>
             <div class="flex justify-between text-xs mb-1">
                 <span class="${theme.text} font-bold">${label}</span>
                 <span class="text-gray-500 font-mono">${valueText}</span>
             </div>
-            <div class="w-full bg-gray-100 rounded-full h-3 relative overflow-hidden">
-                <div class="${barColor} h-3 rounded-full transition-all duration-700 ${striped ? 'progress-stripe' : ''}" style="width: ${progress}%"></div>
-                ${overlay}
-            </div>
+            ${barHtml}
             ${markersHtml}
             ${subTextHtml}
         </div>`;
