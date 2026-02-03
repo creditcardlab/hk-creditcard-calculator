@@ -97,6 +97,56 @@ def list_child_databases(page_id, token):
     return results
 
 
+def create_child_database(page_id, token, db_title, title_prop_name):
+    url = f"{API_BASE}/databases"
+    body = {
+        "parent": {"type": "page_id", "page_id": page_id},
+        "title": [{"type": "text", "text": {"content": db_title}}],
+        "properties": {
+            title_prop_name: {"title": {}},
+        },
+    }
+    return notion_request("POST", url, token, body=body)
+
+
+def bootstrap_child_databases(page_id, token):
+    """
+    Ensure the Notion page has the expected child databases used by this repo.
+    Creates any missing databases with a stable title property name so upserts work.
+    """
+    required = [
+        ("Cards", "Card ID"),
+        ("Categories", "Category Key"),
+        ("Modules", "Module Key"),
+        ("Trackers", "Tracker Key"),
+        ("Campaigns", "Campaign ID"),
+        ("Campaign Sections", "Section ID"),
+        ("Campaign Registry", "Campaign ID"),
+        ("Counters Registry", "Key"),
+    ]
+
+    db_map = {title: db_id for title, db_id in list_child_databases(page_id, token)}
+    created = []
+    for db_title, title_prop_name in required:
+        if db_title in db_map:
+            continue
+        created_db = create_child_database(page_id, token, db_title, title_prop_name)
+        created.append(db_title)
+        db_map[db_title] = created_db.get("id")
+
+    # Notion may take a moment to reflect newly created DB blocks in /children.
+    if created:
+        time.sleep(0.5)
+        db_map = {title: db_id for title, db_id in list_child_databases(page_id, token)}
+        missing_after = [t for t, _ in required if t not in db_map]
+        if missing_after:
+            print(f"[warn] bootstrap: created {', '.join(created)} but still missing: {', '.join(missing_after)}")
+        else:
+            print(f"[info] bootstrap: created databases: {', '.join(created)}")
+
+    return db_map
+
+
 def query_page_by_title(database_id, title_prop, key, token):
     url = f"{API_BASE}/databases/{database_id}/query"
     body = {"filter": {"property": title_prop, "title": {"equals": key}}}
@@ -581,9 +631,9 @@ def sync(repo_root, page_url, token):
                 usage_key = s.get("usageKey")
                 props = {
                     "Campaign ID": rt(camp_id),
-                    "Campaign": rels([camp_page_id]) if camp_page_id else rels([]),
+                    **({"Campaign": rels([camp_page_id])} if (camp_page_id and "Campaign" in allowed) else {}),
                     "Promo ID": rt(camp_id),
-                    "Promotion": rels([camp_page_id]) if camp_page_id else rels([]),
+                    **({"Promotion": rels([camp_page_id])} if (camp_page_id and "Promotion" in allowed) else {}),
                     "Type": rt(s.get("type", "")),
                     "Label": rt(s.get("label", "")),
                     "Usage Key": rt(usage_key or ""),
@@ -672,6 +722,7 @@ def sync(repo_root, page_url, token):
 def main():
     parser = argparse.ArgumentParser(description="Sync repo data to Notion (optional) and/or dump DATA JSON")
     parser.add_argument("--page-url", help="Notion page URL that contains the child databases")
+    parser.add_argument("--bootstrap", action="store_true", help="Create the expected child databases under the page if missing")
     parser.add_argument("--dump", help="Write a JSON dump of DATA to this file (for offline inspection)")
     args = parser.parse_args()
 
@@ -689,6 +740,12 @@ def main():
     token = os.environ.get("NOTION_TOKEN")
     if not token:
         die("NOTION_TOKEN is not set")
+
+    if args.bootstrap:
+        page_id = extract_id_from_url(args.page_url)
+        if not page_id:
+            die("Could not parse page ID from URL")
+        bootstrap_child_databases(page_id, token)
 
     sync(repo_root, args.page_url, token)
     print("Sync complete")
