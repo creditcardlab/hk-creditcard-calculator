@@ -66,8 +66,9 @@
         trackers: (typeof trackersDB !== "undefined") ? trackersDB : {},
         campaigns: (typeof CAMPAIGNS !== "undefined") ? CAMPAIGNS : [],
         campaignRegistry: (typeof CAMPAIGN_REGISTRY !== "undefined") ? CAMPAIGN_REGISTRY : {},
-        promotions: (typeof CAMPAIGNS !== "undefined") ? adaptCampaignsToPromotions(CAMPAIGNS, (typeof modulesDB !== "undefined") ? modulesDB : {}) : ((typeof PROMOTIONS !== "undefined") ? PROMOTIONS : []),
-        promoRegistry: (typeof CAMPAIGN_REGISTRY !== "undefined") ? CAMPAIGN_REGISTRY : ((typeof PROMO_REGISTRY !== "undefined") ? PROMO_REGISTRY : {}),
+        // Back-compat: UI still reads DATA.promotions, but source of truth is CAMPAIGNS.
+        promotions: (typeof CAMPAIGNS !== "undefined") ? adaptCampaignsToPromotions(CAMPAIGNS, (typeof modulesDB !== "undefined") ? modulesDB : {}) : [],
+        promoRegistry: (typeof CAMPAIGN_REGISTRY !== "undefined") ? CAMPAIGN_REGISTRY : {},
         rules: (typeof DATA_RULES !== "undefined") ? DATA_RULES : {},
         redHotCategories,
         periodDefaults: {
