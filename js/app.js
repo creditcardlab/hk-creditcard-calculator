@@ -329,6 +329,7 @@ function trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paym
     if (!cardId || typeof DATA === 'undefined' || !DATA.cards || !DATA.modules) return;
     const card = DATA.cards.find(c => c.id === cardId);
     if (!card || !Array.isArray(card.modules)) return;
+    const resolvedCategory = resolveCategory(cardId, category);
 
     card.modules.forEach(modId => {
         const mod = DATA.modules[modId];
@@ -337,11 +338,11 @@ function trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paym
 
         let eligible = true;
         if (typeof mod.eligible_check === 'function') {
-            eligible = !!mod.eligible_check(category, { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod });
+            eligible = !!mod.eligible_check(resolvedCategory, { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod });
         } else if (!mod.match) {
             eligible = true;
         } else if (Array.isArray(mod.match)) {
-            eligible = isCategoryOrOnlineMatch(mod.match, category, isOnline);
+            eligible = isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline);
         }
 
         if (!eligible) return;

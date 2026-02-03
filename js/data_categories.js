@@ -45,7 +45,7 @@ const categoriesDB = {
     other: { label: "❓ 其他", hidden: true },
     online_foreign: { label: "🌐 網上外幣", hidden: true, parent: "overseas" },
     overseas_jktt: { label: "🇯🇵 海外 (日本-舊)", hidden: true, parent: "overseas" }, // legacy typo
-    travel_plus_tier1: { label: "✈️ Travel+ Tier1", hidden: true, parent: "overseas" },
+    travel_plus_tier1: { label: "✈️ Travel+ Tier1", hidden: true },
     charity: { label: "❤️ 慈善", hidden: true },
     streaming: { label: "🎬 串流/訂閱", hidden: true },
     wechat: { label: "💬 WeChat Pay", hidden: true },

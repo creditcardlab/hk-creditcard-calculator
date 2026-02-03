@@ -418,7 +418,26 @@ function isCategoryOrOnlineMatch(moduleMatches, category, isOnline) {
 }
 
 function isForeignCategory(category) {
-    return category && (category.startsWith('overseas') || category === 'foreign' || category === 'travel_plus_tier1');
+    // Prefer hierarchy-based detection so new overseas children (e.g. online_foreign, china_consumption)
+    // automatically count as "foreign" without string prefix assumptions.
+    if (!category) return false;
+    if (category === 'foreign') return true; // legacy
+    if (category === 'overseas') return true;
+
+    const visited = new Set();
+    const stack = [category];
+    while (stack.length) {
+        const cur = stack.pop();
+        if (!cur || visited.has(cur)) continue;
+        visited.add(cur);
+
+        const parents = CATEGORY_HIERARCHY[cur];
+        if (!parents || !Array.isArray(parents)) continue;
+        if (parents.includes('overseas')) return true;
+        parents.forEach(p => stack.push(p));
+    }
+
+    return false;
 }
 
 function isMissionMet(mod, userProfile) {
@@ -667,13 +686,13 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             }
             else if (mod.type === "mission_tracker") {
                 if (userProfile.settings[mod.setting_key] !== false) {
-                    const match = mod.match ? isCategoryOrOnlineMatch(mod.match, category, isOnline) : true;
+                    const match = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline) : true;
                     const eligible = match && (typeof mod.eligible_check === 'function' ? mod.eligible_check(category, { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod }) : true);
                     missionTags.push({ id: mod.mission_id, eligible, desc: mod.desc });
                 }
             }
             else if (mod.type === "category") {
-                const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, category, isOnline) : true;
+                const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline) : true;
                 if (!matchOk) return;
                 if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod })) return;
                 if (mod.cap_limit) {

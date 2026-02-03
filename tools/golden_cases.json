@@ -696,6 +696,93 @@
           "hasPartial": false
         }
       }
+    },
+    {
+      "id": "case_026_travel_plus_tier1_mo_met",
+      "input": {
+        "amount": 2500,
+        "date": "2025-05-01",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_travel_plus"
+        ],
+        "settings": {
+          "travel_plus_promo_enabled": true
+        },
+        "category": "overseas_mo",
+        "usage": {
+          "spend_hangseng_travel_plus": 8000
+        }
+      },
+      "expected": {
+        "topCardId": "hangseng_travel_plus",
+        "topValue": 175,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_027_travel_plus_tier2_other_met",
+      "input": {
+        "amount": 2500,
+        "date": "2025-05-01",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_travel_plus"
+        ],
+        "settings": {
+          "travel_plus_promo_enabled": true
+        },
+        "category": "overseas_other",
+        "usage": {
+          "spend_hangseng_travel_plus": 8000
+        }
+      },
+      "expected": {
+        "topCardId": "hangseng_travel_plus",
+        "topValue": 125,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_028_travel_plus_tier1_mo_locked",
+      "input": {
+        "amount": 2500,
+        "date": "2025-05-01",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_travel_plus"
+        ],
+        "settings": {
+          "travel_plus_promo_enabled": true
+        },
+        "category": "overseas_mo",
+        "usage": {
+          "spend_hangseng_travel_plus": 0
+        }
+      },
+      "expected": {
+        "topCardId": "hangseng_travel_plus",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
     }
   ]
 }

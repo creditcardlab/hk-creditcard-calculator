@@ -40,7 +40,8 @@ const DATA_RULES = {
             map: {
                 overseas_cn: "travel_plus_tier1",
                 overseas_jkt: "travel_plus_tier1",
-                overseas_tw: "travel_plus_tier1"
+                overseas_tw: "travel_plus_tier1",
+                overseas_mo: "travel_plus_tier1"
             }
         }
     }
