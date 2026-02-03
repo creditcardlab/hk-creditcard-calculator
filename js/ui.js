@@ -857,8 +857,14 @@ window.renderLedger = function (transactions) {
     <div class="space-y-3">`;
 
     transactions.forEach(tx => {
-        const date = new Date(tx.date);
-        const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        // Prefer transaction date (txDate) over record timestamp (date).
+        let dateStr = "";
+        if (tx.txDate) {
+            dateStr = String(tx.txDate);
+        } else {
+            const date = new Date(tx.date);
+            dateStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        }
         // Try to get nice card name if possible, else use ID
         let cardName = tx.cardId;
         if (typeof DATA !== 'undefined' && Array.isArray(DATA.cards)) {
