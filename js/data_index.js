@@ -31,59 +31,27 @@
         DATA_RULES.categoryHierarchy = categoryHierarchy;
     }
 
-    const adaptCampaignsToPromotions = (campaigns, modules) => {
-        if (!Array.isArray(campaigns)) return [];
-        return campaigns.map(c => {
-            const clone = { ...c };
-            clone.sections = (c.sections || []).map(sec => {
-                const next = { ...sec };
-                if (sec.type === "cap_rate" && (sec.rate === undefined || sec.rate === null)) {
-                    const mod = sec.rateModule ? modules[sec.rateModule] : null;
-                    next.rate = mod && typeof mod.rate === "number" ? mod.rate : 0;
-                }
-                return next;
-            });
-            return clone;
-        });
-    };
-
     const rawCards = (typeof cardsDB !== "undefined") ? cardsDB : [];
     const rawModules = (typeof modulesDB !== "undefined") ? modulesDB : {};
     const rawTrackers = (typeof trackersDB !== "undefined") ? trackersDB : {};
 
-    const normalizeCards = (cards, modules, trackers) => {
+    const normalizeCards = (cards) => {
         if (!Array.isArray(cards)) return [];
-        return cards.map((c) => {
-            const card = { ...(c || {}) };
-
-            // New schema: rewardModules + trackers.
-            if (Array.isArray(card.rewardModules) || Array.isArray(card.trackers)) {
-                if (!Array.isArray(card.rewardModules)) card.rewardModules = [];
-                if (!Array.isArray(card.trackers)) card.trackers = [];
-                return card;
-            }
-
-            // Legacy schema: modules[] mixing reward modules + trackers.
-            const legacy = Array.isArray(card.modules) ? card.modules : [];
-            card.rewardModules = legacy.filter((id) => !!modules[id]);
-            card.trackers = legacy.filter((id) => !!trackers[id]);
-            return card;
-        });
+        return cards.map((c) => ({
+            ...(c || {}),
+            rewardModules: Array.isArray(c && c.rewardModules) ? c.rewardModules : [],
+            trackers: Array.isArray(c && c.trackers) ? c.trackers : []
+        }));
     };
 
     const data = {
-        // Preserve raw cards for validation/migration messaging.
-        cardsRaw: rawCards,
-        cards: normalizeCards(rawCards, rawModules, rawTrackers),
+        cards: normalizeCards(rawCards),
         categories: categoriesDB,
         modules: rawModules,
         conversions: (typeof conversionDB !== "undefined") ? conversionDB : [],
         trackers: rawTrackers,
         campaigns: (typeof CAMPAIGNS !== "undefined") ? CAMPAIGNS : [],
         campaignRegistry: (typeof CAMPAIGN_REGISTRY !== "undefined") ? CAMPAIGN_REGISTRY : {},
-        // Back-compat: UI still reads DATA.promotions, but source of truth is CAMPAIGNS.
-        promotions: (typeof CAMPAIGNS !== "undefined") ? adaptCampaignsToPromotions(CAMPAIGNS, rawModules) : [],
-        promoRegistry: (typeof CAMPAIGN_REGISTRY !== "undefined") ? CAMPAIGN_REGISTRY : {},
         rules: (typeof DATA_RULES !== "undefined") ? DATA_RULES : {},
         redHotCategories,
         periodDefaults: {

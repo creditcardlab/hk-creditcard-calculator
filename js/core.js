@@ -601,11 +601,10 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     }
 
     // [Module Logic]
-    const rewardModules = Array.isArray(card.rewardModules) ? card.rewardModules : (Array.isArray(card.modules) ? card.modules : []);
-    if (!Array.isArray(rewardModules) || rewardModules.length === 0) return null;
+    if (!Array.isArray(card.rewardModules) || card.rewardModules.length === 0) return null;
 
     // Filter Valid Modules First
-    const activeModules = rewardModules.filter(modID => {
+    const activeModules = card.rewardModules.filter(modID => {
         const m = modules[modID];
         if (!m) return false;
         return checkValidity(m, txDate, isHoliday);

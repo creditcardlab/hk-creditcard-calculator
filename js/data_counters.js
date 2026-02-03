@@ -20,7 +20,6 @@ function buildCountersRegistry(data) {
     const modules = data && data.modules ? data.modules : {};
     const trackers = data && data.trackers ? data.trackers : {};
     const campaigns = data && data.campaigns ? data.campaigns : [];
-    const promotions = data && data.promotions ? data.promotions : [];
 
     const normalizePeriodSpec = (spec) => {
         if (!spec) return { periodType: "none", anchorRef: null };
@@ -64,27 +63,22 @@ function buildCountersRegistry(data) {
         });
     }
 
-    const campaignSource = campaigns && campaigns.length > 0 ? campaigns : promotions;
-
-    // From promotions
-    if (campaignSource) {
-        (campaignSource || []).forEach((p) => {
-            const promoId = p && p.id ? p.id : "promo";
-            const promoPeriod = p.period || null;
-            const periodSpec = normalizePeriodSpec(promoPeriod);
-            const promoAnchor = periodSpec.anchorRef ? { ...periodSpec.anchorRef, promoId } : null;
-            const promoPriority = periodSpec.periodType !== "none" ? 1 : 0;
-            (p.capKeys || []).forEach((k) => addKey(k, `promo:${promoId}.capKeys`, periodSpec.periodType, promoAnchor, promoPriority, "promo", promoId));
-            (p.sections || []).forEach((s, i) => {
-                const secId = `${promoId}.section${i + 1}`;
-                if (s.usageKey) addKey(s.usageKey, `${secId}.usageKey`, periodSpec.periodType, promoAnchor, promoPriority, "promo", promoId);
-                if (Array.isArray(s.usageKeys)) s.usageKeys.forEach((k) => addKey(k, `${secId}.usageKeys`, periodSpec.periodType, promoAnchor, promoPriority, "promo", promoId));
-                if (s.unlockKey) addKey(s.unlockKey, `${secId}.unlockKey`, periodSpec.periodType, promoAnchor, promoPriority, "promo", promoId);
-                if (s.totalKey) addKey(s.totalKey, `${secId}.totalKey`, periodSpec.periodType, promoAnchor, promoPriority, "promo", promoId);
-                if (s.eligibleKey) addKey(s.eligibleKey, `${secId}.eligibleKey`, periodSpec.periodType, promoAnchor, promoPriority, "promo", promoId);
-            });
+    // From campaigns (UI display metadata that references resettable keys)
+    (campaigns || []).forEach((c) => {
+        const campaignId = c && c.id ? c.id : "campaign";
+        const periodSpec = normalizePeriodSpec(c && c.period ? c.period : null);
+        const anchor = periodSpec.anchorRef ? { ...periodSpec.anchorRef, promoId: campaignId } : null;
+        const priority = periodSpec.periodType !== "none" ? 1 : 0;
+        (c.capKeys || []).forEach((k) => addKey(k, `campaign:${campaignId}.capKeys`, periodSpec.periodType, anchor, priority, "campaign", campaignId));
+        (c.sections || []).forEach((s, i) => {
+            const secId = `${campaignId}.section${i + 1}`;
+            if (s.usageKey) addKey(s.usageKey, `${secId}.usageKey`, periodSpec.periodType, anchor, priority, "campaign", campaignId);
+            if (Array.isArray(s.usageKeys)) s.usageKeys.forEach((k) => addKey(k, `${secId}.usageKeys`, periodSpec.periodType, anchor, priority, "campaign", campaignId));
+            if (s.unlockKey) addKey(s.unlockKey, `${secId}.unlockKey`, periodSpec.periodType, anchor, priority, "campaign", campaignId);
+            if (s.totalKey) addKey(s.totalKey, `${secId}.totalKey`, periodSpec.periodType, anchor, priority, "campaign", campaignId);
+            if (s.eligibleKey) addKey(s.eligibleKey, `${secId}.eligibleKey`, periodSpec.periodType, anchor, priority, "campaign", campaignId);
         });
-    }
+    });
 
     // Misc usage keys not captured in data files
     addKey("guru_spend_accum", "manual:misc", "none", null, 0, null, null);

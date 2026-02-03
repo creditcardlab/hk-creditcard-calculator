@@ -21,10 +21,8 @@ function validateData(data) {
     };
 
     const cards = Array.isArray(data.cards) ? data.cards : [];
-    const cardsRaw = Array.isArray(data.cardsRaw) ? data.cardsRaw : null;
     const modules = data.modules || {};
     const categories = data.categories || {};
-    const promotions = Array.isArray(data.promotions) ? data.promotions : [];
     const campaigns = Array.isArray(data.campaigns) ? data.campaigns : [];
     const trackers = data.trackers || {};
     const defaults = data.periodDefaults || {};
@@ -110,26 +108,6 @@ function validateData(data) {
         }
     });
 
-    // Legacy cards.modules (compat)
-    // Keep supporting old cards that still use `modules`, but avoid noisy warnings in non-strict mode.
-    let legacyWarned = false;
-    const legacyCards = cardsRaw || cards;
-    legacyCards.forEach((card) => {
-        if (!card || !card.id) return;
-        const hasLegacy = Array.isArray(card.modules);
-        const hasNew = Array.isArray(card.rewardModules) || Array.isArray(card.trackers);
-        if (!hasLegacy || hasNew) return;
-        if (strictPeriods && !legacyWarned) {
-            addWarning("[data] cards use legacy modules; migrate to rewardModules/trackers.");
-            legacyWarned = true;
-        }
-        card.modules.forEach((modId) => {
-            if (!modules[modId] && !trackers[modId]) {
-                addError(`[data] card ${card.id} references missing module/tracker: ${modId}`);
-            }
-        });
-    });
-
     // Modules -> categories
     Object.keys(modules).forEach((modId) => {
         const mod = modules[modId] || {};
@@ -182,34 +160,17 @@ function validateData(data) {
         }
     });
 
-    // Period definitions on promotions
-    promotions.forEach((promo) => {
-        if (!promo || !promo.id) return;
-        if (promo.period) {
-            const periodSpec = normalizePeriodSpec(promo.period);
+    campaigns.forEach((campaign) => {
+        if (!campaign || !campaign.id) return;
+        if (campaign.period) {
+            const periodSpec = normalizePeriodSpec(campaign.period);
             const anchor = periodSpec.anchorRef || defaults[periodSpec.periodType];
-            validateAnchor({ ...anchor, type: periodSpec.periodType }, `promo:${promo.id}.period`);
+            validateAnchor({ ...anchor, type: periodSpec.periodType }, `campaign:${campaign.id}.period`);
             return;
         }
-
-        // If UI badge implies a reset boundary, warn in strict mode when period metadata is missing.
-        const badgeType = promo.badge && promo.badge.type ? String(promo.badge.type) : "";
+        const badgeType = campaign.badge && campaign.badge.type ? String(campaign.badge.type) : "";
         if (strictPeriods && (badgeType === "month_end" || badgeType === "quarter_end" || badgeType === "promo_end")) {
-            addWarning(`[data] promo ${promo.id} badge=${badgeType} but missing promo.period`);
-        }
-    });
-
-    campaigns.forEach((promo) => {
-        if (!promo || !promo.id) return;
-        if (promo.period) {
-            const periodSpec = normalizePeriodSpec(promo.period);
-            const anchor = periodSpec.anchorRef || defaults[periodSpec.periodType];
-            validateAnchor({ ...anchor, type: periodSpec.periodType }, `campaign:${promo.id}.period`);
-            return;
-        }
-        const badgeType = promo.badge && promo.badge.type ? String(promo.badge.type) : "";
-        if (strictPeriods && (badgeType === "month_end" || badgeType === "quarter_end" || badgeType === "promo_end")) {
-            addWarning(`[data] campaign ${promo.id} badge=${badgeType} but missing campaign.period`);
+            addWarning(`[data] campaign ${campaign.id} badge=${badgeType} but missing campaign.period`);
         }
     });
 
@@ -221,37 +182,6 @@ function validateData(data) {
             if (catId === "online") return;
             if (!categories[catId]) {
                 addError(`[data] tracker ${trackerId} match category missing: ${catId}`);
-            }
-        });
-    });
-
-    // Promotions -> usage keys / cap modules
-    promotions.forEach((promo) => {
-        const promoId = promo && promo.id ? promo.id : "promo";
-        const sections = Array.isArray(promo.sections) ? promo.sections : [];
-        sections.forEach((sec, idx) => {
-            const label = `${promoId}.section${idx + 1}`;
-            if (sec.capModule && !modules[sec.capModule]) {
-                addError(`[data] ${label} capModule missing: ${sec.capModule}`);
-            }
-            if (sec.usageKey && !knownUsageKeys.has(sec.usageKey)) {
-                addError(`[data] ${label} usageKey missing: ${sec.usageKey}`);
-            }
-            if (sec.totalKey && !knownUsageKeys.has(sec.totalKey)) {
-                addError(`[data] ${label} totalKey missing: ${sec.totalKey}`);
-            }
-            if (sec.eligibleKey && !knownUsageKeys.has(sec.eligibleKey)) {
-                addError(`[data] ${label} eligibleKey missing: ${sec.eligibleKey}`);
-            }
-            if (sec.unlockKey && !knownUsageKeys.has(sec.unlockKey)) {
-                addError(`[data] ${label} unlockKey missing: ${sec.unlockKey}`);
-            }
-            if (Array.isArray(sec.usageKeys)) {
-                sec.usageKeys.forEach((k) => {
-                    if (!knownUsageKeys.has(k)) {
-                        addError(`[data] ${label} usageKeys missing: ${k}`);
-                    }
-                });
             }
         });
     });

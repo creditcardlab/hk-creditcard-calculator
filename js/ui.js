@@ -200,25 +200,7 @@ function renderPromoSections(sections, theme) {
     if (!sections) return "";
     return sections.map(sec => {
         if (!sec) return "";
-
-        // Legacy (pre-model) fallback
-        if (!sec.kind) {
-            const barColor = sec.barColor || theme.bar;
-            const markersHtml = renderPromoMarkers(sec.markers);
-            const subTextHtml = sec.subText ? `<div class="text-[10px] text-right mt-1">${sec.subText}</div>` : '';
-            return `<div>
-                <div class="flex justify-between text-xs mb-1">
-                    <span class="${theme.text} font-bold">${sec.label}</span>
-                    <span class="text-gray-500 font-mono">${sec.valueText}</span>
-                </div>
-                <div class="w-full bg-gray-100 rounded-full h-3 relative overflow-hidden">
-                    <div class="${barColor} h-3 rounded-full transition-all duration-700 ${sec.striped ? 'progress-stripe' : ''}" style="width: ${sec.progress}%"></div>
-                    ${sec.overlay || ''}
-                </div>
-                ${markersHtml}
-                ${subTextHtml}
-            </div>`;
-        }
+        if (!sec.kind) return "";
 
         const label = escapeHtml(sec.label || "");
         const valueText = escapeHtml(sec.valueText || "");
@@ -475,28 +457,55 @@ function renderDashboard(userProfile) {
             onClick: "handleGuruUpgrade()"
         } : null;
 
-        html += createProgressCard({
-            title: "Travel Guru", icon: "fas fa-trophy", theme: "yellow", badge: lvName,
-            sections: [
-                { label: "🚀 升級進度", valueText: `$${spendAccum.toLocaleString()} / $${curUpg.target.toLocaleString()}`, progress: upgPct, barColor: "bg-blue-500", striped: true },
-                { label: "💰 本級回贈", valueText: `${Math.floor(rcUsed)} / ${curRebate.cap}`, progress: rebatePct, barColor: isMaxed ? "bg-red-500" : "bg-yellow-400" }
-            ],
-            actionButton: upgradeButton
-        });
-    }
+	        html += createProgressCard({
+	            title: "Travel Guru", icon: "fas fa-trophy", theme: "yellow", badge: lvName,
+	            sections: [
+	                {
+	                    kind: "mission",
+	                    label: "🚀 升級進度",
+	                    valueText: `$${spendAccum.toLocaleString()} / $${curUpg.target.toLocaleString()}`,
+	                    progress: upgPct,
+	                    state: "active",
+	                    lockedReason: null,
+	                    markers: null,
+	                    overlayModel: null,
+	                    meta: { spendAccum, target: curUpg.target }
+	                },
+	                {
+	                    kind: "cap",
+	                    label: "💰 本級回贈",
+	                    valueText: `${Math.floor(rcUsed)} / ${curRebate.cap}`,
+	                    progress: rebatePct,
+	                    state: isMaxed ? "capped" : "active",
+	                    lockedReason: null,
+	                    markers: null,
+	                    overlayModel: null,
+	                    meta: {
+	                        used: rcUsed,
+	                        cap: curRebate.cap,
+	                        remaining: Math.max(0, curRebate.cap - rcUsed),
+	                        prefix: "",
+	                        unit: " RC",
+	                        unlocked: true
+	                    }
+	                }
+	            ],
+	            actionButton: upgradeButton
+	        });
+	    }
 
-    // Promotions (data-driven)
-    if (typeof DATA !== 'undefined' && Array.isArray(DATA.promotions)) {
-        DATA.promotions.forEach(promo => {
-            const status = (typeof buildPromoStatus === "function") ? buildPromoStatus(promo, userProfile, DATA.modules) : null;
+    // Campaigns (data-driven)
+    if (typeof DATA !== 'undefined' && Array.isArray(DATA.campaigns)) {
+        DATA.campaigns.forEach(campaign => {
+            const status = (typeof buildPromoStatus === "function") ? buildPromoStatus(campaign, userProfile, DATA.modules) : null;
             if (!status || !status.eligible) return;
 
-            const reg = (DATA.promoRegistry && promo && promo.id) ? DATA.promoRegistry[promo.id] : null;
+            const reg = (DATA.campaignRegistry && campaign && campaign.id) ? DATA.campaignRegistry[campaign.id] : null;
             if (reg && reg.settingKey && userProfile.settings[reg.settingKey] === false) {
-                html += renderWarningCard(reg.warningTitle || promo.name, promo.icon, reg.warningDesc || "需登記以賺取回贈", reg.settingKey);
+                html += renderWarningCard(reg.warningTitle || campaign.name, campaign.icon, reg.warningDesc || "需登記以賺取回贈", reg.settingKey);
                 // Prevent duplicate rendering in the "Remaining Caps" section.
                 if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
-                else if (promo.capKeys) promo.capKeys.forEach(k => renderedCaps.add(k));
+                else if (campaign.capKeys) campaign.capKeys.forEach(k => renderedCaps.add(k));
                 return;
             }
 
@@ -505,18 +514,18 @@ function renderDashboard(userProfile) {
             if (status.capKeys) status.capKeys.forEach(k => renderedCaps.add(k));
 
             let badgeText = "";
-            if (promo.badge) {
-                if (promo.badge.type === "month_end") badgeText = formatResetDate(monthEndStr);
-                if (promo.badge.type === "quarter_end") badgeText = formatResetDate(quarterEndStr);
-                if (promo.badge.type === "promo_end" && promo.badge.moduleKey) {
-                    const mod = DATA.modules[promo.badge.moduleKey] || (DATA.trackers && DATA.trackers[promo.badge.moduleKey]);
-                    if (mod && mod[promo.badge.field]) badgeText = formatPromoDate(mod[promo.badge.field]);
-                    if (promo.badge.staticDate) badgeText = formatPromoDate(promo.badge.staticDate);
+            if (campaign.badge) {
+                if (campaign.badge.type === "month_end") badgeText = formatResetDate(monthEndStr);
+                if (campaign.badge.type === "quarter_end") badgeText = formatResetDate(quarterEndStr);
+                if (campaign.badge.type === "promo_end" && campaign.badge.moduleKey) {
+                    const mod = DATA.modules[campaign.badge.moduleKey] || (DATA.trackers && DATA.trackers[campaign.badge.moduleKey]);
+                    if (mod && mod[campaign.badge.field]) badgeText = formatPromoDate(mod[campaign.badge.field]);
+                    if (campaign.badge.staticDate) badgeText = formatPromoDate(campaign.badge.staticDate);
                 }
             }
 
             html += createProgressCard({
-                title: promo.name, icon: promo.icon, theme: promo.theme, badge: badgeText,
+                title: campaign.name, icon: campaign.icon, theme: campaign.theme, badge: badgeText,
                 sections: sections
             });
         });
@@ -525,9 +534,8 @@ function renderDashboard(userProfile) {
     // 5. Remaining Caps as Promotion Cards (no separate cap monitors)
     userProfile.ownedCards.forEach(cardId => {
         const card = DATA.cards.find(c => c.id === cardId);
-        const rewardModules = card && Array.isArray(card.rewardModules) ? card.rewardModules : (card && Array.isArray(card.modules) ? card.modules : null);
-        if (!card || !Array.isArray(rewardModules)) return;
-        rewardModules.forEach(modId => {
+        if (!card || !Array.isArray(card.rewardModules)) return;
+        card.rewardModules.forEach(modId => {
             const mod = DATA.modules[modId];
             if (!mod || !mod.cap_limit || !mod.cap_key) return;
             if (mod.cap_key === 'boc_amazing_local_weekday_cap' || mod.cap_key === 'boc_amazing_local_holiday_cap' || mod.cap_key === 'boc_amazing_online_weekday_cap' || mod.cap_key === 'boc_amazing_online_holiday_cap') return;
@@ -554,29 +562,46 @@ function renderDashboard(userProfile) {
             const displayUnit = (unit === '分' || unit === 'RC') ? unit : ((unit === '元' || unit === '$') ? '' : unit);
             const displayPrefix = (unit === '元' || unit === '$') ? '$' : '';
 
-            const sections = [];
+	            const sections = [];
+	            let unlockMet = true;
 
-            if (mod.req_mission_spend && mod.req_mission_key) {
-                const thresholdSpend = Number(userProfile.usage[mod.req_mission_key]) || 0;
-                const thresholdPct = Math.min(100, (thresholdSpend / mod.req_mission_spend) * 100);
-                const thresholdMet = thresholdSpend >= mod.req_mission_spend;
-                sections.push({
-                    label: "🎯 門檻任務",
-                    valueText: `$${thresholdSpend.toLocaleString()} / $${mod.req_mission_spend.toLocaleString()}`,
-                    progress: thresholdPct,
-                    barColor: thresholdMet ? "bg-green-500" : "bg-gray-400 opacity-50",
-                    subText: thresholdMet ? '<span class="text-green-600 font-bold">✅ 已達標</span>' : `<span class="text-gray-400">🔒尚欠 $${(mod.req_mission_spend - thresholdSpend).toLocaleString()}</span>`
-                });
-            }
+	            if (mod.req_mission_spend && mod.req_mission_key) {
+	                const thresholdSpend = Number(userProfile.usage[mod.req_mission_key]) || 0;
+	                const thresholdPct = Math.min(100, (thresholdSpend / mod.req_mission_spend) * 100);
+	                const thresholdMet = thresholdSpend >= mod.req_mission_spend;
+	                unlockMet = thresholdMet;
+	                sections.push({
+	                    kind: "mission",
+	                    label: "🎯 門檻任務",
+	                    valueText: `$${thresholdSpend.toLocaleString()} / $${mod.req_mission_spend.toLocaleString()}`,
+	                    progress: thresholdPct,
+	                    state: thresholdMet ? "active" : "locked",
+	                    lockedReason: thresholdMet ? null : `尚欠 $${(mod.req_mission_spend - thresholdSpend).toLocaleString()}`,
+	                    markers: null,
+	                    overlayModel: null,
+	                    meta: { spend: thresholdSpend, target: mod.req_mission_spend, unlocked: thresholdMet }
+	                });
+	            }
 
-            sections.push({
-                label: "💰 回贈進度",
-                valueText: `${displayPrefix}${Math.floor(currentVal).toLocaleString()}${displayUnit} / ${displayPrefix}${Math.floor(maxVal).toLocaleString()}${displayUnit}`,
-                progress: pct,
-                striped: true,
-                barColor: currentVal >= maxVal ? "bg-red-500" : "bg-blue-500",
-                subText: currentVal >= maxVal ? '⚠️ 已爆 Cap' : `尚餘 ${displayPrefix}${Math.ceil(remaining).toLocaleString()}${displayUnit}`
-            });
+	            const rewardState = currentVal >= maxVal ? "capped" : (unlockMet ? "active" : "locked");
+	            sections.push({
+	                kind: "cap",
+	                label: "💰 回贈進度",
+	                valueText: `${displayPrefix}${Math.floor(currentVal).toLocaleString()}${displayUnit} / ${displayPrefix}${Math.floor(maxVal).toLocaleString()}${displayUnit}`,
+	                progress: pct,
+	                state: rewardState,
+	                lockedReason: unlockMet ? null : "Locked",
+	                markers: null,
+	                overlayModel: null,
+	                meta: {
+	                    used: currentVal,
+	                    cap: maxVal,
+	                    remaining: Math.max(0, remaining),
+	                    prefix: displayPrefix,
+	                    unit: displayUnit,
+	                    unlocked: unlockMet
+	                }
+	            });
 
             html += createProgressCard({
                 title: `${card.name} ${mod.desc}`,

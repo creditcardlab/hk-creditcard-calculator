@@ -242,7 +242,6 @@ vm.createContext(ctx);
 ].forEach((f)=>vm.runInContext(fs.readFileSync(path.join(root,f),'utf8'),ctx,{filename:f}));
 
 const out = {
-  cardsRaw: (ctx.DATA && ctx.DATA.cardsRaw) ? ctx.DATA.cardsRaw : null,
   cards: (ctx.DATA && ctx.DATA.cards) ? ctx.DATA.cards : null,
   categories: (ctx.DATA && ctx.DATA.categories) ? ctx.DATA.categories : null,
   modules: (ctx.DATA && ctx.DATA.modules) ? ctx.DATA.modules : null,
@@ -697,4 +696,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
