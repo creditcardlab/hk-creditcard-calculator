@@ -25,6 +25,7 @@ function loadScript(filePath) {
 
 function bootAppContext() {
   global.window = global;
+  global.__SKIP_INIT = true;
   global.document = {};
   global.localStorage = createLocalStorage();
   global.fetch = async () => { throw new Error("fetch not available in golden runner"); };
@@ -41,7 +42,8 @@ function bootAppContext() {
     "data_index.js",
     "engine_trackers.js",
     "core.js",
-    "periods.js"
+    "periods.js",
+    "app.js"
   ].map((file) => path.resolve(ROOT, "js", file));
 
   scripts.forEach(loadScript);
@@ -151,6 +153,7 @@ function main() {
   const payload = JSON.parse(raw);
   const cases = payload.cases || [];
   const periodCases = payload.period_cases || [];
+  const txCases = payload.tx_cases || [];
 
   const shouldUpdate = process.argv.includes("--update");
 
@@ -216,6 +219,59 @@ function main() {
       }
       if (c.expectReset !== didReset) {
         mismatches.push(`reset expected ${c.expectReset}, got ${didReset}`);
+      }
+
+      if (mismatches.length > 0) {
+        failures += 1;
+        console.log(`❌ ${c.id}: ${mismatches.join("; ")}`);
+      } else {
+        console.log(`✅ ${c.id}`);
+      }
+    });
+  }
+
+  if (txCases.length > 0) {
+    txCases.forEach((c) => {
+      if (!c) return;
+      const baseProfile = deepClone(global.userProfile || {});
+      const profile = {
+        ownedCards: Array.isArray(c.ownedCards) ? c.ownedCards.slice() : (baseProfile.ownedCards || []),
+        settings: { ...(baseProfile.settings || {}), ...(c.settings || {}) },
+        usage: { ...(baseProfile.usage || {}), ...(c.usage || {}) },
+        stats: deepClone(baseProfile.stats || { totalSpend: 0, totalVal: 0, txCount: 0 }),
+        transactions: []
+      };
+
+      global.userProfile = profile;
+      if (typeof userProfile !== "undefined") {
+        userProfile = profile;
+      }
+      const tx = {
+        id: 1,
+        date: c.date,
+        txDate: c.txDate,
+        cardId: c.cardId,
+        category: c.category,
+        isOnline: !!c.isOnline,
+        isMobilePay: !!c.isMobilePay,
+        paymentMethod: c.paymentMethod || "physical",
+        amount: c.amount,
+        rebateVal: 0,
+        rebateText: "",
+        desc: "test",
+        pendingUnlocks: []
+      };
+      profile.transactions = [tx];
+      rebuildUsageAndStatsFromTransactions();
+
+      const actual = profile.usage[c.expectedUsageKey] || 0;
+      const expected = c.expectedUsageValue || 0;
+      const mismatches = [];
+      if (actual !== expected) {
+        mismatches.push(`usage ${c.expectedUsageKey} expected ${expected}, got ${actual}`);
+      }
+      if (c.unexpectedUsageKey && profile.usage[c.unexpectedUsageKey]) {
+        mismatches.push(`unexpected key set: ${c.unexpectedUsageKey}`);
       }
 
       if (mismatches.length > 0) {

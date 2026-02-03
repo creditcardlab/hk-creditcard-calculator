@@ -22,6 +22,13 @@ function buildCountersRegistry(data) {
     const campaigns = data && data.campaigns ? data.campaigns : [];
     const promotions = data && data.promotions ? data.promotions : [];
 
+    const normalizePeriodSpec = (spec) => {
+        if (!spec) return { periodType: "none", anchorRef: null };
+        if (typeof spec === "string") return { periodType: spec, anchorRef: null };
+        if (typeof spec === "object") return { periodType: spec.type || "none", anchorRef: spec };
+        return { periodType: "none", anchorRef: null };
+    };
+
     // From modules
     if (modules) {
         Object.keys(modules).forEach((k) => {
@@ -33,11 +40,13 @@ function buildCountersRegistry(data) {
 
             if (mod.cap && mod.cap.period) {
                 const capKey = mod.cap.key || mod.cap_key;
-                addKey(capKey, `module:${k}.cap`, mod.cap.period, mod.cap.anchor || null, 2, "module", k);
+                const periodSpec = normalizePeriodSpec(mod.cap.period);
+                addKey(capKey, `module:${k}.cap`, periodSpec.periodType, periodSpec.anchorRef, 2, "module", k);
             }
             if (mod.counter && mod.counter.period) {
                 const counterKey = mod.counter.key || mod.req_mission_key || mod.usage_key;
-                addKey(counterKey, `module:${k}.counter`, mod.counter.period, mod.counter.anchor || null, 2, "module", k);
+                const periodSpec = normalizePeriodSpec(mod.counter.period);
+                addKey(counterKey, `module:${k}.counter`, periodSpec.periodType, periodSpec.anchorRef, 2, "module", k);
             }
         });
     }
@@ -49,7 +58,8 @@ function buildCountersRegistry(data) {
             addKey(t.req_mission_key, `tracker:${k}.req_mission_key`, "none", null, 0, "tracker", k);
             if (t.counter && t.counter.period) {
                 const counterKey = t.counter.key || t.req_mission_key;
-                addKey(counterKey, `tracker:${k}.counter`, t.counter.period, t.counter.anchor || null, 2, "tracker", k);
+                const periodSpec = normalizePeriodSpec(t.counter.period);
+                addKey(counterKey, `tracker:${k}.counter`, periodSpec.periodType, periodSpec.anchorRef, 2, "tracker", k);
             }
         });
     }
@@ -61,16 +71,17 @@ function buildCountersRegistry(data) {
         (campaignSource || []).forEach((p) => {
             const promoId = p && p.id ? p.id : "promo";
             const promoPeriod = p.period || null;
-            const promoAnchor = promoPeriod ? { ...promoPeriod, promoId } : null;
-            const promoPriority = promoPeriod ? 1 : 0;
-            (p.capKeys || []).forEach((k) => addKey(k, `promo:${promoId}.capKeys`, promoPeriod ? promoPeriod.type : "none", promoAnchor, promoPriority, "promo", promoId));
+            const periodSpec = normalizePeriodSpec(promoPeriod);
+            const promoAnchor = periodSpec.anchorRef ? { ...periodSpec.anchorRef, promoId } : null;
+            const promoPriority = periodSpec.periodType !== "none" ? 1 : 0;
+            (p.capKeys || []).forEach((k) => addKey(k, `promo:${promoId}.capKeys`, periodSpec.periodType, promoAnchor, promoPriority, "promo", promoId));
             (p.sections || []).forEach((s, i) => {
                 const secId = `${promoId}.section${i + 1}`;
-                if (s.usageKey) addKey(s.usageKey, `${secId}.usageKey`, promoPeriod ? promoPeriod.type : "none", promoAnchor, promoPriority, "promo", promoId);
-                if (Array.isArray(s.usageKeys)) s.usageKeys.forEach((k) => addKey(k, `${secId}.usageKeys`, promoPeriod ? promoPeriod.type : "none", promoAnchor, promoPriority, "promo", promoId));
-                if (s.unlockKey) addKey(s.unlockKey, `${secId}.unlockKey`, promoPeriod ? promoPeriod.type : "none", promoAnchor, promoPriority, "promo", promoId);
-                if (s.totalKey) addKey(s.totalKey, `${secId}.totalKey`, promoPeriod ? promoPeriod.type : "none", promoAnchor, promoPriority, "promo", promoId);
-                if (s.eligibleKey) addKey(s.eligibleKey, `${secId}.eligibleKey`, promoPeriod ? promoPeriod.type : "none", promoAnchor, promoPriority, "promo", promoId);
+                if (s.usageKey) addKey(s.usageKey, `${secId}.usageKey`, periodSpec.periodType, promoAnchor, promoPriority, "promo", promoId);
+                if (Array.isArray(s.usageKeys)) s.usageKeys.forEach((k) => addKey(k, `${secId}.usageKeys`, periodSpec.periodType, promoAnchor, promoPriority, "promo", promoId));
+                if (s.unlockKey) addKey(s.unlockKey, `${secId}.unlockKey`, periodSpec.periodType, promoAnchor, promoPriority, "promo", promoId);
+                if (s.totalKey) addKey(s.totalKey, `${secId}.totalKey`, periodSpec.periodType, promoAnchor, promoPriority, "promo", promoId);
+                if (s.eligibleKey) addKey(s.eligibleKey, `${secId}.eligibleKey`, periodSpec.periodType, promoAnchor, promoPriority, "promo", promoId);
             });
         });
     }

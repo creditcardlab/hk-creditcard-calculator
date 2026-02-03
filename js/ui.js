@@ -70,7 +70,15 @@ function getMonthTotals(transactions) {
     let reward = 0;
     let count = 0;
     transactions.forEach(tx => {
-        const d = tx.date ? new Date(tx.date) : null;
+        let d = null;
+        if (tx.txDate) {
+            const parts = String(tx.txDate).split('-').map(n => parseInt(n, 10));
+            if (parts.length === 3 && parts.every(n => Number.isFinite(n))) {
+                const [y, m, day] = parts;
+                d = new Date(y, m - 1, day);
+            }
+        }
+        if (!d && tx.date) d = new Date(tx.date);
         if (!d || Number.isNaN(d.getTime())) return;
         if (d.getFullYear() !== y || d.getMonth() !== m) return;
         spend += Number(tx.amount) || 0;
@@ -631,6 +639,8 @@ function renderCalculatorResults(results, currentMode) {
             feeLineHtml = `<div class="text-xs text-red-400 mt-0.5"><i class="fas fa-money-bill-wave mr-1"></i>外幣手續費: $${feeVal} (${(cardConfig.fcf * 100).toFixed(2)}%)</div>`;
         }
 
+        const txDateInput = document.getElementById('tx-date');
+        const txDate = txDateInput ? txDateInput.value : "";
         const dataStr = encodeURIComponent(JSON.stringify({
             amount: res.amount, trackingKey: res.trackingKey, estValue: res.estValue,
             guruRC: res.guruRC, missionTags: res.missionTags, category: res.category,
@@ -642,7 +652,8 @@ function renderCalculatorResults(results, currentMode) {
             pendingUnlocks: res.pendingUnlocks || [],
             isOnline,
             isMobilePay,
-            paymentMethod
+            paymentMethod,
+            txDate
         }));
         let displayVal = res.displayVal;
         let displayUnit = res.displayUnit;

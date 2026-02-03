@@ -95,8 +95,9 @@ function getBucketKey(dateInput, periodType, anchor, id) {
         const endDate = anchor && anchor.endDate ? anchor.endDate : null;
         const keyBase = `promo:${id || "promo"}@${startDate}`;
         if (endDate) {
-            const end = parseDateInput(endDate);
-            if (end && dateObj > end) return `${keyBase}:ended`;
+            // Compare by YYYY-MM-DD so endDate is inclusive regardless of time-of-day.
+            const dateStr = formatDateKey(dateObj);
+            if (dateStr > endDate) return `${keyBase}:ended`;
         }
         return keyBase;
     }
@@ -106,6 +107,18 @@ function getBucketKey(dateInput, periodType, anchor, id) {
 function legacyMonthToBucketKey(legacyMonthKey, anchor) {
     if (!legacyMonthKey) return null;
     const parts = legacyMonthKey.split("-");
+    if (parts.length < 2) return null;
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    if (!Number.isFinite(y) || !Number.isFinite(m)) return null;
+    const startDay = normalizeStartDay(anchor && anchor.startDay);
+    const dateObj = new Date(y, m - 1, startDay);
+    return formatDateKey(dateObj);
+}
+
+function legacyQuarterToBucketKey(legacyQuarterKey, anchor) {
+    if (!legacyQuarterKey) return null;
+    const parts = legacyQuarterKey.split("-");
     if (parts.length < 2) return null;
     const y = parseInt(parts[0], 10);
     const m = parseInt(parts[1], 10);

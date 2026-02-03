@@ -114,19 +114,28 @@ function validateData(data) {
         });
     });
 
+    const normalizePeriodSpec = (spec) => {
+        if (!spec) return { periodType: "none", anchorRef: null };
+        if (typeof spec === "string") return { periodType: spec, anchorRef: null };
+        if (typeof spec === "object") return { periodType: spec.type || "none", anchorRef: spec };
+        return { periodType: "none", anchorRef: null };
+    };
+
     // Period definitions on modules
     Object.keys(modules).forEach((modId) => {
         const mod = modules[modId] || {};
         if (mod.cap && mod.cap.period) {
-            const anchor = mod.cap.anchor || defaults[mod.cap.period];
-            validateAnchor({ ...anchor, type: mod.cap.period }, `module:${modId}.cap`);
+            const periodSpec = normalizePeriodSpec(mod.cap.period);
+            const anchor = periodSpec.anchorRef || defaults[periodSpec.periodType];
+            validateAnchor({ ...anchor, type: periodSpec.periodType }, `module:${modId}.cap`);
         } else if (strictPeriods && mod.cap_key) {
             // Only warn in strict mode: many caps are intentionally non-resettable.
             addWarning(`[data] module ${modId} cap_key has no cap.period (defaults to none): ${mod.cap_key}`);
         }
         if (mod.counter && mod.counter.period) {
-            const anchor = mod.counter.anchor || defaults[mod.counter.period];
-            validateAnchor({ ...anchor, type: mod.counter.period }, `module:${modId}.counter`);
+            const periodSpec = normalizePeriodSpec(mod.counter.period);
+            const anchor = periodSpec.anchorRef || defaults[periodSpec.periodType];
+            validateAnchor({ ...anchor, type: periodSpec.periodType }, `module:${modId}.counter`);
         } else if (strictPeriods && mod.req_mission_key) {
             // Only warn in strict mode: many mission keys are intended to be lifetime or promo-scoped.
             addWarning(`[data] module ${modId} req_mission_key has no counter.period (defaults to none): ${mod.req_mission_key}`);
@@ -137,8 +146,9 @@ function validateData(data) {
     Object.keys(trackers).forEach((trackerId) => {
         const tracker = trackers[trackerId] || {};
         if (tracker.counter && tracker.counter.period) {
-            const anchor = tracker.counter.anchor || defaults[tracker.counter.period];
-            validateAnchor({ ...anchor, type: tracker.counter.period }, `tracker:${trackerId}.counter`);
+            const periodSpec = normalizePeriodSpec(tracker.counter.period);
+            const anchor = periodSpec.anchorRef || defaults[periodSpec.periodType];
+            validateAnchor({ ...anchor, type: periodSpec.periodType }, `tracker:${trackerId}.counter`);
         } else if (strictPeriods && tracker.req_mission_key) {
             addWarning(`[data] tracker ${trackerId} req_mission_key has no counter.period (defaults to none): ${tracker.req_mission_key}`);
         }
@@ -148,7 +158,9 @@ function validateData(data) {
     promotions.forEach((promo) => {
         if (!promo || !promo.id) return;
         if (promo.period) {
-            validateAnchor(promo.period, `promo:${promo.id}.period`);
+            const periodSpec = normalizePeriodSpec(promo.period);
+            const anchor = periodSpec.anchorRef || defaults[periodSpec.periodType];
+            validateAnchor({ ...anchor, type: periodSpec.periodType }, `promo:${promo.id}.period`);
             return;
         }
 
@@ -162,7 +174,9 @@ function validateData(data) {
     campaigns.forEach((promo) => {
         if (!promo || !promo.id) return;
         if (promo.period) {
-            validateAnchor(promo.period, `campaign:${promo.id}.period`);
+            const periodSpec = normalizePeriodSpec(promo.period);
+            const anchor = periodSpec.anchorRef || defaults[periodSpec.periodType];
+            validateAnchor({ ...anchor, type: periodSpec.periodType }, `campaign:${promo.id}.period`);
             return;
         }
         const badgeType = promo.badge && promo.badge.type ? String(promo.badge.type) : "";

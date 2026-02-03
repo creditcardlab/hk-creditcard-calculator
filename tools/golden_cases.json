@@ -813,6 +813,50 @@
       "prevBucketKey": "promo:winter_promo@2025-12-01",
       "expectedBucketKey": "promo:winter_promo@2025-12-01:ended",
       "expectReset": true
+    },
+    {
+      "id": "period_004_quarter_start_month_4",
+      "periodType": "quarter",
+      "anchor": { "type": "quarter", "startMonth": 4, "startDay": 1 },
+      "date": "2026-05-15",
+      "prevBucketKey": "2026-01-01",
+      "expectedBucketKey": "2026-04-01",
+      "expectReset": true
+    },
+    {
+      "id": "period_005_month_start_day_20_prev",
+      "periodType": "month",
+      "anchor": { "type": "month", "startDay": 20 },
+      "date": "2026-02-10",
+      "prevBucketKey": "2026-01-20",
+      "expectedBucketKey": "2026-01-20",
+      "expectReset": false
+    },
+    {
+      "id": "period_006_override_bucket_diff",
+      "periodType": "month",
+      "anchor": { "type": "month", "startDay": 5 },
+      "date": "2026-02-06",
+      "prevBucketKey": "2026-02-01",
+      "expectedBucketKey": "2026-02-05",
+      "expectReset": true
+    }
+  ],
+  "tx_cases": [
+    {
+      "id": "tx_001_txDate_used_for_holiday_bucket",
+      "ownedCards": ["boc_cheers_vi"],
+      "settings": { "boc_amazing_enabled": true },
+      "cardId": "boc_cheers_vi",
+      "category": "dining",
+      "amount": 6000,
+      "isOnline": false,
+      "paymentMethod": "physical",
+      "txDate": "2026-02-17",
+      "date": "2026-02-18T10:00:00.000Z",
+      "expectedUsageKey": "boc_amazing_local_holiday_cap",
+      "unexpectedUsageKey": "boc_amazing_local_weekday_cap",
+      "expectedUsageValue": 60300
     }
   ]
 }

@@ -62,21 +62,29 @@ function getCountersRegistry() {
     return (typeof DATA !== "undefined" && DATA.countersRegistry) ? DATA.countersRegistry : {};
 }
 
-function resolveAnchorForEntry(entry, key) {
+function resolveAnchorForKey(key, entry) {
     const defaults = (typeof DATA !== "undefined" && DATA.periodDefaults) ? DATA.periodDefaults : {};
     const overrides = (userProfile.settings && userProfile.settings.periodOverrides) ? userProfile.settings.periodOverrides : {};
+
     let override = null;
-    if (entry && entry.refType === "module" && overrides.modules && overrides.modules[entry.refId]) {
+    if (overrides.byKey && overrides.byKey[key]) {
+        override = overrides.byKey[key];
+    }
+    if (!override && entry && entry.refType === "module" && overrides.modules && overrides.modules[entry.refId]) {
         override = overrides.modules[entry.refId];
     }
-    if (entry && entry.refType === "promo" && overrides.promos && overrides.promos[entry.refId]) {
+    if (!override && entry && (entry.refType === "promo" || entry.refType === "campaign") && overrides.byCampaignId && overrides.byCampaignId[entry.refId]) {
+        override = overrides.byCampaignId[entry.refId];
+    }
+    if (!override && entry && entry.refType === "promo" && overrides.promos && overrides.promos[entry.refId]) {
         override = overrides.promos[entry.refId];
     }
+
     const base = override || entry.anchorRef || (entry.periodType ? defaults[entry.periodType] : null) || null;
     if (!base) return null;
     const normalized = { ...base };
     if (!normalized.type) normalized.type = entry.periodType;
-    if (entry && entry.refType === "promo" && entry.refId) normalized.promoId = entry.refId;
+    if (entry && (entry.refType === "promo" || entry.refType === "campaign") && entry.refId) normalized.promoId = entry.refId;
     return normalized;
 }
 
@@ -96,11 +104,23 @@ function migrateCounterPeriods() {
             Object.keys(registry).forEach((key) => {
                 const entry = registry[key];
                 if (!entry || entry.periodType !== "month") return;
-                const anchor = resolveAnchorForEntry(entry, key);
+                const anchor = resolveAnchorForKey(key, entry);
                 const bucketKey = legacyMonthToBucketKey(legacyMonth, anchor);
                 if (bucketKey) periods.byKey[key] = bucketKey;
             });
         }
+    }
+
+    if (periods.quarter && periods.byKey) {
+        const legacyQuarter = periods.quarter;
+        const registry = getCountersRegistry();
+        Object.keys(registry).forEach((key) => {
+            const entry = registry[key];
+            if (!entry || entry.periodType !== "quarter") return;
+            const anchor = resolveAnchorForKey(key, entry);
+            const bucketKey = legacyQuarterToBucketKey(legacyQuarter, anchor);
+            if (bucketKey && !periods.byKey[key]) periods.byKey[key] = bucketKey;
+        });
     }
 }
 
@@ -116,7 +136,7 @@ function resetCountersForPeriod(period) {
 
     keys.forEach((key) => {
         const entry = registry[key];
-        const anchor = resolveAnchorForEntry(entry, key);
+        const anchor = resolveAnchorForKey(key, entry);
         const bucketKey = getBucketKey(today, period, anchor, anchor && anchor.promoId);
         if (!bucketKey) return;
         if (byKey[key] !== bucketKey) {
@@ -140,7 +160,7 @@ function validateUsageRegistry() {
         "bea_month",
         "winter_recalc_v2"
     ]);
-    const unknown = Object.keys(usage).filter(k => !internalKeys.has(k) && !registry[k]);
+    const unknown = Object.keys(usage).filter(k => !internalKeys.has(k) && !registry[k] && !String(k).startsWith("spend_"));
     if (unknown.length) {
         console.warn("[warn] usage keys missing from countersRegistry:", unknown.join(", "));
     }
@@ -300,7 +320,7 @@ function rebuildUsageAndStatsFromTransactions() {
         const isOnline = !!tx.isOnline;
         const paymentMethod = tx.paymentMethod || (tx.isMobilePay ? "mobile" : "physical");
         const isMobilePay = paymentMethod !== "physical";
-        const txDate = tx.date ? new Date(tx.date).toISOString().slice(0, 10) : "";
+        const txDate = tx.txDate || (tx.date ? new Date(tx.date).toISOString().slice(0, 10) : "");
         const isHoliday = (typeof HolidayManager !== 'undefined' && HolidayManager.isHoliday) ? HolidayManager.isHoliday(txDate) : false;
 
         userProfile.stats.totalSpend += amount;
@@ -385,6 +405,9 @@ function commitTransaction(data) {
     const { amount, trackingKey, estValue, guruRC, missionTags, category, cardId, rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, pendingUnlocks, isOnline } = data;
     const paymentMethod = data.paymentMethod || (data.isMobilePay ? "mobile" : "physical");
     const isMobilePay = paymentMethod !== "physical";
+    const txDate = data.txDate || "";
+    const txDateSafe = txDate || new Date().toISOString().slice(0, 10);
+    const isHoliday = (typeof HolidayManager !== 'undefined' && HolidayManager.isHoliday) ? HolidayManager.isHoliday(txDateSafe) : false;
 
     userProfile.stats.totalSpend += amount;
     userProfile.stats.totalVal += estValue;
@@ -404,7 +427,7 @@ function commitTransaction(data) {
         userProfile.usage[`spend_${cardId}`] = (userProfile.usage[`spend_${cardId}`] || 0) + amount;
     }
     // Track mission spends (e.g. sim non-online tracker) attached to the current card
-    trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod);
+    trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod, txDateSafe, isHoliday);
     if (guruRC > 0) userProfile.usage["guru_rc_used"] = (userProfile.usage["guru_rc_used"] || 0) + guruRC;
 
     const level = parseInt(userProfile.settings.guru_level);
@@ -434,6 +457,7 @@ function commitTransaction(data) {
     const tx = {
         id: Date.now(),
         date: new Date().toISOString(),
+        txDate: txDateSafe,
         cardId: cardId || 'unknown',
         category: category,
         isOnline: !!isOnline,
@@ -633,4 +657,6 @@ window.importData = function (event) {
 }
 
 // Start
-init();
+if (typeof window === "undefined" || !window.__SKIP_INIT) {
+    init();
+}
