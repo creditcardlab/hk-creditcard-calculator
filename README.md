@@ -1,53 +1,88 @@
-# 💳 信用卡管家 Credit Card Manager
+# HK Credit Card Calculator
 
-一個幫你計算同追蹤信用卡回贈嘅智能工具。
+一個純前端（static）的香港信用卡回贈計算 + 進度追蹤工具。
 
-## ✨ 主要功能
+## 功能
 
-- 🧮 **智能計算器** - 輸入金額同類別，即時比較所有卡片回贈
-- 📊 **進度追蹤** - 監控月簽任務、回贈額度、推廣活動進度
-- 💾 **數據備份** - 匯出/匯入功能，保障你嘅數據安全
-- 🎯 **額度監控** - 自動提醒Cap位，避免「爆Cap」
+- 計算器：輸入金額、類別、是否網購/手機支付、交易日期，即時比較最佳回贈卡。
+- Dashboard：顯示各推廣/任務進度、cap 用量、重置日提示。
+- 記帳：把簽賬記錄到本機，並更新各種 usage counters（供 cap/任務判斷）。
+- 匯出/匯入：備份 localStorage。
 
-## 🚀 使用方法
+## 重要概念
 
-1. 開啟網頁後，去「設定」頁面揀選你有嘅信用卡
-2. 喺「計算」頁面輸入簽賬金額同類別
-3. 系統會自動排序，顯示最佳回贈嘅卡
-4. 點擊「+ 記一筆」就可以記錄交易
+- `tx.date`：記帳時間（timestamp）。
+- `tx.txDate`：簽賬日（YYYY-MM-DD）。所有 period bucket（month/quarter/promo）同 holiday 判斷都以 `tx.txDate` 為準。
 
-## 💡 小貼士
+## Data 結構（最核心）
 
-- 定期喺「設定」匯出數據作備份
-- 留意「進度」頁面嘅任務提醒
-- 用「🏆 最佳」標籤快速識別最抵卡
+- 卡：`js/data_cards.js`
+- 類別：`js/data_categories.js`
+- 計回贈規則（Modules）：`js/data_modules.js`
+- 任務/計數規則（Trackers）：`js/data_trackers.js`
+- Dashboard 顯示（Campaigns）：`js/data_campaigns.js`
+- Counter/Period Registry（重置邏輯 metadata）：`js/data_counters.js`
+- Data Bootstrap：`js/data_index.js`（組裝 `DATA`）
 
-## 📱 支援平台
+卡資料結構（Phase 7 之後）：
 
-- ✅ 手機瀏覽器
-- ✅ 電腦瀏覽器
-- ✅ 平板
+- `rewardModules`：只放計回贈用嘅 module id（對應 `DATA.modules`）。
+- `trackers`：只放任務/計數用嘅 tracker id（對應 `DATA.trackers`）。
 
-## 🔒 私隱
+## 開發/測試
 
-所有數據儲存喺你嘅瀏覽器本地（localStorage），唔會上傳去任何伺服器。
+1. 打開 `index.html`（或用任意 static server）。
+1. 跑 golden tests（建議每次改 data/engine 都跑一次）：
 
-## ⚠️ 免責聲明
+```bash
+node tools/run_golden_cases.js
+```
 
-- 本工具僅供參考，所有回贈計算結果僅為估算
-- 銀行條款及推廣優惠會不時更改，實際回贈以銀行最新公佈為準
-- 使用者應自行核實銀行條款，並對自己的財務決策負責
-- 本工具不構成任何財務建議
+1. 更新 golden expected（只喺你確定規則改動係 intended 時先用）：
 
-## 🐛 問題回報 / 意見反饋
+```bash
+node tools/run_golden_cases.js --update
+```
 
-如果你發現計算有誤或有新卡想加入，歡迎填寫 [Google Form 匿名回報](https://docs.google.com/forms/d/e/1FAIpQLSc924Ytr60wr15_QFdrITFGoR3tjDmtg2djbPPxswkUvJZY4A/viewform)，或提交 GitHub Issue。
+## Notion Sync（用嚟 visualise 同方便改 data）
 
-## 📄 License
+`tools/sync_notion.py` 會讀 repo 嘅 `DATA`（用 Node VM 跑 `js/data_index.js`），然後同步到你 Notion page 底下嘅 child databases（如果你有建立）。
 
-MIT License - 詳見 [LICENSE](LICENSE) 文件
+1. 只輸出本地 JSON dump（唔需要 Notion token）：
 
----
+```bash
+python3 tools/sync_notion.py --dump .tmp_data_dump.json
+```
 
-Last Updated: 2026-01-28
-Made with ❤️ in Hong Kong
+1. 同步到 Notion（需要 Notion integration token）：
+
+```bash
+export NOTION_TOKEN='...'
+python3 tools/sync_notion.py --page-url 'https://www.notion.so/...'
+```
+
+1. 支援嘅 database 名稱（建議用呢啲名；舊名亦會兼容）：
+
+```text
+Cards
+Categories
+Modules
+Trackers
+Campaigns (或 Promotions)
+Campaign Sections (或 Promotion Sections)
+Campaign Registry (或 Promo Registry)
+Counters Registry (可選)
+```
+
+## 私隱
+
+所有數據儲存在瀏覽器 localStorage，無後端、無伺服器儲存。
+
+## 免責聲明
+
+回贈計算只作估算；銀行條款/推廣會變；請自行核實，呢個 project 唔構成任何財務建議。
+
+## License
+
+MIT，見 `LICENSE`。
+

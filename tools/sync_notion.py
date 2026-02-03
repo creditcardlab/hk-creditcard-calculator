@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 import argparse
 import json
@@ -6,8 +7,8 @@ import re
 import subprocess
 import sys
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 
 NOTION_VERSION = "2022-06-28"
 API_BASE = "https://api.notion.com/v1"
@@ -24,7 +25,7 @@ def chunk_text(s, size=1800):
     s = str(s)
     if not s:
         return []
-    return [s[i:i+size] for i in range(0, len(s), size)]
+    return [s[i:i + size] for i in range(0, len(s), size)]
 
 
 def rich_text_value(s):
@@ -50,7 +51,7 @@ def notion_request(method, url, token, body=None, retry=3):
             retry_after = e.headers.get("Retry-After")
             sleep_s = float(retry_after) if retry_after else 1.0
             time.sleep(sleep_s)
-            return notion_request(method, url, token, body=body, retry=retry-1)
+            return notion_request(method, url, token, body=body, retry=retry - 1)
         detail = e.read().decode("utf-8")
         raise RuntimeError(f"Notion API error {e.code}: {detail}")
 
@@ -60,12 +61,18 @@ def get_database(database_id, token):
     return notion_request("GET", url, token)
 
 
+def update_database(database_id, token, properties):
+    url = f"{API_BASE}/databases/{database_id}"
+    body = {"properties": properties}
+    return notion_request("PATCH", url, token, body=body)
+
+
 def extract_id_from_url(url):
     # Accept UUID with or without dashes, or 32 hex chars in URL.
-    m = re.search(r"([0-9a-fA-F]{32})", url)
+    m = re.search(r"([0-9a-fA-F]{32})", url or "")
     if m:
         return m.group(1)
-    m = re.search(r"([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})", url)
+    m = re.search(r"([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})", url or "")
     if m:
         return m.group(1)
     return None
@@ -92,12 +99,7 @@ def list_child_databases(page_id, token):
 
 def query_page_by_title(database_id, title_prop, key, token):
     url = f"{API_BASE}/databases/{database_id}/query"
-    body = {
-        "filter": {
-            "property": title_prop,
-            "title": {"equals": key}
-        }
-    }
+    body = {"filter": {"property": title_prop, "title": {"equals": key}}}
     data = notion_request("POST", url, token, body=body)
     results = data.get("results", [])
     return results[0]["id"] if results else None
@@ -116,9 +118,7 @@ def update_page(page_id, properties, token):
 
 
 def build_props(title_prop, title_value, props):
-    out = {
-        title_prop: {"title": [{"text": {"content": title_value}}]}
-    }
+    out = {title_prop: {"title": [{"text": {"content": title_value}}]}}
     for k, v in props.items():
         out[k] = v
     return out
@@ -150,12 +150,6 @@ def resolve_title_prop(db_id, token, default_title_prop, db_label):
         else:
             die(f"{db_label}: could not find title property '{title_prop}' in Notion database")
     return title_prop, allowed
-
-
-def update_database(database_id, token, properties):
-    url = f"{API_BASE}/databases/{database_id}"
-    body = {"properties": properties}
-    return notion_request("PATCH", url, token, body=body)
 
 
 def infer_property_schema(prop_value):
@@ -223,21 +217,74 @@ def rels(ids):
 
 
 def load_data_via_node(repo_root):
+    # Load the same data bootstrap as the browser (data_index.js builds DATA).
     node_script = r"""
 const fs=require('fs');
 const vm=require('vm');
 const path=require('path');
 const root=process.cwd();
-const ctx={};
+
+const ctx={ console };
+ctx.window = ctx;
+ctx.global = ctx;
 vm.createContext(ctx);
-['js/data_cards.js','js/data_categories.js','js/data_modules.js','js/data_conversions.js','js/data_rules.js','js/data_promotions.js']
-  .forEach(f=>{vm.runInContext(fs.readFileSync(path.join(root,f),'utf8'),ctx,{filename:f});});
-vm.runInContext('this.cardsDB=cardsDB;this.categoriesDB=categoriesDB;this.modulesDB=modulesDB;this.conversionDB=conversionDB;this.DATA_RULES=DATA_RULES;this.PROMOTIONS=PROMOTIONS;this.PROMO_REGISTRY=PROMO_REGISTRY;',ctx);
-const out={cards:ctx.cardsDB,categories:ctx.categoriesDB,modules:ctx.modulesDB,conversions:ctx.conversionDB,rules:ctx.DATA_RULES,promotions:ctx.PROMOTIONS,promoRegistry:ctx.PROMO_REGISTRY};
+
+[
+  'js/data_cards.js',
+  'js/data_categories.js',
+  'js/data_modules.js',
+  'js/data_trackers.js',
+  'js/data_conversions.js',
+  'js/data_rules.js',
+  'js/data_campaigns.js',
+  'js/data_counters.js',
+  'js/data_index.js',
+].forEach((f)=>vm.runInContext(fs.readFileSync(path.join(root,f),'utf8'),ctx,{filename:f}));
+
+const out = {
+  cardsRaw: (ctx.DATA && ctx.DATA.cardsRaw) ? ctx.DATA.cardsRaw : null,
+  cards: (ctx.DATA && ctx.DATA.cards) ? ctx.DATA.cards : null,
+  categories: (ctx.DATA && ctx.DATA.categories) ? ctx.DATA.categories : null,
+  modules: (ctx.DATA && ctx.DATA.modules) ? ctx.DATA.modules : null,
+  trackers: (ctx.DATA && ctx.DATA.trackers) ? ctx.DATA.trackers : null,
+  conversions: (ctx.DATA && ctx.DATA.conversions) ? ctx.DATA.conversions : null,
+  rules: (ctx.DATA && ctx.DATA.rules) ? ctx.DATA.rules : null,
+  campaigns: (ctx.DATA && ctx.DATA.campaigns) ? ctx.DATA.campaigns : null,
+  campaignRegistry: (ctx.DATA && ctx.DATA.campaignRegistry) ? ctx.DATA.campaignRegistry : null,
+  countersRegistry: (ctx.DATA && ctx.DATA.countersRegistry) ? ctx.DATA.countersRegistry : null,
+  periodDefaults: (ctx.DATA && ctx.DATA.periodDefaults) ? ctx.DATA.periodDefaults : null,
+};
 process.stdout.write(JSON.stringify(out));
 """
     result = subprocess.check_output(["node", "-e", node_script], cwd=repo_root, text=True, encoding="utf-8")
     return json.loads(result)
+
+
+def pick_db_name(db_map, preferred, fallbacks):
+    if preferred in db_map:
+        return preferred
+    for name in fallbacks:
+        if name in db_map:
+            return name
+    return None
+
+
+def sync_table(db_id, token, db_label, default_title_prop, template_props, rows, build_row_props):
+    title_prop, allowed = resolve_title_prop(db_id, token, default_title_prop, db_label)
+    allowed = ensure_properties(db_id, token, template_props, db_label)
+    out_page_ids = {}
+    for key, row in rows:
+        props = build_row_props(key, row)
+        props = build_props(title_prop, key, props)
+        props = filter_props(props, allowed, f"{db_label}:{key}")
+        page_id_existing = query_page_by_title(db_id, title_prop, key, token)
+        if page_id_existing:
+            update_page(page_id_existing, props, token)
+            out_page_ids[key] = page_id_existing
+        else:
+            created = create_page(db_id, props, token)
+            out_page_ids[key] = created.get("id")
+    return out_page_ids
 
 
 def sync(repo_root, page_url, token):
@@ -246,20 +293,35 @@ def sync(repo_root, page_url, token):
         die("Could not parse page ID from URL")
 
     db_map = {title: db_id for title, db_id in list_child_databases(page_id, token)}
-
     data = load_data_via_node(repo_root)
-    promo_page_ids = {}
 
-    # Cards
+    cards = data.get("cards") or []
+    categories = data.get("categories") or {}
+    modules = data.get("modules") or {}
+    trackers = data.get("trackers") or {}
+    campaigns = data.get("campaigns") or []
+    campaign_registry = data.get("campaignRegistry") or {}
+    counters_registry = data.get("countersRegistry") or {}
+
+    campaign_db_name = pick_db_name(db_map, "Campaigns", ["Promotions"])
+    campaign_sections_db_name = pick_db_name(db_map, "Campaign Sections", ["Promotion Sections"])
+    campaign_registry_db_name = pick_db_name(db_map, "Campaign Registry", ["Promo Registry"])
+
+    card_page_ids = {}
+    campaign_page_ids = {}
+
     if "Cards" in db_map:
         db_id = db_map["Cards"]
-        title_prop, allowed = resolve_title_prop(db_id, token, "Card ID", "Cards")
-        template_props = build_props(title_prop, "__template__", {
+        template_props = build_props("Card ID", "__template__", {
             "Name": rt(""),
             "Currency": rt(""),
             "Type": rt(""),
             "FCF": num(None),
-            "Modules": rt(""),
+            "Reward Modules": rt(""),
+            "Trackers": rt(""),
+            "Modules": rt(""),  # legacy combined view
+            "Reward Module Count": num(None),
+            "Tracker Count": num(None),
             "Redemption": rt(""),
             "Redemption ? Unit": rt(""),
             "Redemption ? Min": num(None),
@@ -267,36 +329,43 @@ def sync(repo_root, page_url, token):
             "Redemption ? Ratio": rt(""),
             "Source File": rt(""),
         })
-        allowed = ensure_properties(db_id, token, template_props, "Cards")
-        for c in data["cards"]:
-            key = c.get("id", "")
-            props = build_props(title_prop, key, {
+
+        def build_row_props(key, c):
+            reward_modules = c.get("rewardModules", []) or []
+            tracker_ids = c.get("trackers", []) or []
+            combined = list(reward_modules) + list(tracker_ids)
+            red = c.get("redemption") or {}
+            return {
                 "Name": rt(c.get("name", "")),
                 "Currency": rt(c.get("currency", "")),
                 "Type": rt(c.get("type", "")),
                 "FCF": num(c.get("fcf", 0)),
-                "Modules": rt(json.dumps(c.get("modules", []), ensure_ascii=False)),
-                "Redemption": rt(json.dumps(c.get("redemption", {}) if c.get("redemption") is not None else {}, ensure_ascii=False) if c.get("redemption") is not None else ""),
-                "Redemption ? Unit": rt((c.get("redemption") or {}).get("unit", "")),
-                "Redemption ? Min": num((c.get("redemption") or {}).get("min", None)),
-                "Redemption ? Fee": rt((c.get("redemption") or {}).get("fee", "")),
-                "Redemption ? Ratio": rt((c.get("redemption") or {}).get("ratio", "")),
+                "Reward Modules": rt(json.dumps(reward_modules, ensure_ascii=False)),
+                "Trackers": rt(json.dumps(tracker_ids, ensure_ascii=False)),
+                "Modules": rt(json.dumps(combined, ensure_ascii=False)),
+                "Reward Module Count": num(len(reward_modules)),
+                "Tracker Count": num(len(tracker_ids)),
+                "Redemption": rt(json.dumps(red, ensure_ascii=False) if red else ""),
+                "Redemption ? Unit": rt(red.get("unit", "")),
+                "Redemption ? Min": num(red.get("min", None)),
+                "Redemption ? Fee": rt(red.get("fee", "")),
+                "Redemption ? Ratio": rt(red.get("ratio", "")),
                 "Source File": rt("js/data_cards.js"),
-            })
-            props = filter_props(props, allowed, f"Cards:{key}")
-            page_id_existing = query_page_by_title(db_id, title_prop, key, token)
-            if page_id_existing:
-                update_page(page_id_existing, props, token)
-                promo_page_ids[key] = page_id_existing
-            else:
-                created = create_page(db_id, props, token)
-                promo_page_ids[key] = created.get("id")
+            }
 
-    # Categories
+        card_page_ids = sync_table(
+            db_id=db_id,
+            token=token,
+            db_label="Cards",
+            default_title_prop="Card ID",
+            template_props=template_props,
+            rows=[(c.get("id", ""), c) for c in cards if c.get("id")],
+            build_row_props=build_row_props,
+        )
+
     if "Categories" in db_map:
         db_id = db_map["Categories"]
-        title_prop, allowed = resolve_title_prop(db_id, token, "Category Key", "Categories")
-        template_props = build_props(title_prop, "__template__", {
+        template_props = build_props("Category Key", "__template__", {
             "Label": rt(""),
             "Order": num(None),
             "Parent": rt(""),
@@ -305,9 +374,9 @@ def sync(repo_root, page_url, token):
             "Req": rt(""),
             "Source File": rt(""),
         })
-        allowed = ensure_properties(db_id, token, template_props, "Categories")
-        for key, c in data["categories"].items():
-            props = {
+
+        def build_row_props(key, c):
+            return {
                 "Label": rt(c.get("label", "")),
                 "Order": num(c.get("order", None)),
                 "Parent": rt(c.get("parent", "")),
@@ -316,21 +385,20 @@ def sync(repo_root, page_url, token):
                 "Req": rt(c.get("req", "")),
                 "Source File": rt("js/data_categories.js"),
             }
-            props = build_props(title_prop, key, props)
-            props = filter_props(props, allowed, f"Categories:{key}")
-            page_id_existing = query_page_by_title(db_id, title_prop, key, token)
-            if page_id_existing:
-                update_page(page_id_existing, props, token)
-                promo_page_ids[key] = page_id_existing
-            else:
-                created = create_page(db_id, props, token)
-                promo_page_ids[key] = created.get("id")
 
-    # Modules
+        sync_table(
+            db_id=db_id,
+            token=token,
+            db_label="Categories",
+            default_title_prop="Category Key",
+            template_props=template_props,
+            rows=[(k, v) for k, v in categories.items()],
+            build_row_props=build_row_props,
+        )
+
     if "Modules" in db_map:
         db_id = db_map["Modules"]
-        title_prop, allowed = resolve_title_prop(db_id, token, "Module Key", "Modules")
-        template_props = build_props(title_prop, "__template__", {
+        template_props = build_props("Module Key", "__template__", {
             "Type": rt(""),
             "Desc": rt(""),
             "Data": rt(""),
@@ -351,16 +419,13 @@ def sync(repo_root, page_url, token):
             "Req Mission Key": rt(""),
             "Setting Key": rt(""),
             "Usage Key": rt(""),
-            "Mission ID": rt(""),
-            "Promo End": rt(""),
-            "Valid To": rt(""),
-            "Valid On Red Day": chk(False),
             "Config": rt(""),
             "Source File": rt(""),
         })
-        allowed = ensure_properties(db_id, token, template_props, "Modules")
-        for key, m in data["modules"].items():
-            props = {
+
+        def build_row_props(key, m):
+            match = m.get("match", []) if isinstance(m.get("match", None), list) else []
+            return {
                 "Type": rt(m.get("type", "")),
                 "Desc": rt(m.get("desc", "")),
                 "Data": rt(json.dumps(m, ensure_ascii=False)),
@@ -368,7 +433,7 @@ def sync(repo_root, page_url, token):
                 "Rate Per X": num(m.get("rate_per_x", None)),
                 "Multiplier": num(m.get("multiplier", None)),
                 "Category": rt(m.get("category", "")),
-                "Match": mselect(m.get("match", [])),
+                "Match": mselect(match),
                 "Mode": rt(m.get("mode", "")),
                 "Cap Mode": rt(m.get("cap_mode", "")),
                 "Cap Limit": num(m.get("cap_limit", None)),
@@ -381,122 +446,110 @@ def sync(repo_root, page_url, token):
                 "Req Mission Key": rt(m.get("req_mission_key", "")),
                 "Setting Key": rt(m.get("setting_key", "")),
                 "Usage Key": rt(m.get("usage_key", "")),
-                "Mission ID": rt(m.get("mission_id", "")),
-                "Promo End": rt(m.get("promo_end", "")),
-                "Valid To": rt(m.get("valid_to", "")),
-                "Valid On Red Day": chk(m.get("valid_on_red_day", False)),
-                "Config": rt(json.dumps(m.get("config", {}), ensure_ascii=False) if "config" in m else ""),
+                "Config": rt(json.dumps(m.get("config", {}) if m.get("config") is not None else {}, ensure_ascii=False) if m.get("config") is not None else ""),
                 "Source File": rt("js/data_modules.js"),
             }
-            props = build_props(title_prop, key, props)
-            props = filter_props(props, allowed, f"Modules:{key}")
-            page_id_existing = query_page_by_title(db_id, title_prop, key, token)
-            if page_id_existing:
-                update_page(page_id_existing, props, token)
-                promo_page_ids[key] = page_id_existing
-            else:
-                created = create_page(db_id, props, token)
-                promo_page_ids[key] = created.get("id")
 
-    # Conversions
-    if "Conversions" in db_map:
-        db_id = db_map["Conversions"]
-        title_prop, allowed = resolve_title_prop(db_id, token, "Source Currency", "Conversions")
-        template_props = build_props(title_prop, "__template__", {
-            "Miles Rate": num(None),
-            "Cash Rate": num(None),
+        sync_table(
+            db_id=db_id,
+            token=token,
+            db_label="Modules",
+            default_title_prop="Module Key",
+            template_props=template_props,
+            rows=[(k, v) for k, v in modules.items()],
+            build_row_props=build_row_props,
+        )
+
+    if "Trackers" in db_map:
+        db_id = db_map["Trackers"]
+        template_props = build_props("Tracker Key", "__template__", {
+            "Type": rt(""),
+            "Desc": rt(""),
+            "Data": rt(""),
+            "Match": mselect([]),
+            "Setting Key": rt(""),
+            "Req Mission Key": rt(""),
+            "Mission ID": rt(""),
+            "Promo End": rt(""),
+            "Valid From": rt(""),
+            "Valid To": rt(""),
+            "Has Eligible Check": chk(False),
+            "Counter": rt(""),
             "Source File": rt(""),
         })
-        allowed = ensure_properties(db_id, token, template_props, "Conversions")
-        for c in data["conversions"]:
-            key = c.get("src", "")
-            props = build_props(title_prop, key, {
-                "Miles Rate": num(c.get("miles_rate", None)),
-                "Cash Rate": num(c.get("cash_rate", None)),
-                "Source File": rt("js/data_conversions.js"),
-            })
-            props = filter_props(props, allowed, f"Conversions:{key}")
-            page_id_existing = query_page_by_title(db_id, title_prop, key, token)
-            if page_id_existing:
-                update_page(page_id_existing, props, token)
-                promo_page_ids[key] = page_id_existing
-            else:
-                created = create_page(db_id, props, token)
-                promo_page_ids[key] = created.get("id")
 
-    # Rules
-    if "Rules" in db_map:
-        db_id = db_map["Rules"]
-        title_prop, allowed = resolve_title_prop(db_id, token, "Rule Key", "Rules")
-        template_props = build_props(title_prop, "__template__", {
+        def build_row_props(key, t):
+            match = t.get("match", []) if isinstance(t.get("match", None), list) else []
+            return {
+                "Type": rt(t.get("type", "")),
+                "Desc": rt(t.get("desc", "")),
+                "Data": rt(json.dumps(t, ensure_ascii=False)),
+                "Match": mselect(match),
+                "Setting Key": rt(t.get("setting_key", "")),
+                "Req Mission Key": rt(t.get("req_mission_key", "")),
+                "Mission ID": rt(t.get("mission_id", "")),
+                "Promo End": rt(t.get("promo_end", "")),
+                "Valid From": rt(t.get("valid_from", "")),
+                "Valid To": rt(t.get("valid_to", "")),
+                "Has Eligible Check": chk("eligible_check" in t),
+                "Counter": rt(json.dumps(t.get("counter", {}) if t.get("counter") is not None else {}, ensure_ascii=False) if t.get("counter") is not None else ""),
+                "Source File": rt("js/data_trackers.js"),
+            }
+
+        sync_table(
+            db_id=db_id,
+            token=token,
+            db_label="Trackers",
+            default_title_prop="Tracker Key",
+            template_props=template_props,
+            rows=[(k, v) for k, v in trackers.items()],
+            build_row_props=build_row_props,
+        )
+
+    if campaign_db_name:
+        db_id = db_map[campaign_db_name]
+        template_props = build_props("Campaign ID", "__template__", {
+            "Name": rt(""),
+            "Theme": rt(""),
+            "Icon": rt(""),
+            "Badge": rt(""),
+            "Cards": rt(""),
+            "Cap Keys": rt(""),
+            "Period": rt(""),
             "Data": rt(""),
             "Source File": rt(""),
         })
-        allowed = ensure_properties(db_id, token, template_props, "Rules")
-        for key, val in data["rules"].items():
-            props = build_props(title_prop, key, {
-                "Data": rt(json.dumps(val, ensure_ascii=False)),
-                "Source File": rt("js/data_rules.js"),
-            })
-            props = filter_props(props, allowed, f"Rules:{key}")
-            page_id_existing = query_page_by_title(db_id, title_prop, key, token)
-            if page_id_existing:
-                update_page(page_id_existing, props, token)
-                promo_page_ids[key] = page_id_existing
-            else:
-                created = create_page(db_id, props, token)
-                promo_page_ids[key] = created.get("id")
 
-    # Promotions
-    if "Promotions" in db_map:
-        db_id = db_map["Promotions"]
-        title_prop, allowed = resolve_title_prop(db_id, token, "Promo ID", "Promotions")
-        template_props = build_props(title_prop, "__template__", {
-            "Name": rt(""),
-            "Theme": rt(""),
-            "Cards": rt(""),
-            "Badge": rt(""),
-            "Badge ? Type": rt(""),
-            "Badge ? ModuleKey": rt(""),
-            "Badge ? Field": rt(""),
-            "Badge ? StaticDate": rt(""),
-            "Sections": rt(""),
-            "Cap Keys": rt(""),
-            "Source File": rt(""),
-        })
-        allowed = ensure_properties(db_id, token, template_props, "Promotions")
-        for p in data["promotions"]:
-            key = p.get("id", "")
-            props = build_props(title_prop, key, {
-                "Name": rt(p.get("name", "")),
-                "Theme": rt(p.get("theme", "")),
-                "Cards": rt(json.dumps(p.get("cards", []), ensure_ascii=False)),
-                "Badge": rt(json.dumps(p.get("badge", {}), ensure_ascii=False)),
-                "Badge ? Type": rt((p.get("badge") or {}).get("type", "")),
-                "Badge ? ModuleKey": rt((p.get("badge") or {}).get("moduleKey", "")),
-                "Badge ? Field": rt((p.get("badge") or {}).get("field", "")),
-                "Badge ? StaticDate": rt((p.get("badge") or {}).get("staticDate", "")),
-                "Sections": rt(json.dumps(p.get("sections", []), ensure_ascii=False)),
-                "Cap Keys": rt(json.dumps(p.get("capKeys", []), ensure_ascii=False)),
-                "Source File": rt("js/data_promotions.js"),
-            })
-            props = filter_props(props, allowed, f"Promotions:{key}")
-            page_id_existing = query_page_by_title(db_id, title_prop, key, token)
-            if page_id_existing:
-                update_page(page_id_existing, props, token)
-                promo_page_ids[key] = page_id_existing
-            else:
-                created = create_page(db_id, props, token)
-                promo_page_ids[key] = created.get("id")
+        def build_row_props(key, c):
+            return {
+                "Name": rt(c.get("name", "")),
+                "Theme": rt(c.get("theme", "")),
+                "Icon": rt(c.get("icon", "")),
+                "Badge": rt(json.dumps(c.get("badge", {}) if c.get("badge") is not None else {}, ensure_ascii=False)),
+                "Cards": rt(json.dumps(c.get("cards", []) if c.get("cards") is not None else [], ensure_ascii=False)),
+                "Cap Keys": rt(json.dumps(c.get("capKeys", []) if c.get("capKeys") is not None else [], ensure_ascii=False)),
+                "Period": rt(json.dumps(c.get("period", {}) if c.get("period") is not None else {}, ensure_ascii=False) if c.get("period") is not None else ""),
+                "Data": rt(json.dumps(c, ensure_ascii=False)),
+                "Source File": rt("js/data_campaigns.js"),
+            }
 
+        campaign_page_ids = sync_table(
+            db_id=db_id,
+            token=token,
+            db_label=campaign_db_name,
+            default_title_prop="Campaign ID",
+            template_props=template_props,
+            rows=[(c.get("id", ""), c) for c in campaigns if c.get("id")],
+            build_row_props=build_row_props,
+        )
 
-    # Promotion Sections
-    if "Promotion Sections" in db_map:
-        db_id = db_map["Promotion Sections"]
-        title_prop, allowed = resolve_title_prop(db_id, token, "Section ID", "Promotion Sections")
-        template_props = build_props(title_prop, "__template__", {
-            "Promo ID": rt(""),
-            "Promotion": rels([]),
+    if campaign_sections_db_name:
+        db_id = db_map[campaign_sections_db_name]
+        template_props = build_props("Section ID", "__template__", {
+            "Campaign ID": rt(""),
+            "Campaign": rels([]),
+            "Promo ID": rt(""),         # legacy name
+            "Promotion": rels([]),      # legacy name
             "Type": rt(""),
             "Label": rt(""),
             "Usage Key": rt(""),
@@ -513,18 +566,25 @@ def sync(repo_root, page_url, token):
             "Tiers": rt(""),
             "Source File": rt(""),
         })
-        allowed = ensure_properties(db_id, token, template_props, "Promotion Sections")
-        for p in data["promotions"]:
-            promo_id = p.get("id", "")
-            promo_page_id = promo_page_ids.get(promo_id)
-            sections = p.get("sections", []) or []
+
+        title_prop, allowed = resolve_title_prop(db_id, token, "Section ID", campaign_sections_db_name)
+        allowed = ensure_properties(db_id, token, template_props, campaign_sections_db_name)
+
+        for camp in campaigns:
+            camp_id = camp.get("id", "")
+            if not camp_id:
+                continue
+            camp_page_id = campaign_page_ids.get(camp_id)
+            sections = camp.get("sections", []) or []
             for i, s in enumerate(sections, start=1):
-                section_id = f"{promo_id}#{i}"
+                section_id = f"{camp_id}#{i}"
                 usage_keys = s.get("usageKeys")
                 usage_key = s.get("usageKey")
                 props = {
-                    "Promo ID": rt(promo_id),
-                    "Promotion": rels([promo_page_id]) if promo_page_id else rels([]),
+                    "Campaign ID": rt(camp_id),
+                    "Campaign": rels([camp_page_id]) if camp_page_id else rels([]),
+                    "Promo ID": rt(camp_id),
+                    "Promotion": rels([camp_page_id]) if camp_page_id else rels([]),
                     "Type": rt(s.get("type", "")),
                     "Label": rt(s.get("label", "")),
                     "Usage Key": rt(usage_key or ""),
@@ -539,57 +599,102 @@ def sync(repo_root, page_url, token):
                     "Eligible Key": rt(s.get("eligibleKey", "")),
                     "Markers": rt(json.dumps(s.get("markers", []), ensure_ascii=False)) if s.get("markers") is not None else rt(""),
                     "Tiers": rt(json.dumps(s.get("tiers", []), ensure_ascii=False)) if s.get("tiers") is not None else rt(""),
-                    "Source File": rt("js/data_promotions.js"),
+                    "Source File": rt("js/data_campaigns.js"),
                 }
                 props = build_props(title_prop, section_id, props)
-                props = filter_props(props, allowed, f"Promotion Sections:{section_id}")
+                props = filter_props(props, allowed, f"{campaign_sections_db_name}:{section_id}")
                 page_id_existing = query_page_by_title(db_id, title_prop, section_id, token)
                 if page_id_existing:
                     update_page(page_id_existing, props, token)
                 else:
                     create_page(db_id, props, token)
 
-    # Promo Registry
-    if "Promo Registry" in db_map:
-        db_id = db_map["Promo Registry"]
-        title_prop, allowed = resolve_title_prop(db_id, token, "Promo ID", "Promo Registry")
-        template_props = build_props(title_prop, "__template__", {
+    if campaign_registry_db_name:
+        db_id = db_map[campaign_registry_db_name]
+        template_props = build_props("Campaign ID", "__template__", {
             "Setting Key": rt(""),
             "Warning Title": rt(""),
             "Warning Desc": rt(""),
             "Source File": rt(""),
         })
-        allowed = ensure_properties(db_id, token, template_props, "Promo Registry")
-        for key, val in data["promoRegistry"].items():
-            props = build_props(title_prop, key, {
+
+        def build_row_props(key, val):
+            return {
                 "Setting Key": rt(val.get("settingKey", "")),
                 "Warning Title": rt(val.get("warningTitle", "")),
                 "Warning Desc": rt(val.get("warningDesc", "")),
-                "Source File": rt("js/data_promotions.js"),
-            })
-            props = filter_props(props, allowed, f"Promo Registry:{key}")
-            page_id_existing = query_page_by_title(db_id, title_prop, key, token)
-            if page_id_existing:
-                update_page(page_id_existing, props, token)
-                promo_page_ids[key] = page_id_existing
-            else:
-                created = create_page(db_id, props, token)
-                promo_page_ids[key] = created.get("id")
+                "Source File": rt("js/data_campaigns.js"),
+            }
+
+        sync_table(
+            db_id=db_id,
+            token=token,
+            db_label=campaign_registry_db_name,
+            default_title_prop="Campaign ID",
+            template_props=template_props,
+            rows=[(k, v) for k, v in campaign_registry.items()],
+            build_row_props=build_row_props,
+        )
+
+    if "Counters Registry" in db_map:
+        db_id = db_map["Counters Registry"]
+        template_props = build_props("Key", "__template__", {
+            "Period Type": rt(""),
+            "Anchor": rt(""),
+            "Source": rt(""),
+            "Ref Type": rt(""),
+            "Ref ID": rt(""),
+            "Priority": num(None),
+            "Source File": rt(""),
+        })
+
+        def build_row_props(key, entry):
+            return {
+                "Period Type": rt(entry.get("periodType", "")),
+                "Anchor": rt(json.dumps(entry.get("anchorRef", {}) if entry.get("anchorRef") is not None else {}, ensure_ascii=False) if entry.get("anchorRef") is not None else ""),
+                "Source": rt(entry.get("source", "")),
+                "Ref Type": rt(entry.get("refType", "")),
+                "Ref ID": rt(entry.get("refId", "")),
+                "Priority": num(entry.get("priority", None)),
+                "Source File": rt("js/data_counters.js"),
+            }
+
+        sync_table(
+            db_id=db_id,
+            token=token,
+            db_label="Counters Registry",
+            default_title_prop="Key",
+            template_props=template_props,
+            rows=[(k, v) for k, v in counters_registry.items()],
+            build_row_props=build_row_props,
+        )
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Sync repo data to Notion")
-    parser.add_argument("--page-url", required=True, help="Notion page URL that contains the databases")
+    parser = argparse.ArgumentParser(description="Sync repo data to Notion (optional) and/or dump DATA JSON")
+    parser.add_argument("--page-url", help="Notion page URL that contains the child databases")
+    parser.add_argument("--dump", help="Write a JSON dump of DATA to this file (for offline inspection)")
     args = parser.parse_args()
+
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data = load_data_via_node(repo_root)
+
+    if args.dump:
+        with open(args.dump, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"Wrote dump: {args.dump}")
+
+    if not args.page_url:
+        return
 
     token = os.environ.get("NOTION_TOKEN")
     if not token:
         die("NOTION_TOKEN is not set")
 
-    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sync(repo_root, args.page_url, token)
     print("Sync complete")
 
 
 if __name__ == "__main__":
     main()
+
