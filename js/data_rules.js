@@ -45,13 +45,3 @@ const DATA_RULES = {
         }
     }
 };
-
-DATA_RULES.categoryHierarchy = categoryHierarchy;
-
-const DATA = {
-    cards: cardsDB,
-    modules: modulesDB,
-    conversions: conversionDB,
-    redHotCategories: redHotCategories,
-    rules: DATA_RULES
-};

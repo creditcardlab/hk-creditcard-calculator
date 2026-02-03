@@ -101,6 +101,212 @@ function renderWarningCard(title, icon, description, settingKey) {
     </div>`;
 }
 
+function renderPromoOverlay(overlayModel) {
+    if (!overlayModel || !overlayModel.type) return "";
+
+    if (overlayModel.type === "winter_mission") {
+        const t1 = Number(overlayModel.tier1) || 0;
+        const t2 = Math.max(t1, Number(overlayModel.tier2) || 0);
+        const spend = Number(overlayModel.spend) || 0;
+        const totalCap = t2 || 1;
+        const seg1Width = (t1 / totalCap) * 100;
+        const seg2Width = 100 - seg1Width;
+        const seg1Fill = t1 > 0 ? Math.min(1, spend / t1) * seg1Width : 0;
+        const seg2Fill = t2 > t1 ? Math.min(1, Math.max(0, spend - t1) / (t2 - t1)) * seg2Width : 0;
+        const seg1WidthSafe = Math.max(0, Math.min(100, seg1Width));
+        const seg2WidthSafe = Math.max(0, Math.min(100, seg2Width));
+
+        return `<div class="absolute inset-0">
+            <div class="absolute inset-0 flex">
+                <div style="width:${seg1WidthSafe}%" class="h-3"></div>
+                <div style="width:${seg2WidthSafe}%" class="bg-gray-200 h-3"></div>
+            </div>
+            <div class="absolute inset-0 flex">
+                <div style="width:${seg1Fill}%" class="bg-blue-500 h-3"></div>
+                <div style="width:${seg2Fill}%" class="bg-blue-400 h-3"></div>
+            </div>
+            <div class="absolute top-0 bottom-0" style="left:${seg1WidthSafe}%; width:1px; background:rgba(0,0,0,0.08)"></div>
+        </div>`;
+    }
+
+    if (overlayModel.type === "winter_reward") {
+        const cap1 = Number(overlayModel.cap1) || 0;
+        const cap2 = Math.max(cap1, Number(overlayModel.cap2) || 0);
+        const rewardTier1 = Number(overlayModel.rewardTier1) || 0;
+        const rewardTier2 = Number(overlayModel.rewardTier2) || 0;
+        const tier1Unlocked = !!overlayModel.tier1Unlocked;
+        const tier2Unlocked = !!overlayModel.tier2Unlocked;
+        const rewardLocked = !tier1Unlocked;
+
+        const capTotal = cap2 || 1;
+        const seg1Width = (cap1 / capTotal) * 100;
+        const seg2Width = 100 - seg1Width;
+        const seg1Fill = tier1Unlocked && cap1 > 0 ? Math.min(1, rewardTier1 / cap1) * seg1Width : 0;
+        const seg2Fill = tier2Unlocked && cap2 > cap1 ? Math.min(1, Math.max(0, rewardTier2 - cap1) / (cap2 - cap1)) * seg2Width : 0;
+        const seg1WidthSafe = Math.max(0, Math.min(100, seg1Width));
+        const seg2WidthSafe = Math.max(0, Math.min(100, seg2Width));
+
+        return `<div class="absolute inset-0">
+            ${rewardLocked ? '' : `<div class="absolute inset-0 flex">
+                <div style="width:${seg1WidthSafe}%" class="h-3"></div>
+                <div style="width:${seg2WidthSafe}%" class="bg-gray-200 h-3"></div>
+            </div>`}
+            <div class="absolute inset-0 flex">
+                <div style="width:${seg1Fill}%" class="bg-green-500 h-3"></div>
+                <div style="width:${seg2Fill}%" class="bg-green-600 h-3"></div>
+            </div>
+            ${rewardLocked ? '' : `<div class="absolute top-0 bottom-0" style="left:${seg1WidthSafe}%; width:1px; background:rgba(0,0,0,0.08)"></div>`}
+            ${rewardLocked ? `<div class="absolute inset-0 flex items-center justify-center text-gray-500 text-xs"><i class="fas fa-lock"></i></div>` : ''}
+        </div>`;
+    }
+
+    return "";
+}
+
+function renderPromoMarkers(markers) {
+    if (!markers) return "";
+    if (typeof markers === "string") {
+        return `<div class="flex justify-between text-[8px] text-gray-400 mt-0.5 px-1">${markers}</div>`;
+    }
+    if (Array.isArray(markers) && markers.length > 0 && typeof markers[0] === "object") {
+        const items = markers.map(m => {
+            const pos = Math.max(0, Math.min(100, Number(m.pos) || 0));
+            const align = pos === 0 ? 'left' : (pos === 100 ? 'right' : 'center');
+            const translate = align === 'center' ? 'translateX(-50%)' : (align === 'right' ? 'translateX(-100%)' : 'translateX(0)');
+            const label = escapeHtml(m.label || "");
+            return `<span style="left:${pos}%; transform:${translate}" class="absolute text-[8px] text-gray-400">${label}</span>`;
+        }).join('');
+        return `<div class="relative h-3 mt-0.5 px-1">${items}</div>`;
+    }
+    if (Array.isArray(markers)) {
+        const items = markers.map(m => {
+            const label = (typeof m === "number") ? m.toLocaleString() : String(m);
+            return `<span>${escapeHtml(label)}</span>`;
+        }).join('');
+        return `<div class="flex justify-between text-[8px] text-gray-400 mt-0.5 px-1">${items}</div>`;
+    }
+    return "";
+}
+
+function renderPromoSections(sections, theme) {
+    if (!sections) return "";
+    return sections.map(sec => {
+        if (!sec) return "";
+
+        // Legacy (pre-model) fallback
+        if (!sec.kind) {
+            const barColor = sec.barColor || theme.bar;
+            const markersHtml = renderPromoMarkers(sec.markers);
+            const subTextHtml = sec.subText ? `<div class="text-[10px] text-right mt-1">${sec.subText}</div>` : '';
+            return `<div>
+                <div class="flex justify-between text-xs mb-1">
+                    <span class="${theme.text} font-bold">${sec.label}</span>
+                    <span class="text-gray-500 font-mono">${sec.valueText}</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-3 relative overflow-hidden">
+                    <div class="${barColor} h-3 rounded-full transition-all duration-700 ${sec.striped ? 'progress-stripe' : ''}" style="width: ${sec.progress}%"></div>
+                    ${sec.overlay || ''}
+                </div>
+                ${markersHtml}
+                ${subTextHtml}
+            </div>`;
+        }
+
+        const label = escapeHtml(sec.label || "");
+        const valueText = escapeHtml(sec.valueText || "");
+        const progress = Number.isFinite(sec.progress) ? sec.progress : 0;
+        const state = sec.state || "active";
+
+        let barColor = theme.bar;
+        let striped = false;
+        let subText = "";
+        let subTextClass = "text-gray-500";
+
+        if (sec.kind === "mission") {
+            barColor = state === "locked" ? "bg-gray-400 opacity-50" : "bg-blue-500";
+            subText = state === "locked" ? (sec.lockedReason || "") : "Unlocked";
+            subTextClass = state === "locked" ? "text-gray-400" : "text-green-600 font-bold";
+            if (sec.overlayModel && sec.overlayModel.type === "winter_mission") {
+                barColor = "bg-gray-200";
+            }
+        } else {
+            striped = sec.kind !== "tier_cap" || !(sec.meta && sec.meta.isWinterPromo);
+            if (state === "locked") {
+                barColor = "bg-gray-400 opacity-50";
+                subText = sec.lockedReason || "Locked";
+                subTextClass = "text-gray-400";
+            } else if (state === "capped") {
+                barColor = "bg-red-500";
+                subText = "Capped";
+                subTextClass = "text-red-500";
+            } else {
+                barColor = "bg-green-500";
+                if (sec.meta && typeof sec.meta.remaining === "number") {
+                    const prefix = sec.meta.prefix || "";
+                    const unit = sec.meta.unit || "";
+                    subText = `Remaining ${prefix}${Math.max(0, Math.floor(sec.meta.remaining)).toLocaleString()}${unit}`;
+                } else {
+                    subText = "In Progress";
+                }
+                subTextClass = "text-gray-500";
+            }
+
+            if (sec.overlayModel && sec.overlayModel.type === "winter_reward") {
+                barColor = state === "locked" ? "bg-gray-300" : "bg-gray-200";
+                striped = false;
+                if (sec.lockedReason) {
+                    subText = sec.lockedReason;
+                    subTextClass = "text-gray-400";
+                } else if (state !== "capped") {
+                    subText = "In Progress";
+                    subTextClass = "text-gray-500";
+                }
+            }
+        }
+
+        const overlay = renderPromoOverlay(sec.overlayModel);
+        const markersHtml = renderPromoMarkers(sec.markers);
+        const subTextHtml = subText ? `<div class="text-[10px] text-right mt-1 ${subTextClass}">${escapeHtml(subText)}</div>` : '';
+
+        return `<div>
+            <div class="flex justify-between text-xs mb-1">
+                <span class="${theme.text} font-bold">${label}</span>
+                <span class="text-gray-500 font-mono">${valueText}</span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-3 relative overflow-hidden">
+                <div class="${barColor} h-3 rounded-full transition-all duration-700 ${striped ? 'progress-stripe' : ''}" style="width: ${progress}%"></div>
+                ${overlay}
+            </div>
+            ${markersHtml}
+            ${subTextHtml}
+        </div>`;
+    }).join('');
+}
+
+function breakdownToneClass(tone, flags) {
+    const classes = [];
+    const safeTone = tone || "normal";
+    if (safeTone === "muted") classes.push("text-gray-400");
+    else if (safeTone === "warning") classes.push("text-yellow-600");
+    else if (safeTone === "accent") classes.push("text-purple-600");
+    else if (safeTone === "danger") classes.push("text-red-500");
+    else if (safeTone === "success") classes.push("text-green-600");
+    else classes.push("text-gray-500");
+    if (flags && flags.strike) classes.push("line-through");
+    if (flags && flags.bold) classes.push("font-bold");
+    return classes.join(" ");
+}
+
+function renderBreakdown(entries) {
+    if (!Array.isArray(entries) || entries.length === 0) return "基本回贈";
+    return entries.map(entry => {
+        if (typeof entry === "string") return escapeHtml(entry);
+        const text = escapeHtml(entry.text || "");
+        const cls = breakdownToneClass(entry.tone, entry.flags);
+        return cls ? `<span class="${cls}">${text}</span>` : text;
+    }).join(" + ");
+}
+
 // Helper: Toggle Collapsible Section
 function toggleCollapsible(id) {
     const content = document.getElementById(id);
@@ -112,8 +318,8 @@ function toggleCollapsible(id) {
 }
 
 function getCategoryList(ownedCards) {
-    if (typeof categoriesDB === 'undefined') return [];
-    return Object.entries(categoriesDB)
+    if (typeof DATA === 'undefined' || !DATA.categories) return [];
+    return Object.entries(DATA.categories)
         .map(([id, c]) => ({ id, ...c }))
         .filter(c => !c.hidden)
         .filter(c => {
@@ -196,41 +402,7 @@ function createProgressCard(config) {
         </button>
     </div>` : '';
 
-    let sectionsHtml = [];
-    if (sections) {
-        sectionsHtml = sections.map(sec => {
-            const barColor = sec.barColor || t.bar;
-            // Support split bar (e.g. Winter Promo Lv1/Lv2 markers)
-            let markersHtml = '';
-            if (sec.markers) {
-                if (Array.isArray(sec.markers) && sec.markers.length > 0 && typeof sec.markers[0] === 'object') {
-                    const items = sec.markers.map(m => {
-                        const pos = Math.max(0, Math.min(100, Number(m.pos) || 0));
-                        const align = pos === 0 ? 'left' : (pos === 100 ? 'right' : 'center');
-                        const translate = align === 'center' ? 'translateX(-50%)' : (align === 'right' ? 'translateX(-100%)' : 'translateX(0)');
-                        return `<span style="left:${pos}%; transform:${translate}" class="absolute text-[8px] text-gray-400">${m.label}</span>`;
-                    }).join('');
-                    markersHtml = `<div class="relative h-3 mt-0.5 px-1">${items}</div>`;
-                } else {
-                    markersHtml = `<div class="flex justify-between text-[8px] text-gray-400 mt-0.5 px-1">${sec.markers}</div>`;
-                }
-            }
-            const subTextHtml = sec.subText ? `<div class="text-[10px] text-right mt-1">${sec.subText}</div>` : '';
-
-            return `<div>
-                <div class="flex justify-between text-xs mb-1">
-                    <span class="${t.text} font-bold">${sec.label}</span>
-                    <span class="text-gray-500 font-mono">${sec.valueText}</span>
-                </div>
-                <div class="w-full bg-gray-100 rounded-full h-3 relative overflow-hidden">
-                    <div class="${barColor} h-3 rounded-full transition-all duration-700 ${sec.striped ? 'progress-stripe' : ''}" style="width: ${sec.progress}%"></div>
-                    ${sec.overlay || ''}
-                </div>
-                ${markersHtml}
-                ${subTextHtml}
-            </div>`;
-        }).join('');
-    }
+    const sectionsHtml = sections ? renderPromoSections(sections, t) : '';
 
     return `<div class="bg-white border-2 ${t.border} rounded-2xl shadow-sm overflow-hidden mb-4">
         <div class="${t.bg} p-3 border-b ${t.border} flex justify-between items-center">
@@ -253,7 +425,7 @@ function createResultCard(res, dataStr, mainValHtml, redemptionHtml) {
     return `<div class="card-enter bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start cursor-pointer hover:bg-blue-50 mb-3" onclick="handleRecord('${res.cardName}','${dataStr}')">
         <div class="w-2/3 pr-2">
             <div class="font-bold text-gray-800 text-sm truncate">${res.cardName}</div>
-            <div class="text-xs text-gray-500 mt-1">${res.breakdown.join(" + ") || "基本回贈"}</div>
+            <div class="text-xs text-gray-500 mt-1">${renderBreakdown(res.breakdown)}</div>
         </div>
         <div class="text-right w-1/3 flex flex-col items-end">
             ${mainValHtml}
@@ -306,229 +478,30 @@ function renderDashboard(userProfile) {
     }
 
     // Promotions (data-driven)
-    if (typeof PROMOTIONS !== 'undefined') {
-        PROMOTIONS.forEach(promo => {
-            const status = (typeof buildPromoStatus === "function") ? buildPromoStatus(promo, userProfile, modulesDB) : null;
+    if (typeof DATA !== 'undefined' && Array.isArray(DATA.promotions)) {
+        DATA.promotions.forEach(promo => {
+            const status = (typeof buildPromoStatus === "function") ? buildPromoStatus(promo, userProfile, DATA.modules) : null;
             if (!status || !status.eligible) return;
 
-            const reg = (typeof PROMO_REGISTRY !== 'undefined') ? PROMO_REGISTRY[promo.id] : null;
+            const reg = (DATA.promoRegistry && promo && promo.id) ? DATA.promoRegistry[promo.id] : null;
             if (reg && reg.settingKey && userProfile.settings[reg.settingKey] === false) {
                 html += renderWarningCard(reg.warningTitle || promo.name, promo.icon, reg.warningDesc || "需登記以賺取回贈", reg.settingKey);
-                if (promo.capKeys) promo.capKeys.forEach(k => renderedCaps.add(k));
+                // Prevent duplicate rendering in the "Remaining Caps" section.
+                if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
+                else if (promo.capKeys) promo.capKeys.forEach(k => renderedCaps.add(k));
                 return;
             }
 
-            let sections = status.sections || [];
-            if (!status.sections) {
-            let missionUnlockTarget = null;
-            let missionUnlockValue = null;
-            const isWinterPromo = promo.id === "winter_promo";
-            const winterTier1 = Math.max(0, Number(userProfile.settings.winter_tier1_threshold) || 0);
-            const winterTier2Raw = Math.max(0, Number(userProfile.settings.winter_tier2_threshold) || 0);
-            const winterTier2 = Math.max(winterTier1, winterTier2Raw);
-
-            const getModule = (key) => (key && modulesDB && modulesDB[key]) ? modulesDB[key] : null;
-            const getCapFromModule = (key) => {
-                const m = getModule(key);
-                return m && m.cap_limit ? { cap: m.cap_limit, capKey: m.cap_key || null } : null;
-            };
-
-            promo.sections.forEach(sec => {
-                if (sec.type === "mission") {
-                    let spend = 0;
-                    if (sec.usageKeys) spend = sec.usageKeys.reduce((s, k) => s + (Number(userProfile.usage[k]) || 0), 0);
-                    else spend = Number(userProfile.usage[sec.usageKey]) || 0;
-                    const target = isWinterPromo ? winterTier2 : sec.target;
-                    missionUnlockTarget = target;
-                    missionUnlockValue = spend;
-                    const pct = target > 0 ? Math.min(100, (spend / target) * 100) : 0;
-                    const unlocked = spend >= target;
-                    let markers = null;
-                    const markersSrc = isWinterPromo ? [winterTier1, winterTier2] : sec.markers;
-                    if (markersSrc) {
-                        const list = Array.isArray(markersSrc) ? markersSrc.slice() : [];
-                        if (list.length > 0 && list[0] !== 0) list.unshift(0);
-                        markers = list.map(m => `<span>${m.toLocaleString()}</span>`).join('');
-                    }
-
-                    sections.push({
-                        label: sec.label || "🎯 任務進度",
-                        valueText: `$${spend.toLocaleString()} / $${target.toLocaleString()}`,
-                        progress: isWinterPromo ? 100 : pct,
-                        barColor: isWinterPromo ? "bg-gray-200" : (unlocked ? "bg-blue-500" : "bg-gray-400 opacity-50"),
-                        overlay: isWinterPromo ? (() => {
-                            const t1 = winterTier1;
-                            const t2 = Math.max(t1, winterTier2);
-                            const totalCap = t2 || 1;
-                            const seg1Width = (t1 / totalCap) * 100;
-                            const seg2Width = 100 - seg1Width;
-                            const seg1Fill = t1 > 0 ? Math.min(1, spend / t1) * seg1Width : 0;
-                            const seg2Fill = t2 > t1 ? Math.min(1, Math.max(0, spend - t1) / (t2 - t1)) * seg2Width : 0;
-                            const seg1WidthSafe = Math.max(0, Math.min(100, seg1Width));
-                            const seg2WidthSafe = Math.max(0, Math.min(100, seg2Width));
-                            return `<div class="absolute inset-0">
-                                <div class="absolute inset-0 flex">
-                                    <div style="width:${seg1WidthSafe}%" class="h-3"></div>
-                                    <div style="width:${seg2WidthSafe}%" class="bg-gray-200 h-3"></div>
-                                </div>
-                                <div class="absolute inset-0 flex">
-                                    <div style="width:${seg1Fill}%" class="bg-blue-500 h-3"></div>
-                                    <div style="width:${seg2Fill}%" class="bg-blue-400 h-3"></div>
-                                </div>
-                                <div class="absolute top-0 bottom-0" style="left:${seg1WidthSafe}%; width:1px; background:rgba(0,0,0,0.08)"></div>
-                            </div>`;
-                        })() : null,
-                        subText: unlocked ? `<span class="text-green-600 font-bold">✅ 已達標</span>` : `<span class="text-gray-400">🔒尚欠 $${Math.max(0, target - spend).toLocaleString()}</span>`,
-                        markers: markers
-                    });
-                }
-
-                if (sec.type === "cap_rate") {
-                    const used = Number(userProfile.usage[sec.usageKey]) || 0;
-                    let capVal = sec.cap;
-                    if (sec.capModule) {
-                        const capInfo = getCapFromModule(sec.capModule);
-                        if (capInfo && capInfo.cap) capVal = capInfo.cap;
-                    }
-                    const reward = Math.min(capVal, used * sec.rate);
-                    const pct = Math.min(100, (reward / capVal) * 100);
-                    const unlocked = missionUnlockValue !== null ? missionUnlockValue >= sec.unlockTarget : true;
-                    const barCls = unlocked ? (reward >= capVal ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
-                    const unit = sec.unit || "";
-
-                    sections.push({
-                        label: sec.label || "💰 回贈進度",
-                        valueText: `${Math.floor(reward).toLocaleString()} / ${capVal} ${unit}`.trim(),
-                        progress: pct,
-                        striped: true,
-                        barColor: barCls,
-                        subText: unlocked ? (reward >= capVal ? '⚠️ 已爆 Cap' : '✅ 賺取中') : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> 待解鎖: ${Math.floor(reward)} ${unit}</span>`
-                    });
-                }
-
-                if (sec.type === "tier_cap") {
-                    const total = Number(userProfile.usage[sec.totalKey]) || 0;
-                    const eligibleVal = Number(userProfile.usage[sec.eligibleKey]) || 0;
-                    const tiers = (isWinterPromo && Array.isArray(sec.tiers) && sec.tiers.length >= 2) ? [
-                        { ...sec.tiers[0], threshold: winterTier1 },
-                        { ...sec.tiers[1], threshold: winterTier2 }
-                    ] : sec.tiers;
-                    let cap = tiers[0].cap;
-                    let reward = 0;
-                    if (total >= tiers[1].threshold) {
-                        cap = tiers[1].cap;
-                        reward = Math.min(tiers[1].cap, eligibleVal * tiers[1].rate);
-                    } else if (total >= tiers[0].threshold) {
-                        cap = tiers[0].cap;
-                        reward = Math.min(tiers[0].cap, eligibleVal * tiers[0].rate);
-                    }
-                    const pct = Math.min(100, cap > 0 ? (reward / cap) * 100 : 0);
-                    const unlocked = total >= tiers[0].threshold;
-                    const barCls = unlocked ? (reward >= cap ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
-                    let overlay = null;
-                    let subText = unlocked ? (reward >= cap ? '⚠️ 已達等級上限' : '✅ 賺取中') : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> 待解鎖: ${Math.floor(reward)} RC</span>`;
-                    let cap1 = null;
-                    let cap2 = null;
-                    let rewardLocked = false;
-
-                    if (isWinterPromo) {
-                        cap1 = tiers[0].cap || 0;
-                        cap2 = Math.max(cap1, tiers[1].cap || 0);
-                        const capTotal = cap2 || 1;
-                        const seg1Width = (cap1 / capTotal) * 100;
-                        const seg2Width = 100 - seg1Width;
-                        const rewardTier1 = Math.min(cap1, eligibleVal * tiers[0].rate);
-                        const rewardTier2 = Math.min(cap2, eligibleVal * tiers[1].rate);
-                        const t1 = tiers[0].threshold || 0;
-                        const t2 = Math.max(t1, tiers[1].threshold || 0);
-                        const tier1Unlocked = total >= t1;
-                        const tier2Unlocked = total >= t2;
-                        rewardLocked = !tier1Unlocked;
-                        const seg1Fill = tier1Unlocked && cap1 > 0 ? Math.min(1, rewardTier1 / cap1) * seg1Width : 0;
-                        const seg2Fill = tier2Unlocked && cap2 > cap1 ? Math.min(1, Math.max(0, rewardTier2 - cap1) / (cap2 - cap1)) * seg2Width : 0;
-                        const seg1WidthSafe = Math.max(0, Math.min(100, seg1Width));
-                        const seg2WidthSafe = Math.max(0, Math.min(100, seg2Width));
-                        overlay = `<div class="absolute inset-0">
-                            ${rewardLocked ? '' : `<div class="absolute inset-0 flex">
-                                <div style="width:${seg1WidthSafe}%" class="h-3"></div>
-                                <div style="width:${seg2WidthSafe}%" class="bg-gray-200 h-3"></div>
-                            </div>`}
-                            <div class="absolute inset-0 flex">
-                                <div style="width:${seg1Fill}%" class="bg-green-500 h-3"></div>
-                                <div style="width:${seg2Fill}%" class="bg-green-600 h-3"></div>
-                            </div>
-                            ${rewardLocked ? '' : `<div class="absolute top-0 bottom-0" style="left:${seg1WidthSafe}%; width:1px; background:rgba(0,0,0,0.08)"></div>`}
-                            ${rewardLocked ? `<div class="absolute inset-0 flex items-center justify-center text-gray-500 text-xs"><i class="fas fa-lock"></i></div>` : ''}
-                        </div>`;
-
-                        if (total >= t2) {
-                            subText = '✅ 已達 Tier 2';
-                        } else if (total >= t1) {
-                            subText = `<span class="text-gray-500">🔒 Tier 2 待解鎖：${Math.floor(rewardTier2).toLocaleString()} / ${tiers[1].cap}</span>`;
-                        } else {
-                            subText = `<span class="text-gray-400">🔒 未達 Tier 1</span>`;
-                        }
-                    }
-
-                    sections.push({
-                        label: sec.label || "💰 回贈進度",
-                        valueText: `${Math.floor(reward)} / ${cap}`,
-                        progress: isWinterPromo ? 100 : pct,
-                        striped: !isWinterPromo,
-                        barColor: isWinterPromo ? (rewardLocked ? "bg-gray-300" : "bg-gray-200") : barCls,
-                        overlay: overlay,
-                        subText: subText,
-                        markers: isWinterPromo ? (() => {
-                            const total = cap2 || 1;
-                            return [
-                                { label: "0", pos: 0 },
-                                { label: cap1.toLocaleString(), pos: (cap1 / total) * 100 },
-                                { label: cap2.toLocaleString(), pos: 100 }
-                            ];
-                        })() : null
-                    });
-                }
-
-                if (sec.type === "cap") {
-                    let capKey = sec.capKey;
-                    let capVal = sec.cap;
-                    if (sec.capModule) {
-                        const capInfo = getCapFromModule(sec.capModule);
-                        if (capInfo) {
-                            capVal = capInfo.cap;
-                            capKey = capInfo.capKey || capKey;
-                        }
-                    }
-                    const used = Number(userProfile.usage[capKey]) || 0;
-                    const pct = Math.min(100, (used / capVal) * 100);
-                    const unlocked = missionUnlockTarget ? (missionUnlockValue >= missionUnlockTarget) : true;
-                    const unit = sec.unit || '';
-                    const prefix = unit ? '' : '$';
-
-                    sections.push({
-                        label: sec.label || "💰 回贈進度",
-                        valueText: `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${capVal.toLocaleString()}${unit}`,
-                        progress: pct,
-                        striped: true,
-                        barColor: used >= capVal ? "bg-red-500" : (unlocked ? "bg-green-500" : "bg-gray-400 opacity-50"),
-                        subText: used >= capVal ? '⚠️ 已爆 Cap' : (unlocked ? `尚餘 ${prefix}${Math.max(0, capVal - used).toLocaleString()}${unit}` : '🔒 需達到簽賬門檻')
-                    });
-                    if (capKey) renderedCaps.add(capKey);
-                }
-            });
-
-            if (promo.capKeys) promo.capKeys.forEach(k => renderedCaps.add(k));
-            } else {
-                if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
-                if (status.capKeys) status.capKeys.forEach(k => renderedCaps.add(k));
-            }
+            const sections = status.sections || [];
+            if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
+            if (status.capKeys) status.capKeys.forEach(k => renderedCaps.add(k));
 
             let badgeText = "";
             if (promo.badge) {
                 if (promo.badge.type === "month_end") badgeText = formatResetDate(monthEndStr);
                 if (promo.badge.type === "quarter_end") badgeText = formatResetDate(quarterEndStr);
                 if (promo.badge.type === "promo_end" && promo.badge.moduleKey) {
-                    const mod = modulesDB[promo.badge.moduleKey];
+                    const mod = DATA.modules[promo.badge.moduleKey];
                     if (mod && mod[promo.badge.field]) badgeText = formatPromoDate(mod[promo.badge.field]);
                     if (promo.badge.staticDate) badgeText = formatPromoDate(promo.badge.staticDate);
                 }
@@ -543,10 +516,10 @@ function renderDashboard(userProfile) {
 
     // 5. Remaining Caps as Promotion Cards (no separate cap monitors)
     userProfile.ownedCards.forEach(cardId => {
-        const card = cardsDB.find(c => c.id === cardId);
+        const card = DATA.cards.find(c => c.id === cardId);
         if (!card || !Array.isArray(card.modules)) return;
         card.modules.forEach(modId => {
-            const mod = modulesDB[modId];
+            const mod = DATA.modules[modId];
             if (!mod || !mod.cap_limit || !mod.cap_key) return;
             if (mod.cap_key === 'boc_amazing_local_weekday_cap' || mod.cap_key === 'boc_amazing_local_holiday_cap' || mod.cap_key === 'boc_amazing_online_weekday_cap' || mod.cap_key === 'boc_amazing_online_holiday_cap') return;
             if (renderedCaps.has(mod.cap_key)) return;
@@ -643,7 +616,7 @@ function renderCalculatorResults(results, currentMode) {
         let hasFee = false;
         const showFeeEquation = currentMode === 'cash' && userProfile && userProfile.settings && userProfile.settings.deduct_fcf_ranking;
         const allowFeeNet = showFeeEquation && res.supportsCash;
-        const cardConfig = cardsDB.find(c => c.id === res.cardId);
+        const cardConfig = DATA.cards.find(c => c.id === res.cardId);
         // Check if category implies foreign currency
         const isForeign = res.category.startsWith('overseas') || res.category === 'foreign' || res.category === 'travel_plus_tier1';
 
@@ -731,7 +704,7 @@ function renderCalculatorResults(results, currentMode) {
             ${topBadge}
             <div class="w-2/3 pr-2">
                 <div class="font-bold text-gray-800 text-sm truncate">${res.cardName}</div>
-                <div class="text-xs text-gray-500 mt-1">${res.breakdown.join(" + ") || "基本回贈"}</div>
+                <div class="text-xs text-gray-500 mt-1">${renderBreakdown(res.breakdown)}</div>
                 ${hasFee && !showFeeEquation ? feeLineHtml : ''}
             </div>
             <div class="text-right w-1/3 flex flex-col items-end">
@@ -784,7 +757,7 @@ function renderSettings(userProfile) {
 
     html += `<div class="bg-white p-5 rounded-2xl shadow-sm"><h2 class="text-sm font-bold text-gray-800 uppercase mb-4 border-b pb-2">我的錢包</h2><div class="space-y-6">`;
     bankGroups.forEach(group => {
-        const groupCards = cardsDB.filter(c => group.filter(c.id));
+        const groupCards = DATA.cards.filter(c => group.filter(c.id));
         if (groupCards.length > 0) {
             html += `<div><h3 class="text-xs font-bold text-gray-400 uppercase mb-2 pl-1 tracking-wider">${group.name}</h3><div class="bg-gray-50 rounded-xl px-3 py-1 border border-gray-100">`;
             groupCards.forEach(c => {
@@ -876,11 +849,9 @@ window.renderLedger = function (transactions) {
         const date = new Date(tx.date);
         const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
         // Try to get nice card name if possible, else use ID
-        // Note: cardsDB is defined in data.js, but might be 'const' in global scope.
-        // We can access 'cardsDB' directly as it is loaded first.
         let cardName = tx.cardId;
-        if (typeof cardsDB !== 'undefined') {
-            const c = cardsDB.find(x => x.id === tx.cardId);
+        if (typeof DATA !== 'undefined' && Array.isArray(DATA.cards)) {
+            const c = DATA.cards.find(x => x.id === tx.cardId);
             if (c) cardName = c.name;
         }
 
@@ -898,7 +869,7 @@ window.renderLedger = function (transactions) {
                     </div>
                      <div class="text-sm font-bold text-gray-800">
                         ${(() => {
-                const def = (typeof categoriesDB !== 'undefined') ? categoriesDB[tx.category] : null;
+                const def = (typeof DATA !== 'undefined' && DATA.categories) ? DATA.categories[tx.category] : null;
                 const label = def ? def.label.split(' (')[0] : (tx.desc || tx.category);
                 return escapeHtml(label);
             })()}

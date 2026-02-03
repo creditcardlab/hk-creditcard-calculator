@@ -68,24 +68,3 @@ const categoriesDB = {
     dining_enjoy: { label: "🍽️ enJoy 指定餐飲", hidden: true },
     retail_enjoy: { label: "🛍️ enJoy 指定零售", hidden: true }
 };
-
-// Auto-generate Red Hot categories
-const redHotCategories = {
-    dining: [],
-    world: [],
-    home: [],
-    enjoyment: [],
-    style: []
-};
-
-// Auto-generate category hierarchy
-const categoryHierarchy = {};
-
-Object.keys(categoriesDB).forEach(key => {
-    const c = categoriesDB[key];
-    if (c.red_hot && redHotCategories[c.red_hot]) redHotCategories[c.red_hot].push(key);
-    if (c.parent) {
-        if (!categoryHierarchy[key]) categoryHierarchy[key] = [];
-        categoryHierarchy[key].push(c.parent);
-    }
-});

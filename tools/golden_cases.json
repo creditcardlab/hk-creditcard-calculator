@@ -1,0 +1,701 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "case_001_basic_general_cash",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2025-11-15",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red",
+          "hsbc_everymile"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_everymile",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_002_online_cash",
+      "input": {
+        "amount": 2000,
+        "category": "general",
+        "date": "2025-11-15",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red",
+          "hsbc_vs"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 80,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_003_online_partial_cap",
+      "input": {
+        "amount": 10000,
+        "category": "general",
+        "date": "2025-11-15",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {},
+        "usage": {
+          "red_online_cap": 380
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 400,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_004_online_capped",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2025-11-15",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {},
+        "usage": {
+          "red_online_cap": 400
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 40,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_005_dining_red_hot",
+      "input": {
+        "amount": 1500,
+        "category": "dining",
+        "date": "2025-11-15",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_vs",
+          "hsbc_red"
+        ],
+        "settings": {
+          "red_hot_allocation": {
+            "dining": 5,
+            "world": 0,
+            "home": 0,
+            "enjoyment": 0,
+            "style": 0
+          }
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_vs",
+        "topValue": 54,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_006_em_promo_locked",
+      "input": {
+        "amount": 3000,
+        "category": "overseas_jkt",
+        "date": "2025-12-15",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_everymile"
+        ],
+        "settings": {
+          "em_promo_enabled": true
+        },
+        "usage": {
+          "em_q1_total": 5000
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_everymile",
+        "topValue": 30,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_007_em_promo_met",
+      "input": {
+        "amount": 3000,
+        "category": "overseas_jkt",
+        "date": "2025-12-15",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_everymile"
+        ],
+        "settings": {
+          "em_promo_enabled": true
+        },
+        "usage": {
+          "em_q1_total": 13000
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_everymile",
+        "topValue": 75,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_008_em_promo_capped",
+      "input": {
+        "amount": 3000,
+        "category": "overseas_jkt",
+        "date": "2025-12-15",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_everymile"
+        ],
+        "settings": {
+          "em_promo_enabled": true
+        },
+        "usage": {
+          "em_q1_total": 13000,
+          "em_promo_cap": 225
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_everymile",
+        "topValue": 75,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_009_winter_accumulating",
+      "input": {
+        "amount": 1200,
+        "category": "dining",
+        "date": "2025-12-20",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {
+          "winter_promo_enabled": true
+        },
+        "usage": {
+          "winter_total": 5000,
+          "winter_eligible": 5000
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 4.8,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_010_winter_capped",
+      "input": {
+        "amount": 1200,
+        "category": "dining",
+        "date": "2025-12-20",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {
+          "winter_promo_enabled": true
+        },
+        "usage": {
+          "winter_total": 40000,
+          "winter_eligible": 40000
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 4.8,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_011_citi_rewards_mobile_miles",
+      "input": {
+        "amount": 800,
+        "category": "grocery",
+        "date": "2025-11-10",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "mobile",
+        "ownedCards": [
+          "citi_rewards",
+          "hsbc_red"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_rewards",
+        "topValue": 144,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_012_citi_rewards_physical_miles",
+      "input": {
+        "amount": 800,
+        "category": "grocery",
+        "date": "2025-11-10",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_rewards",
+          "hsbc_red"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_rewards",
+        "topValue": 144,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_013_overseas_cash_compete",
+      "input": {
+        "amount": 5000,
+        "category": "overseas_tw",
+        "date": "2025-10-05",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "sc_simply_cash",
+          "hsbc_red"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "sc_simply_cash",
+        "topValue": 100,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_014_deduct_fcf_ranking",
+      "input": {
+        "amount": 5000,
+        "category": "overseas_other",
+        "date": "2025-10-05",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red",
+          "sc_smart"
+        ],
+        "settings": {
+          "deduct_fcf_ranking": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "sc_smart",
+        "topValue": 27.5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_015_travel_red_hot_custom",
+      "input": {
+        "amount": 2200,
+        "category": "travel",
+        "date": "2025-09-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_vs"
+        ],
+        "settings": {
+          "red_hot_allocation": {
+            "dining": 5,
+            "world": 0,
+            "home": 0,
+            "enjoyment": 3,
+            "style": 0
+          }
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_vs",
+        "topValue": 61.6,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_016_alipay_zero_reward",
+      "input": {
+        "amount": 500,
+        "category": "alipay",
+        "date": "2025-08-03",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red",
+          "sc_simply_cash"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "sc_simply_cash",
+        "topValue": 7.5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_017_tuition_bonus",
+      "input": {
+        "amount": 10000,
+        "category": "tuition",
+        "date": "2025-08-20",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_gold_student"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_gold_student",
+        "topValue": 239.992,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_018_tuition_capped",
+      "input": {
+        "amount": 1000,
+        "category": "tuition",
+        "date": "2025-08-20",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_gold_student"
+        ],
+        "settings": {},
+        "usage": {
+          "student_tuition_cap": 8333
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_gold_student",
+        "topValue": 28,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_019_overseas_miles",
+      "input": {
+        "amount": 3200,
+        "category": "overseas_cn",
+        "date": "2025-07-01",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "sc_cathay_std",
+          "hsbc_everymile"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "sc_cathay_std",
+        "topValue": 800,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_020_dining_miles",
+      "input": {
+        "amount": 900,
+        "category": "dining",
+        "date": "2025-07-01",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "sc_cathay_std",
+          "hsbc_everymile"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "sc_cathay_std",
+        "topValue": 225,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_021_cashback_cash",
+      "input": {
+        "amount": 1500,
+        "category": "general",
+        "date": "2025-06-18",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_cashback",
+          "sc_simply_cash"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "sc_simply_cash",
+        "topValue": 22.5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_022_transport_octopus",
+      "input": {
+        "amount": 600,
+        "category": "transport",
+        "date": "2025-06-18",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_octopus",
+          "hsbc_red"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_octopus",
+        "topValue": 120,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_023_mmpower_locked",
+      "input": {
+        "amount": 2000,
+        "category": "general",
+        "date": "2025-05-08",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_mmpower"
+        ],
+        "settings": {
+          "mmpower_promo_enabled": true
+        },
+        "usage": {
+          "spend_hangseng_mmpower": 0
+        }
+      },
+      "expected": {
+        "topCardId": "hangseng_mmpower",
+        "topValue": 8,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_024_mmpower_met",
+      "input": {
+        "amount": 2000,
+        "category": "general",
+        "date": "2025-05-08",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_mmpower"
+        ],
+        "settings": {
+          "mmpower_promo_enabled": true
+        },
+        "usage": {
+          "spend_hangseng_mmpower": 6000
+        }
+      },
+      "expected": {
+        "topCardId": "hangseng_mmpower",
+        "topValue": 100,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_025_travel_plus_locked",
+      "input": {
+        "amount": 2500,
+        "category": "travel_plus_tier1",
+        "date": "2025-04-02",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_travel_plus"
+        ],
+        "settings": {
+          "travel_plus_promo_enabled": true
+        },
+        "usage": {
+          "spend_hangseng_travel_plus": 0
+        }
+      },
+      "expected": {
+        "topCardId": "hangseng_travel_plus",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    }
+  ]
+}

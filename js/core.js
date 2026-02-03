@@ -149,38 +149,19 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
             if (markersSrc) {
                 const list = Array.isArray(markersSrc) ? markersSrc.slice() : [];
                 if (list.length > 0 && list[0] !== 0) list.unshift(0);
-                markers = list.map(m => `<span>${m.toLocaleString()}</span>`).join('');
+                markers = list;
             }
 
             sections.push({
+                kind: "mission",
                 label: sec.label || "Mission Progress",
                 valueText: `$${spend.toLocaleString()} / $${target.toLocaleString()}`,
                 progress: isWinterPromo ? 100 : pct,
-                barColor: isWinterPromo ? "bg-gray-200" : (unlocked ? "bg-blue-500" : "bg-gray-400 opacity-50"),
-                overlay: isWinterPromo ? (() => {
-                    const t1 = winterTier1;
-                    const t2 = Math.max(t1, winterTier2);
-                    const totalCap = t2 || 1;
-                    const seg1Width = (t1 / totalCap) * 100;
-                    const seg2Width = 100 - seg1Width;
-                    const seg1Fill = t1 > 0 ? Math.min(1, spend / t1) * seg1Width : 0;
-                    const seg2Fill = t2 > t1 ? Math.min(1, Math.max(0, spend - t1) / (t2 - t1)) * seg2Width : 0;
-                    const seg1WidthSafe = Math.max(0, Math.min(100, seg1Width));
-                    const seg2WidthSafe = Math.max(0, Math.min(100, seg2Width));
-                    return `<div class="absolute inset-0">
-                        <div class="absolute inset-0 flex">
-                            <div style="width:${seg1WidthSafe}%" class="h-3"></div>
-                            <div style="width:${seg2WidthSafe}%" class="bg-gray-200 h-3"></div>
-                        </div>
-                        <div class="absolute inset-0 flex">
-                            <div style="width:${seg1Fill}%" class="bg-blue-500 h-3"></div>
-                            <div style="width:${seg2Fill}%" class="bg-blue-400 h-3"></div>
-                        </div>
-                        <div class="absolute top-0 bottom-0" style="left:${seg1WidthSafe}%; width:1px; background:rgba(0,0,0,0.08)"></div>
-                    </div>`;
-                })() : null,
-                subText: unlocked ? `<span class="text-green-600 font-bold">Unlocked</span>` : `<span class="text-gray-400">Remaining $${Math.max(0, target - spend).toLocaleString()}</span>`,
-                markers: markers
+                state: unlocked ? "unlocked" : "locked",
+                markers,
+                overlayModel: isWinterPromo ? { type: "winter_mission", tier1: winterTier1, tier2: winterTier2, spend } : null,
+                lockedReason: unlocked ? null : `Remaining $${Math.max(0, target - spend).toLocaleString()}`,
+                meta: { spend, target, unlocked, isWinterPromo }
             });
         }
 
@@ -194,16 +175,24 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
             const reward = Math.min(capVal, used * sec.rate);
             const pct = Math.min(100, (reward / capVal) * 100);
             const unlocked = missionUnlockValue !== null ? missionUnlockValue >= sec.unlockTarget : true;
-            const barCls = unlocked ? (reward >= capVal ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
             const unit = sec.unit || "";
+            const state = unlocked ? (reward >= capVal ? "capped" : "active") : "locked";
+            const lockedReason = !unlocked ? `Locked ${Math.floor(reward).toLocaleString()} ${unit}`.trim() : null;
 
             sections.push({
+                kind: "cap_rate",
                 label: sec.label || "Reward Progress",
                 valueText: `${Math.floor(reward).toLocaleString()} / ${capVal} ${unit}`.trim(),
                 progress: pct,
-                striped: true,
-                barColor: barCls,
-                subText: unlocked ? (reward >= capVal ? "Capped" : "In Progress") : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> Locked ${Math.floor(reward)} ${unit}</span>`
+                state,
+                lockedReason,
+                meta: {
+                    reward,
+                    cap: capVal,
+                    unit,
+                    remaining: Math.max(0, capVal - reward),
+                    unlocked
+                }
             });
         }
 
@@ -225,68 +214,65 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
             }
             const pct = Math.min(100, cap > 0 ? (reward / cap) * 100 : 0);
             const unlocked = total >= tiers[0].threshold;
-            const barCls = unlocked ? (reward >= cap ? "bg-red-500" : "bg-green-500") : "bg-gray-400 opacity-50";
-            let overlay = null;
-            let subText = unlocked ? (reward >= cap ? "Capped" : "In Progress") : `<span class="text-gray-400 font-bold"><i class="fas fa-lock"></i> Locked ${Math.floor(reward)} RC</span>`;
-            let cap1 = null;
-            let cap2 = null;
-            let rewardLocked = false;
+            const state = unlocked ? (reward >= cap ? "capped" : "active") : "locked";
+            let overlayModel = null;
+            let markers = null;
+            let lockedReason = null;
 
             if (isWinterPromo) {
-                cap1 = tiers[0].cap || 0;
-                cap2 = Math.max(cap1, tiers[1].cap || 0);
-                const capTotal = cap2 || 1;
-                const seg1Width = (cap1 / capTotal) * 100;
-                const seg2Width = 100 - seg1Width;
+                const cap1 = tiers[0].cap || 0;
+                const cap2 = Math.max(cap1, tiers[1].cap || 0);
                 const rewardTier1 = Math.min(cap1, eligibleVal * tiers[0].rate);
                 const rewardTier2 = Math.min(cap2, eligibleVal * tiers[1].rate);
                 const t1 = tiers[0].threshold || 0;
                 const t2 = Math.max(t1, tiers[1].threshold || 0);
                 const tier1Unlocked = total >= t1;
                 const tier2Unlocked = total >= t2;
-                rewardLocked = !tier1Unlocked;
-                const seg1Fill = tier1Unlocked && cap1 > 0 ? Math.min(1, rewardTier1 / cap1) * seg1Width : 0;
-                const seg2Fill = tier2Unlocked && cap2 > cap1 ? Math.min(1, Math.max(0, rewardTier2 - cap1) / (cap2 - cap1)) * seg2Width : 0;
-                const seg1WidthSafe = Math.max(0, Math.min(100, seg1Width));
-                const seg2WidthSafe = Math.max(0, Math.min(100, seg2Width));
-                overlay = `<div class="absolute inset-0">
-                    ${rewardLocked ? '' : `<div class="absolute inset-0 flex">
-                        <div style="width:${seg1WidthSafe}%" class="h-3"></div>
-                        <div style="width:${seg2WidthSafe}%" class="bg-gray-200 h-3"></div>
-                    </div>`}
-                    <div class="absolute inset-0 flex">
-                        <div style="width:${seg1Fill}%" class="bg-green-500 h-3"></div>
-                        <div style="width:${seg2Fill}%" class="bg-green-600 h-3"></div>
-                    </div>
-                    ${rewardLocked ? '' : `<div class="absolute top-0 bottom-0" style="left:${seg1WidthSafe}%; width:1px; background:rgba(0,0,0,0.08)"></div>`}
-                    ${rewardLocked ? `<div class="absolute inset-0 flex items-center justify-center text-gray-500 text-xs"><i class="fas fa-lock"></i></div>` : ''}
-                </div>`;
+
+                overlayModel = {
+                    type: "winter_reward",
+                    cap1,
+                    cap2,
+                    rewardTier1,
+                    rewardTier2,
+                    tier1Unlocked,
+                    tier2Unlocked,
+                    tier1Threshold: t1,
+                    tier2Threshold: t2
+                };
+
+                const totalCap = cap2 || 1;
+                markers = [
+                    { label: "0", pos: 0 },
+                    { label: cap1.toLocaleString(), pos: (cap1 / totalCap) * 100 },
+                    { label: cap2.toLocaleString(), pos: 100 }
+                ];
 
                 if (total >= t2) {
-                    subText = "Tier 2";
+                    lockedReason = null;
                 } else if (total >= t1) {
-                    subText = `<span class="text-gray-500">Tier 2 Locked ${Math.floor(rewardTier2).toLocaleString()} / ${tiers[1].cap}</span>`;
+                    lockedReason = `Tier 2 Locked ${Math.floor(rewardTier2).toLocaleString()} / ${tiers[1].cap}`;
                 } else {
-                    subText = `<span class="text-gray-400">Tier 1 Locked</span>`;
+                    lockedReason = "Tier 1 Locked";
                 }
             }
 
             sections.push({
+                kind: "tier_cap",
                 label: sec.label || "Reward Progress",
                 valueText: `${Math.floor(reward)} / ${cap}`,
                 progress: isWinterPromo ? 100 : pct,
-                striped: !isWinterPromo,
-                barColor: isWinterPromo ? (rewardLocked ? "bg-gray-300" : "bg-gray-200") : barCls,
-                overlay: overlay,
-                subText: subText,
-                markers: isWinterPromo ? (() => {
-                    const total = cap2 || 1;
-                    return [
-                        { label: "0", pos: 0 },
-                        { label: cap1.toLocaleString(), pos: (cap1 / total) * 100 },
-                        { label: cap2.toLocaleString(), pos: 100 }
-                    ];
-                })() : null
+                state,
+                markers,
+                overlayModel,
+                lockedReason,
+                meta: {
+                    reward,
+                    cap,
+                    remaining: Math.max(0, cap - reward),
+                    unlocked,
+                    isWinterPromo
+                }
             });
         }
 
@@ -305,14 +291,23 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
             const unlocked = missionUnlockTarget ? (missionUnlockValue >= missionUnlockTarget) : true;
             const unit = sec.unit || '';
             const prefix = unit ? '' : '$';
+            const state = used >= capVal ? "capped" : (unlocked ? "active" : "locked");
 
             sections.push({
+                kind: "cap",
                 label: sec.label || "Reward Progress",
                 valueText: `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${capVal.toLocaleString()}${unit}`,
                 progress: pct,
-                striped: true,
-                barColor: used >= capVal ? "bg-red-500" : (unlocked ? "bg-green-500" : "bg-gray-400 opacity-50"),
-                subText: used >= capVal ? "Capped" : (unlocked ? `Remaining ${prefix}${Math.max(0, capVal - used).toLocaleString()}${unit}` : "Locked")
+                state,
+                lockedReason: unlocked ? null : "Locked",
+                meta: {
+                    used,
+                    cap: capVal,
+                    unit,
+                    prefix,
+                    remaining: Math.max(0, capVal - used),
+                    unlocked
+                }
             });
             if (capKey) renderedCaps.add(capKey);
         }
@@ -329,14 +324,30 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 }
 
 function calculateGuru(mod, amount, level, category) {
-    if (level <= 0 || !isCategoryMatch([mod.category], category)) return { rate: 0, desc: "", generatedRC: 0 };
+    if (level <= 0 || !isCategoryMatch([mod.category], category)) return { rate: 0, entry: null, generatedRC: 0 };
     const conf = mod.config[level];
-    if (!conf) return { rate: 0, desc: "", generatedRC: 0 };
+    if (!conf) return { rate: 0, entry: null, generatedRC: 0 };
     const capStatus = checkCap(mod.usage_key, conf.cap_rc);
-    if (capStatus.isMaxed) return { rate: 0, desc: `<span class="text-yellow-600 line-through text-[10px]">${conf.desc} (爆Cap)</span>`, generatedRC: 0 };
+    if (capStatus.isMaxed) {
+        return {
+            rate: 0,
+            entry: { text: `${conf.desc} (爆Cap)`, tone: "warning", flags: { capped: true, strike: true } },
+            generatedRC: 0
+        };
+    }
     const potentialRC = amount * conf.rate;
-    if (potentialRC <= capStatus.remaining) return { rate: conf.rate, desc: `<span class="text-yellow-600 font-bold text-[10px]">${conf.desc}</span>`, generatedRC: potentialRC };
-    else return { rate: capStatus.remaining / amount, desc: `<span class="text-yellow-600 font-bold text-[10px]">${conf.desc}(部分)</span>`, generatedRC: capStatus.remaining };
+    if (potentialRC <= capStatus.remaining) {
+        return {
+            rate: conf.rate,
+            entry: { text: conf.desc, tone: "warning", flags: { bold: true } },
+            generatedRC: potentialRC
+        };
+    }
+    return {
+        rate: capStatus.remaining / amount,
+        entry: { text: `${conf.desc}(部分)`, tone: "warning", flags: { partial: true, bold: true } },
+        generatedRC: capStatus.remaining
+    };
 }
 
 function getRedHotCategory(inputCategory) {
@@ -483,14 +494,26 @@ function checkValidity(mod, txDate, isHoliday) {
     return true;
 }
 
+function makeBreakdownEntry(text, tone, flags) {
+    return { text: text || "", tone: tone || "normal", flags: flags || {} };
+}
+
+function makeBreakdownFromText(text, tone, flags) {
+    const nextFlags = { ...(flags || {}) };
+    if (text && text.includes("🔒")) nextFlags.locked = true;
+    return makeBreakdownEntry(text, tone || (nextFlags.locked ? "muted" : "normal"), nextFlags);
+}
+
 function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod) {
+    const modules = (DATA && DATA.modules) ? DATA.modules : {};
+    const conversions = (DATA && DATA.conversions) ? DATA.conversions : [];
     const resolvedCategory = resolveCategory(card.id, category);
     const rules = DATA && DATA.rules;
     const prefix = card.id.split('_')[0];
     const zeroCats = rules && rules.zeroRewardByCardPrefix && rules.zeroRewardByCardPrefix[prefix];
     const isZeroCategory = Array.isArray(zeroCats) && zeroCats.includes(category);
 
-    const conv = conversionDB.find(c => c.src === card.currency);
+    const conv = conversions.find(c => c.src === card.currency);
     if (!conv) return null;
 
     let totalRate = 0;
@@ -501,6 +524,10 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     let trackingKey = null;
     let rewardInfo = null;
     let pendingUnlocks = [];
+    const addBreakdown = (text, tone, flags) => {
+        if (!text) return;
+        breakdown.push(makeBreakdownFromText(text, tone, flags));
+    };
 
     if (isZeroCategory) {
         let valStr = "", unitStr = "";
@@ -531,7 +558,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             estCashNet: 0,
             estMilesPotential: 0,
             estCashPotential: 0,
-            breakdown: ["Alipay/WeChat 0%"],
+            breakdown: [makeBreakdownEntry("Alipay/WeChat 0%", "muted", { zero: true })],
             trackingKey: null,
             guruRC: 0,
             missionTags: [],
@@ -553,7 +580,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
 
     // Filter Valid Modules First
     const activeModules = card.modules.filter(modID => {
-        const m = modulesDB[modID];
+        const m = modules[modID];
         if (!m) return false;
         return checkValidity(m, txDate, isHoliday);
     });
@@ -562,15 +589,15 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     // This replacerModule is for category-specific 'replace' mode modules
     const ctx = { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod };
     let replacerModuleCurrentId = activeModules.find(mid => {
-        const m = modulesDB[mid];
+        const m = modules[mid];
         return isReplacerEligible(m, amount, resolvedCategory, userProfile, false, ctx);
     });
     let replacerModulePotentialId = activeModules.find(mid => {
-        const m = modulesDB[mid];
+        const m = modules[mid];
         return isReplacerEligible(m, amount, resolvedCategory, userProfile, true, ctx);
     });
-    let replacerModuleCurrent = replacerModuleCurrentId ? modulesDB[replacerModuleCurrentId] : null;
-    let replacerModulePotential = replacerModulePotentialId ? modulesDB[replacerModulePotentialId] : null;
+    let replacerModuleCurrent = replacerModuleCurrentId ? modules[replacerModuleCurrentId] : null;
+    let replacerModulePotential = replacerModulePotentialId ? modules[replacerModulePotentialId] : null;
 
     function replaceModuleCapped(mod) {
         if (!mod || !mod.cap_limit || !mod.cap_key) return false;
@@ -592,7 +619,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
 
     // ... (Module Logic 保持 V10.7 不變) ...
     activeModules.forEach(modID => {
-        const mod = modulesDB[modID];
+        const mod = modules[modID];
         // [FIX] Clone mod to avoid mutating global DB if we change desc
         // Actually mod is ref. Safer to use tempDesc.
         if (!mod) return;
@@ -631,8 +658,8 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         else if (mod.type === "red_hot_fixed_bonus") { const rhCat = getRedHotCategory(category); if (rhCat) { rate = mod.multiplier * mod.rate_per_x; hit = true; } }
             else if (mod.type === "guru_capped") {
                 const res = calculateGuru(mod, amount, parseInt(userProfile.settings.guru_level), category);
-                if (res.desc) {
-                    breakdown.push(res.desc);
+                if (res.entry) {
+                    breakdown.push(res.entry);
                     guruRC = res.generatedRC;
                     totalRate += res.rate;
                     totalRatePotential += res.rate;
@@ -667,29 +694,29 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                     }
 
                         if (isMaxed) {
-                            breakdown.push(`<span class="text-gray-300 line-through text-[10px]">${tempDesc || mod.desc} (爆Cap)</span>`);
+                            addBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
                         } else {
                             const projectedReward = amount * mod.rate;
                             if (projectedReward <= remaining) {
                                 rate = mod.rate;
                                 hit = true;
-                                breakdown.push(tempDesc || mod.desc);
+                                addBreakdown(tempDesc || mod.desc);
                             } else {
                                 rate = remaining / amount;
-                                breakdown.push(`${tempDesc || mod.desc}(部分)`);
+                                addBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
                                 hit = true;
                             }
                         }
                 } else {
                     // Standard Spending-based Cap
                     const capCheck = checkCap(mod.cap_key, mod.cap_limit);
-                    if (capCheck.isMaxed) breakdown.push(`<span class="text-gray-300 line-through text-[10px]">${tempDesc || mod.desc}</span>`);
-                    else if (amount > capCheck.remaining) { rate = (capCheck.remaining * mod.rate) / amount; breakdown.push(`${tempDesc || mod.desc}(部分)`); hit = true; }
+                    if (capCheck.isMaxed) addBreakdown(tempDesc || mod.desc, "muted", { capped: true, strike: true });
+                    else if (amount > capCheck.remaining) { rate = (capCheck.remaining * mod.rate) / amount; addBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true }); hit = true; }
                     else {
                         rate = mod.rate;
                         hit = true;
                         // [FIXED] Push description when within spending cap
-                        breakdown.push(tempDesc || mod.desc);
+                        addBreakdown(tempDesc || mod.desc);
                     }
                 }
             } else { rate = mod.rate; hit = true; }
@@ -707,7 +734,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                 if (allowPotential) totalRatePotential += rate;
 
                 const descText = tempDesc || mod.desc;
-                if (!mod.cap_limit && (allowCurrent || allowPotential)) breakdown.push(descText);
+                if (!mod.cap_limit && (allowCurrent || allowPotential)) addBreakdown(descText);
 
                 // [UPDATED] Capture Reward Tracking Info (current only)
                 if (allowCurrent && mod.cap_mode === 'reward' && mod.cap_limit) {
@@ -722,14 +749,14 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                 if (allowPotential && !allowCurrent && retroactive && mod.req_mission_key) {
                     const pendingNative = amount * rate;
                     if (pendingNative > 0) {
-                        pendingUnlocks.push({
-                            reqKey: mod.req_mission_key,
-                            reqSpend: mod.req_mission_spend || 0,
-                            pendingNative,
-                            cashRate: (conversionDB.find(c => c.src === card.currency) || { cash_rate: 0 }).cash_rate,
-                            capMode: mod.cap_mode || "reward",
-                            capKey: mod.cap_key || null,
-                            capLimit: mod.cap_limit || null,
+                            pendingUnlocks.push({
+                                reqKey: mod.req_mission_key,
+                                reqSpend: mod.req_mission_spend || 0,
+                                pendingNative,
+                                cashRate: (conversions.find(c => c.src === card.currency) || { cash_rate: 0 }).cash_rate,
+                                capMode: mod.cap_mode || "reward",
+                                capKey: mod.cap_key || null,
+                                capLimit: mod.cap_limit || null,
                             secondaryCapKey: mod.secondary_cap_key || null,
                             secondaryCapLimit: mod.secondary_cap_limit || null
                         });
@@ -754,7 +781,9 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
 
     // ... (Mission Tags Logic 保持不變) ...
     missionTags.forEach(tag => {
-        let label = tag.desc, cls = tag.id === 'winter_promo' ? 'text-red-500' : 'text-purple-600';
+        let label = tag.desc;
+        let tone = tag.id === 'winter_promo' ? 'danger' : 'accent';
+        let flags = {};
         const emTotal = userProfile.usage["em_q1_total"] || 0;
         const winterTotal = userProfile.usage["winter_total"] || 0;
         if (tag.eligible) {
@@ -765,21 +794,52 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             const cleanTagDesc = tag.desc.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
 
             // Check if breakdown contains this cleaned name AND a Lock icon (indicating it's the warned version)
-            const alreadyWarned = breakdown.some(b => b.includes(cleanTagDesc) && b.includes("🔒"));
+            const alreadyWarned = breakdown.some(b => {
+                const text = typeof b === "string" ? b : (b && b.text) || "";
+                const hasText = text.includes(cleanTagDesc);
+                const locked = typeof b === "object" && b.flags && b.flags.locked;
+                return hasText && (locked || text.includes("🔒"));
+            });
 
             if (alreadyWarned) {
                 return;
             }
 
             let isCapped = false;
-            if (tag.id === 'em_promo') { if ((userProfile.usage["em_q1_eligible"] || 0) * 0.015 >= 225) isCapped = true; if (isCapped) { label = "🚫 EM推廣(爆Cap)"; cls = "text-gray-400"; } else if (emTotal < 12000) { label = "🔒 EM推廣(累積中)"; cls = "text-gray-400"; } }
-            if (tag.id === 'winter_promo') { const e = userProfile.usage["winter_eligible"] || 0; let max = 0, r = 0; if (winterTotal >= 40000) { max = 800; r = 0.06 } else if (winterTotal >= 20000) { max = 250; r = 0.03 } if (max > 0 && (e * r) >= max) isCapped = true; if (isCapped) { label = "🚫 冬日賞(爆Cap)"; cls = "text-gray-400"; } else if (winterTotal < 20000) { label = "🔒 冬日賞(累積中)"; cls = "text-gray-400"; } }
-            breakdown.push(`<span class="${cls} font-bold text-[10px]">${label}</span>`);
+            if (tag.id === 'em_promo') {
+                if ((userProfile.usage["em_q1_eligible"] || 0) * 0.015 >= 225) isCapped = true;
+                if (isCapped) {
+                    label = "🚫 EM推廣(爆Cap)";
+                    tone = "muted";
+                    flags = { capped: true, strike: true };
+                } else if (emTotal < 12000) {
+                    label = "🔒 EM推廣(累積中)";
+                    tone = "muted";
+                    flags = { locked: true };
+                }
+            }
+            if (tag.id === 'winter_promo') {
+                const e = userProfile.usage["winter_eligible"] || 0;
+                let max = 0, r = 0;
+                if (winterTotal >= 40000) { max = 800; r = 0.06 }
+                else if (winterTotal >= 20000) { max = 250; r = 0.03 }
+                if (max > 0 && (e * r) >= max) isCapped = true;
+                if (isCapped) {
+                    label = "🚫 冬日賞(爆Cap)";
+                    tone = "muted";
+                    flags = { capped: true, strike: true };
+                } else if (winterTotal < 20000) {
+                    label = "🔒 冬日賞(累積中)";
+                    tone = "muted";
+                    flags = { locked: true };
+                }
+            }
+            addBreakdown(label, tone, flags);
         } else {
             let show = false;
             if (tag.id === 'em_promo' && emTotal < 12000) show = true;
             if (tag.id === 'winter_promo' && winterTotal < 40000) show = true;
-            if (show) breakdown.push(`<span class="text-gray-400 text-[10px]">🎯 計入${tag.desc}門檻</span>`);
+            if (show) addBreakdown(`🎯 計入${tag.desc}門檻`, "muted");
         }
     });
 
@@ -840,9 +900,10 @@ function calculateResults(amount, category, displayMode, userProfile, txDate, is
     const isOnline = !!options.isOnline;
     const isMobilePay = !!options.isMobilePay;
     const paymentMethod = options.paymentMethod || (isMobilePay ? "mobile" : "physical");
+    const cards = (DATA && DATA.cards) ? DATA.cards : [];
 
     userProfile.ownedCards.forEach(cardId => {
-        const card = cardsDB.find(c => c.id === cardId);
+        const card = cards.find(c => c.id === cardId);
         if (!card) return;
         const res = buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod);
         if (res) results.push(res);
@@ -858,5 +919,3 @@ function calculateResults(amount, category, displayMode, userProfile, txDate, is
         }
     });
 }
-
-

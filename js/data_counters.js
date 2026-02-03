@@ -1,6 +1,6 @@
 // data_counters.js - Counter registry (period metadata + validation helper)
 
-function buildCountersRegistry() {
+function buildCountersRegistry(data) {
     const registry = {};
 
     const addKey = (key, source, period) => {
@@ -10,10 +10,13 @@ function buildCountersRegistry() {
         }
     };
 
-    // From modulesDB
-    if (typeof modulesDB !== "undefined") {
-        Object.keys(modulesDB).forEach((k) => {
-            const mod = modulesDB[k] || {};
+    const modules = data && data.modules ? data.modules : {};
+    const promotions = data && data.promotions ? data.promotions : [];
+
+    // From modules
+    if (modules) {
+        Object.keys(modules).forEach((k) => {
+            const mod = modules[k] || {};
             addKey(mod.cap_key, `module:${k}.cap_key`);
             addKey(mod.secondary_cap_key, `module:${k}.secondary_cap_key`);
             addKey(mod.usage_key, `module:${k}.usage_key`);
@@ -22,8 +25,8 @@ function buildCountersRegistry() {
     }
 
     // From promotions
-    if (typeof PROMOTIONS !== "undefined") {
-        (PROMOTIONS || []).forEach((p) => {
+    if (promotions) {
+        (promotions || []).forEach((p) => {
             const promoId = p && p.id ? p.id : "promo";
             (p.capKeys || []).forEach((k) => addKey(k, `promo:${promoId}.capKeys`));
             (p.sections || []).forEach((s, i) => {
@@ -63,5 +66,3 @@ function buildCountersRegistry() {
 
     return registry;
 }
-
-const COUNTERS_REGISTRY = buildCountersRegistry();

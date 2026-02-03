@@ -6,6 +6,10 @@ let currentMode = 'miles';
 
 // --- INIT ---
 function init() {
+    if (typeof validateData === "function") {
+        const shouldValidate = !(DATA && DATA.debug && DATA.debug.validate === false);
+        if (shouldValidate) validateData(DATA);
+    }
     loadUserData();
     if (!userProfile.usage["guru_spend_accum"]) userProfile.usage["guru_spend_accum"] = 0;
     if (userProfile.settings.deduct_fcf_ranking === undefined) userProfile.settings.deduct_fcf_ranking = false;
@@ -53,7 +57,7 @@ function getMonthKey() {
 }
 
 function getCountersRegistry() {
-    return (typeof COUNTERS_REGISTRY !== "undefined") ? COUNTERS_REGISTRY : {};
+    return (typeof DATA !== "undefined" && DATA.countersRegistry) ? DATA.countersRegistry : {};
 }
 
 function migrateCounterPeriods() {
@@ -93,7 +97,7 @@ function validateUsageRegistry() {
     ]);
     const unknown = Object.keys(usage).filter(k => !internalKeys.has(k) && !registry[k]);
     if (unknown.length) {
-        console.warn("[warn] usage keys missing from COUNTERS_REGISTRY:", unknown.join(", "));
+        console.warn("[warn] usage keys missing from countersRegistry:", unknown.join(", "));
     }
 }
 
@@ -267,7 +271,7 @@ function rebuildUsageAndStatsFromTransactions() {
             userProfile.usage["guru_spend_accum"] = (userProfile.usage["guru_spend_accum"] || 0) + amount;
         }
 
-        const card = cardsDB.find(c => c.id === cardId);
+        const card = DATA.cards.find(c => c.id === cardId);
         if (!card) return;
         const res = buildCardResult(card, amount, category, 'cash', userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod);
         if (!res) return;
@@ -322,12 +326,12 @@ window.handleDeleteTx = function (id) {
 // --- DATA MODIFIERS ---
 
 function trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod) {
-    if (!cardId || typeof cardsDB === 'undefined' || typeof modulesDB === 'undefined') return;
-    const card = cardsDB.find(c => c.id === cardId);
+    if (!cardId || typeof DATA === 'undefined' || !DATA.cards || !DATA.modules) return;
+    const card = DATA.cards.find(c => c.id === cardId);
     if (!card || !Array.isArray(card.modules)) return;
 
     card.modules.forEach(modId => {
-        const mod = modulesDB[modId];
+        const mod = DATA.modules[modId];
         if (!mod || mod.type !== "mission_tracker" || !mod.req_mission_key) return;
         if (mod.setting_key && userProfile.settings[mod.setting_key] === false) return;
 
