@@ -725,21 +725,21 @@ function renderCalculatorResults(results, currentMode) {
     const paymentMethod = paymentSelect ? paymentSelect.value : "physical";
     const isMobilePay = paymentMethod !== "physical";
 
-    results.forEach((res, index) => {
-        // Prepare Rebate Text (User specific request)
-        // Miles -> "400里", Cash -> "$40", RC -> "400 RC"
-        let resultText = "";
-        const u = res.displayUnit;
-        const v = res.displayVal;
+	results.forEach((res, index) => {
+	        const unsupportedMode = currentMode === "miles" ? !res.supportsMiles : !res.supportsCash;
 
-        if (v === '---') {
-            resultText = '---';
-        } else if (u === 'Miles' || u === '里') {
-            resultText = `${v}里`;
-        } else if (u === 'RC') {
-            resultText = `${v} RC`;
-        } else if (u === '$' || u === 'HKD' || u === '元') {
-            resultText = `$${v}`;
+	        // Prepare Rebate Text (User specific request)
+	        // Miles -> "400里", Cash -> "$40", RC -> "400 RC"
+	        let resultText = "";
+	        const u = res.displayUnit;
+	        const v = res.displayVal;
+
+	        if (u === 'Miles' || u === '里') {
+	            resultText = `${v}里`;
+	        } else if (u === 'RC') {
+	            resultText = `${v} RC`;
+	        } else if (u === '$' || u === 'HKD' || u === '元') {
+	            resultText = `$${v}`;
         } else {
             resultText = `${v} ${u}`; // Fallback
         }
@@ -770,23 +770,24 @@ function renderCalculatorResults(results, currentMode) {
 
         const txDateInput = document.getElementById('tx-date');
         const txDate = txDateInput ? txDateInput.value : "";
-        const dataStr = encodeURIComponent(JSON.stringify({
-            amount: res.amount, trackingKey: res.trackingKey, estValue: res.estValue,
-            guruRC: res.guruRC, missionTags: res.missionTags, category: res.category,
-            cardId: res.cardId,
-            rewardTrackingKey: res.rewardTrackingKey,
-            secondaryRewardTrackingKey: res.secondaryRewardTrackingKey,
-            generatedReward: res.generatedReward,
-            resultText: resultText,
-            pendingUnlocks: res.pendingUnlocks || [],
-            isOnline,
-            isMobilePay,
-            paymentMethod,
-            txDate
-        }));
-        let displayVal = res.displayVal;
-        let displayUnit = res.displayUnit;
-        let valClass = res.displayVal === '---' ? 'text-gray-400 font-medium' : 'text-red-600 font-bold';
+	        const dataStr = encodeURIComponent(JSON.stringify({
+	            amount: res.amount, trackingKey: res.trackingKey, estValue: res.estValue,
+	            guruRC: res.guruRC, missionTags: res.missionTags, category: res.category,
+	            cardId: res.cardId,
+	            rewardTrackingKey: res.rewardTrackingKey,
+	            secondaryRewardTrackingKey: res.secondaryRewardTrackingKey,
+	            generatedReward: res.generatedReward,
+	            resultText: resultText,
+	            unsupportedMode,
+	            pendingUnlocks: res.pendingUnlocks || [],
+	            isOnline,
+	            isMobilePay,
+	            paymentMethod,
+	            txDate
+	        }));
+	        let displayVal = res.displayVal;
+	        let displayUnit = res.displayUnit;
+	        let valClass = unsupportedMode ? 'text-gray-400 font-medium' : 'text-red-600 font-bold';
 
         if (allowFeeNet && hasFee && feeNetValue !== null) {
             displayVal = feeNetValue;
@@ -794,11 +795,14 @@ function renderCalculatorResults(results, currentMode) {
             valClass = 'text-blue-600 font-bold';
         }
 
-        let mainValHtml = `<div class="text-xl ${valClass}">${displayVal} <span class="text-xs text-gray-400">${displayUnit}</span></div>`;
-        let potentialHtml = "";
-        if (res.displayValPotential && res.displayValPotential !== res.displayVal && res.displayValPotential !== "---") {
-            let potentialVal = res.displayValPotential;
-            let potentialUnit = res.displayUnitPotential;
+	        let mainValHtml = `<div class="text-xl ${valClass}">${displayVal} <span class="text-xs text-gray-400">${displayUnit}</span></div>`;
+	        if (unsupportedMode) {
+	            mainValHtml += `<div class="text-[10px] text-gray-400 mt-0.5">不支援此模式</div>`;
+	        }
+	        let potentialHtml = "";
+	        if (res.displayValPotential && res.displayValPotential !== res.displayVal) {
+	            let potentialVal = res.displayValPotential;
+	            let potentialUnit = res.displayUnitPotential;
             if (allowFeeNet && hasFee && feeNetPotential !== null) {
                 potentialVal = feeNetPotential;
                 potentialUnit = "HKD";
@@ -810,21 +814,22 @@ function renderCalculatorResults(results, currentMode) {
             mainValHtml += potentialHtml;
         }
 
-        if (res.redemptionConfig) {
-            const rd = res.redemptionConfig;
-            if (res.displayVal !== '---') {
-                mainValHtml = `
-                    <div class="text-xl ${valClass}">${displayVal} <span class="text-xs text-gray-400">${displayUnit}</span></div>
-                    <div class="text-xs text-gray-500 mt-0.5 font-mono">(${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit})</div>
-                    ${potentialHtml}
-                `;
-            } else {
-                mainValHtml = `
-                    <div class="text-xl text-gray-400 font-medium">---</div>
-                    <div class="text-xs text-gray-500 mt-0.5 font-mono">${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit}</div>
-                    ${potentialHtml}
-                `;
-            }
+	        if (res.redemptionConfig) {
+	            const rd = res.redemptionConfig;
+	            if (!unsupportedMode) {
+	                mainValHtml = `
+	                    <div class="text-xl ${valClass}">${displayVal} <span class="text-xs text-gray-400">${displayUnit}</span></div>
+	                    <div class="text-xs text-gray-500 mt-0.5 font-mono">(${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit})</div>
+	                    ${potentialHtml}
+	                `;
+	            } else {
+	                mainValHtml = `
+	                    <div class="text-xl ${valClass}">0 <span class="text-xs text-gray-400">${displayUnit}</span></div>
+	                    <div class="text-[10px] text-gray-400 mt-0.5">不支援此模式</div>
+	                    <div class="text-xs text-gray-500 mt-0.5 font-mono">${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit}</div>
+	                    ${potentialHtml}
+	                `;
+	            }
 
             redemptionHtml = `
                 <div class="mt-1 flex justify-end">
@@ -835,10 +840,10 @@ function renderCalculatorResults(results, currentMode) {
                 </div>`;
         }
 
-        // Add top result styling for top 3
-        const isTop = index < 3 && res.displayVal !== '---';
-        const topClass = isTop ? ' top-result relative' : '';
-        const topBadge = index === 0 && res.displayVal !== '---' ? '<span class="top-result-badge">🏆 最佳</span>' : '';
+	        // Add top result styling for top 3
+	        const isTop = index < 3 && !unsupportedMode;
+	        const topClass = isTop ? ' top-result relative' : '';
+	        const topBadge = index === 0 && !unsupportedMode ? '<span class="top-result-badge">🏆 最佳</span>' : '';
 
         html += `<div class="card-enter bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start cursor-pointer hover:bg-blue-50 mb-3${topClass}" onclick="handleRecord('${res.cardName}','${dataStr}')">
             ${topBadge}
@@ -1002,7 +1007,9 @@ window.renderLedger = function (transactions) {
         }
 
         const amountNum = Number(tx.amount) || 0;
-        const rebateText = escapeHtml(tx.rebateText || "");
+        const rawRebateText = String(tx.rebateText || "").trim();
+        const safeRebateText = (rawRebateText && /\d/.test(rawRebateText)) ? rawRebateText : "$0";
+        const rebateText = escapeHtml(safeRebateText);
         const safeDateStr = escapeHtml(dateStr);
         const safeCardName = escapeHtml(cardName);
 

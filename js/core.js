@@ -555,16 +555,13 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     if (isZeroCategory) {
         let valStr = "", unitStr = "";
         let valStrPotential = "", unitStrPotential = "";
+        const unsupportedMode = (displayMode === "miles") ? (conv.miles_rate === 0) : (conv.cash_rate === 0);
         if (displayMode === 'miles') {
-            if (conv.miles_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
-            else { valStr = "0"; unitStr = "里"; }
-            if (conv.miles_rate === 0) { valStrPotential = "---"; unitStrPotential = "(不支援)"; }
-            else { valStrPotential = "0"; unitStrPotential = "里"; }
+            valStr = "0"; unitStr = "里";
+            valStrPotential = "0"; unitStrPotential = "里";
         } else {
-            if (conv.cash_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
-            else { valStr = "0"; unitStr = "HKD"; }
-            if (conv.cash_rate === 0) { valStrPotential = "---"; unitStrPotential = "(不支援)"; }
-            else { valStrPotential = "0"; unitStrPotential = "HKD"; }
+            valStr = "0"; unitStr = "HKD";
+            valStrPotential = "0"; unitStrPotential = "HKD";
         }
 
         return {
@@ -592,6 +589,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             redemptionConfig: card.redemption,
             supportsMiles: conv.miles_rate !== 0,
             supportsCash: conv.cash_rate !== 0,
+            unsupportedMode,
             nativeVal: 0,
             nativeValPotential: 0,
             pendingUnlocks: []
@@ -882,17 +880,18 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
 
     const supportsMiles = conv.miles_rate !== 0;
     const supportsCash = conv.cash_rate !== 0;
+    const unsupportedMode = (displayMode === "miles") ? !supportsMiles : !supportsCash;
 
     if (displayMode === 'miles') {
-        if (conv.miles_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
-        else { valStr = Math.floor(estMiles).toLocaleString(); unitStr = "里"; }
-        if (conv.miles_rate === 0) { valStrPotential = "---"; unitStrPotential = "(不支援)"; }
-        else { valStrPotential = Math.floor(estMilesPotential).toLocaleString(); unitStrPotential = "里"; }
+        valStr = supportsMiles ? Math.floor(estMiles).toLocaleString() : "0";
+        unitStr = "里";
+        valStrPotential = supportsMiles ? Math.floor(estMilesPotential).toLocaleString() : "0";
+        unitStrPotential = "里";
     } else {
-        if (conv.cash_rate === 0) { valStr = "---"; unitStr = "(不支援)"; }
-        else { valStr = Math.floor(estCash).toLocaleString(); unitStr = "HKD"; }
-        if (conv.cash_rate === 0) { valStrPotential = "---"; unitStrPotential = "(不支援)"; }
-        else { valStrPotential = Math.floor(estCashPotential).toLocaleString(); unitStrPotential = "HKD"; }
+        valStr = supportsCash ? Math.floor(estCash).toLocaleString() : "0";
+        unitStr = "HKD";
+        valStrPotential = supportsCash ? Math.floor(estCashPotential).toLocaleString() : "0";
+        unitStrPotential = "HKD";
     }
 
     return {
@@ -910,6 +909,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         redemptionConfig: card.redemption,
         supportsMiles,
         supportsCash,
+        unsupportedMode,
         nativeVal: native,
         nativeValPotential: nativePotential,
         pendingUnlocks
