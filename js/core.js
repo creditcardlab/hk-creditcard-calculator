@@ -152,17 +152,18 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
                 markers = list;
             }
 
-            sections.push({
-                kind: "mission",
-                label: sec.label || "Mission Progress",
-                valueText: `$${spend.toLocaleString()} / $${target.toLocaleString()}`,
-                progress: isWinterPromo ? 100 : pct,
-                state: unlocked ? "unlocked" : "locked",
-                markers,
-                overlayModel: isWinterPromo ? { type: "winter_mission", tier1: winterTier1, tier2: winterTier2, spend } : null,
-                lockedReason: unlocked ? null : `Remaining $${Math.max(0, target - spend).toLocaleString()}`,
-                meta: { spend, target, unlocked, isWinterPromo }
-            });
+	            sections.push({
+	                kind: "mission",
+	                label: sec.label || "任務門檻",
+	                valueText: `$${spend.toLocaleString()} / $${target.toLocaleString()}`,
+	                progress: isWinterPromo ? 100 : pct,
+	                // Mission is informational progress; reward sections handle lock/cap gating.
+	                state: "active",
+	                markers,
+	                overlayModel: isWinterPromo ? { type: "winter_mission", tier1: winterTier1, tier2: winterTier2, spend } : null,
+	                lockedReason: unlocked ? null : `尚差 $${Math.max(0, target - spend).toLocaleString()}`,
+	                meta: { spend, target, unlocked, isWinterPromo }
+	            });
         }
 
         if (sec.type === "cap_rate") {
@@ -173,20 +174,23 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
                 if (capInfo && capInfo.cap) capVal = capInfo.cap;
             }
             const reward = Math.min(capVal, used * sec.rate);
-            const pct = Math.min(100, (reward / capVal) * 100);
-            const unlocked = missionUnlockValue !== null ? missionUnlockValue >= sec.unlockTarget : true;
-            const unit = sec.unit || "";
-            const state = unlocked ? (reward >= capVal ? "capped" : "active") : "locked";
-            const lockedReason = !unlocked ? `Locked ${Math.floor(reward).toLocaleString()} ${unit}`.trim() : null;
+	            const pct = Math.min(100, (reward / capVal) * 100);
+	            const unlocked = missionUnlockValue !== null ? missionUnlockValue >= sec.unlockTarget : true;
+	            const unit = sec.unit || "";
+	            const isCurrencyUnit = (unit === "" || unit === "$" || unit === "HKD" || unit === "元" || unit === "HK$");
+	            const prefix = isCurrencyUnit ? "$" : "";
+	            const suffix = isCurrencyUnit ? "" : (unit ? ` ${unit}` : "");
+	            const state = unlocked ? (reward >= capVal ? "capped" : "active") : "locked";
+	            const lockedReason = !unlocked ? "未解鎖" : null;
 
-            sections.push({
-                kind: "cap_rate",
-                label: sec.label || "Reward Progress",
-                valueText: `${Math.floor(reward).toLocaleString()} / ${capVal} ${unit}`.trim(),
-                progress: pct,
-                state,
-                lockedReason,
-                meta: {
+	            sections.push({
+	                kind: "cap_rate",
+	                label: sec.label || "回贈上限",
+	                valueText: `${prefix}${Math.floor(reward).toLocaleString()}${suffix} / ${prefix}${capVal.toLocaleString()}${suffix}`.trim(),
+	                progress: pct,
+	                state,
+	                lockedReason,
+	                meta: {
                     reward,
                     cap: capVal,
                     unit,
@@ -248,24 +252,24 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
                     { label: cap2.toLocaleString(), pos: 100 }
                 ];
 
-                if (total >= t2) {
-                    lockedReason = null;
-                } else if (total >= t1) {
-                    lockedReason = `Tier 2 Locked ${Math.floor(rewardTier2).toLocaleString()} / ${tiers[1].cap}`;
-                } else {
-                    lockedReason = "Tier 1 Locked";
-                }
-            }
+	                if (total >= t2) {
+	                    lockedReason = null;
+	                } else if (total >= t1) {
+	                    lockedReason = `第 2 階未解鎖：${Math.floor(rewardTier2).toLocaleString()} / ${tiers[1].cap}`;
+	                } else {
+	                    lockedReason = "第 1 階未解鎖";
+	                }
+	            }
 
-            sections.push({
-                kind: "tier_cap",
-                label: sec.label || "Reward Progress",
-                valueText: `${Math.floor(reward)} / ${cap}`,
-                progress: isWinterPromo ? 100 : pct,
-                state,
-                markers,
-                overlayModel,
-                lockedReason,
+	            sections.push({
+	                kind: "tier_cap",
+	                label: sec.label || "回贈上限",
+	                valueText: `$${Math.floor(reward).toLocaleString()} / $${cap.toLocaleString()}`,
+	                progress: isWinterPromo ? 100 : pct,
+	                state,
+	                markers,
+	                overlayModel,
+	                lockedReason,
                 meta: {
                     reward,
                     cap,
@@ -293,16 +297,16 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
             const prefix = unit ? '' : '$';
             const state = used >= capVal ? "capped" : (unlocked ? "active" : "locked");
 
-            sections.push({
-                kind: "cap",
-                label: sec.label || "Reward Progress",
-                valueText: `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${capVal.toLocaleString()}${unit}`,
-                progress: pct,
-                state,
-                lockedReason: unlocked ? null : "Locked",
-                meta: {
-                    used,
-                    cap: capVal,
+	            sections.push({
+	                kind: "cap",
+	                label: sec.label || "回贈上限",
+	                valueText: `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${capVal.toLocaleString()}${unit}`,
+	                progress: pct,
+	                state,
+	                lockedReason: unlocked ? null : "未解鎖",
+	                meta: {
+	                    used,
+	                    cap: capVal,
                     unit,
                     prefix,
                     remaining: Math.max(0, capVal - used),

@@ -201,6 +201,26 @@ function clampPercent(value) {
     return Math.max(0, Math.min(100, num));
 }
 
+function normalizeProgressLabel(kind, label) {
+    const raw = (label || "").trim();
+    if (!raw) {
+        if (kind === "mission") return "任務門檻";
+        if (kind === "cap" || kind === "cap_rate" || kind === "tier_cap") return "回贈上限";
+        return "";
+    }
+
+    const first = raw.codePointAt(0);
+    // If the label starts with emoji/symbols, assume it's intentionally customized.
+    if (first && first > 0x1f000) return raw;
+
+    if (raw === "Mission Progress") return "任務門檻";
+    if (raw === "Reward Progress") return "回贈上限";
+    if (raw === "回贈進度") return "回贈上限";
+    if (raw === "💰 回贈進度") return "💰 回贈上限";
+    if (raw === "🎯 門檻任務") return "🎯 任務門檻";
+    return raw;
+}
+
 function getSectionUi(sec, theme) {
     const state = sec.state || "active";
     const kind = sec.kind || "cap";
@@ -220,32 +240,49 @@ function getSectionUi(sec, theme) {
         subTextClass: "text-gray-500"
     };
 
+    if (kind === "mission") {
+        // Mission progress is informational; do not render lock overlay even if unmet.
+        ui.showLock = false;
+        ui.striped = false;
+
+        const met = !!meta.unlocked;
+        if (hasOverlay) {
+            ui.fillClass = "bg-gray-200";
+        } else {
+            ui.fillClass = met ? "bg-green-500" : "bg-blue-500";
+        }
+
+        if (met) {
+            ui.subText = meta.unlockedText || "已達標";
+            ui.subTextClass = "text-green-600 font-bold";
+        } else {
+            ui.subText = sec.lockedReason || "進行中";
+            ui.subTextClass = "text-gray-500";
+        }
+
+        return ui;
+    }
+
     if (state === "locked") {
         ui.trackClass = "pc-track pc-track-locked";
         ui.fillClass = "bg-gray-300";
         ui.striped = false;
-        ui.subText = sec.lockedReason || "Locked";
+        ui.subText = sec.lockedReason || "未解鎖";
         ui.subTextClass = "text-gray-400";
     } else if (state === "capped") {
         ui.fillClass = "bg-red-500";
         ui.striped = false;
-        ui.subText = "Capped";
+        ui.subText = "已封頂";
         ui.subTextClass = "text-red-500";
     } else {
-        if (kind === "mission") {
-            ui.fillClass = "bg-blue-500";
-            ui.subText = "Unlocked";
-            ui.subTextClass = "text-green-600 font-bold";
+        if (typeof meta.remaining === "number") {
+            const prefix = meta.prefix || "";
+            const unit = meta.unit || "";
+            ui.subText = `尚餘 ${prefix}${Math.max(0, Math.floor(meta.remaining)).toLocaleString()}${unit}`;
         } else {
-            if (typeof meta.remaining === "number") {
-                const prefix = meta.prefix || "";
-                const unit = meta.unit || "";
-                ui.subText = `Remaining ${prefix}${Math.max(0, Math.floor(meta.remaining)).toLocaleString()}${unit}`;
-            } else {
-                ui.subText = "In Progress";
-            }
-            ui.subTextClass = "text-gray-500";
+            ui.subText = "進行中";
         }
+        ui.subTextClass = "text-gray-500";
     }
 
     if (hasOverlay) {
@@ -304,7 +341,7 @@ function renderPromoSections(sections, theme) {
         if (!sec) return "";
         if (!sec.kind) return "";
 
-        const label = escapeHtml(sec.label || "");
+        const label = escapeHtml(normalizeProgressLabel(sec.kind, sec.label));
         const valueText = escapeHtml(sec.valueText || "");
         const progress = Number.isFinite(sec.progress) ? sec.progress : 0;
 
@@ -530,10 +567,10 @@ function renderDashboard(userProfile) {
 	                    valueText: `$${spendAccum.toLocaleString()} / $${curUpg.target.toLocaleString()}`,
 	                    progress: upgPct,
 	                    state: "active",
-	                    lockedReason: null,
+	                    lockedReason: spendAccum >= curUpg.target ? null : `尚差 $${Math.max(0, curUpg.target - spendAccum).toLocaleString()}`,
 	                    markers: null,
 	                    overlayModel: null,
-	                    meta: { spendAccum, target: curUpg.target }
+	                    meta: { spendAccum, target: curUpg.target, unlocked: spendAccum >= curUpg.target, unlockedText: "可升級" }
 	                },
 	                {
 	                    kind: "cap",
@@ -636,11 +673,11 @@ function renderDashboard(userProfile) {
 	                unlockMet = thresholdMet;
 	                sections.push({
 	                    kind: "mission",
-	                    label: "🎯 門檻任務",
+	                    label: "🎯 任務門檻",
 	                    valueText: `$${thresholdSpend.toLocaleString()} / $${mod.req_mission_spend.toLocaleString()}`,
 	                    progress: thresholdPct,
-	                    state: thresholdMet ? "active" : "locked",
-	                    lockedReason: thresholdMet ? null : `尚欠 $${(mod.req_mission_spend - thresholdSpend).toLocaleString()}`,
+	                    state: "active",
+	                    lockedReason: thresholdMet ? null : `尚差 $${Math.max(0, mod.req_mission_spend - thresholdSpend).toLocaleString()}`,
 	                    markers: null,
 	                    overlayModel: null,
 	                    meta: { spend: thresholdSpend, target: mod.req_mission_spend, unlocked: thresholdMet }
@@ -650,11 +687,11 @@ function renderDashboard(userProfile) {
 	            const rewardState = currentVal >= maxVal ? "capped" : (unlockMet ? "active" : "locked");
 	            sections.push({
 	                kind: "cap",
-	                label: "💰 回贈進度",
+	                label: "💰 回贈上限",
 	                valueText: `${displayPrefix}${Math.floor(currentVal).toLocaleString()}${displayUnit} / ${displayPrefix}${Math.floor(maxVal).toLocaleString()}${displayUnit}`,
 	                progress: pct,
 	                state: rewardState,
-	                lockedReason: unlockMet ? null : "Locked",
+	                lockedReason: unlockMet ? null : "未解鎖",
 	                markers: null,
 	                overlayModel: null,
 	                meta: {
