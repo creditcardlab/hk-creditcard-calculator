@@ -3,7 +3,8 @@
 function evaluateTrackers(cardId, ctx, userProfile, data) {
     if (!data || !data.cards || !data.trackers) return { missionTags: [], effects: [] };
     const card = data.cards.find(c => c.id === cardId);
-    if (!card || !Array.isArray(card.modules)) return { missionTags: [], effects: [] };
+    const trackerIds = card && Array.isArray(card.trackers) ? card.trackers : (card && Array.isArray(card.modules) ? card.modules : null);
+    if (!card || !Array.isArray(trackerIds)) return { missionTags: [], effects: [] };
 
     const resolvedCategory = resolveCategory(cardId, ctx.category);
     const isOnline = !!ctx.isOnline;
@@ -13,8 +14,8 @@ function evaluateTrackers(cardId, ctx, userProfile, data) {
     const missionTags = [];
     const effects = [];
 
-    card.modules.forEach((modId) => {
-        const tracker = data.trackers[modId];
+    trackerIds.forEach((trackerId) => {
+        const tracker = data.trackers[trackerId];
         if (!tracker || tracker.type !== "mission_tracker") return;
         if (tracker.setting_key && userProfile.settings[tracker.setting_key] === false) return;
 

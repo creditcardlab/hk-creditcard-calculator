@@ -525,8 +525,9 @@ function renderDashboard(userProfile) {
     // 5. Remaining Caps as Promotion Cards (no separate cap monitors)
     userProfile.ownedCards.forEach(cardId => {
         const card = DATA.cards.find(c => c.id === cardId);
-        if (!card || !Array.isArray(card.modules)) return;
-        card.modules.forEach(modId => {
+        const rewardModules = card && Array.isArray(card.rewardModules) ? card.rewardModules : (card && Array.isArray(card.modules) ? card.modules : null);
+        if (!card || !Array.isArray(rewardModules)) return;
+        rewardModules.forEach(modId => {
             const mod = DATA.modules[modId];
             if (!mod || !mod.cap_limit || !mod.cap_key) return;
             if (mod.cap_key === 'boc_amazing_local_weekday_cap' || mod.cap_key === 'boc_amazing_local_holiday_cap' || mod.cap_key === 'boc_amazing_online_weekday_cap' || mod.cap_key === 'boc_amazing_online_holiday_cap') return;

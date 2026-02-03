@@ -58,16 +58,42 @@
         });
     };
 
+    const rawCards = (typeof cardsDB !== "undefined") ? cardsDB : [];
+    const rawModules = (typeof modulesDB !== "undefined") ? modulesDB : {};
+    const rawTrackers = (typeof trackersDB !== "undefined") ? trackersDB : {};
+
+    const normalizeCards = (cards, modules, trackers) => {
+        if (!Array.isArray(cards)) return [];
+        return cards.map((c) => {
+            const card = { ...(c || {}) };
+
+            // New schema: rewardModules + trackers.
+            if (Array.isArray(card.rewardModules) || Array.isArray(card.trackers)) {
+                if (!Array.isArray(card.rewardModules)) card.rewardModules = [];
+                if (!Array.isArray(card.trackers)) card.trackers = [];
+                return card;
+            }
+
+            // Legacy schema: modules[] mixing reward modules + trackers.
+            const legacy = Array.isArray(card.modules) ? card.modules : [];
+            card.rewardModules = legacy.filter((id) => !!modules[id]);
+            card.trackers = legacy.filter((id) => !!trackers[id]);
+            return card;
+        });
+    };
+
     const data = {
-        cards: (typeof cardsDB !== "undefined") ? cardsDB : [],
+        // Preserve raw cards for validation/migration messaging.
+        cardsRaw: rawCards,
+        cards: normalizeCards(rawCards, rawModules, rawTrackers),
         categories: categoriesDB,
-        modules: (typeof modulesDB !== "undefined") ? modulesDB : {},
+        modules: rawModules,
         conversions: (typeof conversionDB !== "undefined") ? conversionDB : [],
-        trackers: (typeof trackersDB !== "undefined") ? trackersDB : {},
+        trackers: rawTrackers,
         campaigns: (typeof CAMPAIGNS !== "undefined") ? CAMPAIGNS : [],
         campaignRegistry: (typeof CAMPAIGN_REGISTRY !== "undefined") ? CAMPAIGN_REGISTRY : {},
         // Back-compat: UI still reads DATA.promotions, but source of truth is CAMPAIGNS.
-        promotions: (typeof CAMPAIGNS !== "undefined") ? adaptCampaignsToPromotions(CAMPAIGNS, (typeof modulesDB !== "undefined") ? modulesDB : {}) : [],
+        promotions: (typeof CAMPAIGNS !== "undefined") ? adaptCampaignsToPromotions(CAMPAIGNS, rawModules) : [],
         promoRegistry: (typeof CAMPAIGN_REGISTRY !== "undefined") ? CAMPAIGN_REGISTRY : {},
         rules: (typeof DATA_RULES !== "undefined") ? DATA_RULES : {},
         redHotCategories,
