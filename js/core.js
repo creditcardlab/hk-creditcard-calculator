@@ -103,6 +103,14 @@ function loadUserData() {
         if (!userProfile.stats) userProfile.stats = { totalSpend: 0, totalVal: 0, txCount: 0 };
         if (!userProfile.usage) userProfile.usage = {};
         if (!userProfile.transactions) userProfile.transactions = [];
+
+        // Migration: tuition cap used to track spending (cap_limit=8333) and now tracks reward ($200).
+        // If we detect an old large value, convert it to reward units using the module rate (2.4%).
+        const tuitionKey = "student_tuition_cap";
+        const tuitionVal = Number(userProfile.usage[tuitionKey]) || 0;
+        if (tuitionVal > 200.5) {
+            userProfile.usage[tuitionKey] = tuitionVal * 0.024;
+        }
     }
     saveUserData();
 }
