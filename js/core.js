@@ -166,14 +166,25 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 	            });
         }
 
-        if (sec.type === "cap_rate") {
-            const used = Number(userProfile.usage[sec.usageKey]) || 0;
-            let capVal = sec.cap;
-            if (sec.capModule) {
-                const capInfo = getCapFromModule(sec.capModule);
-                if (capInfo && capInfo.cap) capVal = capInfo.cap;
-            }
-            const reward = Math.min(capVal, used * sec.rate);
+	        if (sec.type === "cap_rate") {
+	            const used = Number(userProfile.usage[sec.usageKey]) || 0;
+	            let capVal = sec.cap;
+	            if (sec.capModule) {
+	                const capInfo = getCapFromModule(sec.capModule);
+	                if (capInfo && capInfo.cap) capVal = capInfo.cap;
+	            }
+	            let rate = Number(sec.rate);
+	            if (!Number.isFinite(rate) && sec.rateModule) {
+	                const rm = getModule(sec.rateModule);
+	                if (rm && Number.isFinite(Number(rm.rate))) rate = Number(rm.rate);
+	            }
+	            if (!Number.isFinite(rate) && sec.capModule) {
+	                const rm = getModule(sec.capModule);
+	                if (rm && Number.isFinite(Number(rm.rate))) rate = Number(rm.rate);
+	            }
+	            if (!Number.isFinite(rate)) rate = 0;
+
+	            const reward = Math.min(capVal, used * rate);
 	            const pct = Math.min(100, (reward / capVal) * 100);
 	            const unlocked = missionUnlockValue !== null ? missionUnlockValue >= sec.unlockTarget : true;
 	            const unit = sec.unit || "";
