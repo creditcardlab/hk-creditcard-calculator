@@ -4,12 +4,12 @@ const CAMPAIGN_REGISTRY = {
     em_promo: {
         settingKey: "em_promo_enabled",
         warningTitle: "EveryMile 海外推廣",
-        warningDesc: "需登記以賺取額外回贈"
+        warningDesc: "需登記以賺取回贈"
     },
     winter_promo: {
         settingKey: "winter_promo_enabled",
         warningTitle: "最紅冬日賞",
-        warningDesc: "需登記以賺取額外回贈"
+        warningDesc: "需登記以賺取回贈"
     },
     boc_amazing: {
         settingKey: "boc_amazing_enabled",

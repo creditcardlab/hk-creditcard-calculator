@@ -201,11 +201,22 @@ function clampPercent(value) {
     return Math.max(0, Math.min(100, num));
 }
 
+function cget(path, fallback) {
+    const root = (typeof COPY_ZHHK !== "undefined" && COPY_ZHHK) ? COPY_ZHHK : (window.COPY_ZHHK || {});
+    const parts = String(path || "").split(".").filter(Boolean);
+    let cur = root;
+    for (const p of parts) {
+        if (!cur || typeof cur !== "object" || !(p in cur)) return fallback;
+        cur = cur[p];
+    }
+    return (cur === undefined || cur === null) ? fallback : cur;
+}
+
 function normalizeProgressLabel(kind, label) {
     const raw = (label || "").trim();
     if (!raw) {
-        if (kind === "mission") return "任務門檻";
-        if (kind === "cap" || kind === "cap_rate" || kind === "tier_cap") return "回贈上限";
+        if (kind === "mission") return cget("progress.missionThreshold", "任務門檻");
+        if (kind === "cap" || kind === "cap_rate" || kind === "tier_cap") return cget("progress.rewardCap", "回贈上限");
         return "";
     }
 
@@ -240,7 +251,7 @@ function getSectionUi(sec, theme) {
         subTextClass: "text-gray-500"
     };
 
-    if (kind === "mission") {
+	    if (kind === "mission") {
         // Mission progress is informational; do not render lock overlay even if unmet.
         ui.showLock = false;
         ui.striped = false;
@@ -252,36 +263,36 @@ function getSectionUi(sec, theme) {
             ui.fillClass = met ? "bg-green-500" : "bg-blue-500";
         }
 
-        if (met) {
-            ui.subText = meta.unlockedText || "已達標";
-            ui.subTextClass = "text-green-600 font-bold";
-        } else {
-            ui.subText = sec.lockedReason || "進行中";
-            ui.subTextClass = "text-gray-500";
-        }
+	        if (met) {
+	            ui.subText = meta.unlockedText || cget("status.met", "已達標");
+	            ui.subTextClass = "text-green-600 font-bold";
+	        } else {
+	            ui.subText = sec.lockedReason || cget("status.inProgress", "進行中");
+	            ui.subTextClass = "text-gray-500";
+	        }
 
         return ui;
     }
 
-    if (state === "locked") {
+	    if (state === "locked") {
         ui.trackClass = "pc-track pc-track-locked";
         ui.fillClass = "bg-gray-300";
         ui.striped = false;
-        ui.subText = sec.lockedReason || "未解鎖";
-        ui.subTextClass = "text-gray-400";
-    } else if (state === "capped") {
+	        ui.subText = sec.lockedReason || cget("status.locked", "未解鎖");
+	        ui.subTextClass = "text-gray-400";
+	    } else if (state === "capped") {
         ui.fillClass = "bg-red-500";
         ui.striped = false;
-        ui.subText = "已封頂";
-        ui.subTextClass = "text-red-500";
-    } else {
+	        ui.subText = cget("status.capped", "已封頂");
+	        ui.subTextClass = "text-red-500";
+	    } else {
         if (typeof meta.remaining === "number") {
             const prefix = meta.prefix || "";
             const unit = meta.unit || "";
-            ui.subText = `尚餘 ${prefix}${Math.max(0, Math.floor(meta.remaining)).toLocaleString()}${unit}`;
-        } else {
-            ui.subText = "進行中";
-        }
+	            ui.subText = `${cget("status.remainingPrefix", "尚餘")} ${prefix}${Math.max(0, Math.floor(meta.remaining)).toLocaleString()}${unit}`;
+	        } else {
+	            ui.subText = cget("status.inProgress", "進行中");
+	        }
         ui.subTextClass = "text-gray-500";
     }
 
@@ -602,13 +613,18 @@ function renderDashboard(userProfile) {
             if (!status || !status.eligible) return;
 
             const reg = (DATA.campaignRegistry && campaign && campaign.id) ? DATA.campaignRegistry[campaign.id] : null;
-            if (reg && reg.settingKey && userProfile.settings[reg.settingKey] === false) {
-                html += renderWarningCard(reg.warningTitle || campaign.name, campaign.icon, reg.warningDesc || "需登記以賺取回贈", reg.settingKey);
-                // Prevent duplicate rendering in the "Remaining Caps" section.
-                if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
-                else if (campaign.capKeys) campaign.capKeys.forEach(k => renderedCaps.add(k));
-                return;
-            }
+	        if (reg && reg.settingKey && userProfile.settings[reg.settingKey] === false) {
+	            html += renderWarningCard(
+	                reg.warningTitle || campaign.name,
+	                campaign.icon,
+	                reg.warningDesc || cget("warning.needRegister", "需登記以賺取回贈"),
+	                reg.settingKey
+	            );
+	            // Prevent duplicate rendering in the "Remaining Caps" section.
+	            if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
+	            else if (campaign.capKeys) campaign.capKeys.forEach(k => renderedCaps.add(k));
+	            return;
+	        }
 
             const sections = status.sections || [];
             if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
@@ -641,11 +657,16 @@ function renderDashboard(userProfile) {
             if (!mod || !mod.cap_limit || !mod.cap_key) return;
             if (mod.cap_key === 'boc_amazing_local_weekday_cap' || mod.cap_key === 'boc_amazing_local_holiday_cap' || mod.cap_key === 'boc_amazing_online_weekday_cap' || mod.cap_key === 'boc_amazing_online_holiday_cap') return;
             if (renderedCaps.has(mod.cap_key)) return;
-            if (mod.setting_key && userProfile.settings[mod.setting_key] === false) {
-                html += renderWarningCard(`${card.name} ${mod.desc}`, "fas fa-exclamation-triangle", "需登記以顯示進度", mod.setting_key);
-                renderedCaps.add(mod.cap_key);
-                return;
-            }
+	        if (mod.setting_key && userProfile.settings[mod.setting_key] === false) {
+	            html += renderWarningCard(
+	                `${card.name} ${mod.desc}`,
+	                "fas fa-exclamation-triangle",
+	                cget("warning.needRegister", "需登記以賺取回贈"),
+	                mod.setting_key
+	            );
+	            renderedCaps.add(mod.cap_key);
+	            return;
+	        }
 
             renderedCaps.add(mod.cap_key);
 
@@ -690,7 +711,7 @@ function renderDashboard(userProfile) {
 	                valueText: `${displayPrefix}${Math.floor(currentVal).toLocaleString()}${displayUnit} / ${displayPrefix}${Math.floor(maxVal).toLocaleString()}${displayUnit}`,
 	                progress: pct,
 	                state: rewardState,
-	                lockedReason: unlockMet ? null : "未解鎖",
+	                lockedReason: unlockMet ? null : cget("status.locked", "未解鎖"),
 	                markers: null,
 	                overlayModel: null,
 	                meta: {
@@ -792,24 +813,24 @@ function renderCalculatorResults(results, currentMode) {
 	        let displayUnit = res.displayUnit;
 	        let valClass = unsupportedMode ? 'text-gray-400 font-medium' : 'text-red-600 font-bold';
 
-        if (allowFeeNet && hasFee && feeNetValue !== null) {
-            displayVal = feeNetValue;
-            displayUnit = "HKD";
-            valClass = 'text-blue-600 font-bold';
-        }
-
-	        let mainValHtml = `<div class="text-xl ${valClass}">${escapeHtml(formatValueText(displayVal, displayUnit))}</div>`;
-	        if (unsupportedMode) {
-	            mainValHtml += `<div class="text-[10px] text-gray-400 mt-0.5">不支援此模式</div>`;
+	        if (allowFeeNet && hasFee && feeNetValue !== null) {
+	            displayVal = feeNetValue;
+	            displayUnit = "$";
+	            valClass = 'text-blue-600 font-bold';
 	        }
+
+		        let mainValHtml = `<div class="text-xl ${valClass}">${escapeHtml(formatValueText(displayVal, displayUnit))}</div>`;
+		        if (unsupportedMode) {
+		            mainValHtml += `<div class="text-[10px] text-gray-400 mt-0.5">${escapeHtml(cget("calc.unsupportedMode", "不支援此模式"))}</div>`;
+		        }
 	        let potentialHtml = "";
 	        if (res.displayValPotential && res.displayValPotential !== res.displayVal) {
 	            let potentialVal = res.displayValPotential;
 	            let potentialUnit = res.displayUnitPotential;
-            if (allowFeeNet && hasFee && feeNetPotential !== null) {
-                potentialVal = feeNetPotential;
-                potentialUnit = "HKD";
-            }
+	            if (allowFeeNet && hasFee && feeNetPotential !== null) {
+	                potentialVal = feeNetPotential;
+	                potentialUnit = "$";
+	            }
 	            potentialHtml = `<div class="text-[10px] text-gray-500 mt-0.5">🔓 解鎖後：${escapeHtml(formatValueText(potentialVal, potentialUnit))}</div>`;
 	        }
         let redemptionHtml = "";
@@ -825,14 +846,14 @@ function renderCalculatorResults(results, currentMode) {
 	                    <div class="text-xs text-gray-500 mt-0.5 font-mono">(${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit})</div>
 	                    ${potentialHtml}
 	                `;
-	            } else {
-	                mainValHtml = `
-	                    <div class="text-xl ${valClass}">0 <span class="text-xs text-gray-400">${displayUnit}</span></div>
-	                    <div class="text-[10px] text-gray-400 mt-0.5">不支援此模式</div>
-	                    <div class="text-xs text-gray-500 mt-0.5 font-mono">${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit}</div>
-	                    ${potentialHtml}
-	                `;
-	            }
+		            } else {
+		                mainValHtml = `
+		                    <div class="text-xl ${valClass}">0 <span class="text-xs text-gray-400">${displayUnit}</span></div>
+		                    <div class="text-[10px] text-gray-400 mt-0.5">${escapeHtml(cget("calc.unsupportedMode", "不支援此模式"))}</div>
+		                    <div class="text-xs text-gray-500 mt-0.5 font-mono">${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit}</div>
+		                    ${potentialHtml}
+		                `;
+		            }
 
             redemptionHtml = `
                 <div class="mt-1 flex justify-end">
