@@ -228,12 +228,19 @@ function normalizeProgressLabel(kind, label) {
     if (out === "Mission Progress") out = mission;
     if (out === "Reward Progress") out = reward;
 
-    out = out
-        .replaceAll("簽賬門檻", mission)
-        .replaceAll("任務門檻", mission)
-        .replaceAll("任務進度", mission)
-        .replaceAll("門檻任務", mission)
-        .replaceAll("回贈上限", reward);
+    const hasMission = out.includes(mission);
+    const hasReward = out.includes(reward);
+
+    if (!hasMission) {
+        out = out
+            .replaceAll("簽賬門檻", mission)
+            .replaceAll("任務門檻", mission)
+            .replaceAll("任務進度", mission)
+            .replaceAll("門檻任務", mission);
+    }
+    if (!hasReward) {
+        out = out.replaceAll("回贈上限", reward);
+    }
 
     // If someone already typed the new terms, keep them.
     return out;
