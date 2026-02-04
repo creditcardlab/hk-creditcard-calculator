@@ -119,6 +119,7 @@ def bootstrap_child_databases(page_id, token):
         ("Categories", "Category Key"),
         ("Modules", "Module Key"),
         ("Trackers", "Tracker Key"),
+        ("Conversions", "Conversion Src"),
         ("Campaigns", "Campaign ID"),
         ("Campaign Sections", "Section ID"),
         ("Campaign Registry", "Campaign ID"),
@@ -348,6 +349,7 @@ def sync(repo_root, page_url, token):
     categories = data.get("categories") or {}
     modules = data.get("modules") or {}
     trackers = data.get("trackers") or {}
+    conversions = data.get("conversions") or []
     campaigns = data.get("campaigns") or []
     campaign_registry = data.get("campaignRegistry") or {}
     counters_registry = data.get("countersRegistry") or {}
@@ -552,6 +554,31 @@ def sync(repo_root, page_url, token):
             default_title_prop="Tracker Key",
             template_props=template_props,
             rows=[(k, v) for k, v in trackers.items()],
+            build_row_props=build_row_props,
+        )
+
+    if "Conversions" in db_map:
+        db_id = db_map["Conversions"]
+        template_props = build_props("Conversion Src", "__template__", {
+            "Miles Rate": num(None),
+            "Cash Rate": num(None),
+            "Source File": rt(""),
+        })
+
+        def build_row_props(key, c):
+            return {
+                "Miles Rate": num(c.get("miles_rate", None)),
+                "Cash Rate": num(c.get("cash_rate", None)),
+                "Source File": rt("js/data_conversions.js"),
+            }
+
+        sync_table(
+            db_id=db_id,
+            token=token,
+            db_label="Conversions",
+            default_title_prop="Conversion Src",
+            template_props=template_props,
+            rows=[(c.get("src", ""), c) for c in conversions if isinstance(c, dict) and c.get("src")],
             build_row_props=build_row_props,
         )
 
