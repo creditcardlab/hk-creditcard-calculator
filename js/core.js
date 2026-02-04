@@ -162,7 +162,7 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 
 	            sections.push({
 	                kind: "mission",
-	                label: sec.label || "任務門檻",
+	                label: sec.label || "簽賬任務進度",
 	                valueText: `$${spend.toLocaleString()} / $${target.toLocaleString()}`,
 	                progress: isWinterPromo ? 100 : pct,
 	                // Mission is informational progress; reward sections handle lock/cap gating.
@@ -204,7 +204,7 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 
 	            sections.push({
 	                kind: "cap_rate",
-	                label: sec.label || "回贈上限",
+	                label: sec.label || "回贈進度",
 	                valueText: `${prefix}${Math.floor(reward).toLocaleString()}${suffix} / ${prefix}${capVal.toLocaleString()}${suffix}`.trim(),
 	                progress: pct,
 	                state,
@@ -282,7 +282,7 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 
 	            sections.push({
 	                kind: "tier_cap",
-	                label: sec.label || "回贈上限",
+	                label: sec.label || "回贈進度",
 	                valueText: `$${Math.floor(reward).toLocaleString()} / $${cap.toLocaleString()}`,
 	                progress: isWinterPromo ? 100 : pct,
 	                state,
@@ -320,7 +320,7 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 
 	            sections.push({
 	                kind: "cap",
-	                label: sec.label || "回贈上限",
+	                label: sec.label || "回贈進度",
 	                valueText: `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${capVal.toLocaleString()}${unit}`,
 	                progress: pct,
 	                state,

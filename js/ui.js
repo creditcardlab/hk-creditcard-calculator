@@ -220,16 +220,23 @@ function normalizeProgressLabel(kind, label) {
         return "";
     }
 
-    const first = raw.codePointAt(0);
-    // If the label starts with emoji/symbols, assume it's intentionally customized.
-    if (first && first > 0x1f000) return raw;
+    // Normalize common variants but preserve any prefix emoji / qualifiers.
+    const mission = cget("progress.missionThreshold", "簽賬任務進度");
+    const reward = cget("progress.rewardCap", "回贈進度");
 
-    if (raw === "Mission Progress") return "任務門檻";
-    if (raw === "Reward Progress") return "回贈上限";
-    if (raw === "回贈進度") return "回贈上限";
-    if (raw === "💰 回贈進度") return "💰 回贈上限";
-    if (raw === "🎯 門檻任務") return "🎯 任務門檻";
-    return raw;
+    let out = raw;
+    if (out === "Mission Progress") out = mission;
+    if (out === "Reward Progress") out = reward;
+
+    out = out
+        .replaceAll("簽賬門檻", mission)
+        .replaceAll("任務門檻", mission)
+        .replaceAll("任務進度", mission)
+        .replaceAll("門檻任務", mission)
+        .replaceAll("回贈上限", reward);
+
+    // If someone already typed the new terms, keep them.
+    return out;
 }
 
 function getSectionUi(sec, theme) {
@@ -693,7 +700,7 @@ function renderDashboard(userProfile) {
 	                unlockMet = thresholdMet;
 	                sections.push({
 	                    kind: "mission",
-	                    label: "🎯 任務門檻",
+	                    label: "🎯 簽賬任務進度",
 	                    valueText: `$${thresholdSpend.toLocaleString()} / $${mod.req_mission_spend.toLocaleString()}`,
 	                    progress: thresholdPct,
 	                    state: "active",
@@ -707,7 +714,7 @@ function renderDashboard(userProfile) {
 	            const rewardState = currentVal >= maxVal ? "capped" : (unlockMet ? "active" : "locked");
 	            sections.push({
 	                kind: "cap",
-	                label: "💰 回贈上限",
+	                label: "💰 回贈進度",
 	                valueText: `${displayPrefix}${Math.floor(currentVal).toLocaleString()}${displayUnit} / ${displayPrefix}${Math.floor(maxVal).toLocaleString()}${displayUnit}`,
 	                progress: pct,
 	                state: rewardState,

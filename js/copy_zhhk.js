@@ -18,11 +18,10 @@
             unsupportedMode: "不支援此模式",
         },
         progress: {
-            missionThreshold: "任務門檻",
-            rewardCap: "回贈上限",
+            missionThreshold: "簽賬任務進度",
+            rewardCap: "回贈進度",
         }
     };
 
     window.COPY_ZHHK = COPY_ZHHK;
 })();
-

@@ -57,7 +57,7 @@ const CAMPAIGNS = [
         badge: { type: "promo_end", moduleKey: "em_overseas_mission", field: "promo_end" },
         cards: ["hsbc_everymile"],
         sections: [
-            { type: "mission", label: "🎯 任務進度", usageKey: "em_q1_total", target: 12000 },
+            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "em_q1_total", target: 12000 },
             { type: "cap_rate", label: "💰 回贈進度", usageKey: "em_q1_eligible", capModule: "em_overseas_bonus", rateModule: "em_overseas_bonus", unit: "RC", unlockKey: "em_q1_total", unlockTarget: 12000 }
         ],
         capKeys: ["em_promo_cap"]
@@ -70,7 +70,7 @@ const CAMPAIGNS = [
         badge: { type: "promo_end", moduleKey: "winter_tracker", field: "promo_end" },
         cards: ["hsbc_vs", "hsbc_red", "hsbc_pulse", "hsbc_unionpay_std", "hsbc_easy", "hsbc_gold_student", "hsbc_gold", "hsbc_premier"],
         sections: [
-            { type: "mission", label: "🎯 任務進度", usageKey: "winter_total", target: 40000, markers: [20000, 40000] },
+            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "winter_total", target: 40000, markers: [20000, 40000] },
             {
                 type: "tier_cap",
                 label: "💰 回贈進度",
@@ -92,11 +92,11 @@ const CAMPAIGNS = [
         badge: { type: "month_end" },
         cards: ["boc_cheers_vi", "boc_cheers_vs"],
         sections: [
-            { type: "mission", label: "🎯 任務進度", usageKeys: ["spend_boc_cheers_vi", "spend_boc_cheers_vs"], target: 6000 },
-            { type: "cap", label: "💰 回贈上限 (平日)", capModule: "boc_amazing_weekday", unit: "元", unlockTarget: 6000 },
-            { type: "cap", label: "💰 回贈上限 (紅日)", capModule: "boc_amazing_holiday", unit: "元", unlockTarget: 6000 },
-            { type: "cap", label: "💰 網購回贈上限 (平日)", capModule: "boc_amazing_online_weekday", unit: "元", unlockTarget: 6000 },
-            { type: "cap", label: "💰 網購回贈上限 (紅日)", capModule: "boc_amazing_online_holiday", unit: "元", unlockTarget: 6000 }
+            { type: "mission", label: "🎯 簽賬任務進度", usageKeys: ["spend_boc_cheers_vi", "spend_boc_cheers_vs"], target: 6000 },
+            { type: "cap", label: "💰 回贈進度 (平日)", capModule: "boc_amazing_weekday", unit: "元", unlockTarget: 6000 },
+            { type: "cap", label: "💰 回贈進度 (紅日)", capModule: "boc_amazing_holiday", unit: "元", unlockTarget: 6000 },
+            { type: "cap", label: "💰 網購回贈進度 (平日)", capModule: "boc_amazing_online_weekday", unit: "元", unlockTarget: 6000 },
+            { type: "cap", label: "💰 網購回贈進度 (紅日)", capModule: "boc_amazing_online_holiday", unit: "元", unlockTarget: 6000 }
         ],
         capKeys: ["boc_amazing_local_weekday_cap", "boc_amazing_local_holiday_cap", "boc_amazing_online_weekday_cap", "boc_amazing_online_holiday_cap"]
     },
@@ -108,9 +108,9 @@ const CAMPAIGNS = [
         badge: { type: "quarter_end" },
         cards: ["boc_cheers_vi", "boc_cheers_vs"],
         sections: [
-            { type: "mission", label: "🎯 簽賬門檻", usageKeys: ["spend_boc_cheers_vi", "spend_boc_cheers_vs"], target: 5000 },
-            { type: "cap", label: "💰 回贈上限 (中澳)", capModule: "boc_amazing_fly_cn", unit: "分", unlockTarget: 5000 },
-            { type: "cap", label: "💰 回贈上限 (其他)", capModule: "boc_amazing_fly_other", unit: "分", unlockTarget: 5000 }
+            { type: "mission", label: "🎯 簽賬任務進度", usageKeys: ["spend_boc_cheers_vi", "spend_boc_cheers_vs"], target: 5000 },
+            { type: "cap", label: "💰 回贈進度 (中澳)", capModule: "boc_amazing_fly_cn", unit: "分", unlockTarget: 5000 },
+            { type: "cap", label: "💰 回贈進度 (其他)", capModule: "boc_amazing_fly_other", unit: "分", unlockTarget: 5000 }
         ],
         capKeys: ["boc_amazing_fly_cn_cap", "boc_amazing_fly_other_cap"]
     },
@@ -122,8 +122,8 @@ const CAMPAIGNS = [
         badge: { type: "month_end" },
         cards: ["hangseng_mmpower"],
         sections: [
-            { type: "mission", label: "🎯 簽賬門檻", usageKey: "spend_hangseng_mmpower", target: 5000 },
-            { type: "cap", label: "💰 回贈上限", capModule: "mmpower_overseas_bonus", unit: "元", unlockTarget: 5000 }
+            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_hangseng_mmpower", target: 5000 },
+            { type: "cap", label: "💰 回贈進度", capModule: "mmpower_overseas_bonus", unit: "元", unlockTarget: 5000 }
         ],
         capKeys: ["mmpower_reward_cap"]
     },
@@ -135,8 +135,8 @@ const CAMPAIGNS = [
         badge: { type: "month_end" },
         cards: ["hangseng_travel_plus"],
         sections: [
-            { type: "mission", label: "🎯 簽賬門檻", usageKey: "spend_hangseng_travel_plus", target: 6000 },
-            { type: "cap", label: "💰 回贈上限", capModule: "travel_plus_tier1_bonus", unit: "元", unlockTarget: 6000 }
+            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_hangseng_travel_plus", target: 6000 },
+            { type: "cap", label: "💰 回贈進度", capModule: "travel_plus_tier1_bonus", unit: "元", unlockTarget: 6000 }
         ],
         capKeys: ["travel_plus_reward_cap"]
     },
@@ -148,8 +148,8 @@ const CAMPAIGNS = [
         badge: { type: "month_end" },
         cards: ["fubon_in_platinum"],
         sections: [
-            { type: "mission", label: "🎯 簽賬門檻", usageKey: "spend_fubon_in_platinum", target: 1000 },
-            { type: "cap", label: "💰 回贈上限", capModule: "fubon_in_online", unit: "分", unlockTarget: 1000 }
+            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_fubon_in_platinum", target: 1000 },
+            { type: "cap", label: "💰 回贈進度", capModule: "fubon_in_online", unit: "分", unlockTarget: 1000 }
         ],
         capKeys: ["fubon_in_bonus_cap"]
     },
@@ -161,8 +161,8 @@ const CAMPAIGNS = [
         badge: { type: "month_end" },
         cards: ["dbs_black"],
         sections: [
-            { type: "mission", label: "🎯 簽賬門檻", usageKey: "spend_dbs_black", target: 20000 },
-            { type: "cap", label: "💰 回贈上限", capModule: "dbs_black_overseas_promo", unit: "里", unlockTarget: 20000 }
+            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_dbs_black", target: 20000 },
+            { type: "cap", label: "💰 回贈進度", capModule: "dbs_black_overseas_promo", unit: "里", unlockTarget: 20000 }
         ]
     },
     {
@@ -173,8 +173,8 @@ const CAMPAIGNS = [
         badge: { type: "month_end" },
         cards: ["sim_credit"],
         sections: [
-            { type: "mission", label: "🎯 非網購門檻", usageKey: "sim_non_online_spend", target: 500 },
-            { type: "cap", label: "💰 回贈上限", capModule: "sim_online", unit: "元", unlockTarget: 500 }
+            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "sim_non_online_spend", target: 500 },
+            { type: "cap", label: "💰 回贈進度", capModule: "sim_online", unit: "元", unlockTarget: 500 }
         ],
         capKeys: ["sim_online_cap"]
     }
