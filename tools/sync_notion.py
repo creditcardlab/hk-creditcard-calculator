@@ -1017,9 +1017,7 @@ def pull_modules_core(db_id, token, db_label):
         entry = {}
 
         # Only pull fields that map 1:1 onto module objects.
-        t = extract_rich_text(row_props, "Type") if "Type" in row_props else ""
-        if t != "":
-            entry["type"] = t
+        # Keep this conservative: avoid structural changes (type/mode/match/category) via Notion.
         d = extract_rich_text(row_props, "Desc") if "Desc" in row_props else ""
         if d != "":
             entry["desc"] = d
@@ -1033,16 +1031,6 @@ def pull_modules_core(db_id, token, db_label):
         n = extract_number(row_props, "Multiplier") if "Multiplier" in row_props else None
         if n is not None:
             entry["multiplier"] = n
-
-        c = extract_rich_text(row_props, "Category") if "Category" in row_props else ""
-        if c != "":
-            entry["category"] = c
-        ms = extract_multi_select(row_props, "Match") if "Match" in row_props else []
-        if ms:
-            entry["match"] = ms
-        m = extract_rich_text(row_props, "Mode") if "Mode" in row_props else ""
-        if m != "":
-            entry["mode"] = m
 
         cm = extract_rich_text(row_props, "Cap Mode") if "Cap Mode" in row_props else ""
         if cm != "":
@@ -1075,9 +1063,8 @@ def pull_modules_core(db_id, token, db_label):
             entry["req_mission_key"] = rk
 
         entry = normalize_core_entry(entry, [
-            "type", "desc",
+            "desc",
             "rate", "rate_per_x", "multiplier",
-            "category", "match", "mode",
             "cap_mode", "cap_limit", "cap_key",
             "secondary_cap_limit", "secondary_cap_key",
             "min_spend", "min_single_spend",
@@ -1302,6 +1289,8 @@ def pull_overrides(repo_root, page_url, token, overrides_out, pull_dbs=None, ack
             except Exception as e:
                 print(f"[warn] failed to ack page {page_id}: {e}")
 
+    return ack_ids
+
 
 def pull_core(repo_root, page_url, token, core_out_path, core_dbs=None, ack=False):
     page_id = extract_id_from_url(page_url)
@@ -1359,12 +1348,24 @@ def pull_core(repo_root, page_url, token, core_out_path, core_dbs=None, ack=Fals
             except Exception as e:
                 print(f"[warn] failed to ack page {page_id}: {e}")
 
+    return ack_ids
+
+
+def ack_sync_to_repo(token, page_ids):
+    ids = sorted(set([i for i in (page_ids or []) if i]))
+    for page_id in ids:
+        try:
+            update_page(page_id, {"Sync To Repo": {"checkbox": False}}, token)
+        except Exception as e:
+            print(f"[warn] failed to ack page {page_id}: {e}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Sync repo data to Notion (optional) and/or dump DATA JSON")
     parser.add_argument("--page-url", help="Notion page URL that contains the child databases")
     parser.add_argument("--bootstrap", action="store_true", help="Create the expected child databases under the page if missing")
     parser.add_argument("--dump", help="Write a JSON dump of DATA to this file (for offline inspection)")
+    parser.add_argument("--pull-all", action="store_true", help="Pull both overrides + core (single ack) into js/data_notion_overrides.js and js/data_notion_core_overrides.js")
     parser.add_argument("--pull-overrides", action="store_true", help="Pull Notion overrides into js/data_notion_overrides.js")
     parser.add_argument("--overrides-out", default="js/data_notion_overrides.js", help="Output path for overrides JS")
     parser.add_argument("--pull-db", action="append", help="Limit override pull to specific DBs (repeatable)")
@@ -1383,6 +1384,8 @@ def main():
         print(f"Wrote dump: {args.dump}")
 
     if not args.page_url:
+        if args.pull_all:
+            die("--pull-all requires --page-url")
         if args.pull_overrides:
             die("--pull-overrides requires --page-url")
         if args.pull_core:
@@ -1399,8 +1402,16 @@ def main():
             die("Could not parse page ID from URL")
         bootstrap_child_databases(page_id, token)
 
-    if args.pull_overrides and args.pull_core:
-        die("Use either --pull-overrides or --pull-core (run twice if you need both).")
+    pull_ops = int(bool(args.pull_all)) + int(bool(args.pull_overrides)) + int(bool(args.pull_core))
+    if pull_ops > 1:
+        die("Use only one of --pull-all, --pull-overrides, or --pull-core.")
+
+    if args.pull_all:
+        core_ids = pull_core(repo_root, args.page_url, token, args.core_out, core_dbs=args.core_db, ack=False)
+        over_ids = pull_overrides(repo_root, args.page_url, token, args.overrides_out, pull_dbs=args.pull_db, ack=False)
+        if args.ack:
+            ack_sync_to_repo(token, list(core_ids or []) + list(over_ids or []))
+        return
 
     if args.pull_overrides:
         pull_overrides(repo_root, args.page_url, token, args.overrides_out, pull_dbs=args.pull_db, ack=args.ack)

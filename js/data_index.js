@@ -63,9 +63,9 @@
     const applyCoreOverrides = (core) => {
         if (!core || typeof core !== "object") return;
 
-        const applyFields = (target, src) => {
+        const applyFields = (target, src, allowed) => {
             if (!target || !src) return;
-            Object.keys(src).forEach((key) => {
+            (allowed || Object.keys(src)).forEach((key) => {
                 const val = src[key];
                 if (val === undefined || val === null) return;
                 if (typeof val === "string" && val === "") return;
@@ -74,11 +74,29 @@
             });
         };
 
+        // Intentionally conservative: avoid structural changes (e.g. mode/match/type) via Notion core edits.
+        const allowedCardCoreFields = ["name", "currency", "type", "fcf"];
+        const allowedModuleCoreFields = [
+            "desc",
+            "rate",
+            "rate_per_x",
+            "multiplier",
+            "cap_mode",
+            "cap_limit",
+            "cap_key",
+            "secondary_cap_limit",
+            "secondary_cap_key",
+            "min_spend",
+            "min_single_spend",
+            "req_mission_spend",
+            "req_mission_key"
+        ];
+
         if (core.modules && data.modules) {
             Object.keys(core.modules).forEach((id) => {
                 const mod = data.modules[id];
                 if (!mod) return;
-                applyFields(mod, core.modules[id]);
+                applyFields(mod, core.modules[id], allowedModuleCoreFields);
             });
         }
 
@@ -86,7 +104,7 @@
             Object.keys(core.cards).forEach((id) => {
                 const card = data.cards.find(c => c && c.id === id);
                 if (!card) return;
-                applyFields(card, core.cards[id]);
+                applyFields(card, core.cards[id], allowedCardCoreFields);
             });
         }
     };
