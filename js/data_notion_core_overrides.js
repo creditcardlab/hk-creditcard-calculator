@@ -3,5 +3,6 @@
 // Core overrides are higher risk: validate with golden cases before merge.
 const NOTION_CORE_OVERRIDES = {
   "version": 1,
+  "cards": {},
   "modules": {}
 };

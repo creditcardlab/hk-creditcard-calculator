@@ -1090,6 +1090,56 @@ def pull_modules_core(db_id, token, db_label):
     return overrides, page_ids
 
 
+def pull_cards_core(db_id, token, db_label):
+    """
+    Pull a controlled subset of card-core fields from Notion.
+    Gate: only rows with 'Sync To Repo' checked.
+    """
+    db = get_database(db_id, token)
+    props = db.get("properties") or {}
+    allowed = set(props.keys())
+    title_prop = "Card ID" if "Card ID" in allowed else get_title_prop_name(db)
+    if not title_prop:
+        print(f"[warn] {db_label}: missing title property, skipping core pull")
+        return {}, []
+    if "Sync To Repo" not in allowed:
+        print(f"[warn] {db_label}: missing 'Sync To Repo' checkbox, skipping core pull")
+        return {}, []
+    if props.get("Sync To Repo", {}).get("type") != "checkbox":
+        print(f"[warn] {db_label}: 'Sync To Repo' is not a checkbox, skipping core pull")
+        return {}, []
+
+    rows = query_database(db_id, token, {"property": "Sync To Repo", "checkbox": {"equals": True}})
+    overrides = {}
+    page_ids = []
+    for row in rows:
+        row_props = row.get("properties") or {}
+        key = extract_title_value(row_props.get(title_prop))
+        if not key:
+            continue
+        entry = {}
+
+        nm = extract_rich_text(row_props, "Name") if "Name" in row_props else ""
+        if nm != "":
+            entry["name"] = nm
+        cur = extract_rich_text(row_props, "Currency") if "Currency" in row_props else ""
+        if cur != "":
+            entry["currency"] = cur
+        ty = extract_rich_text(row_props, "Type") if "Type" in row_props else ""
+        if ty != "":
+            entry["type"] = ty
+        f = extract_number(row_props, "FCF") if "FCF" in row_props else None
+        if f is not None:
+            entry["fcf"] = f
+
+        entry = normalize_core_entry(entry, ["name", "currency", "type", "fcf"])
+        if entry:
+            overrides[key] = entry
+            page_ids.append(row.get("id"))
+
+    return overrides, page_ids
+
+
 def pull_db_overrides(db_id, token, db_label, default_title_prop, field_specs):
     db = get_database(db_id, token)
     props = db.get("properties") or {}
@@ -1272,8 +1322,19 @@ def pull_core(repo_root, page_url, token, core_out_path, core_dbs=None, ack=Fals
             return True
         return name in allowed_set
 
-    overrides = {"version": 1, "modules": {}}
+    overrides = {"version": 1, "cards": {}, "modules": {}}
     ack_ids = []
+
+    if db_allowed("cards") and db_map.get("Cards"):
+        data, ids = pull_cards_core(db_map["Cards"], token, "Cards")
+        cards_out = {}
+        for k, v in sorted(data.items()):
+            cards_out[k] = v
+        overrides["cards"] = cards_out
+        ack_ids.extend(ids)
+    else:
+        if db_allowed("cards"):
+            print("[warn] pull-core: 'Cards' database not found under this page")
 
     if db_allowed("modules") and db_map.get("Modules"):
         data, ids = pull_modules_core(db_map["Modules"], token, "Modules")
@@ -1307,7 +1368,7 @@ def main():
     parser.add_argument("--pull-overrides", action="store_true", help="Pull Notion overrides into js/data_notion_overrides.js")
     parser.add_argument("--overrides-out", default="js/data_notion_overrides.js", help="Output path for overrides JS")
     parser.add_argument("--pull-db", action="append", help="Limit override pull to specific DBs (repeatable)")
-    parser.add_argument("--pull-core", action="store_true", help="Pull Notion core edits (MVP: Modules) into js/data_notion_core_overrides.js")
+    parser.add_argument("--pull-core", action="store_true", help="Pull Notion core edits (MVP: Cards + Modules) into js/data_notion_core_overrides.js")
     parser.add_argument("--core-out", default="js/data_notion_core_overrides.js", help="Output path for core overrides JS")
     parser.add_argument("--core-db", action="append", help="Limit core pull to specific DBs (repeatable, e.g. 'modules')")
     parser.add_argument("--ack", action="store_true", help="After pulling, uncheck Sync To Repo for pulled rows")

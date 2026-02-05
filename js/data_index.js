@@ -81,6 +81,14 @@
                 applyFields(mod, core.modules[id]);
             });
         }
+
+        if (core.cards && data.cards) {
+            Object.keys(core.cards).forEach((id) => {
+                const card = data.cards.find(c => c && c.id === id);
+                if (!card) return;
+                applyFields(card, core.cards[id]);
+            });
+        }
     };
 
     const applyOverrides = (overrides) => {
