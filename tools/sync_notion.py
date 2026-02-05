@@ -630,6 +630,9 @@ def sync(repo_root, page_url, token):
             "Rate": num(None),
             "Rate Per X": num(None),
             "Multiplier": num(None),
+            "Promo End": rt(""),
+            "Valid From": rt(""),
+            "Valid To": rt(""),
             "Category": rt(""),
             "Match": mselect([]),
             "Mode": rt(""),
@@ -665,6 +668,9 @@ def sync(repo_root, page_url, token):
                 "Rate": num(m.get("rate", None)),
                 "Rate Per X": num(m.get("rate_per_x", None)),
                 "Multiplier": num(m.get("multiplier", None)),
+                "Promo End": rt(m.get("promo_end", "")),
+                "Valid From": rt(m.get("valid_from", "")),
+                "Valid To": rt(m.get("valid_to", "")),
                 "Category": rt(m.get("category", "")),
                 "Match": mselect(match),
                 "Mode": rt(m.get("mode", "")),
@@ -1032,6 +1038,16 @@ def pull_modules_core(db_id, token, db_label):
         if n is not None:
             entry["multiplier"] = n
 
+        pe = extract_rich_text(row_props, "Promo End") if "Promo End" in row_props else ""
+        if pe != "":
+            entry["promo_end"] = pe
+        vf = extract_rich_text(row_props, "Valid From") if "Valid From" in row_props else ""
+        if vf != "":
+            entry["valid_from"] = vf
+        vt = extract_rich_text(row_props, "Valid To") if "Valid To" in row_props else ""
+        if vt != "":
+            entry["valid_to"] = vt
+
         cm = extract_rich_text(row_props, "Cap Mode") if "Cap Mode" in row_props else ""
         if cm != "":
             entry["cap_mode"] = cm
@@ -1065,6 +1081,7 @@ def pull_modules_core(db_id, token, db_label):
         entry = normalize_core_entry(entry, [
             "desc",
             "rate", "rate_per_x", "multiplier",
+            "promo_end", "valid_from", "valid_to",
             "cap_mode", "cap_limit", "cap_key",
             "secondary_cap_limit", "secondary_cap_key",
             "min_spend", "min_single_spend",

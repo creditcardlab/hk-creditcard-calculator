@@ -90,7 +90,16 @@ function resolveAnchorForKeyUi(key, entry, userProfile) {
 function getResetBadgeForKey(key, userProfile) {
     if (typeof DATA === "undefined" || !DATA.countersRegistry) return "";
     const entry = DATA.countersRegistry[key];
-    if (!entry || !entry.periodType || entry.periodType === "none") return "";
+    if (!entry || !entry.periodType) return "";
+
+    // Non-resettable caps: if the underlying module/campaign has an end date, show it as "promo end".
+    // Otherwise, show an explicit "no reset" badge so the card doesn't look broken/missing metadata.
+    if (entry.periodType === "none") {
+        const mod = (entry.refType === "module" && entry.refId && DATA.modules) ? DATA.modules[entry.refId] : null;
+        const endDate = mod && (mod.promo_end || mod.valid_to) ? (mod.promo_end || mod.valid_to) : null;
+        if (endDate) return formatPromoDate(endDate);
+        return "不重置";
+    }
 
     const anchor = resolveAnchorForKeyUi(key, entry, userProfile);
     if (entry.periodType === "promo") {

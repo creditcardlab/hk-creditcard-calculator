@@ -139,6 +139,15 @@ function validateData(data) {
     // Period definitions on modules
     Object.keys(modules).forEach((modId) => {
         const mod = modules[modId] || {};
+        if (mod.valid_from && !isValidDate(mod.valid_from)) {
+            addWarning(`[data] module ${modId} valid_from is not YYYY-MM-DD: ${mod.valid_from}`);
+        }
+        if (mod.valid_to && !isValidDate(mod.valid_to)) {
+            addWarning(`[data] module ${modId} valid_to is not YYYY-MM-DD: ${mod.valid_to}`);
+        }
+        if (mod.promo_end && !isValidDate(mod.promo_end)) {
+            addWarning(`[data] module ${modId} promo_end is not YYYY-MM-DD: ${mod.promo_end}`);
+        }
         if (mod.cap && mod.cap.period) {
             const periodSpec = normalizePeriodSpec(mod.cap.period);
             const anchor = periodSpec.anchorRef || defaults[periodSpec.periodType];
