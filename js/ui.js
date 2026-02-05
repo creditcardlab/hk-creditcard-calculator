@@ -672,8 +672,12 @@ function renderDashboard(userProfile) {
             if (mod.cap_key === 'boc_amazing_local_weekday_cap' || mod.cap_key === 'boc_amazing_local_holiday_cap' || mod.cap_key === 'boc_amazing_online_weekday_cap' || mod.cap_key === 'boc_amazing_online_holiday_cap') return;
             if (renderedCaps.has(mod.cap_key)) return;
 	        if (mod.setting_key && userProfile.settings[mod.setting_key] === false) {
+                const title = (mod.display_name_zhhk && String(mod.display_name_zhhk).trim())
+                    ? String(mod.display_name_zhhk).trim()
+                    : `${card.name} ${mod.desc}`;
+
 	            html += renderWarningCard(
-	                `${card.name} ${mod.desc}`,
+	                title,
 	                "fas fa-exclamation-triangle",
 	                cget("warning.needRegister", "需登記以賺取回贈"),
 	                mod.setting_key
@@ -681,6 +685,10 @@ function renderDashboard(userProfile) {
 	            renderedCaps.add(mod.cap_key);
 	            return;
 	        }
+
+            const title = (mod.display_name_zhhk && String(mod.display_name_zhhk).trim())
+                ? String(mod.display_name_zhhk).trim()
+                : `${card.name} ${mod.desc}`;
 
             renderedCaps.add(mod.cap_key);
 
@@ -739,7 +747,7 @@ function renderDashboard(userProfile) {
 	            });
 
             html += createProgressCard({
-                title: `${card.name} ${mod.desc}`,
+                title,
                 icon: "fas fa-chart-line",
                 theme: "gray",
                 badge: formatResetDate(monthEndStr),
