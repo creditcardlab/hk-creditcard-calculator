@@ -556,8 +556,8 @@ function renderDashboard(userProfile) {
     const monthEndStr = getMonthEndStr();
     const quarterEndStr = getQuarterEndStr();
     const renderedCaps = new Set();
-    // If the same cap_key appears across multiple owned cards, it's a shared cap.
-    // In that case, avoid showing a specific card name prefix in the title.
+    // If the same cap_key appears across multiple cards in the dataset, treat it as a shared cap.
+    // In that case, avoid showing a specific owned card prefix in the title (e.g. HSBC 最紅自主).
     const capKeyCounts = {};
     const monthTotals = getMonthTotals(userProfile.transactions);
     const totalSpend = monthTotals.spend;
@@ -666,8 +666,7 @@ function renderDashboard(userProfile) {
     }
 
     // 5. Remaining Caps as Promotion Cards (no separate cap monitors)
-    userProfile.ownedCards.forEach(cardId => {
-        const card = DATA.cards.find(c => c.id === cardId);
+    (DATA.cards || []).forEach(card => {
         if (!card || !Array.isArray(card.rewardModules)) return;
         card.rewardModules.forEach(modId => {
             const mod = DATA.modules[modId];
