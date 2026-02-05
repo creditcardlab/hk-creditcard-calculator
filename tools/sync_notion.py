@@ -56,6 +56,24 @@ def notion_request(method, url, token, body=None, retry=3):
         raise RuntimeError(f"Notion API error {e.code}: {detail}")
 
 
+def query_database(database_id, token, filter_body=None):
+    results = []
+    start_cursor = None
+    while True:
+        body = {"page_size": 100}
+        if filter_body:
+            body["filter"] = filter_body
+        if start_cursor:
+            body["start_cursor"] = start_cursor
+        url = f"{API_BASE}/databases/{database_id}/query"
+        data = notion_request("POST", url, token, body=body)
+        results.extend(data.get("results", []))
+        if not data.get("has_more"):
+            break
+        start_cursor = data.get("next_cursor")
+    return results
+
+
 def get_database(database_id, token):
     url = f"{API_BASE}/databases/{database_id}"
     return notion_request("GET", url, token)
@@ -189,6 +207,61 @@ def filter_props(props, allowed_props, context):
     return {k: v for k, v in props.items() if k in allowed_props}
 
 
+def extract_title_value(prop):
+    if not prop:
+        return ""
+    if prop.get("type") == "title":
+        parts = [p.get("plain_text", "") for p in prop.get("title", [])]
+        return "".join(parts).strip()
+    if prop.get("type") == "rich_text":
+        parts = [p.get("plain_text", "") for p in prop.get("rich_text", [])]
+        return "".join(parts).strip()
+    return ""
+
+
+def extract_rich_text(props, name):
+    prop = (props or {}).get(name)
+    if not prop:
+        return ""
+    if prop.get("type") == "rich_text":
+        parts = [p.get("plain_text", "") for p in prop.get("rich_text", [])]
+        return "".join(parts).strip()
+    if prop.get("type") == "title":
+        parts = [p.get("plain_text", "") for p in prop.get("title", [])]
+        return "".join(parts).strip()
+    return ""
+
+
+def extract_select(props, name):
+    prop = (props or {}).get(name)
+    if not prop or prop.get("type") != "select":
+        return ""
+    select = prop.get("select")
+    return select.get("name", "") if select else ""
+
+
+def extract_date(props, name):
+    prop = (props or {}).get(name)
+    if not prop or prop.get("type") != "date":
+        return ""
+    date = prop.get("date")
+    return date.get("start", "") if date else ""
+
+
+def extract_url(props, name):
+    prop = (props or {}).get(name)
+    if not prop or prop.get("type") != "url":
+        return ""
+    return prop.get("url") or ""
+
+
+def extract_checkbox(props, name):
+    prop = (props or {}).get(name)
+    if not prop or prop.get("type") != "checkbox":
+        return False
+    return bool(prop.get("checkbox"))
+
+
 def resolve_title_prop(db_id, token, default_title_prop, db_label):
     db = get_database(db_id, token)
     allowed = set((db.get("properties") or {}).keys())
@@ -214,6 +287,10 @@ def infer_property_schema(prop_value):
         return {"multi_select": {"options": []}}
     if "select" in prop_value:
         return {"select": {"options": []}}
+    if "url" in prop_value:
+        return {"url": {}}
+    if "date" in prop_value:
+        return {"date": {}}
     return None
 
 
@@ -289,6 +366,7 @@ vm.createContext(ctx);
   'js/data_rules.js',
   'js/data_campaigns.js',
   'js/data_counters.js',
+  'js/data_notion_overrides.js',
   'js/data_index.js',
 ].forEach((f)=>vm.runInContext(fs.readFileSync(path.join(root,f),'utf8'),ctx,{filename:f}));
 
@@ -378,6 +456,13 @@ def sync(repo_root, page_url, token):
             "Redemption ? Min": num(None),
             "Redemption ? Fee": rt(""),
             "Redemption ? Ratio": rt(""),
+            "Display Name (zh-HK)": rt(""),
+            "Note (zh-HK)": rt(""),
+            "Status": {"select": {"name": ""}},
+            "Last Verified": {"date": {}},
+            "Source URL": {"url": ""},
+            "Source Title": rt(""),
+            "Sync To Repo": chk(False),
             "Source File": rt(""),
         })
 
@@ -471,6 +556,14 @@ def sync(repo_root, page_url, token):
             "Setting Key": rt(""),
             "Usage Key": rt(""),
             "Config": rt(""),
+            "Display Name (zh-HK)": rt(""),
+            "Note (zh-HK)": rt(""),
+            "Status": {"select": {"name": ""}},
+            "Last Verified": {"date": {}},
+            "Source URL": {"url": ""},
+            "Source Title": rt(""),
+            "Unit Override": rt(""),
+            "Sync To Repo": chk(False),
             "Source File": rt(""),
         })
 
@@ -562,6 +655,11 @@ def sync(repo_root, page_url, token):
         template_props = build_props("Conversion Src", "__template__", {
             "Miles Rate": num(None),
             "Cash Rate": num(None),
+            "Note (zh-HK)": rt(""),
+            "Last Verified": {"date": {}},
+            "Source URL": {"url": ""},
+            "Source Title": rt(""),
+            "Sync To Repo": chk(False),
             "Source File": rt(""),
         })
 
@@ -593,6 +691,13 @@ def sync(repo_root, page_url, token):
             "Cap Keys": rt(""),
             "Period": rt(""),
             "Data": rt(""),
+            "Display Name (zh-HK)": rt(""),
+            "Note (zh-HK)": rt(""),
+            "Status": {"select": {"name": ""}},
+            "Last Verified": {"date": {}},
+            "Source URL": {"url": ""},
+            "Source Title": rt(""),
+            "Sync To Repo": chk(False),
             "Source File": rt(""),
         })
 
@@ -628,6 +733,7 @@ def sync(repo_root, page_url, token):
             "Promotion": rels([]),      # legacy name
             "Type": rt(""),
             "Label": rt(""),
+            "Label (zh-HK)": rt(""),
             "Usage Key": rt(""),
             "Usage Keys": rt(""),
             "Target": num(None),
@@ -640,6 +746,7 @@ def sync(repo_root, page_url, token):
             "Eligible Key": rt(""),
             "Markers": rt(""),
             "Tiers": rt(""),
+            "Sync To Repo": chk(False),
             "Source File": rt(""),
         })
 
@@ -746,11 +853,196 @@ def sync(repo_root, page_url, token):
         )
 
 
+def build_overrides_js(overrides):
+    header = [
+        "// js/data_notion_overrides.js",
+        "// Generated by tools/sync_notion.py --pull-overrides",
+        "// Only contains whitelisted fields. Core reward logic stays in js/data_*.js.",
+        "",
+    ]
+    body = json.dumps(overrides, ensure_ascii=False, indent=2)
+    return "\n".join(header) + f"const NOTION_OVERRIDES = {body};\n"
+
+
+def normalize_overrides_entry(entry, fields):
+    out = {}
+    for key in fields:
+        val = entry.get(key, "")
+        if val is None or val == "":
+            continue
+        out[key] = val
+    return out
+
+
+def pull_db_overrides(db_id, token, db_label, default_title_prop, field_specs):
+    db = get_database(db_id, token)
+    props = db.get("properties") or {}
+    allowed = set(props.keys())
+    title_prop = default_title_prop if default_title_prop in allowed else get_title_prop_name(db)
+    if not title_prop:
+        print(f"[warn] {db_label}: missing title property, skipping")
+        return {}, []
+    if "Sync To Repo" not in allowed:
+        print(f"[warn] {db_label}: missing 'Sync To Repo' checkbox, skipping pull")
+        return {}, []
+    if props.get("Sync To Repo", {}).get("type") != "checkbox":
+        print(f"[warn] {db_label}: 'Sync To Repo' is not a checkbox, skipping pull")
+        return {}, []
+
+    rows = query_database(db_id, token, {"property": "Sync To Repo", "checkbox": {"equals": True}})
+    overrides = {}
+    page_ids = []
+    for row in rows:
+        row_props = row.get("properties") or {}
+        key = extract_title_value(row_props.get(title_prop))
+        if not key:
+            continue
+        entry = {}
+        for prop_name, out_key, extractor in field_specs:
+            val = extractor(row_props, prop_name) if prop_name in row_props else ""
+            if val is None or val == "":
+                continue
+            entry[out_key] = val
+        if entry:
+            overrides[key] = entry
+            page_ids.append(row.get("id"))
+    return overrides, page_ids
+
+
+def pull_overrides(repo_root, page_url, token, overrides_out, pull_dbs=None, ack=False):
+    page_id = extract_id_from_url(page_url)
+    if not page_id:
+        die("Could not parse page ID from URL")
+
+    db_map = {title: db_id for title, db_id in list_child_databases(page_id, token)}
+    campaign_db_name = pick_db_name(db_map, "Campaigns", ["Promotions"])
+    campaign_sections_db_name = pick_db_name(db_map, "Campaign Sections", ["Promotion Sections"])
+
+    allowed_set = None
+    if pull_dbs:
+        allowed_set = set([d.strip().lower() for d in pull_dbs if d and d.strip()])
+
+    overrides = {
+        "version": 1,
+        "cards": {},
+        "modules": {},
+        "campaigns": {},
+        "campaignSections": {},
+        "conversions": {}
+    }
+    ack_ids = []
+
+    def db_allowed(name):
+        if not allowed_set:
+            return True
+        return name in allowed_set
+
+    if db_allowed("cards") and db_map.get("Cards"):
+        fields = [
+            ("Display Name (zh-HK)", "display_name_zhhk", extract_rich_text),
+            ("Note (zh-HK)", "note_zhhk", extract_rich_text),
+            ("Status", "status", extract_select),
+            ("Last Verified", "last_verified_at", extract_date),
+            ("Source URL", "source_url", extract_url),
+            ("Source Title", "source_title", extract_rich_text),
+        ]
+        data, ids = pull_db_overrides(db_map["Cards"], token, "Cards", "Card ID", fields)
+        card_out = {}
+        for k, v in sorted(data.items()):
+            entry = normalize_overrides_entry(v, ["display_name_zhhk", "note_zhhk", "status", "last_verified_at", "source_url", "source_title"])
+            if entry:
+                card_out[k] = entry
+        overrides["cards"] = card_out
+        ack_ids.extend(ids)
+
+    if db_allowed("modules") and db_map.get("Modules"):
+        fields = [
+            ("Display Name (zh-HK)", "display_name_zhhk", extract_rich_text),
+            ("Note (zh-HK)", "note_zhhk", extract_rich_text),
+            ("Status", "status", extract_select),
+            ("Last Verified", "last_verified_at", extract_date),
+            ("Source URL", "source_url", extract_url),
+            ("Source Title", "source_title", extract_rich_text),
+            ("Unit Override", "unit_override", extract_rich_text),
+        ]
+        data, ids = pull_db_overrides(db_map["Modules"], token, "Modules", "Module Key", fields)
+        module_out = {}
+        for k, v in sorted(data.items()):
+            entry = normalize_overrides_entry(v, ["display_name_zhhk", "note_zhhk", "status", "last_verified_at", "source_url", "source_title", "unit_override"])
+            if entry:
+                module_out[k] = entry
+        overrides["modules"] = module_out
+        ack_ids.extend(ids)
+
+    if db_allowed("campaigns") and campaign_db_name and db_map.get(campaign_db_name):
+        fields = [
+            ("Display Name (zh-HK)", "display_name_zhhk", extract_rich_text),
+            ("Note (zh-HK)", "note_zhhk", extract_rich_text),
+            ("Status", "status", extract_select),
+            ("Last Verified", "last_verified_at", extract_date),
+            ("Source URL", "source_url", extract_url),
+            ("Source Title", "source_title", extract_rich_text),
+        ]
+        data, ids = pull_db_overrides(db_map[campaign_db_name], token, campaign_db_name, "Campaign ID", fields)
+        campaign_out = {}
+        for k, v in sorted(data.items()):
+            entry = normalize_overrides_entry(v, ["display_name_zhhk", "note_zhhk", "status", "last_verified_at", "source_url", "source_title"])
+            if entry:
+                campaign_out[k] = entry
+        overrides["campaigns"] = campaign_out
+        ack_ids.extend(ids)
+
+    if db_allowed("campaign sections") and campaign_sections_db_name and db_map.get(campaign_sections_db_name):
+        fields = [
+            ("Label (zh-HK)", "label_zhhk", extract_rich_text),
+        ]
+        data, ids = pull_db_overrides(db_map[campaign_sections_db_name], token, campaign_sections_db_name, "Section ID", fields)
+        section_out = {}
+        for k, v in sorted(data.items()):
+            entry = normalize_overrides_entry(v, ["label_zhhk"])
+            if entry:
+                section_out[k] = entry
+        overrides["campaignSections"] = section_out
+        ack_ids.extend(ids)
+
+    if db_allowed("conversions") and db_map.get("Conversions"):
+        fields = [
+            ("Note (zh-HK)", "note_zhhk", extract_rich_text),
+            ("Last Verified", "last_verified_at", extract_date),
+            ("Source URL", "source_url", extract_url),
+            ("Source Title", "source_title", extract_rich_text),
+        ]
+        data, ids = pull_db_overrides(db_map["Conversions"], token, "Conversions", "Conversion Src", fields)
+        conv_out = {}
+        for k, v in sorted(data.items()):
+            entry = normalize_overrides_entry(v, ["note_zhhk", "last_verified_at", "source_url", "source_title"])
+            if entry:
+                conv_out[k] = entry
+        overrides["conversions"] = conv_out
+        ack_ids.extend(ids)
+
+    out_path = overrides_out if os.path.isabs(overrides_out) else os.path.join(repo_root, overrides_out)
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write(build_overrides_js(overrides))
+    print(f"Wrote overrides: {out_path}")
+
+    if ack and ack_ids:
+        for page_id in ack_ids:
+            try:
+                update_page(page_id, {"Sync To Repo": {"checkbox": False}}, token)
+            except Exception as e:
+                print(f"[warn] failed to ack page {page_id}: {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Sync repo data to Notion (optional) and/or dump DATA JSON")
     parser.add_argument("--page-url", help="Notion page URL that contains the child databases")
     parser.add_argument("--bootstrap", action="store_true", help="Create the expected child databases under the page if missing")
     parser.add_argument("--dump", help="Write a JSON dump of DATA to this file (for offline inspection)")
+    parser.add_argument("--pull-overrides", action="store_true", help="Pull Notion overrides into js/data_notion_overrides.js")
+    parser.add_argument("--overrides-out", default="js/data_notion_overrides.js", help="Output path for overrides JS")
+    parser.add_argument("--pull-db", action="append", help="Limit override pull to specific DBs (repeatable)")
+    parser.add_argument("--ack", action="store_true", help="After pulling overrides, uncheck Sync To Repo for pulled rows")
     args = parser.parse_args()
 
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -762,6 +1054,8 @@ def main():
         print(f"Wrote dump: {args.dump}")
 
     if not args.page_url:
+        if args.pull_overrides:
+            die("--pull-overrides requires --page-url")
         return
 
     token = os.environ.get("NOTION_TOKEN")
@@ -773,6 +1067,10 @@ def main():
         if not page_id:
             die("Could not parse page ID from URL")
         bootstrap_child_databases(page_id, token)
+
+    if args.pull_overrides:
+        pull_overrides(repo_root, args.page_url, token, args.overrides_out, pull_dbs=args.pull_db, ack=args.ack)
+        return
 
     sync(repo_root, args.page_url, token)
     print("Sync complete")

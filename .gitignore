@@ -1,5 +1,7 @@
 .tmp_data_dump.json
 *.tmp_data_dump.json
 *.dump.json
+__pycache__/
+*.pyc
 .DS_Store
 .worktrees/
