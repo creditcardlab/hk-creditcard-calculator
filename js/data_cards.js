@@ -41,22 +41,26 @@ const cardsDB = [
         trackers: ["winter_tracker"]
     },
     {
-        id: "hsbc_pulse",
-        name: "HSBC Pulse 銀聯鑽石",
-        currency: "HSBC_RC",
-        type: "unionpay",
-        fcf: 0,
-        rewardModules: ["hsbc_std_base", "red_hot_variable", "pulse_china_bonus", "travel_guru_v2"],
-        trackers: ["winter_tracker"]
+      id: "hsbc_pulse",
+      name: "HSBC Pulse 銀聯鑽石",
+      currency: "HSBC_RC",
+      type: "unionpay",
+      fcf: 0,
+      // Mainland China + Macau are fee-free; other foreign spend uses the card's fcf.
+      fcf_exempt_categories: ["overseas_cn", "overseas_mo", "china_consumption"],
+      rewardModules: ["hsbc_std_base", "red_hot_variable", "pulse_china_bonus", "travel_guru_v2"],
+      trackers: ["winter_tracker"]
     },
     {
-        id: "hsbc_unionpay_std",
-        name: "HSBC 銀聯雙幣 (標準)",
-        currency: "HSBC_RC",
-        type: "unionpay",
-        fcf: 0,
-        rewardModules: ["hsbc_std_base", "red_hot_variable", "travel_guru_v2"],
-        trackers: ["winter_tracker"]
+      id: "hsbc_unionpay_std",
+      name: "HSBC 銀聯雙幣 (標準)",
+      currency: "HSBC_RC",
+      type: "unionpay",
+      fcf: 0,
+      // Mainland China + Macau are fee-free; other foreign spend uses the card's fcf.
+      fcf_exempt_categories: ["overseas_cn", "overseas_mo", "china_consumption"],
+      rewardModules: ["hsbc_std_base", "red_hot_variable", "travel_guru_v2"],
+      trackers: ["winter_tracker"]
     },
     {
         id: "hsbc_easy",

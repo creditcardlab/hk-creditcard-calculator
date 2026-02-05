@@ -818,15 +818,17 @@ function renderCalculatorResults(results, currentMode) {
             ? isForeignCategory(res.category)
             : (res.category.startsWith('overseas') || res.category === 'foreign' || res.category === 'travel_plus_tier1');
 
-        if (cardConfig && cardConfig.fcf > 0 && isForeign) {
-            const fee = res.amount * cardConfig.fcf;
+        const exempt = cardConfig && Array.isArray(cardConfig.fcf_exempt_categories) ? cardConfig.fcf_exempt_categories : [];
+        const feeRate = (cardConfig && cardConfig.fcf > 0 && isForeign && !exempt.includes(res.category)) ? cardConfig.fcf : 0;
+        if (cardConfig && feeRate > 0) {
+            const fee = res.amount * feeRate;
             const feeVal = fee.toFixed(1);
             const net = res.estCash - fee;
             const netPotential = res.estCashPotential - fee;
             hasFee = true;
             feeNetValue = Math.floor(net).toLocaleString();
             feeNetPotential = Math.floor(netPotential).toLocaleString();
-            feeLineHtml = `<div class="text-xs text-red-400 mt-0.5"><i class="fas fa-money-bill-wave mr-1"></i>外幣手續費: $${feeVal} (${(cardConfig.fcf * 100).toFixed(2)}%)</div>`;
+            feeLineHtml = `<div class="text-xs text-red-400 mt-0.5"><i class="fas fa-money-bill-wave mr-1"></i>外幣手續費: $${feeVal} (${(feeRate * 100).toFixed(2)}%)</div>`;
         }
 
         const txDateInput = document.getElementById('tx-date');
@@ -968,19 +970,7 @@ function renderSettings(userProfile) {
             html += `<div><h3 class="text-xs font-bold text-gray-400 uppercase mb-2 pl-1 tracking-wider">${group.name}</h3><div class="bg-gray-50 rounded-xl px-3 py-1 border border-gray-100">`;
             groupCards.forEach(c => {
                 const ch = userProfile.ownedCards.includes(c.id) ? 'checked' : '';
-                const noteHtml = (c.note_zhhk && String(c.note_zhhk).trim())
-                    ? `<div class="text-[10px] text-gray-400 mt-0.5 whitespace-pre-line">${escapeHtml(String(c.note_zhhk).trim())}</div>`
-                    : "";
-                html += `<div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-0">
-                    <div class="flex flex-col pr-3 min-w-0">
-                        <span class="text-sm text-gray-700 font-medium truncate">${escapeHtml(c.name)}</span>
-                        ${noteHtml}
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" class="sr-only peer" ${ch} onchange="toggleCard('${c.id}')">
-                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                    </label>
-                </div>`;
+                html += `<div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-0"><span class="text-sm text-gray-700 font-medium">${escapeHtml(c.name)}</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" ${ch} onchange="toggleCard('${c.id}')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div></label></div>`;
             });
             html += `</div></div>`;
         }

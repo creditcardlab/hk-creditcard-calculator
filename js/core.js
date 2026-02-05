@@ -121,6 +121,15 @@ function saveUserData() {
 
 function checkCap(key, limit) { const u = userProfile.usage[key] || 0; return { used: u, remaining: Math.max(0, limit - u), isMaxed: u >= limit }; }
 
+function getForeignFeeRate(card, category) {
+    if (!card) return 0;
+    const base = Number(card.fcf) || 0;
+    if (base <= 0) return 0;
+    const exempt = Array.isArray(card.fcf_exempt_categories) ? card.fcf_exempt_categories : [];
+    if (exempt.includes(category)) return 0;
+    return base;
+}
+
 function buildPromoStatus(promo, userProfile, modulesDB) {
     if (!promo || !userProfile) return null;
     const eligible = Array.isArray(promo.cards) && promo.cards.some(id => (userProfile.ownedCards || []).includes(id));
@@ -890,7 +899,8 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     // Calculate both values for sorting
     const estMiles = native * conv.miles_rate;
     const estCash = native * conv.cash_rate;
-    const foreignFee = (card.fcf && isForeignCategory(category)) ? amount * card.fcf : 0;
+    const feeRate = (isForeignCategory(category) ? getForeignFeeRate(card, category) : 0);
+    const foreignFee = feeRate ? amount * feeRate : 0;
     const estCashNet = estCash - foreignFee;
     const estMilesPotential = nativePotential * conv.miles_rate;
     const estCashPotential = nativePotential * conv.cash_rate;
