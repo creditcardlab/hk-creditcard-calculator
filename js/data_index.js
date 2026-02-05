@@ -60,13 +60,28 @@
         }
     };
 
-    if (typeof buildCountersRegistry === "function") {
-        data.countersRegistry = buildCountersRegistry(data);
-    } else {
-        data.countersRegistry = {};
-    }
+    const applyCoreOverrides = (core) => {
+        if (!core || typeof core !== "object") return;
 
-    data.debug = { validate: true };
+        const applyFields = (target, src) => {
+            if (!target || !src) return;
+            Object.keys(src).forEach((key) => {
+                const val = src[key];
+                if (val === undefined || val === null) return;
+                if (typeof val === "string" && val === "") return;
+                if (Array.isArray(val) && val.length === 0) return; // avoid accidental clears
+                target[key] = val;
+            });
+        };
+
+        if (core.modules && data.modules) {
+            Object.keys(core.modules).forEach((id) => {
+                const mod = data.modules[id];
+                if (!mod) return;
+                applyFields(mod, core.modules[id]);
+            });
+        }
+    };
 
     const applyOverrides = (overrides) => {
         if (!overrides || typeof overrides !== "object") return;
@@ -134,9 +149,22 @@
         }
     };
 
+    if (typeof NOTION_CORE_OVERRIDES !== "undefined") {
+        applyCoreOverrides(NOTION_CORE_OVERRIDES);
+    }
+
     if (typeof NOTION_OVERRIDES !== "undefined") {
         applyOverrides(NOTION_OVERRIDES);
     }
+
+    // Build derived registries after core overrides are applied, so caps/keys are consistent.
+    if (typeof buildCountersRegistry === "function") {
+        data.countersRegistry = buildCountersRegistry(data);
+    } else {
+        data.countersRegistry = {};
+    }
+
+    data.debug = { validate: true };
 
     root.DATA = data;
 })();
