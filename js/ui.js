@@ -556,6 +556,9 @@ function renderDashboard(userProfile) {
     const monthEndStr = getMonthEndStr();
     const quarterEndStr = getQuarterEndStr();
     const renderedCaps = new Set();
+    // If the same cap_key appears across multiple owned cards, it's a shared cap.
+    // In that case, avoid showing a specific card name prefix in the title.
+    const capKeyCounts = {};
     const monthTotals = getMonthTotals(userProfile.transactions);
     const totalSpend = monthTotals.spend;
     const totalVal = monthTotals.reward;
@@ -670,11 +673,23 @@ function renderDashboard(userProfile) {
             const mod = DATA.modules[modId];
             if (!mod || !mod.cap_limit || !mod.cap_key) return;
             if (mod.cap_key === 'boc_amazing_local_weekday_cap' || mod.cap_key === 'boc_amazing_local_holiday_cap' || mod.cap_key === 'boc_amazing_online_weekday_cap' || mod.cap_key === 'boc_amazing_online_holiday_cap') return;
+            capKeyCounts[mod.cap_key] = (capKeyCounts[mod.cap_key] || 0) + 1;
+        });
+    });
+
+    userProfile.ownedCards.forEach(cardId => {
+        const card = DATA.cards.find(c => c.id === cardId);
+        if (!card || !Array.isArray(card.rewardModules)) return;
+        card.rewardModules.forEach(modId => {
+            const mod = DATA.modules[modId];
+            if (!mod || !mod.cap_limit || !mod.cap_key) return;
+            if (mod.cap_key === 'boc_amazing_local_weekday_cap' || mod.cap_key === 'boc_amazing_local_holiday_cap' || mod.cap_key === 'boc_amazing_online_weekday_cap' || mod.cap_key === 'boc_amazing_online_holiday_cap') return;
             if (renderedCaps.has(mod.cap_key)) return;
 	        if (mod.setting_key && userProfile.settings[mod.setting_key] === false) {
+                const isShared = (capKeyCounts[mod.cap_key] || 0) > 1;
                 const title = (mod.display_name_zhhk && String(mod.display_name_zhhk).trim())
                     ? String(mod.display_name_zhhk).trim()
-                    : `${card.name} ${mod.desc}`;
+                    : (isShared ? String(mod.desc || "").trim() : `${card.name} ${mod.desc}`);
 
 	            html += renderWarningCard(
 	                title,
@@ -686,9 +701,10 @@ function renderDashboard(userProfile) {
 	            return;
 	        }
 
+            const isShared = (capKeyCounts[mod.cap_key] || 0) > 1;
             const title = (mod.display_name_zhhk && String(mod.display_name_zhhk).trim())
                 ? String(mod.display_name_zhhk).trim()
-                : `${card.name} ${mod.desc}`;
+                : (isShared ? String(mod.desc || "").trim() : `${card.name} ${mod.desc}`);
 
             renderedCaps.add(mod.cap_key);
 
