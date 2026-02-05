@@ -68,5 +68,75 @@
 
     data.debug = { validate: true };
 
+    const applyOverrides = (overrides) => {
+        if (!overrides || typeof overrides !== "object") return;
+
+        const applyFields = (target, src, allowed) => {
+            if (!target || !src) return;
+            allowed.forEach((key) => {
+                if (src[key] === undefined || src[key] === null || src[key] === "") return;
+                target[key] = src[key];
+            });
+        };
+
+        const cardFields = ["display_name_zhhk", "note_zhhk", "status", "last_verified_at", "source_url", "source_title"];
+        const moduleFields = ["display_name_zhhk", "note_zhhk", "status", "last_verified_at", "source_url", "source_title", "unit_override"];
+        const campaignFields = ["display_name_zhhk", "note_zhhk", "status", "last_verified_at", "source_url", "source_title"];
+        const conversionFields = ["note_zhhk", "last_verified_at", "source_url", "source_title"];
+
+        if (overrides.cards && data.cards) {
+            Object.keys(overrides.cards).forEach((id) => {
+                const card = data.cards.find(c => c && c.id === id);
+                if (!card) return;
+                applyFields(card, overrides.cards[id], cardFields);
+            });
+        }
+
+        if (overrides.modules && data.modules) {
+            Object.keys(overrides.modules).forEach((id) => {
+                const mod = data.modules[id];
+                if (!mod) return;
+                applyFields(mod, overrides.modules[id], moduleFields);
+            });
+        }
+
+        if (overrides.campaigns && data.campaigns) {
+            overrides.campaigns && Object.keys(overrides.campaigns).forEach((id) => {
+                const camp = data.campaigns.find(c => c && c.id === id);
+                if (!camp) return;
+                applyFields(camp, overrides.campaigns[id], campaignFields);
+            });
+        }
+
+        if (overrides.campaignSections && data.campaigns) {
+            Object.keys(overrides.campaignSections).forEach((key) => {
+                const [campId, idxStr] = String(key).split("#");
+                const idx = Number(idxStr);
+                if (!campId || !Number.isFinite(idx) || idx < 1) return;
+                const camp = data.campaigns.find(c => c && c.id === campId);
+                if (!camp || !Array.isArray(camp.sections)) return;
+                const sec = camp.sections[idx - 1];
+                if (!sec) return;
+                const override = overrides.campaignSections[key] || {};
+                if (override.label_zhhk !== undefined && override.label_zhhk !== "") {
+                    sec.label_zhhk = override.label_zhhk;
+                    sec.label = override.label_zhhk;
+                }
+            });
+        }
+
+        if (overrides.conversions && Array.isArray(data.conversions)) {
+            Object.keys(overrides.conversions).forEach((src) => {
+                const conv = data.conversions.find(c => c && c.src === src);
+                if (!conv) return;
+                applyFields(conv, overrides.conversions[src], conversionFields);
+            });
+        }
+    };
+
+    if (typeof NOTION_OVERRIDES !== "undefined") {
+        applyOverrides(NOTION_OVERRIDES);
+    }
+
     root.DATA = data;
 })();
