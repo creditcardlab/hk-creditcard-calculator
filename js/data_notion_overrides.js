@@ -3,8 +3,88 @@
 // Only contains whitelisted fields. Core reward logic stays in js/data_*.js.
 const NOTION_OVERRIDES = {
   "version": 1,
-  "cards": {},
-  "modules": {},
+  "cards": {
+    "hsbc_easy": {
+      "last_verified_at": "2026-02-06",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf"
+    },
+    "hsbc_everymile": {
+      "last_verified_at": "2026-02-05",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/everymile/everymile-rewards-scheme-travel-benefits.pdf"
+    },
+    "hsbc_gold_student": {
+      "last_verified_at": "2026-02-06"
+    },
+    "hsbc_pulse": {
+      "note_zhhk": "中國內地及澳門外幣手續費為0",
+      "last_verified_at": "2026-02-06",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf"
+    },
+    "hsbc_red": {
+      "last_verified_at": "2026-02-06",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf"
+    },
+    "hsbc_unionpay_std": {
+      "note_zhhk": "中國內地及澳門外幣手續費為0",
+      "last_verified_at": "2026-02-06"
+    },
+    "hsbc_vs": {
+      "last_verified_at": "2026-02-05",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/visa-signature/special-reward-tnc.pdf"
+    }
+  },
+  "modules": {
+    "easy_moneyback_bonus": {
+      "note_zhhk": "基本「易賞錢」獎賞積分即於百佳及屈臣氏作每港幣 5 元簽賬相等於 1「易賞錢」積分或於豐澤作\n每港幣 10 元簽賬相等於 1「易賞錢」積分;6 倍「易賞錢」獎賞積分即於百佳及屈臣氏作每港幣 5 元\n簽賬相等於 6「易賞錢」 積分或於豐澤作每港幣 10 元簽賬相等於 6「易賞錢」積分;而 4 倍「易賞錢\n」獎賞積分即於百佳及屈臣氏作每港幣 5 元簽賬相等於 4「易賞錢」積分或於豐澤作每港幣 10 元簽\n賬相等於 4「易賞錢」積分。有關「易賞錢」積分的條款及細則請參閱「易賞錢」網頁",
+      "last_verified_at": "2026-02-06"
+    },
+    "em_base": {
+      "last_verified_at": "2026-02-05"
+    },
+    "em_designated": {
+      "last_verified_at": "2026-02-05",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf"
+    },
+    "em_grocery_low": {
+      "last_verified_at": "2026-02-05"
+    },
+    "em_overseas_bonus": {
+      "last_verified_at": "2026-02-05"
+    },
+    "hsbc_std_base": {
+      "last_verified_at": "2026-02-06"
+    },
+    "pulse_china_bonus": {
+      "note_zhhk": "要手機支付!!!",
+      "last_verified_at": "2026-02-06"
+    },
+    "red_base": {
+      "last_verified_at": "2026-02-05"
+    },
+    "red_designated_bonus": {
+      "last_verified_at": "2026-02-05"
+    },
+    "red_hot_variable": {
+      "last_verified_at": "2026-02-05",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/rewards/2026-red-hot-rewards-of-your-choice-terms-and-conditions.pdf, https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/#3"
+    },
+    "red_online": {
+      "last_verified_at": "2026-02-05"
+    },
+    "student_tuition_bonus": {
+      "last_verified_at": "2026-02-06",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/tc/tuition-fee-payment-tcs1.pdf"
+    },
+    "travel_guru_v2": {
+      "last_verified_at": "2026-02-05"
+    },
+    "vs_base": {
+      "last_verified_at": "2026-02-06"
+    },
+    "vs_red_hot_bonus": {
+      "last_verified_at": "2026-02-05"
+    }
+  },
   "campaigns": {},
   "campaignSections": {},
   "conversions": {}
