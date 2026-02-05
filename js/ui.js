@@ -61,6 +61,60 @@ function getQuarterEndStr() {
     return `${year}-${m}-${d}`;
 }
 
+function resolveAnchorForKeyUi(key, entry, userProfile) {
+    const defaults = (typeof DATA !== "undefined" && DATA.periodDefaults) ? DATA.periodDefaults : {};
+    const overrides = (userProfile && userProfile.settings && userProfile.settings.periodOverrides) ? userProfile.settings.periodOverrides : {};
+
+    let override = null;
+    if (overrides.byKey && overrides.byKey[key]) {
+        override = overrides.byKey[key];
+    }
+    if (!override && entry && entry.refType === "module" && overrides.modules && overrides.modules[entry.refId]) {
+        override = overrides.modules[entry.refId];
+    }
+    if (!override && entry && (entry.refType === "promo" || entry.refType === "campaign") && overrides.byCampaignId && overrides.byCampaignId[entry.refId]) {
+        override = overrides.byCampaignId[entry.refId];
+    }
+    if (!override && entry && entry.refType === "promo" && overrides.promos && overrides.promos[entry.refId]) {
+        override = overrides.promos[entry.refId];
+    }
+
+    const base = override || (entry ? entry.anchorRef : null) || (entry && entry.periodType ? defaults[entry.periodType] : null) || null;
+    if (!base) return null;
+    const normalized = { ...base };
+    if (entry && entry.periodType && !normalized.type) normalized.type = entry.periodType;
+    if (entry && (entry.refType === "promo" || entry.refType === "campaign") && entry.refId) normalized.promoId = entry.refId;
+    return normalized;
+}
+
+function getResetBadgeForKey(key, userProfile) {
+    if (typeof DATA === "undefined" || !DATA.countersRegistry) return "";
+    const entry = DATA.countersRegistry[key];
+    if (!entry || !entry.periodType || entry.periodType === "none") return "";
+
+    const anchor = resolveAnchorForKeyUi(key, entry, userProfile);
+    if (entry.periodType === "promo") {
+        const endDate = anchor && anchor.endDate ? anchor.endDate : null;
+        return endDate ? formatPromoDate(endDate) : "";
+    }
+
+    const today = new Date();
+    const bucketKey = getBucketKey(today, entry.periodType, anchor, anchor && anchor.promoId);
+    if (!bucketKey) return "";
+    const startDate = parseDateInput(bucketKey);
+    if (!startDate) return "";
+
+    let nextStart = null;
+    if (entry.periodType === "month") nextStart = addMonths(startDate, 1);
+    else if (entry.periodType === "quarter") nextStart = addMonths(startDate, 3);
+    else if (entry.periodType === "year") nextStart = addMonths(startDate, 12);
+    if (!nextStart) return "";
+
+    const resetDate = new Date(nextStart.getTime());
+    resetDate.setDate(resetDate.getDate() - 1);
+    return formatResetDate(formatDateKey(resetDate));
+}
+
 function getMonthTotals(transactions) {
     if (!Array.isArray(transactions)) return { spend: 0, reward: 0, count: 0 };
     const now = new Date();
@@ -765,7 +819,7 @@ function renderDashboard(userProfile) {
                 title,
                 icon: "fas fa-chart-line",
                 theme: "gray",
-                badge: formatResetDate(monthEndStr),
+                badge: getResetBadgeForKey(mod.cap_key, userProfile),
                 sections: sections
             });
         });
