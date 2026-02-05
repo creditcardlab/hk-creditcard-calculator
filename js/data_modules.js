@@ -4,7 +4,14 @@ const modulesDB = {
     // --- HSBC ---
     "hsbc_std_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
     "vs_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
-    "red_hot_variable": { type: "red_hot_allocation", rate_per_x: 0.004, desc: "最紅自主", setting_key: "red_hot_rewards_enabled" },
+    "red_hot_variable": {
+        type: "red_hot_allocation",
+        rate_per_x: 0.004,
+        desc: "最紅自主",
+        setting_key: "red_hot_rewards_enabled",
+        // 「最紅自主」通常以年度為週期（之後如要自訂週期，可用 periodOverrides.byKey/modules 擴展）。
+        cap: { period: { type: "year", startMonth: 1, startDay: 1 } }
+    },
     "vs_red_hot_bonus": { type: "red_hot_fixed_bonus", multiplier: 3, rate_per_x: 0.004, desc: "VS專屬賞 (1.2%)" },
     // Easy Card「易賞錢」：百佳/屈臣氏 $5=1分；豐澤 $10=1分（同樣 6 倍會出現兩個不同回贈率）。
     // - 新交易請用細分 category；舊 category 仍保留以支援已記帳資料。

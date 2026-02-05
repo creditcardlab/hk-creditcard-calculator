@@ -840,6 +840,15 @@
       "prevBucketKey": "2026-02-01",
       "expectedBucketKey": "2026-02-05",
       "expectReset": true
+    },
+    {
+      "id": "period_007_year_boundary",
+      "periodType": "year",
+      "anchor": { "type": "year", "startMonth": 1, "startDay": 1 },
+      "date": "2026-01-01",
+      "prevBucketKey": "2025-01-01",
+      "expectedBucketKey": "2026-01-01",
+      "expectReset": true
     }
   ],
   "tx_cases": [

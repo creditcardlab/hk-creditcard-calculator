@@ -16,6 +16,7 @@ function init() {
     migrateWinterUsage();
     resetCountersForPeriod("month");
     resetCountersForPeriod("quarter");
+    resetCountersForPeriod("year");
     resetCountersForPeriod("promo");
     validateUsageRegistry();
 

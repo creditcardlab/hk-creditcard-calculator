@@ -55,6 +55,15 @@ function validateData(data) {
         } else if (anchor.type === "promo") {
             if (!isValidDate(anchor.startDate)) addError(`[data] ${sourceLabel} invalid promo startDate: ${anchor.startDate}`);
             if (anchor.endDate && !isValidDate(anchor.endDate)) addError(`[data] ${sourceLabel} invalid promo endDate: ${anchor.endDate}`);
+        } else if (anchor.type === "year") {
+            const day = Number(anchor.startDay ?? 1);
+            if (!(day >= 1 && day <= 28)) {
+                addError(`[data] ${sourceLabel} invalid year startDay: ${anchor.startDay}`);
+            }
+            const sm = Number(anchor.startMonth ?? 1);
+            if (!(sm >= 1 && sm <= 12)) {
+                addError(`[data] ${sourceLabel} invalid year startMonth: ${anchor.startMonth}`);
+            }
         } else {
             addWarning(`[data] ${sourceLabel} unknown period type: ${anchor.type}`);
         }

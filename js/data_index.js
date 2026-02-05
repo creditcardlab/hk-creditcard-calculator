@@ -56,7 +56,8 @@
         redHotCategories,
         periodDefaults: {
             month: { type: "month", startDay: 1 },
-            quarter: { type: "quarter", startMonth: 1, startDay: 1 }
+            quarter: { type: "quarter", startMonth: 1, startDay: 1 },
+            year: { type: "year", startMonth: 1, startDay: 1 }
         }
     };
 

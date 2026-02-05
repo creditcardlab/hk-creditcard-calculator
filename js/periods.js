@@ -79,6 +79,24 @@ function getQuarterBucketStart(dateObj, anchor) {
     return bucketStart;
 }
 
+function normalizeStartMonth(startMonth, fallback) {
+    const m = Number(startMonth);
+    if (!Number.isFinite(m)) return fallback;
+    return Math.min(12, Math.max(1, Math.floor(m)));
+}
+
+function getYearBucketStart(dateObj, anchor) {
+    const startDay = normalizeStartDay(anchor && anchor.startDay);
+    const startMonth = normalizeStartMonth(anchor && anchor.startMonth, 1);
+    const date = new Date(dateObj.getTime());
+
+    let bucketStart = new Date(date.getFullYear(), startMonth - 1, startDay);
+    if ((date.getMonth() + 1) < startMonth || ((date.getMonth() + 1) === startMonth && date.getDate() < startDay)) {
+        bucketStart = new Date(date.getFullYear() - 1, startMonth - 1, startDay);
+    }
+    return bucketStart;
+}
+
 function getBucketKey(dateInput, periodType, anchor, id) {
     const dateObj = parseDateInput(dateInput) || new Date();
     if (periodType === "month") {
@@ -87,6 +105,10 @@ function getBucketKey(dateInput, periodType, anchor, id) {
     }
     if (periodType === "quarter") {
         const start = getQuarterBucketStart(dateObj, anchor || {});
+        return formatDateKey(start);
+    }
+    if (periodType === "year") {
+        const start = getYearBucketStart(dateObj, anchor || {});
         return formatDateKey(start);
     }
     if (periodType === "promo") {
