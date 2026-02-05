@@ -968,7 +968,19 @@ function renderSettings(userProfile) {
             html += `<div><h3 class="text-xs font-bold text-gray-400 uppercase mb-2 pl-1 tracking-wider">${group.name}</h3><div class="bg-gray-50 rounded-xl px-3 py-1 border border-gray-100">`;
             groupCards.forEach(c => {
                 const ch = userProfile.ownedCards.includes(c.id) ? 'checked' : '';
-                html += `<div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-0"><span class="text-sm text-gray-700 font-medium">${c.name}</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" ${ch} onchange="toggleCard('${c.id}')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div></label></div>`;
+                const noteHtml = (c.note_zhhk && String(c.note_zhhk).trim())
+                    ? `<div class="text-[10px] text-gray-400 mt-0.5 whitespace-pre-line">${escapeHtml(String(c.note_zhhk).trim())}</div>`
+                    : "";
+                html += `<div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-0">
+                    <div class="flex flex-col pr-3 min-w-0">
+                        <span class="text-sm text-gray-700 font-medium truncate">${escapeHtml(c.name)}</span>
+                        ${noteHtml}
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" ${ch} onchange="toggleCard('${c.id}')">
+                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                </div>`;
             });
             html += `</div></div>`;
         }
