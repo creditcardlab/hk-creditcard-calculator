@@ -68,7 +68,14 @@ const cardsDB = [
         currency: "HSBC_RC",
         type: "visa",
         fcf: 0.0195,
-        rewardModules: ["hsbc_std_base", "red_hot_variable", "easy_moneyback_bonus", "travel_guru_v2"],
+        rewardModules: [
+            "hsbc_std_base",
+            "red_hot_variable",
+            "easy_moneyback_pns_watsons_6x",
+            "easy_moneyback_fortress_6x",
+            "easy_moneyback_bonus", // legacy: support already-recorded transactions
+            "travel_guru_v2"
+        ],
         trackers: ["winter_tracker"]
     },
     {

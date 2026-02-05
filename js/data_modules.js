@@ -6,10 +6,21 @@ const modulesDB = {
     "vs_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
     "red_hot_variable": { type: "red_hot_allocation", rate_per_x: 0.004, desc: "最紅自主", setting_key: "red_hot_rewards_enabled" },
     "vs_red_hot_bonus": { type: "red_hot_fixed_bonus", multiplier: 3, rate_per_x: 0.004, desc: "VS專屬賞 (1.2%)" },
-    "easy_moneyback_bonus": { type: "category", match: ["moneyback_merchant"], rate: 0.024, desc: "易賞錢6倍 (約2.4%)" },
+    // Easy Card「易賞錢」：百佳/屈臣氏 $5=1分；豐澤 $10=1分（同樣 6 倍會出現兩個不同回贈率）。
+    // - 新交易請用細分 category；舊 category 仍保留以支援已記帳資料。
+    "easy_moneyback_bonus": { type: "category", match: ["moneyback_merchant"], rate: 0.024, desc: "易賞錢指定商戶 6倍 (約2.4%)", mode: "replace" },
+    "easy_moneyback_pns_watsons_6x": { type: "category", match: ["moneyback_pns_watsons"], rate: 0.024, desc: "易賞錢：百佳/屈臣氏 6倍 (約2.4%)", mode: "replace" },
+    "easy_moneyback_fortress_6x": { type: "category", match: ["moneyback_fortress"], rate: 0.012, desc: "易賞錢：豐澤 6倍 (約1.2%)", mode: "replace" },
     // Reward cap is $200. Use reward-based cap to avoid 8333 * 2.4% => 199.992 rounding artifacts.
     "student_tuition_bonus": { type: "category", match: ["tuition"], rate: 0.024, desc: "學費回贈 (2.4%)", cap_mode: "reward", cap_limit: 200, cap_key: "student_tuition_cap" },
-    "pulse_china_bonus": { type: "category", match: ["china_consumption"], rate: 0.02, desc: "內地/澳門手機支付 (+2%)" },
+    "pulse_china_bonus": {
+        type: "category",
+        match: ["china_consumption"],
+        rate: 0.02,
+        desc: "內地/澳門手機支付 (+2%)",
+        mode: "add",
+        eligible_check: (cat, ctx) => !!(ctx && ctx.paymentMethod && ctx.paymentMethod !== "physical")
+    },
     "em_base": { type: "always", rate: 0.01, desc: "基本 (1%)" },
     "em_designated": { type: "category", match: ["streaming", "em_designated_spend"], rate: 0.025, desc: "指定 $2/里 (2.5%)", mode: "replace" },
     "em_grocery_low": { type: "category", match: ["grocery"], rate: 0.004, desc: "超市 (0.4%)", mode: "replace" },
@@ -52,7 +63,7 @@ const modulesDB = {
     "citi_rewards_base": { type: "always", rate: 1, desc: "基本 1X積分" },
     "citi_rewards_mobile": {
         type: "category",
-        match: ["dining", "grocery", "transport", "telecom", "general", "moneyback_merchant", "smart_designated", "citi_club_merchant"],
+        match: ["dining", "grocery", "transport", "telecom", "general", "moneyback_merchant", "moneyback_pns_watsons", "moneyback_fortress", "smart_designated", "citi_club_merchant"],
         rate: 2.7,
         desc: "手機支付 2.7X (HK$5.5/里)",
         mode: "replace"

@@ -32,7 +32,7 @@ const trackersDB = {
     // --- sim Credit ---
     "sim_non_online_tracker": {
         type: "mission_tracker", req_mission_key: "sim_non_online_spend",
-        match: ["general", "dining", "nfc_payment", "overseas", "alipay", "wechat", "payme", "oepay", "grocery", "sportswear", "medical", "transport", "travel", "entertainment", "apparel", "health_beauty", "telecom", "other", "moneyback_merchant", "tuition", "chill_merchant", "go_merchant"],
+        match: ["general", "dining", "nfc_payment", "overseas", "alipay", "wechat", "payme", "oepay", "grocery", "sportswear", "medical", "transport", "travel", "entertainment", "apparel", "health_beauty", "telecom", "other", "moneyback_merchant", "moneyback_pns_watsons", "moneyback_fortress", "tuition", "chill_merchant", "go_merchant"],
         desc: "Sim Credit 非網購 ($500)", mission_id: "sim_non_online",
         eligible_check: (cat) => cat !== 'online' && cat !== 'online_foreign'
     },

@@ -54,15 +54,19 @@ const categoriesDB = {
     live_fresh_selected: { label: "DBS Live Fresh Selected", hidden: true },
 
     // Card-specific / UI gated
-    moneyback_merchant: { label: "🏠 指定商戶 (易賞錢)", order: 100, red_hot: "home", req: "hsbc_easy" },
-    tuition: { label: "🎓 學費", order: 101, req: "hsbc_gold_student" },
-    red_designated: { label: "🟥 Red 指定商戶 (8%)", order: 102, req: "hsbc_red" },
-    em_designated_spend: { label: "🌐 EveryMile 指定 ($2/里)", order: 103, req: "hsbc_everymile" },
-    smart_designated: { label: "💳 Smart 指定商戶 (5%)", order: 104, req: "sc_smart" },
-    cathay_hkexpress: { label: "✈️ CX/UO (HK Express)", order: 105, req: (cards) => cards.some(id => id.startsWith("sc_cathay")) },
-    citi_club_merchant: { label: "🛍️ The Club 指定商戶 (4%)", order: 106, req: "citi_club" },
-    chill_merchant: { label: "🎟️ Chill 指定商戶", order: 107, req: "boc_chill" },
-    go_merchant: { label: "🛍️ Go 指定商戶", order: 108, req: "boc_go_diamond" },
+    // Easy Card「易賞錢」指定商戶：不同商戶有不同基本賺分（$5=1分 / $10=1分）。
+    // 保留舊 key 以支援已記帳交易，但從 dropdown 隱藏，避免繼續新增到「不明確」桶。
+    moneyback_merchant: { label: "🏠 易賞錢指定商戶（舊）", order: 100, red_hot: "home", req: "hsbc_easy", hidden: true },
+    moneyback_pns_watsons: { label: "🏠 易賞錢：百佳/屈臣氏", order: 100, red_hot: "home", req: "hsbc_easy" },
+    moneyback_fortress: { label: "🏠 易賞錢：豐澤", order: 101, red_hot: "home", req: "hsbc_easy" },
+    tuition: { label: "🎓 學費", order: 102, req: "hsbc_gold_student" },
+    red_designated: { label: "🟥 Red 指定商戶 (8%)", order: 103, req: "hsbc_red" },
+    em_designated_spend: { label: "🌐 EveryMile 指定 ($2/里)", order: 104, req: "hsbc_everymile" },
+    smart_designated: { label: "💳 Smart 指定商戶 (5%)", order: 105, req: "sc_smart" },
+    cathay_hkexpress: { label: "✈️ CX/UO (HK Express)", order: 106, req: (cards) => cards.some(id => id.startsWith("sc_cathay")) },
+    citi_club_merchant: { label: "🛍️ The Club 指定商戶 (4%)", order: 107, req: "citi_club" },
+    chill_merchant: { label: "🎟️ Chill 指定商戶", order: 108, req: "boc_chill" },
+    go_merchant: { label: "🛍️ Go 指定商戶", order: 109, req: "boc_go_diamond" },
 
     // Enjoy-specific (hidden)
     dining_enjoy: { label: "🍽️ enJoy 指定餐飲", hidden: true },
