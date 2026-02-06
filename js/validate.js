@@ -69,6 +69,28 @@ function validateData(data) {
         }
     };
 
+    const validateRecurrence = (recurrence, sourceLabel) => {
+        if (!recurrence || typeof recurrence !== "object" || Array.isArray(recurrence)) return;
+        const freq = recurrence.freq ? String(recurrence.freq).toLowerCase() : "";
+        if (!freq) {
+            addError(`[data] ${sourceLabel} recurrence missing freq`);
+            return;
+        }
+        const allowedFreq = new Set(["daily", "weekly", "monthly", "quarterly", "yearly"]);
+        if (!allowedFreq.has(freq)) {
+            addError(`[data] ${sourceLabel} recurrence freq unsupported: ${recurrence.freq}`);
+        }
+        if (recurrence.interval !== undefined) {
+            const interval = Number(recurrence.interval);
+            if (!Number.isFinite(interval) || interval <= 0) {
+                addError(`[data] ${sourceLabel} recurrence interval invalid: ${recurrence.interval}`);
+            }
+        }
+        if (recurrence.until && !isValidDate(recurrence.until)) {
+            addError(`[data] ${sourceLabel} recurrence until is not YYYY-MM-DD: ${recurrence.until}`);
+        }
+    };
+
     // Build known usage keys (modules + manual list)
     const knownUsageKeys = new Set();
     const addKnown = (key) => {
@@ -180,17 +202,71 @@ function validateData(data) {
 
     campaigns.forEach((campaign) => {
         if (!campaign || !campaign.id) return;
-        if (campaign.period) {
-            const periodSpec = normalizePeriodSpec(campaign.period);
-            const anchor = periodSpec.anchorRef || defaults[periodSpec.periodType];
-            validateAnchor({ ...anchor, type: periodSpec.periodType }, `campaign:${campaign.id}.period`);
-            return;
+        if (campaign.period_policy && typeof campaign.period_policy === "object" && !Array.isArray(campaign.period_policy)) {
+            const policy = campaign.period_policy;
+            const mode = policy.mode ? String(policy.mode).toLowerCase() : "";
+            const allowedModes = new Set(["fixed", "recurring", "user_relative", "composite"]);
+            if (mode && !allowedModes.has(mode)) {
+                addError(`[data] campaign ${campaign.id} period_policy mode unsupported: ${policy.mode}`);
+            }
+
+            const rawWindows = Array.isArray(policy.windows) ? policy.windows : [policy];
+            let validWindowCount = 0;
+            rawWindows.forEach((windowSpec, idx) => {
+                if (!windowSpec || typeof windowSpec !== "object" || Array.isArray(windowSpec)) {
+                    addError(`[data] campaign ${campaign.id} period_policy window #${idx + 1} is not an object`);
+                    return;
+                }
+
+                const start = windowSpec.startDate || windowSpec.start || windowSpec.startAt || windowSpec.start_at || windowSpec.valid_from || "";
+                const end = windowSpec.endDate || windowSpec.end || windowSpec.endAt || windowSpec.end_at || windowSpec.valid_to || "";
+                const startDate = start ? String(start) : "";
+                const endDate = end ? String(end) : "";
+                if (startDate && !isValidDate(startDate)) {
+                    addError(`[data] campaign ${campaign.id} period_policy window #${idx + 1} start date invalid: ${startDate}`);
+                }
+                if (endDate && !isValidDate(endDate)) {
+                    addError(`[data] campaign ${campaign.id} period_policy window #${idx + 1} end date invalid: ${endDate}`);
+                }
+                if (startDate && endDate && startDate > endDate) {
+                    addError(`[data] campaign ${campaign.id} period_policy window #${idx + 1} end before start: ${startDate} > ${endDate}`);
+                }
+
+                if (windowSpec.period) {
+                    const periodSpec = normalizePeriodSpec(windowSpec.period);
+                    const anchor = periodSpec.anchorRef || defaults[periodSpec.periodType];
+                    validateAnchor({ ...anchor, type: periodSpec.periodType }, `campaign:${campaign.id}.period_policy.window${idx + 1}.period`);
+                }
+                if (windowSpec.recurrence) {
+                    validateRecurrence(windowSpec.recurrence, `campaign:${campaign.id}.period_policy.window${idx + 1}`);
+                }
+                if (startDate || endDate || windowSpec.period || windowSpec.recurrence) validWindowCount += 1;
+            });
+            if (validWindowCount === 0) {
+                addError(`[data] campaign ${campaign.id} period_policy has no valid windows`);
+            }
+            if (policy.recurrence) {
+                validateRecurrence(policy.recurrence, `campaign:${campaign.id}.period_policy`);
+            }
+        } else if (campaign.period_policy !== undefined) {
+            addError(`[data] campaign ${campaign.id} period_policy must be an object`);
+        } else {
+            addError(`[data] campaign ${campaign.id} missing period_policy`);
         }
-        const badgeType = campaign.badge && campaign.badge.type ? String(campaign.badge.type) : "";
-        if (strictPeriods && (badgeType === "month_end" || badgeType === "quarter_end" || badgeType === "promo_end")) {
-            addWarning(`[data] campaign ${campaign.id} badge=${badgeType} but missing campaign.period`);
+
+        if (campaign.period !== undefined) {
+            addWarning(`[data] campaign ${campaign.id} has deprecated field: period (ignored)`);
+        }
+        if (campaign.badge !== undefined) {
+            addWarning(`[data] campaign ${campaign.id} has deprecated field: badge (ignored)`);
         }
     });
+
+    if (data.periodPolicy && Array.isArray(data.periodPolicy.warnings)) {
+        data.periodPolicy.warnings.forEach((msg) => {
+            if (msg) addWarning(String(msg));
+        });
+    }
 
     // Trackers -> categories
     Object.keys(trackers).forEach((trackerId) => {

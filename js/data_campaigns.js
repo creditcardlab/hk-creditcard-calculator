@@ -54,7 +54,10 @@ const CAMPAIGNS = [
         name: "EveryMile 海外",
         icon: "fas fa-plane",
         theme: "purple",
-        badge: { type: "promo_end", moduleKey: "em_overseas_mission", field: "promo_end" },
+        period_policy: {
+            mode: "fixed",
+            period: { type: "promo", startDate: "2026-01-01", endDate: "2026-03-31" }
+        },
         cards: ["hsbc_everymile"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", usageKey: "em_q1_total", target: 12000 },
@@ -67,7 +70,10 @@ const CAMPAIGNS = [
         name: "最紅冬日賞",
         icon: "fas fa-gift",
         theme: "red",
-        badge: { type: "promo_end", moduleKey: "winter_tracker", field: "promo_end" },
+        period_policy: {
+            mode: "fixed",
+            period: { type: "promo", startDate: "2025-12-01", endDate: "2026-02-28" }
+        },
         cards: ["hsbc_vs", "hsbc_red", "hsbc_pulse", "hsbc_unionpay_std", "hsbc_easy", "hsbc_gold_student", "hsbc_gold", "hsbc_premier"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", usageKey: "winter_total", target: 40000, markers: [20000, 40000] },
@@ -89,7 +95,10 @@ const CAMPAIGNS = [
         name: "狂賞派",
         icon: "fas fa-fire",
         theme: "blue",
-        badge: { type: "month_end" },
+        period_policy: {
+            mode: "recurring",
+            period: { type: "month", startDay: 1 }
+        },
         cards: ["boc_cheers_vi", "boc_cheers_vs"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", usageKeys: ["spend_boc_cheers_vi", "spend_boc_cheers_vs"], target: 6000 },
@@ -105,7 +114,10 @@ const CAMPAIGNS = [
         name: "狂賞飛 (外幣) 季度任務",
         icon: "fas fa-plane",
         theme: "blue",
-        badge: { type: "quarter_end" },
+        period_policy: {
+            mode: "recurring",
+            period: { type: "quarter", startMonth: 1, startDay: 1 }
+        },
         cards: ["boc_cheers_vi", "boc_cheers_vs"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", usageKeys: ["spend_boc_cheers_vi", "spend_boc_cheers_vs"], target: 5000 },
@@ -119,7 +131,10 @@ const CAMPAIGNS = [
         name: "MMPower +FUN Dollars",
         icon: "fas fa-bolt",
         theme: "yellow",
-        badge: { type: "month_end" },
+        period_policy: {
+            mode: "recurring",
+            period: { type: "month", startDay: 1 }
+        },
         cards: ["hangseng_mmpower"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_hangseng_mmpower", target: 5000 },
@@ -132,7 +147,10 @@ const CAMPAIGNS = [
         name: "Travel+ 外幣回贈",
         icon: "fas fa-plane",
         theme: "purple",
-        badge: { type: "month_end" },
+        period_policy: {
+            mode: "recurring",
+            period: { type: "month", startDay: 1 }
+        },
         cards: ["hangseng_travel_plus"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_hangseng_travel_plus", target: 6000 },
@@ -145,7 +163,10 @@ const CAMPAIGNS = [
         name: "Fubon iN 網購20X",
         icon: "fas fa-bolt",
         theme: "purple",
-        badge: { type: "month_end" },
+        period_policy: {
+            mode: "recurring",
+            period: { type: "month", startDay: 1 }
+        },
         cards: ["fubon_in_platinum"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_fubon_in_platinum", target: 1000 },
@@ -158,7 +179,10 @@ const CAMPAIGNS = [
         name: "DBS Black $2/里推廣",
         icon: "fas fa-gem",
         theme: "gray",
-        badge: { type: "month_end" },
+        period_policy: {
+            mode: "recurring",
+            period: { type: "month", startDay: 1 }
+        },
         cards: ["dbs_black"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_dbs_black", target: 20000 },
@@ -170,7 +194,10 @@ const CAMPAIGNS = [
         name: "sim 8% 網購推廣",
         icon: "fas fa-percent",
         theme: "green",
-        badge: { type: "month_end" },
+        period_policy: {
+            mode: "recurring",
+            period: { type: "month", startDay: 1 }
+        },
         cards: ["sim_credit"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", usageKey: "sim_non_online_spend", target: 500 },

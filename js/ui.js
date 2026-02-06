@@ -40,25 +40,50 @@ function formatPromoDate(dateStr) {
     return `推廣期至 ${dateStr} (剩 ${days} 日)`;
 }
 
-// Helper: Get Month End Date String (e.g. "2026-01-31")
-function getMonthEndStr() {
-    const now = new Date();
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(lastDay.getDate()).padStart(2, '0');
-    return `${now.getFullYear()}-${m}-${d}`;
+function getCampaignPeriodMeta(campaignId) {
+    if (!campaignId || typeof DATA === "undefined") return null;
+    const byCampaignId = DATA.periodPolicy && DATA.periodPolicy.byCampaignId ? DATA.periodPolicy.byCampaignId : null;
+    return byCampaignId ? (byCampaignId[campaignId] || null) : null;
 }
 
-// Helper: Get Quarter End Date String (e.g. "2026-03-31")
-function getQuarterEndStr() {
-    const now = new Date();
-    const currentMonth = now.getMonth(); // 0-11
-    const endMonth = Math.floor(currentMonth / 3) * 3 + 2;
-    const year = now.getFullYear();
-    const lastDay = new Date(year, endMonth + 1, 0);
-    const m = String(endMonth + 1).padStart(2, '0');
-    const d = String(lastDay.getDate()).padStart(2, '0');
-    return `${year}-${m}-${d}`;
+function formatPeriodEndBadge(periodSpec, campaignId) {
+    if (!periodSpec || !periodSpec.type) return "";
+    if (periodSpec.type === "promo") {
+        const endDate = periodSpec.endDate || "";
+        return endDate ? formatPromoDate(endDate) : "";
+    }
+
+    const today = new Date();
+    const bucketKey = getBucketKey(today, periodSpec.type, periodSpec, campaignId || null);
+    if (!bucketKey) return "";
+    const startDate = parseDateInput(bucketKey);
+    if (!startDate) return "";
+
+    let nextStart = null;
+    if (periodSpec.type === "month") nextStart = addMonths(startDate, 1);
+    else if (periodSpec.type === "quarter") nextStart = addMonths(startDate, 3);
+    else if (periodSpec.type === "year") nextStart = addMonths(startDate, 12);
+    if (!nextStart) return "";
+
+    const resetDate = new Date(nextStart.getTime());
+    resetDate.setDate(resetDate.getDate() - 1);
+    return formatResetDate(formatDateKey(resetDate));
+}
+
+function getCampaignBadgeText(campaign) {
+    if (!campaign || !campaign.id) return "";
+    const meta = getCampaignPeriodMeta(campaign.id);
+    if (!meta || !meta.badge) return "";
+    const badge = meta.badge;
+
+    if (badge.type === "promo_end") return badge.endDate ? formatPromoDate(badge.endDate) : "";
+    if (badge.type === "period_end" && badge.period) return formatPeriodEndBadge(badge.period, campaign.id);
+    if (badge.type === "month_end") return formatPeriodEndBadge({ type: "month", startDay: 1 }, campaign.id);
+    if (badge.type === "quarter_end") return formatPeriodEndBadge({ type: "quarter", startMonth: 1, startDay: 1 }, campaign.id);
+    if (badge.type === "year_end") return formatPeriodEndBadge({ type: "year", startMonth: 1, startDay: 1 }, campaign.id);
+    if (badge.type === "static_date") return badge.date ? formatPromoDate(badge.date) : "";
+    if (badge.type === "text") return badge.text ? String(badge.text) : "";
+    return "";
 }
 
 function resolveAnchorForKeyUi(key, entry, userProfile) {
@@ -616,8 +641,6 @@ function createResultCard(res, dataStr, mainValHtml, redemptionHtml) {
 
 function renderDashboard(userProfile) {
     const container = document.getElementById('dashboard-container');
-    const monthEndStr = getMonthEndStr();
-    const quarterEndStr = getQuarterEndStr();
     const renderedCaps = new Set();
     // If the same cap_key appears across multiple cards in the dataset, treat it as a shared cap.
     // In that case, avoid showing a specific owned card prefix in the title (e.g. HSBC 最紅自主).
@@ -710,16 +733,7 @@ function renderDashboard(userProfile) {
             if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
             if (status.capKeys) status.capKeys.forEach(k => renderedCaps.add(k));
 
-            let badgeText = "";
-            if (campaign.badge) {
-                if (campaign.badge.type === "month_end") badgeText = formatResetDate(monthEndStr);
-                if (campaign.badge.type === "quarter_end") badgeText = formatResetDate(quarterEndStr);
-                if (campaign.badge.type === "promo_end" && campaign.badge.moduleKey) {
-                    const mod = DATA.modules[campaign.badge.moduleKey] || (DATA.trackers && DATA.trackers[campaign.badge.moduleKey]);
-                    if (mod && mod[campaign.badge.field]) badgeText = formatPromoDate(mod[campaign.badge.field]);
-                    if (campaign.badge.staticDate) badgeText = formatPromoDate(campaign.badge.staticDate);
-                }
-            }
+            const badgeText = getCampaignBadgeText(campaign);
 
             html += createProgressCard({
                 title: campaign.name, icon: campaign.icon, theme: campaign.theme, badge: badgeText,

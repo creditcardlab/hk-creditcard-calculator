@@ -20,6 +20,7 @@ function buildCountersRegistry(data) {
     const modules = data && data.modules ? data.modules : {};
     const trackers = data && data.trackers ? data.trackers : {};
     const campaigns = data && data.campaigns ? data.campaigns : [];
+    const periodPolicyMap = (data && data.periodPolicy && data.periodPolicy.byCampaignId) ? data.periodPolicy.byCampaignId : {};
 
     const normalizePeriodSpec = (spec) => {
         if (!spec) return { periodType: "none", anchorRef: null };
@@ -63,12 +64,13 @@ function buildCountersRegistry(data) {
         });
     }
 
-    // From campaigns (UI display metadata that references resettable keys)
+    // From campaigns (period_policy is the single source for campaign counter periods)
     (campaigns || []).forEach((c) => {
         const campaignId = c && c.id ? c.id : "campaign";
-        const periodSpec = normalizePeriodSpec(c && c.period ? c.period : null);
+        const compiled = periodPolicyMap[campaignId] || null;
+        const periodSpec = normalizePeriodSpec(compiled && compiled.counterPeriod ? compiled.counterPeriod : null);
         const anchor = periodSpec.anchorRef ? { ...periodSpec.anchorRef, promoId: campaignId } : null;
-        const priority = periodSpec.periodType !== "none" ? 1 : 0;
+        const priority = periodSpec.periodType !== "none" ? 3 : 0;
         (c.capKeys || []).forEach((k) => addKey(k, `campaign:${campaignId}.capKeys`, periodSpec.periodType, anchor, priority, "campaign", campaignId));
         (c.sections || []).forEach((s, i) => {
             const secId = `${campaignId}.section${i + 1}`;

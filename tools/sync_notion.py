@@ -192,6 +192,7 @@ def bootstrap_child_databases(page_id, token):
         ("Trackers", "Tracker Key"),
         ("Conversions", "Conversion Src"),
         ("Campaigns", "Campaign ID"),
+        ("Campaign Period Windows", "Window ID"),
         ("Campaign Sections", "Section ID"),
         ("Campaign Registry", "Campaign ID"),
         ("Counters Registry", "Key"),
@@ -450,6 +451,7 @@ vm.createContext(ctx);
   'js/data_rules.js',
   'js/data_campaigns.js',
   'js/data_counters.js',
+  'js/period_policy.js',
   'js/data_notion_core_overrides.js',
   'js/data_notion_overrides.js',
   'js/data_index.js',
@@ -465,6 +467,7 @@ const out = {
   campaigns: (ctx.DATA && ctx.DATA.campaigns) ? ctx.DATA.campaigns : null,
   campaignRegistry: (ctx.DATA && ctx.DATA.campaignRegistry) ? ctx.DATA.campaignRegistry : null,
   countersRegistry: (ctx.DATA && ctx.DATA.countersRegistry) ? ctx.DATA.countersRegistry : null,
+  periodPolicy: (ctx.DATA && ctx.DATA.periodPolicy) ? ctx.DATA.periodPolicy : null,
   periodDefaults: (ctx.DATA && ctx.DATA.periodDefaults) ? ctx.DATA.periodDefaults : null,
 };
 process.stdout.write(JSON.stringify(out));
@@ -522,6 +525,7 @@ def sync(repo_root, page_url, token):
     counters_registry = data.get("countersRegistry") or {}
 
     campaign_db_name = pick_db_name(db_map, "Campaigns", ["Promotions"])
+    campaign_windows_db_name = pick_db_name(db_map, "Campaign Period Windows", ["Promotion Period Windows", "Campaign Windows"])
     campaign_sections_db_name = pick_db_name(db_map, "Campaign Sections", ["Promotion Sections"])
     campaign_registry_db_name = pick_db_name(db_map, "Campaign Registry", ["Promo Registry"])
 
@@ -781,10 +785,19 @@ def sync(repo_root, page_url, token):
             "Name": rt(""),
             "Theme": rt(""),
             "Icon": rt(""),
-            "Badge": rt(""),
             "Cards": rt(""),
             "Cap Keys": rt(""),
-            "Period": rt(""),
+            "Period Policy": rt(""),
+            "PP Mode": {"select": {"name": ""}},
+            "PP Period Type": {"select": {"name": ""}},
+            "PP Start Date": {"date": {}},
+            "PP End Date": {"date": {}},
+            "PP Start Day": num(None),
+            "PP Start Month": num(None),
+            "PP Recurrence Freq": {"select": {"name": ""}},
+            "PP Recurrence Interval": num(None),
+            "PP Recurrence Until": {"date": {}},
+            "PP Windows JSON": rt(""),
             "Data": rt(""),
             "Display Name (zh-HK)": rt(""),
             "Note (zh-HK)": rt(""),
@@ -797,14 +810,25 @@ def sync(repo_root, page_url, token):
         })
 
         def build_row_props(key, c):
+            policy = c.get("period_policy") if isinstance(c.get("period_policy"), dict) else {}
+            flat = build_period_policy_flat_fields(policy)
             return {
                 "Name": rt(c.get("name", "")),
                 "Theme": rt(c.get("theme", "")),
                 "Icon": rt(c.get("icon", "")),
-                "Badge": rt(json.dumps(c.get("badge", {}) if c.get("badge") is not None else {}, ensure_ascii=False)),
                 "Cards": rt(json.dumps(c.get("cards", []) if c.get("cards") is not None else [], ensure_ascii=False)),
                 "Cap Keys": rt(json.dumps(c.get("capKeys", []) if c.get("capKeys") is not None else [], ensure_ascii=False)),
-                "Period": rt(json.dumps(c.get("period", {}) if c.get("period") is not None else {}, ensure_ascii=False) if c.get("period") is not None else ""),
+                "Period Policy": rt(json.dumps(policy, ensure_ascii=False) if policy else ""),
+                "PP Mode": sel(flat.get("mode", "")),
+                "PP Period Type": sel(flat.get("period_type", "")),
+                "PP Start Date": datev(flat.get("start_date", "")),
+                "PP End Date": datev(flat.get("end_date", "")),
+                "PP Start Day": num(flat.get("start_day", None)),
+                "PP Start Month": num(flat.get("start_month", None)),
+                "PP Recurrence Freq": sel(flat.get("recurrence_freq", "")),
+                "PP Recurrence Interval": num(flat.get("recurrence_interval", None)),
+                "PP Recurrence Until": datev(flat.get("recurrence_until", "")),
+                "PP Windows JSON": rt(flat.get("windows_json", "")),
                 "Data": rt(json.dumps(c, ensure_ascii=False)),
                 "Source File": rt("js/data_campaigns.js"),
             }
@@ -818,6 +842,67 @@ def sync(repo_root, page_url, token):
             rows=[(c.get("id", ""), c) for c in campaigns if c.get("id")],
             build_row_props=build_row_props,
         )
+
+    if campaign_windows_db_name:
+        db_id = db_map[campaign_windows_db_name]
+        template_props = build_props("Window ID", "__template__", {
+            "Campaign ID": rt(""),
+            "Campaign": rels([]),
+            "Window Ref": rt(""),
+            "Mode": {"select": {"name": ""}},
+            "Period Type": {"select": {"name": ""}},
+            "Start Date": {"date": {}},
+            "End Date": {"date": {}},
+            "Start Day": num(None),
+            "Start Month": num(None),
+            "Recurrence Freq": {"select": {"name": ""}},
+            "Recurrence Interval": num(None),
+            "Recurrence Until": {"date": {}},
+            "Priority": num(None),
+            "Audience Rule": rt(""),
+            "Sync To Repo": chk(False),
+            "Source File": rt(""),
+        })
+
+        title_prop, allowed = resolve_title_prop(db_id, token, "Window ID", campaign_windows_db_name)
+        allowed = ensure_properties(db_id, token, template_props, campaign_windows_db_name)
+
+        for camp in campaigns:
+            camp_id = camp.get("id", "")
+            if not camp_id:
+                continue
+            camp_page_id = campaign_page_ids.get(camp_id)
+            policy = camp.get("period_policy") if isinstance(camp.get("period_policy"), dict) else {}
+            mode = str(policy.get("mode", "")).strip()
+            windows = list_policy_windows(policy)
+            for idx, window in windows:
+                flat = build_window_fields_from_policy_window(policy, idx, window)
+                window_ref = str(flat.get("id") or f"window_{idx}")
+                window_id = f"{camp_id}#{window_ref}"
+                props = {
+                    "Campaign ID": rt(camp_id),
+                    **({"Campaign": rels([camp_page_id])} if (camp_page_id and "Campaign" in allowed) else {}),
+                    "Window Ref": rt(window_ref),
+                    "Mode": sel(mode),
+                    "Period Type": sel(flat.get("period_type", "")),
+                    "Start Date": datev(flat.get("start_date", "")),
+                    "End Date": datev(flat.get("end_date", "")),
+                    "Start Day": num(flat.get("start_day", None)),
+                    "Start Month": num(flat.get("start_month", None)),
+                    "Recurrence Freq": sel(flat.get("recurrence_freq", "")),
+                    "Recurrence Interval": num(flat.get("recurrence_interval", None)),
+                    "Recurrence Until": datev(flat.get("recurrence_until", "")),
+                    "Priority": num(flat.get("priority", idx)),
+                    "Audience Rule": rt(flat.get("audience_rule", "")),
+                    "Source File": rt("js/data_campaigns.js"),
+                }
+                props = build_props(title_prop, window_id, props)
+                props = filter_props(props, allowed, f"{campaign_windows_db_name}:{window_id}")
+                page_id_existing = query_page_by_title(db_id, title_prop, window_id, token)
+                if page_id_existing:
+                    update_page(page_id_existing, props, token)
+                else:
+                    create_page(db_id, props, token)
 
     if campaign_sections_db_name:
         db_id = db_map[campaign_sections_db_name]
@@ -993,6 +1078,333 @@ def normalize_core_entry(entry, fields):
     return out
 
 
+def parse_json_text(raw, context):
+    if raw is None:
+        return None
+    text = str(raw).strip()
+    if text == "":
+        return None
+    try:
+        return json.loads(text)
+    except Exception:
+        print(f"[warn] {context}: invalid JSON, skipping")
+        return None
+
+
+def normalize_date_text(raw):
+    if raw is None:
+        return ""
+    text = str(raw).strip()
+    if not text:
+        return ""
+    m = re.match(r"^(\d{4}-\d{2}-\d{2})", text)
+    return m.group(1) if m else ""
+
+
+def extract_select_or_text(props, name):
+    val = extract_select(props, name)
+    if val:
+        return val
+    return extract_rich_text(props, name)
+
+
+def extract_date_or_text(props, name):
+    val = extract_date(props, name)
+    if val:
+        return val
+    return normalize_date_text(extract_rich_text(props, name))
+
+
+def build_period_policy_flat_fields(policy):
+    policy = policy if isinstance(policy, dict) else {}
+    windows = policy.get("windows") if isinstance(policy.get("windows"), list) else []
+    primary_window = windows[0] if windows and isinstance(windows[0], dict) else {}
+    period = policy.get("period") if isinstance(policy.get("period"), dict) else {}
+    if not period and isinstance(primary_window.get("period"), dict):
+        period = primary_window.get("period")
+    recurrence = policy.get("recurrence") if isinstance(policy.get("recurrence"), dict) else {}
+    if not recurrence and isinstance(primary_window.get("recurrence"), dict):
+        recurrence = primary_window.get("recurrence")
+
+    start_date = normalize_date_text(
+        primary_window.get("startDate")
+        or primary_window.get("start")
+        or primary_window.get("startAt")
+        or primary_window.get("start_at")
+        or policy.get("startDate")
+        or policy.get("start")
+        or policy.get("startAt")
+        or policy.get("start_at")
+        or policy.get("valid_from")
+    )
+    end_date = normalize_date_text(
+        primary_window.get("endDate")
+        or primary_window.get("end")
+        or primary_window.get("endAt")
+        or primary_window.get("end_at")
+        or policy.get("endDate")
+        or policy.get("end")
+        or policy.get("endAt")
+        or policy.get("end_at")
+        or policy.get("valid_to")
+    )
+    if not start_date and period.get("type") == "promo":
+        start_date = normalize_date_text(period.get("startDate"))
+    if not end_date and period.get("type") == "promo":
+        end_date = normalize_date_text(period.get("endDate"))
+
+    windows_json = json.dumps(windows, ensure_ascii=False) if windows else ""
+    recurrence_until = normalize_date_text(recurrence.get("until"))
+
+    return {
+        "mode": str(policy.get("mode", "")).strip(),
+        "period_type": str(period.get("type", "")).strip(),
+        "start_date": start_date,
+        "end_date": end_date,
+        "start_day": period.get("startDay"),
+        "start_month": period.get("startMonth"),
+        "recurrence_freq": str(recurrence.get("freq", "")).strip(),
+        "recurrence_interval": recurrence.get("interval"),
+        "recurrence_until": recurrence_until,
+        "windows_json": windows_json
+    }
+
+
+def build_period_policy_from_flat_props(row_props, context):
+    policy = {}
+
+    mode = extract_select_or_text(row_props, "PP Mode")
+    if mode:
+        policy["mode"] = mode
+
+    period = {}
+    period_type = extract_select_or_text(row_props, "PP Period Type")
+    if period_type:
+        period["type"] = period_type
+
+    start_date = extract_date_or_text(row_props, "PP Start Date")
+    end_date = extract_date_or_text(row_props, "PP End Date")
+    if start_date and period_type == "promo":
+        period["startDate"] = start_date
+    if end_date and period_type == "promo":
+        period["endDate"] = end_date
+
+    start_day = extract_number(row_props, "PP Start Day")
+    if start_day is not None:
+        period["startDay"] = int(start_day)
+    start_month = extract_number(row_props, "PP Start Month")
+    if start_month is not None:
+        period["startMonth"] = int(start_month)
+    if period:
+        policy["period"] = period
+
+    recurrence = {}
+    rec_freq = extract_select_or_text(row_props, "PP Recurrence Freq")
+    if rec_freq:
+        recurrence["freq"] = rec_freq
+    rec_interval = extract_number(row_props, "PP Recurrence Interval")
+    if rec_interval is not None:
+        recurrence["interval"] = int(rec_interval)
+    rec_until = extract_date_or_text(row_props, "PP Recurrence Until")
+    if rec_until:
+        recurrence["until"] = rec_until
+    if recurrence:
+        policy["recurrence"] = recurrence
+
+    windows_raw = extract_rich_text(row_props, "PP Windows JSON")
+    windows = parse_json_text(windows_raw, f"{context}.PP Windows JSON")
+    if isinstance(windows, list):
+        policy["windows"] = windows
+
+    if not policy:
+        return {}
+
+    if start_date and "windows" not in policy and period_type != "promo":
+        policy["startDate"] = start_date
+    if end_date and "windows" not in policy and period_type != "promo":
+        policy["endDate"] = end_date
+    return policy
+
+
+def merge_period_policy(base, patch):
+    out = dict(base or {})
+    for key, value in (patch or {}).items():
+        if value is None:
+            continue
+        if isinstance(value, str) and value == "":
+            continue
+        if key in ("period", "recurrence") and isinstance(value, dict):
+            merged = dict(out.get(key) if isinstance(out.get(key), dict) else {})
+            merged.update(value)
+            out[key] = merged
+            continue
+        out[key] = value
+    return out
+
+
+def list_policy_windows(policy):
+    policy = policy if isinstance(policy, dict) else {}
+    windows = policy.get("windows") if isinstance(policy.get("windows"), list) else []
+    out = []
+
+    if windows:
+        for idx, window in enumerate(windows, start=1):
+            if not isinstance(window, dict):
+                continue
+            out.append((idx, window))
+        return out
+
+    if policy:
+        out.append((1, policy))
+    return out
+
+
+def build_window_fields_from_policy_window(policy, window_idx, window):
+    policy = policy if isinstance(policy, dict) else {}
+    window = window if isinstance(window, dict) else {}
+    period = window.get("period") if isinstance(window.get("period"), dict) else {}
+    recurrence = window.get("recurrence") if isinstance(window.get("recurrence"), dict) else {}
+    if not recurrence and isinstance(policy.get("recurrence"), dict):
+        recurrence = policy.get("recurrence")
+
+    start_date = normalize_date_text(
+        window.get("startDate") or window.get("start") or window.get("startAt") or window.get("start_at")
+        or policy.get("startDate") or policy.get("start") or policy.get("startAt") or policy.get("start_at")
+    )
+    end_date = normalize_date_text(
+        window.get("endDate") or window.get("end") or window.get("endAt") or window.get("end_at")
+        or policy.get("endDate") or policy.get("end") or policy.get("endAt") or policy.get("end_at")
+    )
+    if not start_date and period.get("type") == "promo":
+        start_date = normalize_date_text(period.get("startDate"))
+    if not end_date and period.get("type") == "promo":
+        end_date = normalize_date_text(period.get("endDate"))
+    if not end_date:
+        end_date = normalize_date_text(recurrence.get("until"))
+
+    out = {
+        "id": str(window.get("id") or f"window_{window_idx}"),
+        "priority": int(window.get("priority")) if isinstance(window.get("priority"), (int, float)) else window_idx,
+        "start_date": start_date,
+        "end_date": end_date,
+        "period_type": str(period.get("type", "")).strip(),
+        "start_day": period.get("startDay"),
+        "start_month": period.get("startMonth"),
+        "recurrence_freq": str(recurrence.get("freq", "")).strip(),
+        "recurrence_interval": recurrence.get("interval"),
+        "recurrence_until": normalize_date_text(recurrence.get("until")),
+        "audience_rule": str(window.get("audienceRule") or window.get("audience_rule") or "").strip()
+    }
+    return out
+
+
+def build_period_window_from_row_props(row_props, context):
+    period = {}
+    period_type = extract_select_or_text(row_props, "Period Type")
+    if period_type:
+        period["type"] = period_type
+    start_day = extract_number(row_props, "Start Day")
+    if start_day is not None:
+        period["startDay"] = int(start_day)
+    start_month = extract_number(row_props, "Start Month")
+    if start_month is not None:
+        period["startMonth"] = int(start_month)
+
+    recurrence = {}
+    rec_freq = extract_select_or_text(row_props, "Recurrence Freq")
+    if rec_freq:
+        recurrence["freq"] = rec_freq
+    rec_interval = extract_number(row_props, "Recurrence Interval")
+    if rec_interval is not None:
+        recurrence["interval"] = int(rec_interval)
+    rec_until = extract_date_or_text(row_props, "Recurrence Until")
+    if rec_until:
+        recurrence["until"] = rec_until
+
+    window = {}
+    wid = extract_rich_text(row_props, "Window Ref")
+    if wid:
+        window["id"] = wid
+    start_date = extract_date_or_text(row_props, "Start Date")
+    if start_date:
+        window["startDate"] = start_date
+    end_date = extract_date_or_text(row_props, "End Date")
+    if end_date:
+        window["endDate"] = end_date
+    if period:
+        if period.get("type") == "promo":
+            if "startDate" in window:
+                period["startDate"] = window["startDate"]
+            if "endDate" in window:
+                period["endDate"] = window["endDate"]
+        window["period"] = period
+    if recurrence:
+        window["recurrence"] = recurrence
+    priority = extract_number(row_props, "Priority")
+    if priority is not None:
+        window["priority"] = int(priority)
+    audience_rule = extract_rich_text(row_props, "Audience Rule")
+    if audience_rule:
+        window["audienceRule"] = audience_rule
+
+    if not window:
+        print(f"[warn] {context}: empty period window row, skipping")
+        return None
+    return window
+
+
+def sort_period_windows(windows):
+    def keyfn(w):
+        pri = w.get("priority")
+        pri_num = int(pri) if isinstance(pri, (int, float)) else 0
+        sd = normalize_date_text(w.get("startDate"))
+        ed = normalize_date_text(w.get("endDate"))
+        wid = str(w.get("id", ""))
+        return (pri_num, sd, ed, wid)
+
+    return sorted((w for w in windows if isinstance(w, dict)), key=keyfn)
+
+
+def pull_campaign_windows_core(db_id, token, db_label, campaign_ids=None):
+    db = get_database(db_id, token)
+    props = db.get("properties") or {}
+    allowed = set(props.keys())
+    title_prop = "Window ID" if "Window ID" in allowed else get_title_prop_name(db)
+    if not title_prop:
+        print(f"[warn] {db_label}: missing title property, skipping period windows pull")
+        return {}
+
+    wanted = set(campaign_ids or [])
+    rows = query_database(db_id, token)
+    by_campaign = {}
+    for row in rows:
+        row_props = row.get("properties") or {}
+        row_title = extract_title_value(row_props.get(title_prop))
+        campaign_id = extract_rich_text(row_props, "Campaign ID")
+        if not campaign_id and row_title and "#" in row_title:
+            campaign_id = row_title.split("#", 1)[0].strip()
+        if not campaign_id:
+            continue
+        if wanted and campaign_id not in wanted:
+            continue
+
+        window = build_period_window_from_row_props(row_props, f"{db_label}:{row_title or campaign_id}")
+        if not window:
+            continue
+        if "id" not in window:
+            window_ref = extract_rich_text(row_props, "Window Ref")
+            if window_ref:
+                window["id"] = window_ref
+            elif row_title and "#" in row_title:
+                window["id"] = row_title.split("#", 1)[1].strip()
+
+        by_campaign.setdefault(campaign_id, []).append(window)
+
+    for cid in list(by_campaign.keys()):
+        by_campaign[cid] = sort_period_windows(by_campaign[cid])
+    return by_campaign
+
+
 def pull_modules_core(db_id, token, db_label):
     """
     Pull a controlled subset of module-core fields from Notion.
@@ -1087,6 +1499,71 @@ def pull_modules_core(db_id, token, db_label):
             "min_spend", "min_single_spend",
             "req_mission_spend", "req_mission_key",
         ])
+        if entry:
+            overrides[key] = entry
+            page_ids.append(row.get("id"))
+
+    return overrides, page_ids
+
+
+def pull_campaigns_core(db_id, token, db_label, windows_db_id=None, windows_db_label="Campaign Period Windows"):
+    """
+    Pull campaign-core fields from Notion.
+    Gate: only rows with 'Sync To Repo' checked.
+    """
+    db = get_database(db_id, token)
+    props = db.get("properties") or {}
+    allowed = set(props.keys())
+    title_prop = "Campaign ID" if "Campaign ID" in allowed else get_title_prop_name(db)
+    if not title_prop:
+        print(f"[warn] {db_label}: missing title property, skipping core pull")
+        return {}, []
+    if "Sync To Repo" not in allowed:
+        print(f"[warn] {db_label}: missing 'Sync To Repo' checkbox, skipping core pull")
+        return {}, []
+    if props.get("Sync To Repo", {}).get("type") != "checkbox":
+        print(f"[warn] {db_label}: 'Sync To Repo' is not a checkbox, skipping core pull")
+        return {}, []
+
+    rows = query_database(db_id, token, {"property": "Sync To Repo", "checkbox": {"equals": True}})
+    campaign_ids = []
+    for row in rows:
+        row_props = row.get("properties") or {}
+        key = extract_title_value(row_props.get(title_prop))
+        if key:
+            campaign_ids.append(key)
+
+    windows_by_campaign = {}
+    if windows_db_id and campaign_ids:
+        try:
+            windows_by_campaign = pull_campaign_windows_core(windows_db_id, token, windows_db_label, campaign_ids=campaign_ids)
+        except Exception as e:
+            print(f"[warn] {windows_db_label}: failed to pull period windows: {e}")
+            windows_by_campaign = {}
+
+    overrides = {}
+    page_ids = []
+    for row in rows:
+        row_props = row.get("properties") or {}
+        key = extract_title_value(row_props.get(title_prop))
+        if not key:
+            continue
+        entry = {}
+
+        period_policy_raw = extract_rich_text(row_props, "Period Policy") if "Period Policy" in row_props else ""
+        period_policy = parse_json_text(period_policy_raw, f"{db_label}:{key}.Period Policy")
+        base_policy = period_policy if isinstance(period_policy, dict) else {}
+        flat_policy = build_period_policy_from_flat_props(row_props, f"{db_label}:{key}")
+        merged_policy = merge_period_policy(base_policy, flat_policy)
+        windows = windows_by_campaign.get(key) if windows_by_campaign else None
+        if isinstance(windows, list) and windows:
+            merged_policy["windows"] = windows
+            if not merged_policy.get("mode"):
+                merged_policy["mode"] = "composite" if len(windows) > 1 else "fixed"
+        if isinstance(merged_policy, dict) and merged_policy:
+            entry["period_policy"] = merged_policy
+
+        entry = normalize_core_entry(entry, ["period_policy"])
         if entry:
             overrides[key] = entry
             page_ids.append(row.get("id"))
@@ -1189,6 +1666,7 @@ def pull_overrides(repo_root, page_url, token, overrides_out, pull_dbs=None, ack
         if title not in db_map:
             db_map[title] = db_id
     campaign_db_name = pick_db_name(db_map, "Campaigns", ["Promotions"])
+    campaign_windows_db_name = pick_db_name(db_map, "Campaign Period Windows", ["Promotion Period Windows", "Campaign Windows"])
     campaign_sections_db_name = pick_db_name(db_map, "Campaign Sections", ["Promotion Sections"])
 
     allowed_set = None
@@ -1318,6 +1796,7 @@ def pull_core(repo_root, page_url, token, core_out_path, core_dbs=None, ack=Fals
     for title, db_id in (discover_linked_databases(page_id, token) or {}).items():
         if title not in db_map:
             db_map[title] = db_id
+    campaign_db_name = pick_db_name(db_map, "Campaigns", ["Promotions"])
 
     allowed_set = None
     if core_dbs:
@@ -1328,7 +1807,7 @@ def pull_core(repo_root, page_url, token, core_out_path, core_dbs=None, ack=Fals
             return True
         return name in allowed_set
 
-    overrides = {"version": 1, "cards": {}, "modules": {}}
+    overrides = {"version": 1, "cards": {}, "modules": {}, "campaigns": {}}
     ack_ids = []
 
     if db_allowed("cards") and db_map.get("Cards"):
@@ -1352,6 +1831,24 @@ def pull_core(repo_root, page_url, token, core_out_path, core_dbs=None, ack=Fals
     else:
         if db_allowed("modules"):
             print("[warn] pull-core: 'Modules' database not found under this page")
+
+    if db_allowed("campaigns") and campaign_db_name and db_map.get(campaign_db_name):
+        windows_db_id = db_map.get(campaign_windows_db_name) if campaign_windows_db_name else None
+        data, ids = pull_campaigns_core(
+            db_map[campaign_db_name],
+            token,
+            campaign_db_name,
+            windows_db_id=windows_db_id,
+            windows_db_label=campaign_windows_db_name or "Campaign Period Windows"
+        )
+        campaigns_out = {}
+        for k, v in sorted(data.items()):
+            campaigns_out[k] = v
+        overrides["campaigns"] = campaigns_out
+        ack_ids.extend(ids)
+    else:
+        if db_allowed("campaigns"):
+            print("[warn] pull-core: 'Campaigns' database not found under this page")
 
     out_path = core_out_path if os.path.isabs(core_out_path) else os.path.join(repo_root, core_out_path)
     with open(out_path, "w", encoding="utf-8") as f:
@@ -1386,9 +1883,9 @@ def main():
     parser.add_argument("--pull-overrides", action="store_true", help="Pull Notion overrides into js/data_notion_overrides.js")
     parser.add_argument("--overrides-out", default="js/data_notion_overrides.js", help="Output path for overrides JS")
     parser.add_argument("--pull-db", action="append", help="Limit override pull to specific DBs (repeatable)")
-    parser.add_argument("--pull-core", action="store_true", help="Pull Notion core edits (MVP: Cards + Modules) into js/data_notion_core_overrides.js")
+    parser.add_argument("--pull-core", action="store_true", help="Pull Notion core edits (Cards + Modules + Campaigns period policy) into js/data_notion_core_overrides.js")
     parser.add_argument("--core-out", default="js/data_notion_core_overrides.js", help="Output path for core overrides JS")
-    parser.add_argument("--core-db", action="append", help="Limit core pull to specific DBs (repeatable, e.g. 'modules')")
+    parser.add_argument("--core-db", action="append", help="Limit core pull to specific DBs (repeatable, e.g. 'modules', 'campaigns')")
     parser.add_argument("--ack", action="store_true", help="After pulling, uncheck Sync To Repo for pulled rows")
     args = parser.parse_args()
 

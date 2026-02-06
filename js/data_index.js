@@ -95,6 +95,7 @@
             "req_mission_spend",
             "req_mission_key"
         ];
+        const allowedCampaignCoreFields = ["period_policy"];
 
         if (core.modules && data.modules) {
             Object.keys(core.modules).forEach((id) => {
@@ -109,6 +110,14 @@
                 const card = data.cards.find(c => c && c.id === id);
                 if (!card) return;
                 applyFields(card, core.cards[id], allowedCardCoreFields);
+            });
+        }
+
+        if (core.campaigns && data.campaigns) {
+            Object.keys(core.campaigns).forEach((id) => {
+                const campaign = data.campaigns.find(c => c && c.id === id);
+                if (!campaign) return;
+                applyFields(campaign, core.campaigns[id], allowedCampaignCoreFields);
             });
         }
     };
@@ -185,6 +194,12 @@
 
     if (typeof NOTION_OVERRIDES !== "undefined") {
         applyOverrides(NOTION_OVERRIDES);
+    }
+
+    if (typeof compilePeriodPolicies === "function") {
+        data.periodPolicy = compilePeriodPolicies(data);
+    } else {
+        data.periodPolicy = { byCampaignId: {}, warnings: [] };
     }
 
     // Build derived registries after core overrides are applied, so caps/keys are consistent.

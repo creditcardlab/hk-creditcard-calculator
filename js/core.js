@@ -132,6 +132,12 @@ function getForeignFeeRate(card, category) {
 
 function buildPromoStatus(promo, userProfile, modulesDB) {
     if (!promo || !userProfile) return null;
+    const policyMeta = (typeof DATA !== "undefined" && DATA.periodPolicy && DATA.periodPolicy.byCampaignId && promo.id)
+        ? DATA.periodPolicy.byCampaignId[promo.id]
+        : null;
+    if (policyMeta && policyMeta.hasDateWindows && !policyMeta.isActive) {
+        return { eligible: false };
+    }
     const eligible = Array.isArray(promo.cards) && promo.cards.some(id => (userProfile.ownedCards || []).includes(id));
     if (!eligible) return { eligible: false };
 

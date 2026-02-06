@@ -39,6 +39,7 @@ function bootAppContext() {
     "data_rules.js",
     "data_campaigns.js",
     "data_counters.js",
+    "period_policy.js",
     "data_notion_core_overrides.js",
     "data_notion_overrides.js",
     "data_index.js",

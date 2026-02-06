@@ -46,6 +46,7 @@ function loadData() {
     "data_rules.js",
     "data_campaigns.js",
     "data_counters.js",
+    "period_policy.js",
     "data_index.js",
   ].map((file) => path.resolve(ROOT, "js", file));
 

@@ -41,6 +41,7 @@ function loadData() {
     "data_rules.js",
     "data_campaigns.js",
     "data_counters.js",
+    "period_policy.js",
     "data_notion_core_overrides.js",
     "data_index.js"
   ].map((file) => path.resolve(ROOT, "js", file));
@@ -79,7 +80,8 @@ function main() {
     campaigns: data.campaigns || [],
     categories: data.categories || {},
     campaignRegistry: data.campaignRegistry || {},
-    countersRegistry: data.countersRegistry || {}
+    countersRegistry: data.countersRegistry || {},
+    periodPolicy: data.periodPolicy || {}
   };
 
   const normalized = normalizeForExport(exportData);

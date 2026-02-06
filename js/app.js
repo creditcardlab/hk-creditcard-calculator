@@ -140,6 +140,10 @@ function resetCountersForPeriod(period) {
         const anchor = resolveAnchorForKey(key, entry);
         const bucketKey = getBucketKey(today, period, anchor, anchor && anchor.promoId);
         if (!bucketKey) return;
+        if (!Object.prototype.hasOwnProperty.call(byKey, key)) {
+            byKey[key] = bucketKey;
+            return;
+        }
         if (byKey[key] !== bucketKey) {
             delete userProfile.usage[key];
             byKey[key] = bucketKey;
