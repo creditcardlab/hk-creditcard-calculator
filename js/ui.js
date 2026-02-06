@@ -714,11 +714,14 @@ function renderDashboard(userProfile) {
         DATA.campaigns.forEach(campaign => {
             const status = (typeof buildPromoStatus === "function") ? buildPromoStatus(campaign, userProfile, DATA.modules) : null;
             if (!status || !status.eligible) return;
+            const campaignTitle = (campaign.display_name_zhhk && String(campaign.display_name_zhhk).trim())
+                ? String(campaign.display_name_zhhk).trim()
+                : campaign.name;
 
             const reg = (DATA.campaignRegistry && campaign && campaign.id) ? DATA.campaignRegistry[campaign.id] : null;
 	        if (reg && reg.settingKey && userProfile.settings[reg.settingKey] === false) {
 	            html += renderWarningCard(
-	                reg.warningTitle || campaign.name,
+	                reg.warningTitle || campaignTitle,
 	                campaign.icon,
 	                reg.warningDesc || cget("warning.needRegister", "需登記以賺取回贈"),
 	                reg.settingKey
@@ -736,7 +739,7 @@ function renderDashboard(userProfile) {
             const badgeText = getCampaignBadgeText(campaign);
 
             html += createProgressCard({
-                title: campaign.name, icon: campaign.icon, theme: campaign.theme, badge: badgeText,
+                title: campaignTitle, icon: campaign.icon, theme: campaign.theme, badge: badgeText,
                 sections: sections
             });
         });

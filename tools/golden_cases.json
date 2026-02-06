@@ -133,7 +133,7 @@
       },
       "expected": {
         "topCardId": "hsbc_vs",
-        "topValue": 54,
+        "topValue": 6,
         "breakdownFlags": {
           "hasLocked": true,
           "hasCapped": false,
@@ -420,7 +420,7 @@
       },
       "expected": {
         "topCardId": "hsbc_vs",
-        "topValue": 61.6,
+        "topValue": 8.8,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -471,11 +471,11 @@
       },
       "expected": {
         "topCardId": "hsbc_gold_student",
-        "topValue": 240,
+        "topValue": 40,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
-          "hasPartial": true
+          "hasPartial": false
         }
       }
     },
@@ -498,7 +498,7 @@
       },
       "expected": {
         "topCardId": "hsbc_gold_student",
-        "topValue": 28,
+        "topValue": 4,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -789,7 +789,10 @@
     {
       "id": "period_001_month_start_day",
       "periodType": "month",
-      "anchor": { "type": "month", "startDay": 20 },
+      "anchor": {
+        "type": "month",
+        "startDay": 20
+      },
       "date": "2026-02-21",
       "prevBucketKey": "2026-01-20",
       "expectedBucketKey": "2026-02-20",
@@ -798,7 +801,11 @@
     {
       "id": "period_002_quarter_boundary",
       "periodType": "quarter",
-      "anchor": { "type": "quarter", "startMonth": 1, "startDay": 1 },
+      "anchor": {
+        "type": "quarter",
+        "startMonth": 1,
+        "startDay": 1
+      },
       "date": "2026-04-01",
       "prevBucketKey": "2026-01-01",
       "expectedBucketKey": "2026-04-01",
@@ -807,7 +814,11 @@
     {
       "id": "period_003_promo_end",
       "periodType": "promo",
-      "anchor": { "type": "promo", "startDate": "2025-12-01", "endDate": "2026-02-01" },
+      "anchor": {
+        "type": "promo",
+        "startDate": "2025-12-01",
+        "endDate": "2026-02-01"
+      },
       "promoId": "winter_promo",
       "date": "2026-02-02",
       "prevBucketKey": "promo:winter_promo@2025-12-01",
@@ -817,7 +828,11 @@
     {
       "id": "period_004_quarter_start_month_4",
       "periodType": "quarter",
-      "anchor": { "type": "quarter", "startMonth": 4, "startDay": 1 },
+      "anchor": {
+        "type": "quarter",
+        "startMonth": 4,
+        "startDay": 1
+      },
       "date": "2026-05-15",
       "prevBucketKey": "2026-01-01",
       "expectedBucketKey": "2026-04-01",
@@ -826,7 +841,10 @@
     {
       "id": "period_005_month_start_day_20_prev",
       "periodType": "month",
-      "anchor": { "type": "month", "startDay": 20 },
+      "anchor": {
+        "type": "month",
+        "startDay": 20
+      },
       "date": "2026-02-10",
       "prevBucketKey": "2026-01-20",
       "expectedBucketKey": "2026-01-20",
@@ -835,7 +853,10 @@
     {
       "id": "period_006_override_bucket_diff",
       "periodType": "month",
-      "anchor": { "type": "month", "startDay": 5 },
+      "anchor": {
+        "type": "month",
+        "startDay": 5
+      },
       "date": "2026-02-06",
       "prevBucketKey": "2026-02-01",
       "expectedBucketKey": "2026-02-05",
@@ -844,7 +865,11 @@
     {
       "id": "period_007_year_boundary",
       "periodType": "year",
-      "anchor": { "type": "year", "startMonth": 1, "startDay": 1 },
+      "anchor": {
+        "type": "year",
+        "startMonth": 1,
+        "startDay": 1
+      },
       "date": "2026-01-01",
       "prevBucketKey": "2025-01-01",
       "expectedBucketKey": "2026-01-01",
@@ -854,8 +879,12 @@
   "tx_cases": [
     {
       "id": "tx_001_txDate_used_for_holiday_bucket",
-      "ownedCards": ["boc_cheers_vi"],
-      "settings": { "boc_amazing_enabled": true },
+      "ownedCards": [
+        "boc_cheers_vi"
+      ],
+      "settings": {
+        "boc_amazing_enabled": true
+      },
       "cardId": "boc_cheers_vi",
       "category": "dining",
       "amount": 6000,

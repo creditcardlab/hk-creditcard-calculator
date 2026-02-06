@@ -628,6 +628,16 @@ def sync(repo_root, page_url, token):
     if "Modules" in db_map:
         db_id = db_map["Modules"]
         template_props = build_props("Module Key", "__template__", {
+            "Offer Name": rt(""),
+            "Rule Template": {"select": {"name": ""}},
+            "Apply Mode": {"select": {"name": ""}},
+            "Reward Type": {"select": {"name": ""}},
+            "Reward Value": num(None),
+            "Active From": {"date": {}},
+            "Active To": {"date": {}},
+            "Category IDs": mselect([]),
+            "Mission Spend Target": num(None),
+            "Mission Credit Mode": {"select": {"name": ""}},
             "Type": rt(""),
             "Desc": rt(""),
             "Data": rt(""),
@@ -665,7 +675,18 @@ def sync(repo_root, page_url, token):
 
         def build_row_props(key, m):
             match = m.get("match", []) if isinstance(m.get("match", None), list) else []
+            flat = build_module_flat_fields(m)
             return {
+                "Offer Name": rt(flat.get("offer_name", "")),
+                "Rule Template": sel(flat.get("rule_template", "")),
+                "Apply Mode": sel(flat.get("apply_mode", "")),
+                "Reward Type": sel(flat.get("reward_type", "")),
+                "Reward Value": num(flat.get("reward_value", None)),
+                "Active From": datev(flat.get("active_from", "")),
+                "Active To": datev(flat.get("active_to", "")),
+                "Category IDs": mselect(flat.get("category_ids", [])),
+                "Mission Spend Target": num(flat.get("mission_spend_target", None)),
+                "Mission Credit Mode": sel(flat.get("mission_credit_mode", "")),
                 "Type": rt(m.get("type", "")),
                 "Desc": rt(m.get("desc", "")),
                 "Data": rt(json.dumps(m, ensure_ascii=False)),
@@ -1115,6 +1136,109 @@ def extract_date_or_text(props, name):
     return normalize_date_text(extract_rich_text(props, name))
 
 
+def build_module_flat_fields(module):
+    module = module if isinstance(module, dict) else {}
+
+    reward_type = ""
+    reward_value = None
+    if module.get("rate") is not None:
+        reward_type = "percent"
+        reward_value = module.get("rate")
+    elif module.get("rate_per_x") is not None:
+        reward_type = "rate_per_x"
+        reward_value = module.get("rate_per_x")
+    elif module.get("multiplier") is not None:
+        reward_type = "multiplier"
+        reward_value = module.get("multiplier")
+
+    apply_mode = str(module.get("mode", "")).strip().lower()
+    if not apply_mode and str(module.get("type", "")).strip().lower() == "always":
+        apply_mode = "always"
+
+    match = module.get("match") if isinstance(module.get("match"), list) else []
+
+    mission_credit_mode = ""
+    if module.get("req_mission_spend") is not None or module.get("req_mission_key"):
+        mission_credit_mode = "from_unlock_only" if module.get("retroactive") is False else "retroactive"
+
+    rule_template = "standard_rate"
+    mtype = str(module.get("type", "")).strip().lower()
+    if mtype == "guru_capped":
+        rule_template = "level_capped"
+    elif mtype in ("tiered_cap", "tier_cap"):
+        rule_template = "tiered_cap"
+    elif mission_credit_mode == "from_unlock_only":
+        rule_template = "mission_non_retroactive"
+    elif mission_credit_mode == "retroactive":
+        rule_template = "mission_retroactive"
+
+    return {
+        "offer_name": str(module.get("desc", "")).strip(),
+        "rule_template": rule_template,
+        "apply_mode": apply_mode,
+        "reward_type": reward_type,
+        "reward_value": reward_value,
+        "active_from": normalize_date_text(module.get("valid_from")),
+        "active_to": normalize_date_text(module.get("valid_to") or module.get("promo_end")),
+        "category_ids": match,
+        "mission_spend_target": module.get("req_mission_spend"),
+        "mission_credit_mode": mission_credit_mode,
+    }
+
+
+def build_module_core_from_flat_props(row_props, context):
+    entry = {}
+
+    offer_name = extract_rich_text(row_props, "Offer Name")
+    if offer_name:
+        entry["desc"] = offer_name
+
+    reward_type = extract_select_or_text(row_props, "Reward Type").strip().lower()
+    reward_value = extract_number(row_props, "Reward Value")
+    if reward_value is not None:
+        if reward_type in ("percent", "rate"):
+            entry["rate"] = reward_value
+        elif reward_type == "rate_per_x":
+            entry["rate_per_x"] = reward_value
+        elif reward_type == "multiplier":
+            entry["multiplier"] = reward_value
+        elif reward_type:
+            print(f"[warn] {context}: unsupported Reward Type '{reward_type}', skipping")
+
+    apply_mode = extract_select_or_text(row_props, "Apply Mode").strip().lower()
+    if apply_mode in ("add", "replace"):
+        entry["mode"] = apply_mode
+    elif apply_mode and apply_mode not in ("always", "base"):
+        print(f"[warn] {context}: unsupported Apply Mode '{apply_mode}', skipping")
+
+    active_from = extract_date_or_text(row_props, "Active From")
+    if active_from:
+        entry["valid_from"] = active_from
+
+    active_to = extract_date_or_text(row_props, "Active To")
+    if active_to:
+        entry["valid_to"] = active_to
+        entry["promo_end"] = active_to
+
+    category_ids = extract_multi_select(row_props, "Category IDs")
+    if category_ids:
+        entry["match"] = category_ids
+
+    mission_target = extract_number(row_props, "Mission Spend Target")
+    if mission_target is not None:
+        entry["req_mission_spend"] = mission_target
+
+    mission_credit_mode = extract_select_or_text(row_props, "Mission Credit Mode").strip().lower()
+    if mission_credit_mode in ("from_unlock_only", "mission_non_retroactive", "non_retroactive"):
+        entry["retroactive"] = False
+    elif mission_credit_mode in ("retroactive", "mission_retroactive"):
+        entry["retroactive"] = True
+    elif mission_credit_mode:
+        print(f"[warn] {context}: unsupported Mission Credit Mode '{mission_credit_mode}', skipping")
+
+    return entry
+
+
 def build_period_policy_flat_fields(policy):
     policy = policy if isinstance(policy, dict) else {}
     windows = policy.get("windows") if isinstance(policy.get("windows"), list) else []
@@ -1445,11 +1569,13 @@ def pull_modules_core(db_id, token, db_label):
             continue
         entry = {}
 
-        # Only pull fields that map 1:1 onto module objects.
-        # Keep this conservative: avoid structural changes (type/mode/match/category) via Notion.
+        # Pull both legacy technical columns and simplified input columns.
         d = extract_rich_text(row_props, "Desc") if "Desc" in row_props else ""
         if d != "":
             entry["desc"] = d
+        offer_name = extract_rich_text(row_props, "Offer Name") if "Offer Name" in row_props else ""
+        if offer_name != "":
+            entry["desc"] = offer_name
 
         n = extract_number(row_props, "Rate") if "Rate" in row_props else None
         if n is not None:
@@ -1501,6 +1627,12 @@ def pull_modules_core(db_id, token, db_label):
         if rk != "":
             entry["req_mission_key"] = rk
 
+        flat_entry = build_module_core_from_flat_props(row_props, f"{db_label}:{key}")
+        if flat_entry:
+            entry.update(flat_entry)
+        if not entry.get("promo_end") and entry.get("valid_to"):
+            entry["promo_end"] = entry["valid_to"]
+
         entry = normalize_core_entry(entry, [
             "desc",
             "rate", "rate_per_x", "multiplier",
@@ -1509,6 +1641,7 @@ def pull_modules_core(db_id, token, db_label):
             "secondary_cap_limit", "secondary_cap_key",
             "min_spend", "min_single_spend",
             "req_mission_spend", "req_mission_key",
+            "mode", "match", "retroactive",
         ])
         if entry:
             overrides[key] = entry

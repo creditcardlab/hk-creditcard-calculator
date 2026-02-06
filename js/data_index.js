@@ -75,13 +75,16 @@
             });
         };
 
-        // Intentionally conservative: avoid structural changes (e.g. mode/match/type) via Notion core edits.
+        // Intentionally conservative: keep high-risk shape changes (e.g. type/config) in repo code.
         const allowedCardCoreFields = ["name", "currency", "type", "fcf"];
         const allowedModuleCoreFields = [
             "desc",
             "rate",
             "rate_per_x",
             "multiplier",
+            "mode",
+            "match",
+            "retroactive",
             "promo_end",
             "valid_from",
             "valid_to",
