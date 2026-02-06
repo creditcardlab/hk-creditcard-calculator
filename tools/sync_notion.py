@@ -1852,15 +1852,15 @@ def pull_offers_core(offers_db_id, token, offers_db_label, period_windows_db_id=
         if cap_type in ("reward", "spending") and cap_value is not None:
             module_entry["cap_mode"] = cap_type
             module_entry["cap_limit"] = cap_value
-            module_entry["cap_key"] = cap_key if cap_key else f"{offer_id}_cap"
+            # Do not auto-generate cap_key for existing offers; preserve repo/default key unless explicitly provided.
+            if cap_key:
+                module_entry["cap_key"] = cap_key
 
         req_mission_key = extract_rich_text(row_props, "Req Mission Key")
         if req_mission_key:
             module_entry["req_mission_key"] = req_mission_key
 
         mission_target = module_entry.get("req_mission_spend")
-        if mission_target is not None and not module_entry.get("req_mission_key"):
-            module_entry["req_mission_key"] = f"{offer_id}_mission_spend"
 
         fallback_from = module_entry.get("valid_from", "")
         fallback_to = module_entry.get("valid_to", "")
@@ -1897,7 +1897,7 @@ def pull_offers_core(offers_db_id, token, offers_db_label, period_windows_db_id=
             if offer_id not in card_entry["reward_modules_add"]:
                 card_entry["reward_modules_add"].append(offer_id)
 
-        if module_entry.get("req_mission_spend") is not None and module_entry.get("req_mission_key"):
+        if mission_target is not None and module_entry.get("req_mission_key"):
             tracker_id = f"{offer_id}_tracker"
             tracker_entry = {
                 "type": "mission_tracker",
@@ -2513,8 +2513,9 @@ def pull_core(repo_root, page_url, token, core_out_path, core_dbs=None, ack=Fals
     if core_dbs:
         allowed_set = set([d.strip().lower() for d in core_dbs if d and d.strip()])
     elif offers_db_name:
-        # New default core pull path for simplified Notion schema.
-        allowed_set = set(["cards", "categories", "offers"])
+        # Safe default: keep pull-core focused on naming/unit edits.
+        # Pull Offers explicitly with --core-db offers when you want structural rule updates.
+        allowed_set = set(["cards", "categories"])
 
     def db_allowed(name):
         if not allowed_set:
@@ -2652,7 +2653,7 @@ def main():
     parser.add_argument("--pull-overrides", action="store_true", help="Pull Notion overrides into js/data_notion_overrides.js")
     parser.add_argument("--overrides-out", default="js/data_notion_overrides.js", help="Output path for overrides JS")
     parser.add_argument("--pull-db", action="append", help="Limit override pull to specific DBs (repeatable)")
-    parser.add_argument("--pull-core", action="store_true", help="Pull Notion core edits into js/data_notion_core_overrides.js (default: cards+categories+offers when Offers DB exists)")
+    parser.add_argument("--pull-core", action="store_true", help="Pull Notion core edits into js/data_notion_core_overrides.js (default: cards+categories; add --core-db offers for offer/rule updates)")
     parser.add_argument("--core-out", default="js/data_notion_core_overrides.js", help="Output path for core overrides JS")
     parser.add_argument("--core-db", action="append", help="Limit core pull to specific DBs (repeatable, e.g. 'cards', 'categories', 'offers', 'modules', 'campaigns')")
     parser.add_argument("--ack", action="store_true", help="After pulling, uncheck Sync To Repo for pulled rows")
