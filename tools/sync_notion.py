@@ -1365,18 +1365,28 @@ def sort_period_windows(windows):
     return sorted((w for w in windows if isinstance(w, dict)), key=keyfn)
 
 
-def pull_campaign_windows_core(db_id, token, db_label, campaign_ids=None):
+def pull_campaign_windows_core(db_id, token, db_label, campaign_ids=None, sync_only=False):
     db = get_database(db_id, token)
     props = db.get("properties") or {}
     allowed = set(props.keys())
     title_prop = "Window ID" if "Window ID" in allowed else get_title_prop_name(db)
     if not title_prop:
         print(f"[warn] {db_label}: missing title property, skipping period windows pull")
-        return {}
+        return {}, []
 
     wanted = set(campaign_ids or [])
-    rows = query_database(db_id, token)
+    rows_filter = None
+    if sync_only:
+        if "Sync To Repo" not in allowed:
+            print(f"[warn] {db_label}: missing 'Sync To Repo' checkbox, cannot filter synced windows")
+            return {}, []
+        if props.get("Sync To Repo", {}).get("type") != "checkbox":
+            print(f"[warn] {db_label}: 'Sync To Repo' is not a checkbox, cannot filter synced windows")
+            return {}, []
+        rows_filter = {"property": "Sync To Repo", "checkbox": {"equals": True}}
+    rows = query_database(db_id, token, rows_filter)
     by_campaign = {}
+    page_ids = []
     for row in rows:
         row_props = row.get("properties") or {}
         row_title = extract_title_value(row_props.get(title_prop))
@@ -1399,10 +1409,11 @@ def pull_campaign_windows_core(db_id, token, db_label, campaign_ids=None):
                 window["id"] = row_title.split("#", 1)[1].strip()
 
         by_campaign.setdefault(campaign_id, []).append(window)
+        page_ids.append(row.get("id"))
 
     for cid in list(by_campaign.keys()):
         by_campaign[cid] = sort_period_windows(by_campaign[cid])
-    return by_campaign
+    return by_campaign, page_ids
 
 
 def pull_modules_core(db_id, token, db_label):
@@ -1450,13 +1461,13 @@ def pull_modules_core(db_id, token, db_label):
         if n is not None:
             entry["multiplier"] = n
 
-        pe = extract_rich_text(row_props, "Promo End") if "Promo End" in row_props else ""
+        pe = extract_date_or_text(row_props, "Promo End") if "Promo End" in row_props else ""
         if pe != "":
             entry["promo_end"] = pe
-        vf = extract_rich_text(row_props, "Valid From") if "Valid From" in row_props else ""
+        vf = extract_date_or_text(row_props, "Valid From") if "Valid From" in row_props else ""
         if vf != "":
             entry["valid_from"] = vf
-        vt = extract_rich_text(row_props, "Valid To") if "Valid To" in row_props else ""
+        vt = extract_date_or_text(row_props, "Valid To") if "Valid To" in row_props else ""
         if vt != "":
             entry["valid_to"] = vt
 
@@ -1534,12 +1545,34 @@ def pull_campaigns_core(db_id, token, db_label, windows_db_id=None, windows_db_l
             campaign_ids.append(key)
 
     windows_by_campaign = {}
+    windows_ack_ids = []
+    window_trigger_campaign_ids = set()
     if windows_db_id and campaign_ids:
         try:
-            windows_by_campaign = pull_campaign_windows_core(windows_db_id, token, windows_db_label, campaign_ids=campaign_ids)
+            windows_by_campaign, _ = pull_campaign_windows_core(windows_db_id, token, windows_db_label, campaign_ids=campaign_ids)
         except Exception as e:
             print(f"[warn] {windows_db_label}: failed to pull period windows: {e}")
             windows_by_campaign = {}
+    elif windows_db_id:
+        print(f"[info] {db_label}: no campaign rows with Sync To Repo checked")
+
+    if windows_db_id:
+        try:
+            synced_windows_by_campaign, synced_window_page_ids = pull_campaign_windows_core(
+                windows_db_id,
+                token,
+                windows_db_label,
+                campaign_ids=None,
+                sync_only=True
+            )
+            windows_ack_ids = list(synced_window_page_ids or [])
+            window_trigger_campaign_ids = set(synced_windows_by_campaign.keys())
+            if window_trigger_campaign_ids:
+                for cid, rows in synced_windows_by_campaign.items():
+                    if cid not in windows_by_campaign:
+                        windows_by_campaign[cid] = rows
+        except Exception as e:
+            print(f"[warn] {windows_db_label}: failed to pull synced period windows: {e}")
 
     overrides = {}
     page_ids = []
@@ -1568,7 +1601,23 @@ def pull_campaigns_core(db_id, token, db_label, windows_db_id=None, windows_db_l
             overrides[key] = entry
             page_ids.append(row.get("id"))
 
-    return overrides, page_ids
+    missing_campaign_ids = sorted([cid for cid in window_trigger_campaign_ids if cid not in overrides])
+    for cid in missing_campaign_ids:
+        windows = windows_by_campaign.get(cid)
+        if not isinstance(windows, list) or not windows:
+            continue
+        policy = {
+            "windows": windows,
+            "mode": "composite" if len(windows) > 1 else "fixed"
+        }
+        overrides[cid] = {"period_policy": policy}
+
+    if not overrides:
+        print(f"[warn] {db_label}: no campaign period updates found (check 'Sync To Repo' on Campaigns or Campaign Period Windows)")
+    else:
+        print(f"[info] {db_label}: pulled {len(overrides)} campaign period policy rows")
+
+    return overrides, page_ids + windows_ack_ids
 
 
 def pull_cards_core(db_id, token, db_label):
@@ -1797,6 +1846,7 @@ def pull_core(repo_root, page_url, token, core_out_path, core_dbs=None, ack=Fals
         if title not in db_map:
             db_map[title] = db_id
     campaign_db_name = pick_db_name(db_map, "Campaigns", ["Promotions"])
+    campaign_windows_db_name = pick_db_name(db_map, "Campaign Period Windows", ["Promotion Period Windows", "Campaign Windows"])
 
     allowed_set = None
     if core_dbs:

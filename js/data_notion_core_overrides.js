@@ -3,194 +3,124 @@
 // Core overrides are higher risk: validate with golden cases before merge.
 const NOTION_CORE_OVERRIDES = {
   "version": 1,
-  "cards": {
-    "hsbc_easy": {
-      "name": "HSBC Easy Card / 白金卡",
-      "currency": "HSBC_RC",
-      "type": "visa",
-      "fcf": 0.0195
-    },
-    "hsbc_everymile": {
-      "name": "HSBC EveryMile",
-      "currency": "HSBC_RC_EM",
-      "type": "master",
-      "fcf": 0.0195
-    },
-    "hsbc_gold": {
-      "name": "HSBC 滙財金卡",
-      "currency": "HSBC_RC",
-      "type": "visa",
-      "fcf": 0.0195
-    },
-    "hsbc_gold_student": {
-      "name": "HSBC 滙財金卡 - 學生卡",
-      "currency": "HSBC_RC",
-      "type": "visa",
-      "fcf": 0.0195
-    },
-    "hsbc_premier": {
-      "name": "HSBC Premier (卓越理財)",
-      "currency": "HSBC_RC",
-      "type": "master",
-      "fcf": 0.0195
-    },
-    "hsbc_pulse": {
-      "name": "HSBC Pulse 銀聯雙幣鑽石",
-      "currency": "HSBC_RC",
-      "type": "unionpay",
-      "fcf": 0.01
-    },
-    "hsbc_red": {
-      "name": "HSBC Red Card",
-      "currency": "HSBC_RC",
-      "type": "master",
-      "fcf": 0.0195
-    },
-    "hsbc_unionpay_std": {
-      "name": "HSBC 銀聯雙幣",
-      "currency": "HSBC_RC",
-      "type": "unionpay",
-      "fcf": 0.01
-    },
-    "hsbc_vs": {
-      "name": "HSBC Visa Signature",
-      "currency": "HSBC_RC",
-      "type": "visa",
-      "fcf": 0.0195
-    }
-  },
+  "cards": {},
   "modules": {
     "easy_moneyback_bonus": {
-      "type": "category",
       "desc": "Easy Card 易賞錢6倍 (2.4%)",
       "rate": 0.024,
-      "match": [
-        "moneyback_merchant"
-      ],
-      "mode": "add"
-    },
-    "em_base": {
-      "type": "always",
-      "desc": "EveryMile 基本回贈 (1%)",
-      "rate": 0.01
-    },
-    "em_designated": {
-      "type": "category",
-      "desc": "EveryMile 指定商戶 (2.5%)",
-      "rate": 0.025,
-      "match": [
-        "em_designated_spend"
-      ],
-      "mode": "replace"
-    },
-    "em_grocery_low": {
-      "type": "category",
-      "desc": "EveryMile 超市回贈 (0.4%)",
-      "rate": 0.004,
-      "match": [
-        "grocery"
-      ],
-      "mode": "replace"
-    },
-    "em_overseas_bonus": {
-      "type": "category",
-      "desc": "EveryMile 專享海外優惠 (1.5%)",
-      "rate": 0.015,
-      "match": [
-        "overseas"
-      ],
-      "mode": "add",
-      "cap_mode": "reward",
-      "cap_limit": 225,
-      "cap_key": "em_promo_cap",
-      "req_mission_spend": 12000,
-      "req_mission_key": "em_q1_total"
-    },
-    "hsbc_std_base": {
-      "type": "always",
-      "desc": "HSBC 基本回贈 (0.4%)",
-      "rate": 0.004
+      "promo_end": "2026-12-31",
+      "valid_from": "2025-05-19",
+      "valid_to": "2026-12-31"
     },
     "pulse_china_bonus": {
-      "type": "category",
       "desc": "中國內地/澳門流動支付 (2%)",
       "rate": 0.02,
-      "match": [
-        "china_consumption"
-      ],
-      "mode": "add",
+      "promo_end": "2026-06-30",
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-06-30",
       "cap_mode": "spending",
       "cap_limit": 80000,
       "cap_key": "pulse_china_bonus_cap"
     },
-    "red_base": {
-      "type": "always",
-      "desc": "HSBC 基本回贈 (0.4%)",
-      "rate": 0.004
-    },
     "red_designated_bonus": {
-      "type": "category",
       "desc": "Red 指定商戶 (7.6%)",
       "rate": 0.076,
-      "match": [
-        "red_designated"
-      ],
-      "mode": "add",
+      "promo_end": "2026-03-31",
+      "valid_from": "2025-09-01",
+      "valid_to": "2026-03-31",
       "cap_mode": "reward",
       "cap_limit": 100,
       "cap_key": "red_designated_cap"
     },
     "red_hot_variable": {
-      "type": "red_hot_allocation",
       "desc": "最紅自主獎賞",
       "rate_per_x": 0.004,
-      "mode": "add",
+      "promo_end": "2026-12-31",
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-12-31",
       "cap_mode": "reward",
       "cap_limit": 2000,
       "cap_key": "red_hot_variable_cap"
     },
     "red_online": {
-      "type": "category",
       "desc": "Red 網上購物 (3.6%)",
       "rate": 0.04,
-      "match": [
-        "online"
-      ],
-      "mode": "add",
+      "promo_end": "2026-03-31",
+      "valid_from": "2025-09-01",
+      "valid_to": "2026-03-31",
       "cap_mode": "reward",
       "cap_limit": 400,
       "cap_key": "red_online_cap"
     },
     "student_tuition_bonus": {
-      "type": "category",
       "desc": "學費回贈 (2.4%)",
       "rate": 0.024,
-      "match": [
-        "tuition"
-      ],
-      "mode": "add",
+      "promo_end": "2026-03-31",
+      "valid_from": "2025-10-01",
+      "valid_to": "2026-03-31",
       "cap_mode": "reward",
       "cap_limit": 200,
       "cap_key": "student_tuition_cap"
     },
-    "travel_guru_v2": {
-      "type": "guru_capped",
-      "category": "overseas"
-    },
-    "vs_base": {
-      "type": "always",
-      "desc": "HSBC 基本回贈 (0.4%)",
-      "rate": 0.004
-    },
     "vs_red_hot_bonus": {
-      "type": "red_hot_fixed_bonus",
       "desc": "Visa Signature 特別獎賞 (1.2%)",
       "rate_per_x": 0.004,
       "multiplier": 3,
-      "mode": "add",
+      "promo_end": "2026-12-31",
+      "valid_from": "2026-01-01",
+      "valid_to": "2026-12-31",
       "cap_mode": "spending",
       "cap_limit": 100000,
       "cap_key": "vs_red_hot_bonus_cap"
+    }
+  },
+  "campaigns": {
+    "em_promo": {
+      "period_policy": {
+        "windows": [
+          {
+            "startDate": "2026-04-01",
+            "endDate": "2026-06-30",
+            "period": {
+              "type": "promo",
+              "startDay": 1,
+              "startDate": "2026-04-01",
+              "endDate": "2026-06-30"
+            },
+            "id": "window_2"
+          },
+          {
+            "id": "window_1",
+            "startDate": "2026-01-01",
+            "endDate": "2026-03-31",
+            "period": {
+              "type": "promo",
+              "startDate": "2026-01-01",
+              "endDate": "2026-03-31"
+            },
+            "priority": 1
+          }
+        ],
+        "mode": "composite"
+      }
+    },
+    "winter_promo": {
+      "period_policy": {
+        "windows": [
+          {
+            "id": "window_1",
+            "startDate": "2025-12-01",
+            "endDate": "2026-02-28",
+            "period": {
+              "type": "promo",
+              "startDate": "2025-12-01",
+              "endDate": "2026-02-28"
+            },
+            "priority": 1
+          }
+        ],
+        "mode": "fixed"
+      }
     }
   }
 };
