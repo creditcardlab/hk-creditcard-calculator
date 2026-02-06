@@ -185,14 +185,19 @@ def normalize_bootstrap_selection(db_names, full=False):
         return None
     if not db_names:
         # Default to a slim set that supports the simplified Notion workflow.
-        return set(["Cards", "Categories", "Modules", "Campaigns", "Campaign Period Windows"])
+        return set(["Cards", "Categories", "Offers", "Period Windows"])
 
     alias_map = {
         "cards": "Cards",
         "categories": "Categories",
         "modules": "Modules",
+        "offers": "Offers",
+        "period windows": "Period Windows",
+        "period_windows": "Period Windows",
+        "periodwindows": "Period Windows",
         "campaigns": "Campaigns",
-        "windows": "Campaign Period Windows",
+        "windows": "Period Windows",
+        "campaign_windows": "Campaign Period Windows",
         "campaign_period_windows": "Campaign Period Windows",
         "campaignsections": "Campaign Sections",
         "campaign_sections": "Campaign Sections",
@@ -228,11 +233,16 @@ def normalize_sync_db_selection(db_names):
         "cards": "cards",
         "categories": "categories",
         "modules": "modules",
+        "offers": "offers",
+        "period_windows": "period_windows",
+        "period windows": "period_windows",
+        "periodwindows": "period_windows",
         "trackers": "trackers",
         "conversions": "conversions",
         "campaigns": "campaigns",
         "campaign_windows": "campaign_windows",
-        "windows": "campaign_windows",
+        "windows": "period_windows",
+        "campaign_windows": "campaign_windows",
         "campaign_period_windows": "campaign_windows",
         "campaign sections": "campaign_sections",
         "campaignsections": "campaign_sections",
@@ -267,9 +277,11 @@ def bootstrap_child_databases(page_id, token, selected_titles=None):
     Creates any missing databases with a stable title property name so upserts work.
     """
     required_all = [
-        ("Cards", "Card ID"),
-        ("Categories", "Category Key"),
+        ("Cards", "Card"),
+        ("Categories", "Category"),
         ("Modules", "Module Key"),
+        ("Offers", "Offer ID"),
+        ("Period Windows", "Window ID"),
         ("Trackers", "Tracker Key"),
         ("Conversions", "Conversion Src"),
         ("Campaigns", "Campaign ID"),
@@ -610,12 +622,24 @@ def sync(repo_root, page_url, token, sync_dbs=None):
     campaigns = data.get("campaigns") or []
     campaign_registry = data.get("campaignRegistry") or {}
     counters_registry = data.get("countersRegistry") or {}
+    module_card_map = {}
+    for card in cards:
+        card_id = card.get("id", "")
+        if not card_id:
+            continue
+        for module_key in (card.get("rewardModules") or []):
+            module_card_map.setdefault(module_key, []).append(card_id)
 
     campaign_db_name = pick_db_name(db_map, "Campaigns", ["Promotions"])
     campaign_windows_db_name = pick_db_name(db_map, "Campaign Period Windows", ["Promotion Period Windows", "Campaign Windows"])
     campaign_sections_db_name = pick_db_name(db_map, "Campaign Sections", ["Promotion Sections"])
     campaign_registry_db_name = pick_db_name(db_map, "Campaign Registry", ["Promo Registry"])
+    offers_db_name = pick_db_name(db_map, "Offers", [])
+    period_windows_db_name = pick_db_name(db_map, "Period Windows", [])
     sync_allowed_set = normalize_sync_db_selection(sync_dbs)
+    if sync_allowed_set is None and (offers_db_name or period_windows_db_name):
+        # New default workflow: keep Notion input schema lean around 4 primary tables.
+        sync_allowed_set = set(["cards", "categories", "offers", "period_windows"])
 
     def db_allowed(name):
         if not sync_allowed_set:
@@ -627,59 +651,29 @@ def sync(repo_root, page_url, token, sync_dbs=None):
 
     if db_allowed("cards") and "Cards" in db_map:
         db_id = db_map["Cards"]
-        template_props = build_props("Card ID", "__template__", {
-            "Name": rt(""),
-            "Currency": rt(""),
-            "Type": rt(""),
-            "FCF": num(None),
-            "Reward Modules": rt(""),
-            "Trackers": rt(""),
-            "Modules": rt(""),  # legacy combined view
-            "Reward Module Count": num(None),
-            "Tracker Count": num(None),
-            "Redemption": rt(""),
-            "Redemption ? Unit": rt(""),
-            "Redemption ? Min": num(None),
-            "Redemption ? Fee": rt(""),
-            "Redemption ? Ratio": rt(""),
+        template_props = build_props("Card", "__template__", {
             "Display Name (zh-HK)": rt(""),
-            "Note (zh-HK)": rt(""),
-            "Status": {"select": {"name": ""}},
-            "Last Verified": {"date": {}},
-            "Source URL": {"url": ""},
-            "Source Title": rt(""),
+            "Bank": rt(""),
+            "Reward Unit": {"select": {"name": ""}},
+            "Active": chk(True),
             "Sync To Repo": chk(False),
-            "Source File": rt(""),
         })
 
         def build_row_props(key, c):
-            reward_modules = c.get("rewardModules", []) or []
-            tracker_ids = c.get("trackers", []) or []
-            combined = list(reward_modules) + list(tracker_ids)
             red = c.get("redemption") or {}
+            display_name = str(c.get("display_name_zhhk") or c.get("name") or key)
+            active = str(c.get("status", "")).strip().lower() != "inactive"
             return {
-                "Name": rt(c.get("name", "")),
-                "Currency": rt(c.get("currency", "")),
-                "Type": rt(c.get("type", "")),
-                "FCF": num(c.get("fcf", 0)),
-                "Reward Modules": rt(json.dumps(reward_modules, ensure_ascii=False)),
-                "Trackers": rt(json.dumps(tracker_ids, ensure_ascii=False)),
-                "Modules": rt(json.dumps(combined, ensure_ascii=False)),
-                "Reward Module Count": num(len(reward_modules)),
-                "Tracker Count": num(len(tracker_ids)),
-                "Redemption": rt(json.dumps(red, ensure_ascii=False) if red else ""),
-                "Redemption ? Unit": rt(red.get("unit", "")),
-                "Redemption ? Min": num(red.get("min", None)),
-                "Redemption ? Fee": rt(red.get("fee", "")),
-                "Redemption ? Ratio": rt(red.get("ratio", "")),
-                "Source File": rt("js/data_cards.js"),
+                "Display Name (zh-HK)": rt(display_name),
+                "Reward Unit": sel(str(red.get("unit", "")).strip()),
+                "Active": chk(active),
             }
 
         card_page_ids = sync_table(
             db_id=db_id,
             token=token,
             db_label="Cards",
-            default_title_prop="Card ID",
+            default_title_prop="Card",
             template_props=template_props,
             rows=[(c.get("id", ""), c) for c in cards if c.get("id")],
             build_row_props=build_row_props,
@@ -687,32 +681,26 @@ def sync(repo_root, page_url, token, sync_dbs=None):
 
     if db_allowed("categories") and "Categories" in db_map:
         db_id = db_map["Categories"]
-        template_props = build_props("Category Key", "__template__", {
-            "Label": rt(""),
-            "Order": num(None),
-            "Parent": rt(""),
-            "Hidden": chk(False),
-            "Red Hot": rt(""),
-            "Req": rt(""),
-            "Source File": rt(""),
+        template_props = build_props("Category", "__template__", {
+            "Display Name (zh-HK)": rt(""),
+            "Parent Category": rt(""),
+            "Active": chk(True),
+            "Sync To Repo": chk(False),
         })
 
         def build_row_props(key, c):
+            active = not bool(c.get("hidden", False))
             return {
-                "Label": rt(c.get("label", "")),
-                "Order": num(c.get("order", None)),
-                "Parent": rt(c.get("parent", "")),
-                "Hidden": chk(c.get("hidden", False)),
-                "Red Hot": rt(c.get("red_hot", "")),
-                "Req": rt(c.get("req", "")),
-                "Source File": rt("js/data_categories.js"),
+                "Display Name (zh-HK)": rt(str(c.get("label", "")).strip()),
+                "Parent Category": rt(str(c.get("parent", "")).strip()),
+                "Active": chk(active),
             }
 
         sync_table(
             db_id=db_id,
             token=token,
             db_label="Categories",
-            default_title_prop="Category Key",
+            default_title_prop="Category",
             template_props=template_props,
             rows=[(k, v) for k, v in categories.items()],
             build_row_props=build_row_props,
@@ -759,6 +747,92 @@ def sync(repo_root, page_url, token, sync_dbs=None):
             default_title_prop="Module Key",
             template_props=template_props,
             rows=[(k, v) for k, v in modules.items()],
+            build_row_props=build_row_props,
+        )
+
+    if db_allowed("offers") and offers_db_name and db_map.get(offers_db_name):
+        db_id = db_map[offers_db_name]
+        template_props = build_props("Offer ID", "__template__", {
+            "Offer Name": rt(""),
+            "Rule Template": {"select": {"name": ""}},
+            "Card IDs": mselect([]),
+            "Category IDs": mselect([]),
+            "Apply Mode": {"select": {"name": ""}},
+            "Reward Type": {"select": {"name": ""}},
+            "Reward Value": num(None),
+            "Mission Spend Target": num(None),
+            "Retroactive": chk(False),
+            "Cap Type": {"select": {"name": ""}},
+            "Cap Value": num(None),
+            "Period Policy": rt(""),
+            "Active": chk(True),
+            "Sync To Repo": chk(False),
+        })
+
+        def build_row_props(module_key, module):
+            row = build_offer_row_from_module(module_key, module, module_card_map.get(module_key, []))
+            return {
+                "Offer Name": rt(row.get("offer_name", "")),
+                "Rule Template": sel(row.get("rule_template", "")),
+                "Card IDs": mselect(row.get("card_ids", [])),
+                "Category IDs": mselect(row.get("category_ids", [])),
+                "Apply Mode": sel(row.get("apply_mode", "")),
+                "Reward Type": sel(row.get("reward_type", "")),
+                "Reward Value": num(row.get("reward_value", None)),
+                "Mission Spend Target": num(row.get("mission_spend_target", None)),
+                "Retroactive": chk(row.get("retroactive", True)),
+                "Cap Type": sel(row.get("cap_type", "none")),
+                "Cap Value": num(row.get("cap_value", None)),
+                "Period Policy": rt(row.get("period_policy", "")),
+                "Active": chk(True),
+            }
+
+        sync_table(
+            db_id=db_id,
+            token=token,
+            db_label=offers_db_name,
+            default_title_prop="Offer ID",
+            template_props=template_props,
+            rows=[(k, v) for k, v in modules.items()],
+            build_row_props=build_row_props,
+        )
+
+    if db_allowed("period_windows") and period_windows_db_name and db_map.get(period_windows_db_name):
+        db_id = db_map[period_windows_db_name]
+        template_props = build_props("Window ID", "__template__", {
+            "Period Policy": rt(""),
+            "Window Order": num(None),
+            "Start Date": {"date": {}},
+            "End Date": {"date": {}},
+            "Recurrence": {"select": {"name": ""}},
+            "Recurrence Interval": num(None),
+            "Recurrence Until": {"date": {}},
+            "Sync To Repo": chk(False),
+        })
+
+        windows_rows = []
+        for module_key, module in modules.items():
+            for window in build_offer_windows_from_module(module_key, module):
+                windows_rows.append((window.get("window_id", ""), window))
+
+        def build_row_props(window_id, row):
+            return {
+                "Period Policy": rt(row.get("period_policy", "")),
+                "Window Order": num(row.get("window_order", None)),
+                "Start Date": datev(row.get("start_date", "")),
+                "End Date": datev(row.get("end_date", "")),
+                "Recurrence": sel(row.get("recurrence", "")),
+                "Recurrence Interval": num(row.get("recurrence_interval", None)),
+                "Recurrence Until": datev(row.get("recurrence_until", "")),
+            }
+
+        sync_table(
+            db_id=db_id,
+            token=token,
+            db_label=period_windows_db_name,
+            default_title_prop="Window ID",
+            template_props=template_props,
+            rows=windows_rows,
             build_row_props=build_row_props,
         )
 
@@ -1174,6 +1248,47 @@ def extract_date_or_text(props, name):
     return normalize_date_text(extract_rich_text(props, name))
 
 
+def parse_text_list(raw):
+    text = str(raw or "").strip()
+    if not text:
+        return []
+    parts = re.split(r"[,\n]", text)
+    out = []
+    seen = set()
+    for part in parts:
+        item = part.strip()
+        if not item or item in seen:
+            continue
+        seen.add(item)
+        out.append(item)
+    return out
+
+
+def extract_multi_select_or_text_list(props, name):
+    values = extract_multi_select(props, name)
+    if values:
+        return values
+    return parse_text_list(extract_rich_text(props, name))
+
+
+def extract_multi_or_single_values(props, names):
+    out = []
+    seen = set()
+    for name in (names or []):
+        values = extract_multi_select_or_text_list(props, name)
+        if not values:
+            single = extract_select_or_text(props, name).strip()
+            if single:
+                values = [single]
+        for value in values:
+            item = str(value or "").strip()
+            if not item or item in seen:
+                continue
+            seen.add(item)
+            out.append(item)
+    return out
+
+
 def build_module_flat_fields(module):
     module = module if isinstance(module, dict) else {}
 
@@ -1258,13 +1373,18 @@ def build_module_core_from_flat_props(row_props, context):
         entry["valid_to"] = active_to
         entry["promo_end"] = active_to
 
-    category_ids = extract_multi_select(row_props, "Category IDs")
+    category_ids = extract_multi_or_single_values(row_props, [
+        "Category IDs", "Category", "Categories"
+    ])
     if category_ids:
         entry["match"] = category_ids
 
     mission_target = extract_number(row_props, "Mission Spend Target")
     if mission_target is not None:
         entry["req_mission_spend"] = mission_target
+
+    if "Retroactive" in (row_props or {}):
+        entry["retroactive"] = extract_checkbox(row_props, "Retroactive")
 
     mission_credit_mode = extract_select_or_text(row_props, "Mission Credit Mode").strip().lower()
     if mission_credit_mode in ("from_unlock_only", "mission_non_retroactive", "non_retroactive"):
@@ -1275,6 +1395,57 @@ def build_module_core_from_flat_props(row_props, context):
         print(f"[warn] {context}: unsupported Mission Credit Mode '{mission_credit_mode}', skipping")
 
     return entry
+
+
+def build_offer_row_from_module(module_key, module, card_ids):
+    module = module if isinstance(module, dict) else {}
+    card_ids = card_ids if isinstance(card_ids, list) else []
+    flat = build_module_flat_fields(module)
+
+    cap_mode = str(module.get("cap_mode", "")).strip().lower()
+    if cap_mode not in ("reward", "spending"):
+        cap_mode = "none"
+    cap_value = module.get("cap_limit") if cap_mode != "none" else None
+
+    return {
+        "offer_name": flat.get("offer_name", ""),
+        "rule_template": flat.get("rule_template", ""),
+        "card_ids": card_ids,
+        "category_ids": flat.get("category_ids", []),
+        "apply_mode": flat.get("apply_mode", ""),
+        "reward_type": flat.get("reward_type", ""),
+        "reward_value": flat.get("reward_value", None),
+        "mission_spend_target": flat.get("mission_spend_target", None),
+        "mission_credit_mode": flat.get("mission_credit_mode", ""),
+        "retroactive": bool(module.get("retroactive", True)),
+        "cap_type": cap_mode,
+        "cap_value": cap_value,
+        "cap_key": str(module.get("cap_key", "")).strip(),
+        "period_policy": f"offer:{module_key}",
+        "req_mission_key": str(module.get("req_mission_key", "")).strip(),
+        "active_from": flat.get("active_from", ""),
+        "active_to": flat.get("active_to", ""),
+        "display_name_zhhk": str(module.get("display_name_zhhk", "")).strip(),
+    }
+
+
+def build_offer_windows_from_module(module_key, module):
+    module = module if isinstance(module, dict) else {}
+    flat = build_module_flat_fields(module)
+    start_date = flat.get("active_from", "")
+    end_date = flat.get("active_to", "")
+    if not start_date and not end_date:
+        return []
+    return [{
+        "window_id": f"offer:{module_key}#1",
+        "period_policy": f"offer:{module_key}",
+        "window_order": 1,
+        "start_date": start_date,
+        "end_date": end_date,
+        "recurrence": "none",
+        "recurrence_interval": 1,
+        "recurrence_until": "",
+    }]
 
 
 def build_period_policy_flat_fields(policy):
@@ -1525,6 +1696,234 @@ def sort_period_windows(windows):
         return (pri_num, sd, ed, wid)
 
     return sorted((w for w in windows if isinstance(w, dict)), key=keyfn)
+
+
+def sort_offer_windows(windows):
+    def keyfn(w):
+        order = w.get("window_order")
+        order_num = int(order) if isinstance(order, (int, float)) else 0
+        sd = normalize_date_text(w.get("start_date"))
+        ed = normalize_date_text(w.get("end_date"))
+        return (order_num, sd, ed)
+
+    return sorted((w for w in windows if isinstance(w, dict)), key=keyfn)
+
+
+def pull_period_windows_for_offers(db_id, token, db_label, policy_ids=None):
+    db = get_database(db_id, token)
+    props = db.get("properties") or {}
+    allowed = set(props.keys())
+    title_prop = "Window ID" if "Window ID" in allowed else get_title_prop_name(db)
+    if not title_prop:
+        print(f"[warn] {db_label}: missing title property, skipping offer period windows pull")
+        return {}, []
+
+    wanted = set(policy_ids or [])
+    rows_filter = None
+    if "Sync To Repo" in allowed and props.get("Sync To Repo", {}).get("type") == "checkbox":
+        rows_filter = {"property": "Sync To Repo", "checkbox": {"equals": True}}
+    rows = query_database(db_id, token, rows_filter)
+    by_policy = {}
+    for row in rows:
+        row_props = row.get("properties") or {}
+        policy_id = extract_rich_text(row_props, "Period Policy")
+        if not policy_id:
+            continue
+        if wanted and policy_id not in wanted:
+            continue
+
+        entry = {
+            "window_id": extract_title_value(row_props.get(title_prop)),
+            "period_policy": policy_id,
+            "window_order": extract_number(row_props, "Window Order"),
+            "start_date": extract_date_or_text(row_props, "Start Date"),
+            "end_date": extract_date_or_text(row_props, "End Date"),
+            "recurrence": extract_select_or_text(row_props, "Recurrence").strip().lower(),
+            "recurrence_interval": extract_number(row_props, "Recurrence Interval"),
+            "recurrence_until": extract_date_or_text(row_props, "Recurrence Until"),
+        }
+        by_policy.setdefault(policy_id, []).append(entry)
+
+    for pid in list(by_policy.keys()):
+        by_policy[pid] = sort_offer_windows(by_policy[pid])
+
+    ack_ids = []
+    if "Sync To Repo" in allowed and props.get("Sync To Repo", {}).get("type") == "checkbox":
+        for row in rows:
+            row_props = row.get("properties") or {}
+            policy_id = extract_rich_text(row_props, "Period Policy")
+            if wanted and policy_id not in wanted:
+                continue
+            ack_ids.append(row.get("id"))
+
+    return by_policy, ack_ids
+
+
+def derive_offer_date_bounds(windows, fallback_from="", fallback_to=""):
+    bounds_start = normalize_date_text(fallback_from)
+    bounds_end = normalize_date_text(fallback_to)
+    for w in (windows or []):
+        sd = normalize_date_text(w.get("start_date"))
+        ed = normalize_date_text(w.get("end_date"))
+        ru = normalize_date_text(w.get("recurrence_until"))
+        if sd and (not bounds_start or sd < bounds_start):
+            bounds_start = sd
+        if ed and (not bounds_end or ed > bounds_end):
+            bounds_end = ed
+        if ru and (not bounds_end or ru > bounds_end):
+            bounds_end = ru
+    return bounds_start, bounds_end
+
+
+def pull_offers_core(offers_db_id, token, offers_db_label, period_windows_db_id=None, period_windows_db_label="Period Windows"):
+    db = get_database(offers_db_id, token)
+    props = db.get("properties") or {}
+    allowed = set(props.keys())
+    title_prop = "Offer ID" if "Offer ID" in allowed else get_title_prop_name(db)
+    if not title_prop:
+        print(f"[warn] {offers_db_label}: missing title property, skipping offer pull")
+        return {"cards": {}, "modules": {}, "trackers": {}}, []
+    if "Sync To Repo" not in allowed:
+        print(f"[warn] {offers_db_label}: missing 'Sync To Repo' checkbox, skipping offer pull")
+        return {"cards": {}, "modules": {}, "trackers": {}}, []
+    if props.get("Sync To Repo", {}).get("type") != "checkbox":
+        print(f"[warn] {offers_db_label}: 'Sync To Repo' is not a checkbox, skipping offer pull")
+        return {"cards": {}, "modules": {}, "trackers": {}}, []
+
+    rows = query_database(offers_db_id, token, {"property": "Sync To Repo", "checkbox": {"equals": True}})
+    offer_rows = []
+    policy_ids = set()
+    for row in rows:
+        row_props = row.get("properties") or {}
+        offer_id = extract_title_value(row_props.get(title_prop))
+        if not offer_id:
+            continue
+        active = extract_checkbox(row_props, "Active") if "Active" in row_props else True
+        if not active:
+            continue
+        policy_id = extract_rich_text(row_props, "Period Policy") or extract_rich_text(row_props, "Period")
+        if policy_id:
+            policy_ids.add(policy_id)
+        offer_rows.append((offer_id, row))
+
+    windows_by_policy = {}
+    windows_ack_ids = []
+    if period_windows_db_id and policy_ids:
+        try:
+            windows_by_policy, windows_ack_ids = pull_period_windows_for_offers(
+                period_windows_db_id,
+                token,
+                period_windows_db_label,
+                policy_ids=policy_ids
+            )
+        except Exception as e:
+            print(f"[warn] {period_windows_db_label}: failed to pull offer period windows: {e}")
+            windows_by_policy = {}
+            windows_ack_ids = []
+
+    cards_out = {}
+    modules_out = {}
+    trackers_out = {}
+    ack_ids = []
+
+    for offer_id, row in offer_rows:
+        row_props = row.get("properties") or {}
+        module_entry = build_module_core_from_flat_props(row_props, f"{offers_db_label}:{offer_id}")
+
+        if "Offer Name" in row_props and "desc" not in module_entry:
+            offer_name = extract_rich_text(row_props, "Offer Name")
+            if offer_name:
+                module_entry["desc"] = offer_name
+
+        apply_mode = extract_select_or_text(row_props, "Apply Mode").strip().lower()
+        category_ids = extract_multi_or_single_values(row_props, [
+            "Category IDs", "Category", "Categories"
+        ])
+        if apply_mode in ("base", "always"):
+            module_entry["type"] = "always"
+        else:
+            module_entry["type"] = "category"
+            if category_ids and "match" not in module_entry:
+                module_entry["match"] = category_ids
+
+        cap_type = extract_select_or_text(row_props, "Cap Type").strip().lower()
+        cap_value = extract_number(row_props, "Cap Value")
+        cap_key = extract_rich_text(row_props, "Cap Key")
+        if cap_type in ("reward", "spending") and cap_value is not None:
+            module_entry["cap_mode"] = cap_type
+            module_entry["cap_limit"] = cap_value
+            module_entry["cap_key"] = cap_key if cap_key else f"{offer_id}_cap"
+
+        req_mission_key = extract_rich_text(row_props, "Req Mission Key")
+        if req_mission_key:
+            module_entry["req_mission_key"] = req_mission_key
+
+        mission_target = module_entry.get("req_mission_spend")
+        if mission_target is not None and not module_entry.get("req_mission_key"):
+            module_entry["req_mission_key"] = f"{offer_id}_mission_spend"
+
+        fallback_from = module_entry.get("valid_from", "")
+        fallback_to = module_entry.get("valid_to", "")
+        policy_id = extract_rich_text(row_props, "Period Policy") or extract_rich_text(row_props, "Period")
+        offer_windows = windows_by_policy.get(policy_id, []) if policy_id else []
+        bounds_start, bounds_end = derive_offer_date_bounds(offer_windows, fallback_from, fallback_to)
+        if bounds_start:
+            module_entry["valid_from"] = bounds_start
+        if bounds_end:
+            module_entry["valid_to"] = bounds_end
+            module_entry["promo_end"] = bounds_end
+
+        module_entry = normalize_core_entry(module_entry, [
+            "type",
+            "desc",
+            "rate", "rate_per_x", "multiplier",
+            "mode", "match", "retroactive",
+            "promo_end", "valid_from", "valid_to",
+            "cap_mode", "cap_limit", "cap_key",
+            "secondary_cap_limit", "secondary_cap_key",
+            "min_spend", "min_single_spend",
+            "req_mission_spend", "req_mission_key",
+        ])
+        if module_entry:
+            modules_out[offer_id] = module_entry
+
+        card_ids = extract_multi_or_single_values(row_props, [
+            "Card IDs", "Card", "Cards", "Card ID"
+        ])
+        for card_id in card_ids:
+            if not card_id:
+                continue
+            card_entry = cards_out.setdefault(card_id, {"reward_modules_add": [], "trackers_add": []})
+            if offer_id not in card_entry["reward_modules_add"]:
+                card_entry["reward_modules_add"].append(offer_id)
+
+        if module_entry.get("req_mission_spend") is not None and module_entry.get("req_mission_key"):
+            tracker_id = f"{offer_id}_tracker"
+            tracker_entry = {
+                "type": "mission_tracker",
+                "desc": module_entry.get("desc", offer_id),
+                "mission_id": offer_id,
+                "req_mission_key": module_entry.get("req_mission_key"),
+                "effects_on_match": [{"key": module_entry.get("req_mission_key"), "amount": "tx_amount"}],
+            }
+            if category_ids:
+                tracker_entry["match"] = category_ids
+            if bounds_start:
+                tracker_entry["valid_from"] = bounds_start
+            if bounds_end:
+                tracker_entry["valid_to"] = bounds_end
+                tracker_entry["promo_end"] = bounds_end
+            trackers_out[tracker_id] = tracker_entry
+            for card_id in card_ids:
+                if not card_id:
+                    continue
+                card_entry = cards_out.setdefault(card_id, {"reward_modules_add": [], "trackers_add": []})
+                if tracker_id not in card_entry["trackers_add"]:
+                    card_entry["trackers_add"].append(tracker_id)
+
+        ack_ids.append(row.get("id"))
+
+    return {"cards": cards_out, "modules": modules_out, "trackers": trackers_out}, ack_ids + windows_ack_ids
 
 
 def pull_campaign_windows_core(db_id, token, db_label, campaign_ids=None, sync_only=False):
@@ -2019,17 +2418,22 @@ def pull_core(repo_root, page_url, token, core_out_path, core_dbs=None, ack=Fals
             db_map[title] = db_id
     campaign_db_name = pick_db_name(db_map, "Campaigns", ["Promotions"])
     campaign_windows_db_name = pick_db_name(db_map, "Campaign Period Windows", ["Promotion Period Windows", "Campaign Windows"])
+    offers_db_name = pick_db_name(db_map, "Offers", [])
+    period_windows_db_name = pick_db_name(db_map, "Period Windows", [])
 
     allowed_set = None
     if core_dbs:
         allowed_set = set([d.strip().lower() for d in core_dbs if d and d.strip()])
+    elif offers_db_name:
+        # New default core pull path for simplified Notion schema.
+        allowed_set = set(["cards", "offers"])
 
     def db_allowed(name):
         if not allowed_set:
             return True
         return name in allowed_set
 
-    overrides = {"version": 1, "cards": {}, "modules": {}, "campaigns": {}}
+    overrides = {"version": 1, "cards": {}, "modules": {}, "trackers": {}, "campaigns": {}}
     ack_ids = []
 
     if db_allowed("cards") and db_map.get("Cards"):
@@ -2053,6 +2457,47 @@ def pull_core(repo_root, page_url, token, core_out_path, core_dbs=None, ack=Fals
     else:
         if db_allowed("modules"):
             print("[warn] pull-core: 'Modules' database not found under this page")
+
+    if db_allowed("offers") and offers_db_name and db_map.get(offers_db_name):
+        data, ids = pull_offers_core(
+            db_map[offers_db_name],
+            token,
+            offers_db_name,
+            period_windows_db_id=(db_map.get(period_windows_db_name) if period_windows_db_name else None),
+            period_windows_db_label=(period_windows_db_name or "Period Windows")
+        )
+        offer_modules = data.get("modules") if isinstance(data, dict) else {}
+        offer_trackers = data.get("trackers") if isinstance(data, dict) else {}
+        offer_cards = data.get("cards") if isinstance(data, dict) else {}
+        if isinstance(offer_modules, dict) and offer_modules:
+            merged = dict(overrides.get("modules") or {})
+            merged.update(offer_modules)
+            overrides["modules"] = merged
+        if isinstance(offer_trackers, dict) and offer_trackers:
+            merged = dict(overrides.get("trackers") or {})
+            merged.update(offer_trackers)
+            overrides["trackers"] = merged
+        if isinstance(offer_cards, dict) and offer_cards:
+            base_cards = dict(overrides.get("cards") or {})
+            for cid, entry in offer_cards.items():
+                existing = base_cards.get(cid) if isinstance(base_cards.get(cid), dict) else {}
+                merged_entry = dict(existing)
+                for add_key in ("reward_modules_add", "trackers_add"):
+                    values = entry.get(add_key) if isinstance(entry, dict) else None
+                    if not isinstance(values, list) or not values:
+                        continue
+                    current = merged_entry.get(add_key) if isinstance(merged_entry.get(add_key), list) else []
+                    for val in values:
+                        if val not in current:
+                            current.append(val)
+                    merged_entry[add_key] = current
+                if merged_entry:
+                    base_cards[cid] = merged_entry
+            overrides["cards"] = base_cards
+        ack_ids.extend(ids)
+    else:
+        if db_allowed("offers"):
+            print("[warn] pull-core: 'Offers' database not found under this page")
 
     if db_allowed("campaigns") and campaign_db_name and db_map.get(campaign_db_name):
         windows_db_id = db_map.get(campaign_windows_db_name) if campaign_windows_db_name else None
@@ -2100,17 +2545,17 @@ def main():
     parser = argparse.ArgumentParser(description="Sync repo data to Notion (optional) and/or dump DATA JSON")
     parser.add_argument("--page-url", help="Notion page URL that contains the child databases")
     parser.add_argument("--bootstrap", action="store_true", help="Create expected child databases under the page if missing (bootstrap-only unless combined with pull flags)")
-    parser.add_argument("--bootstrap-db", action="append", help="Limit bootstrap to selected databases (repeatable, e.g. modules, campaigns, windows)")
+    parser.add_argument("--bootstrap-db", action="append", help="Limit bootstrap to selected databases (repeatable, e.g. cards, categories, offers, period_windows)")
     parser.add_argument("--bootstrap-full", action="store_true", help="Bootstrap full legacy set of databases (Cards/Categories/Modules/Trackers/Conversions/Campaign* etc.)")
-    parser.add_argument("--sync-db", action="append", help="Limit repo->Notion sync tables (repeatable, e.g. cards, categories, modules)")
+    parser.add_argument("--sync-db", action="append", help="Limit repo->Notion sync tables (repeatable; default is cards/categories/offers/period_windows when those DBs exist)")
     parser.add_argument("--dump", help="Write a JSON dump of DATA to this file (for offline inspection)")
     parser.add_argument("--pull-all", action="store_true", help="Pull both overrides + core (single ack) into js/data_notion_overrides.js and js/data_notion_core_overrides.js")
     parser.add_argument("--pull-overrides", action="store_true", help="Pull Notion overrides into js/data_notion_overrides.js")
     parser.add_argument("--overrides-out", default="js/data_notion_overrides.js", help="Output path for overrides JS")
     parser.add_argument("--pull-db", action="append", help="Limit override pull to specific DBs (repeatable)")
-    parser.add_argument("--pull-core", action="store_true", help="Pull Notion core edits (Cards + Modules + Campaigns period policy) into js/data_notion_core_overrides.js")
+    parser.add_argument("--pull-core", action="store_true", help="Pull Notion core edits into js/data_notion_core_overrides.js (default: cards+offers when Offers DB exists)")
     parser.add_argument("--core-out", default="js/data_notion_core_overrides.js", help="Output path for core overrides JS")
-    parser.add_argument("--core-db", action="append", help="Limit core pull to specific DBs (repeatable, e.g. 'modules', 'campaigns')")
+    parser.add_argument("--core-db", action="append", help="Limit core pull to specific DBs (repeatable, e.g. 'modules', 'offers', 'campaigns')")
     parser.add_argument("--ack", action="store_true", help="After pulling, uncheck Sync To Repo for pulled rows")
     args = parser.parse_args()
 

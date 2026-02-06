@@ -75,7 +75,7 @@
             });
         };
 
-        // Intentionally conservative: keep high-risk shape changes (e.g. type/config) in repo code.
+        // Intentionally conservative for existing entities; allow full object insert for new dynamic entities.
         const allowedCardCoreFields = ["name", "currency", "type", "fcf"];
         const allowedModuleCoreFields = [
             "desc",
@@ -98,12 +98,33 @@
             "req_mission_spend",
             "req_mission_key"
         ];
+        const allowedTrackerCoreFields = [
+            "type",
+            "desc",
+            "match",
+            "setting_key",
+            "req_mission_key",
+            "mission_id",
+            "promo_end",
+            "valid_from",
+            "valid_to",
+            "effects_on_match",
+            "effects_on_eligible",
+            "counter",
+            "retroactive"
+        ];
         const allowedCampaignCoreFields = ["period_policy"];
 
         if (core.modules && data.modules) {
             Object.keys(core.modules).forEach((id) => {
                 const mod = data.modules[id];
-                if (!mod) return;
+                if (!mod) {
+                    const next = core.modules[id];
+                    if (next && typeof next === "object" && !Array.isArray(next)) {
+                        data.modules[id] = { ...next };
+                    }
+                    return;
+                }
                 applyFields(mod, core.modules[id], allowedModuleCoreFields);
             });
         }
@@ -113,6 +134,29 @@
                 const card = data.cards.find(c => c && c.id === id);
                 if (!card) return;
                 applyFields(card, core.cards[id], allowedCardCoreFields);
+                const cardPatch = core.cards[id] || {};
+                const rewardAdd = Array.isArray(cardPatch.reward_modules_add) ? cardPatch.reward_modules_add : [];
+                const trackerAdd = Array.isArray(cardPatch.trackers_add) ? cardPatch.trackers_add : [];
+                if (!Array.isArray(card.rewardModules)) card.rewardModules = [];
+                if (!Array.isArray(card.trackers)) card.trackers = [];
+                rewardAdd.forEach((moduleId) => {
+                    if (moduleId && !card.rewardModules.includes(moduleId)) card.rewardModules.push(moduleId);
+                });
+                trackerAdd.forEach((trackerId) => {
+                    if (trackerId && !card.trackers.includes(trackerId)) card.trackers.push(trackerId);
+                });
+            });
+        }
+
+        if (core.trackers && data.trackers) {
+            Object.keys(core.trackers).forEach((id) => {
+                const patch = core.trackers[id];
+                if (!patch || typeof patch !== "object" || Array.isArray(patch)) return;
+                if (!data.trackers[id]) {
+                    data.trackers[id] = { ...patch };
+                    return;
+                }
+                applyFields(data.trackers[id], patch, allowedTrackerCoreFields);
             });
         }
 
