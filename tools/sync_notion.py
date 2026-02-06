@@ -2199,7 +2199,7 @@ def pull_cards_core(db_id, token, db_label):
     db = get_database(db_id, token)
     props = db.get("properties") or {}
     allowed = set(props.keys())
-    title_prop = "Card ID" if "Card ID" in allowed else get_title_prop_name(db)
+    title_prop = "Card" if "Card" in allowed else ("Card ID" if "Card ID" in allowed else get_title_prop_name(db))
     if not title_prop:
         print(f"[warn] {db_label}: missing title property, skipping core pull")
         return {}, []
@@ -2220,8 +2220,17 @@ def pull_cards_core(db_id, token, db_label):
             continue
         entry = {}
 
+        display_name = ""
+        if "Display Name (zh-HK)" in row_props:
+            display_name = extract_rich_text(row_props, "Display Name (zh-HK)")
+        if not display_name and "Display Name" in row_props:
+            display_name = extract_rich_text(row_props, "Display Name")
+        if display_name:
+            entry["name"] = display_name
+            entry["display_name_zhhk"] = display_name
+
         nm = extract_rich_text(row_props, "Name") if "Name" in row_props else ""
-        if nm != "":
+        if nm != "" and "name" not in entry:
             entry["name"] = nm
         cur = extract_rich_text(row_props, "Currency") if "Currency" in row_props else ""
         if cur != "":
@@ -2233,7 +2242,86 @@ def pull_cards_core(db_id, token, db_label):
         if f is not None:
             entry["fcf"] = f
 
-        entry = normalize_core_entry(entry, ["name", "currency", "type", "fcf"])
+        bank = extract_rich_text(row_props, "Bank") if "Bank" in row_props else ""
+        if bank:
+            entry["bank"] = bank
+
+        reward_unit = ""
+        if "Reward Unit" in row_props:
+            reward_unit = extract_select_or_text(row_props, "Reward Unit").strip()
+        if not reward_unit and "Redemption ? Unit" in row_props:
+            reward_unit = extract_select_or_text(row_props, "Redemption ? Unit").strip()
+        if reward_unit:
+            entry["redemption"] = {"unit": reward_unit}
+
+        if "Active" in row_props:
+            active = extract_checkbox(row_props, "Active")
+            entry["hidden"] = (not active)
+            entry["status"] = "active" if active else "inactive"
+
+        entry = normalize_core_entry(entry, [
+            "name", "display_name_zhhk",
+            "currency", "type", "fcf", "bank",
+            "redemption", "status", "hidden"
+        ])
+        if entry:
+            overrides[key] = entry
+            page_ids.append(row.get("id"))
+
+    return overrides, page_ids
+
+
+def pull_categories_core(db_id, token, db_label):
+    """
+    Pull editable category fields from Notion.
+    Gate: only rows with 'Sync To Repo' checked.
+    """
+    db = get_database(db_id, token)
+    props = db.get("properties") or {}
+    allowed = set(props.keys())
+    title_prop = "Category" if "Category" in allowed else ("Category Key" if "Category Key" in allowed else get_title_prop_name(db))
+    if not title_prop:
+        print(f"[warn] {db_label}: missing title property, skipping core pull")
+        return {}, []
+    if "Sync To Repo" not in allowed:
+        print(f"[warn] {db_label}: missing 'Sync To Repo' checkbox, skipping core pull")
+        return {}, []
+    if props.get("Sync To Repo", {}).get("type") != "checkbox":
+        print(f"[warn] {db_label}: 'Sync To Repo' is not a checkbox, skipping core pull")
+        return {}, []
+
+    rows = query_database(db_id, token, {"property": "Sync To Repo", "checkbox": {"equals": True}})
+    overrides = {}
+    page_ids = []
+    for row in rows:
+        row_props = row.get("properties") or {}
+        key = extract_title_value(row_props.get(title_prop))
+        if not key:
+            continue
+        entry = {}
+
+        label = ""
+        if "Display Name (zh-HK)" in row_props:
+            label = extract_rich_text(row_props, "Display Name (zh-HK)")
+        if not label and "Label" in row_props:
+            label = extract_rich_text(row_props, "Label")
+        if label:
+            entry["label"] = label
+
+        parent = ""
+        if "Parent Category" in row_props:
+            parent = extract_rich_text(row_props, "Parent Category")
+        if not parent and "Parent" in row_props:
+            parent = extract_rich_text(row_props, "Parent")
+        if parent:
+            entry["parent"] = parent
+
+        if "Active" in row_props:
+            entry["hidden"] = (not extract_checkbox(row_props, "Active"))
+        elif "Hidden" in row_props:
+            entry["hidden"] = extract_checkbox(row_props, "Hidden")
+
+        entry = normalize_core_entry(entry, ["label", "parent", "hidden"])
         if entry:
             overrides[key] = entry
             page_ids.append(row.get("id"))
@@ -2426,14 +2514,14 @@ def pull_core(repo_root, page_url, token, core_out_path, core_dbs=None, ack=Fals
         allowed_set = set([d.strip().lower() for d in core_dbs if d and d.strip()])
     elif offers_db_name:
         # New default core pull path for simplified Notion schema.
-        allowed_set = set(["cards", "offers"])
+        allowed_set = set(["cards", "categories", "offers"])
 
     def db_allowed(name):
         if not allowed_set:
             return True
         return name in allowed_set
 
-    overrides = {"version": 1, "cards": {}, "modules": {}, "trackers": {}, "campaigns": {}}
+    overrides = {"version": 1, "cards": {}, "categories": {}, "modules": {}, "trackers": {}, "campaigns": {}}
     ack_ids = []
 
     if db_allowed("cards") and db_map.get("Cards"):
@@ -2446,6 +2534,17 @@ def pull_core(repo_root, page_url, token, core_out_path, core_dbs=None, ack=Fals
     else:
         if db_allowed("cards"):
             print("[warn] pull-core: 'Cards' database not found under this page")
+
+    if db_allowed("categories") and db_map.get("Categories"):
+        data, ids = pull_categories_core(db_map["Categories"], token, "Categories")
+        categories_out = {}
+        for k, v in sorted(data.items()):
+            categories_out[k] = v
+        overrides["categories"] = categories_out
+        ack_ids.extend(ids)
+    else:
+        if db_allowed("categories"):
+            print("[warn] pull-core: 'Categories' database not found under this page")
 
     if db_allowed("modules") and db_map.get("Modules"):
         data, ids = pull_modules_core(db_map["Modules"], token, "Modules")
@@ -2553,9 +2652,9 @@ def main():
     parser.add_argument("--pull-overrides", action="store_true", help="Pull Notion overrides into js/data_notion_overrides.js")
     parser.add_argument("--overrides-out", default="js/data_notion_overrides.js", help="Output path for overrides JS")
     parser.add_argument("--pull-db", action="append", help="Limit override pull to specific DBs (repeatable)")
-    parser.add_argument("--pull-core", action="store_true", help="Pull Notion core edits into js/data_notion_core_overrides.js (default: cards+offers when Offers DB exists)")
+    parser.add_argument("--pull-core", action="store_true", help="Pull Notion core edits into js/data_notion_core_overrides.js (default: cards+categories+offers when Offers DB exists)")
     parser.add_argument("--core-out", default="js/data_notion_core_overrides.js", help="Output path for core overrides JS")
-    parser.add_argument("--core-db", action="append", help="Limit core pull to specific DBs (repeatable, e.g. 'modules', 'offers', 'campaigns')")
+    parser.add_argument("--core-db", action="append", help="Limit core pull to specific DBs (repeatable, e.g. 'cards', 'categories', 'offers', 'modules', 'campaigns')")
     parser.add_argument("--ack", action="store_true", help="After pulling, uncheck Sync To Repo for pulled rows")
     args = parser.parse_args()
 

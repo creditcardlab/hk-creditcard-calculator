@@ -76,7 +76,8 @@
         };
 
         // Intentionally conservative for existing entities; allow full object insert for new dynamic entities.
-        const allowedCardCoreFields = ["name", "currency", "type", "fcf"];
+        const allowedCardCoreFields = ["name", "display_name_zhhk", "currency", "type", "fcf", "bank", "status", "hidden"];
+        const allowedCategoryCoreFields = ["label", "parent", "hidden"];
         const allowedModuleCoreFields = [
             "desc",
             "rate",
@@ -135,6 +136,18 @@
                 if (!card) return;
                 applyFields(card, core.cards[id], allowedCardCoreFields);
                 const cardPatch = core.cards[id] || {};
+                if (cardPatch.redemption && typeof cardPatch.redemption === "object" && !Array.isArray(cardPatch.redemption)) {
+                    const mergedRedemption = (card.redemption && typeof card.redemption === "object" && !Array.isArray(card.redemption))
+                        ? { ...card.redemption }
+                        : {};
+                    Object.keys(cardPatch.redemption).forEach((key) => {
+                        const val = cardPatch.redemption[key];
+                        if (val === undefined || val === null) return;
+                        if (typeof val === "string" && val === "") return;
+                        mergedRedemption[key] = val;
+                    });
+                    card.redemption = mergedRedemption;
+                }
                 const rewardAdd = Array.isArray(cardPatch.reward_modules_add) ? cardPatch.reward_modules_add : [];
                 const trackerAdd = Array.isArray(cardPatch.trackers_add) ? cardPatch.trackers_add : [];
                 if (!Array.isArray(card.rewardModules)) card.rewardModules = [];
@@ -145,6 +158,18 @@
                 trackerAdd.forEach((trackerId) => {
                     if (trackerId && !card.trackers.includes(trackerId)) card.trackers.push(trackerId);
                 });
+            });
+        }
+
+        if (core.categories && data.categories) {
+            Object.keys(core.categories).forEach((id) => {
+                const patch = core.categories[id];
+                if (!patch || typeof patch !== "object" || Array.isArray(patch)) return;
+                if (!data.categories[id]) {
+                    data.categories[id] = { ...patch };
+                    return;
+                }
+                applyFields(data.categories[id], patch, allowedCategoryCoreFields);
             });
         }
 
