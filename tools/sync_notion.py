@@ -180,12 +180,93 @@ def create_child_database(page_id, token, db_title, title_prop_name):
     return notion_request("POST", url, token, body=body)
 
 
-def bootstrap_child_databases(page_id, token):
+def normalize_bootstrap_selection(db_names, full=False):
+    if full:
+        return None
+    if not db_names:
+        # Default to a slim set that supports the simplified Notion workflow.
+        return set(["Cards", "Categories", "Modules", "Campaigns", "Campaign Period Windows"])
+
+    alias_map = {
+        "cards": "Cards",
+        "categories": "Categories",
+        "modules": "Modules",
+        "campaigns": "Campaigns",
+        "windows": "Campaign Period Windows",
+        "campaign_period_windows": "Campaign Period Windows",
+        "campaignsections": "Campaign Sections",
+        "campaign_sections": "Campaign Sections",
+        "campaignregistry": "Campaign Registry",
+        "campaign_registry": "Campaign Registry",
+        "trackers": "Trackers",
+        "conversions": "Conversions",
+        "counters": "Counters Registry",
+        "counters_registry": "Counters Registry",
+    }
+
+    selected = set()
+    for raw in db_names:
+        key = str(raw or "").strip()
+        if not key:
+            continue
+        if key in alias_map:
+            selected.add(alias_map[key])
+            continue
+        low = key.lower()
+        if low in alias_map:
+            selected.add(alias_map[low])
+            continue
+        selected.add(key)
+    return selected
+
+
+def normalize_sync_db_selection(db_names):
+    if not db_names:
+        return None
+
+    alias_map = {
+        "cards": "cards",
+        "categories": "categories",
+        "modules": "modules",
+        "trackers": "trackers",
+        "conversions": "conversions",
+        "campaigns": "campaigns",
+        "campaign_windows": "campaign_windows",
+        "windows": "campaign_windows",
+        "campaign_period_windows": "campaign_windows",
+        "campaign sections": "campaign_sections",
+        "campaignsections": "campaign_sections",
+        "campaign_sections": "campaign_sections",
+        "campaign registry": "campaign_registry",
+        "campaignregistry": "campaign_registry",
+        "campaign_registry": "campaign_registry",
+        "counters": "counters_registry",
+        "counters registry": "counters_registry",
+        "counters_registry": "counters_registry",
+    }
+
+    selected = set()
+    for raw in db_names:
+        key = str(raw or "").strip().lower()
+        if not key:
+            continue
+        key_space = key.replace("-", " ").replace("_", " ")
+        if key in alias_map:
+            selected.add(alias_map[key])
+            continue
+        if key_space in alias_map:
+            selected.add(alias_map[key_space])
+            continue
+        selected.add(key)
+    return selected
+
+
+def bootstrap_child_databases(page_id, token, selected_titles=None):
     """
     Ensure the Notion page has the expected child databases used by this repo.
     Creates any missing databases with a stable title property name so upserts work.
     """
-    required = [
+    required_all = [
         ("Cards", "Card ID"),
         ("Categories", "Category Key"),
         ("Modules", "Module Key"),
@@ -197,6 +278,12 @@ def bootstrap_child_databases(page_id, token):
         ("Campaign Registry", "Campaign ID"),
         ("Counters Registry", "Key"),
     ]
+    required = required_all
+    if isinstance(selected_titles, set) and selected_titles:
+        required = [(title, prop) for (title, prop) in required_all if title in selected_titles]
+        missing = sorted([title for title in selected_titles if title not in set(t for t, _ in required_all)])
+        if missing:
+            print(f"[warn] bootstrap: unknown db names ignored: {', '.join(missing)}")
 
     db_map = {title: db_id for title, db_id in list_child_databases(page_id, token)}
     created = []
@@ -503,7 +590,7 @@ def sync_table(db_id, token, db_label, default_title_prop, template_props, rows,
     return out_page_ids
 
 
-def sync(repo_root, page_url, token):
+def sync(repo_root, page_url, token, sync_dbs=None):
     page_id = extract_id_from_url(page_url)
     if not page_id:
         die("Could not parse page ID from URL")
@@ -528,11 +615,17 @@ def sync(repo_root, page_url, token):
     campaign_windows_db_name = pick_db_name(db_map, "Campaign Period Windows", ["Promotion Period Windows", "Campaign Windows"])
     campaign_sections_db_name = pick_db_name(db_map, "Campaign Sections", ["Promotion Sections"])
     campaign_registry_db_name = pick_db_name(db_map, "Campaign Registry", ["Promo Registry"])
+    sync_allowed_set = normalize_sync_db_selection(sync_dbs)
+
+    def db_allowed(name):
+        if not sync_allowed_set:
+            return True
+        return name in sync_allowed_set
 
     card_page_ids = {}
     campaign_page_ids = {}
 
-    if "Cards" in db_map:
+    if db_allowed("cards") and "Cards" in db_map:
         db_id = db_map["Cards"]
         template_props = build_props("Card ID", "__template__", {
             "Name": rt(""),
@@ -592,7 +685,7 @@ def sync(repo_root, page_url, token):
             build_row_props=build_row_props,
         )
 
-    if "Categories" in db_map:
+    if db_allowed("categories") and "Categories" in db_map:
         db_id = db_map["Categories"]
         template_props = build_props("Category Key", "__template__", {
             "Label": rt(""),
@@ -625,7 +718,7 @@ def sync(repo_root, page_url, token):
             build_row_props=build_row_props,
         )
 
-    if "Modules" in db_map:
+    if db_allowed("modules") and "Modules" in db_map:
         db_id = db_map["Modules"]
         template_props = build_props("Module Key", "__template__", {
             "Offer Name": rt(""),
@@ -638,43 +731,12 @@ def sync(repo_root, page_url, token):
             "Category IDs": mselect([]),
             "Mission Spend Target": num(None),
             "Mission Credit Mode": {"select": {"name": ""}},
-            "Type": rt(""),
-            "Desc": rt(""),
-            "Data": rt(""),
-            "Rate": num(None),
-            "Rate Per X": num(None),
-            "Multiplier": num(None),
-            "Promo End": rt(""),
-            "Valid From": rt(""),
-            "Valid To": rt(""),
-            "Category": rt(""),
-            "Match": mselect([]),
-            "Mode": rt(""),
-            "Cap Mode": rt(""),
-            "Cap Limit": num(None),
-            "Cap Key": rt(""),
-            "Secondary Cap Limit": num(None),
-            "Secondary Cap Key": rt(""),
-            "Min Spend": num(None),
-            "Min Single Spend": num(None),
-            "Req Mission Spend": num(None),
             "Req Mission Key": rt(""),
-            "Setting Key": rt(""),
-            "Usage Key": rt(""),
-            "Config": rt(""),
             "Display Name (zh-HK)": rt(""),
-            "Note (zh-HK)": rt(""),
-            "Status": {"select": {"name": ""}},
-            "Last Verified": {"date": {}},
-            "Source URL": {"url": ""},
-            "Source Title": rt(""),
-            "Unit Override": rt(""),
             "Sync To Repo": chk(False),
-            "Source File": rt(""),
         })
 
         def build_row_props(key, m):
-            match = m.get("match", []) if isinstance(m.get("match", None), list) else []
             flat = build_module_flat_fields(m)
             return {
                 "Offer Name": rt(flat.get("offer_name", "")),
@@ -687,31 +749,7 @@ def sync(repo_root, page_url, token):
                 "Category IDs": mselect(flat.get("category_ids", [])),
                 "Mission Spend Target": num(flat.get("mission_spend_target", None)),
                 "Mission Credit Mode": sel(flat.get("mission_credit_mode", "")),
-                "Type": rt(m.get("type", "")),
-                "Desc": rt(m.get("desc", "")),
-                "Data": rt(json.dumps(m, ensure_ascii=False)),
-                "Rate": num(m.get("rate", None)),
-                "Rate Per X": num(m.get("rate_per_x", None)),
-                "Multiplier": num(m.get("multiplier", None)),
-                "Promo End": rt(m.get("promo_end", "")),
-                "Valid From": rt(m.get("valid_from", "")),
-                "Valid To": rt(m.get("valid_to", "")),
-                "Category": rt(m.get("category", "")),
-                "Match": mselect(match),
-                "Mode": rt(m.get("mode", "")),
-                "Cap Mode": rt(m.get("cap_mode", "")),
-                "Cap Limit": num(m.get("cap_limit", None)),
-                "Cap Key": rt(m.get("cap_key", "")),
-                "Secondary Cap Limit": num(m.get("secondary_cap_limit", None)),
-                "Secondary Cap Key": rt(m.get("secondary_cap_key", "")),
-                "Min Spend": num(m.get("min_spend", None)),
-                "Min Single Spend": num(m.get("min_single_spend", None)),
-                "Req Mission Spend": num(m.get("req_mission_spend", None)),
                 "Req Mission Key": rt(m.get("req_mission_key", "")),
-                "Setting Key": rt(m.get("setting_key", "")),
-                "Usage Key": rt(m.get("usage_key", "")),
-                "Config": rt(json.dumps(m.get("config", {}) if m.get("config") is not None else {}, ensure_ascii=False) if m.get("config") is not None else ""),
-                "Source File": rt("js/data_modules.js"),
             }
 
         sync_table(
@@ -724,7 +762,7 @@ def sync(repo_root, page_url, token):
             build_row_props=build_row_props,
         )
 
-    if "Trackers" in db_map:
+    if db_allowed("trackers") and "Trackers" in db_map:
         db_id = db_map["Trackers"]
         template_props = build_props("Tracker Key", "__template__", {
             "Type": rt(""),
@@ -770,7 +808,7 @@ def sync(repo_root, page_url, token):
             build_row_props=build_row_props,
         )
 
-    if "Conversions" in db_map:
+    if db_allowed("conversions") and "Conversions" in db_map:
         db_id = db_map["Conversions"]
         template_props = build_props("Conversion Src", "__template__", {
             "Miles Rate": num(None),
@@ -800,7 +838,7 @@ def sync(repo_root, page_url, token):
             build_row_props=build_row_props,
         )
 
-    if campaign_db_name:
+    if db_allowed("campaigns") and campaign_db_name:
         db_id = db_map[campaign_db_name]
         template_props = build_props("Campaign ID", "__template__", {
             "Name": rt(""),
@@ -864,7 +902,7 @@ def sync(repo_root, page_url, token):
             build_row_props=build_row_props,
         )
 
-    if campaign_windows_db_name:
+    if db_allowed("campaign_windows") and campaign_windows_db_name:
         db_id = db_map[campaign_windows_db_name]
         template_props = build_props("Window ID", "__template__", {
             "Campaign ID": rt(""),
@@ -925,7 +963,7 @@ def sync(repo_root, page_url, token):
                 else:
                     create_page(db_id, props, token)
 
-    if campaign_sections_db_name:
+    if db_allowed("campaign_sections") and campaign_sections_db_name:
         db_id = db_map[campaign_sections_db_name]
         template_props = build_props("Section ID", "__template__", {
             "Campaign ID": rt(""),
@@ -993,7 +1031,7 @@ def sync(repo_root, page_url, token):
                 else:
                     create_page(db_id, props, token)
 
-    if campaign_registry_db_name:
+    if db_allowed("campaign_registry") and campaign_registry_db_name:
         db_id = db_map[campaign_registry_db_name]
         template_props = build_props("Campaign ID", "__template__", {
             "Setting Key": rt(""),
@@ -1020,7 +1058,7 @@ def sync(repo_root, page_url, token):
             build_row_props=build_row_props,
         )
 
-    if "Counters Registry" in db_map:
+    if db_allowed("counters_registry") and "Counters Registry" in db_map:
         db_id = db_map["Counters Registry"]
         template_props = build_props("Key", "__template__", {
             "Period Type": rt(""),
@@ -1569,67 +1607,68 @@ def pull_modules_core(db_id, token, db_label):
             continue
         entry = {}
 
-        # Pull both legacy technical columns and simplified input columns.
-        d = extract_rich_text(row_props, "Desc") if "Desc" in row_props else ""
-        if d != "":
-            entry["desc"] = d
-        offer_name = extract_rich_text(row_props, "Offer Name") if "Offer Name" in row_props else ""
-        if offer_name != "":
-            entry["desc"] = offer_name
-
-        n = extract_number(row_props, "Rate") if "Rate" in row_props else None
-        if n is not None:
-            entry["rate"] = n
-        n = extract_number(row_props, "Rate Per X") if "Rate Per X" in row_props else None
-        if n is not None:
-            entry["rate_per_x"] = n
-        n = extract_number(row_props, "Multiplier") if "Multiplier" in row_props else None
-        if n is not None:
-            entry["multiplier"] = n
-
-        pe = extract_date_or_text(row_props, "Promo End") if "Promo End" in row_props else ""
-        if pe != "":
-            entry["promo_end"] = pe
-        vf = extract_date_or_text(row_props, "Valid From") if "Valid From" in row_props else ""
-        if vf != "":
-            entry["valid_from"] = vf
-        vt = extract_date_or_text(row_props, "Valid To") if "Valid To" in row_props else ""
-        if vt != "":
-            entry["valid_to"] = vt
-
-        cm = extract_rich_text(row_props, "Cap Mode") if "Cap Mode" in row_props else ""
-        if cm != "":
-            entry["cap_mode"] = cm
-        n = extract_number(row_props, "Cap Limit") if "Cap Limit" in row_props else None
-        if n is not None:
-            entry["cap_limit"] = n
-        ck = extract_rich_text(row_props, "Cap Key") if "Cap Key" in row_props else ""
-        if ck != "":
-            entry["cap_key"] = ck
-
-        n = extract_number(row_props, "Secondary Cap Limit") if "Secondary Cap Limit" in row_props else None
-        if n is not None:
-            entry["secondary_cap_limit"] = n
-        sk = extract_rich_text(row_props, "Secondary Cap Key") if "Secondary Cap Key" in row_props else ""
-        if sk != "":
-            entry["secondary_cap_key"] = sk
-
-        n = extract_number(row_props, "Min Spend") if "Min Spend" in row_props else None
-        if n is not None:
-            entry["min_spend"] = n
-        n = extract_number(row_props, "Min Single Spend") if "Min Single Spend" in row_props else None
-        if n is not None:
-            entry["min_single_spend"] = n
-        n = extract_number(row_props, "Req Mission Spend") if "Req Mission Spend" in row_props else None
-        if n is not None:
-            entry["req_mission_spend"] = n
-        rk = extract_rich_text(row_props, "Req Mission Key") if "Req Mission Key" in row_props else ""
-        if rk != "":
-            entry["req_mission_key"] = rk
-
         flat_entry = build_module_core_from_flat_props(row_props, f"{db_label}:{key}")
         if flat_entry:
             entry.update(flat_entry)
+            rk = extract_rich_text(row_props, "Req Mission Key") if "Req Mission Key" in row_props else ""
+            if rk != "":
+                entry["req_mission_key"] = rk
+        else:
+            # Backward compatibility for older Notion schemas.
+            d = extract_rich_text(row_props, "Desc") if "Desc" in row_props else ""
+            if d != "":
+                entry["desc"] = d
+
+            n = extract_number(row_props, "Rate") if "Rate" in row_props else None
+            if n is not None:
+                entry["rate"] = n
+            n = extract_number(row_props, "Rate Per X") if "Rate Per X" in row_props else None
+            if n is not None:
+                entry["rate_per_x"] = n
+            n = extract_number(row_props, "Multiplier") if "Multiplier" in row_props else None
+            if n is not None:
+                entry["multiplier"] = n
+
+            pe = extract_date_or_text(row_props, "Promo End") if "Promo End" in row_props else ""
+            if pe != "":
+                entry["promo_end"] = pe
+            vf = extract_date_or_text(row_props, "Valid From") if "Valid From" in row_props else ""
+            if vf != "":
+                entry["valid_from"] = vf
+            vt = extract_date_or_text(row_props, "Valid To") if "Valid To" in row_props else ""
+            if vt != "":
+                entry["valid_to"] = vt
+
+            cm = extract_rich_text(row_props, "Cap Mode") if "Cap Mode" in row_props else ""
+            if cm != "":
+                entry["cap_mode"] = cm
+            n = extract_number(row_props, "Cap Limit") if "Cap Limit" in row_props else None
+            if n is not None:
+                entry["cap_limit"] = n
+            ck = extract_rich_text(row_props, "Cap Key") if "Cap Key" in row_props else ""
+            if ck != "":
+                entry["cap_key"] = ck
+
+            n = extract_number(row_props, "Secondary Cap Limit") if "Secondary Cap Limit" in row_props else None
+            if n is not None:
+                entry["secondary_cap_limit"] = n
+            sk = extract_rich_text(row_props, "Secondary Cap Key") if "Secondary Cap Key" in row_props else ""
+            if sk != "":
+                entry["secondary_cap_key"] = sk
+
+            n = extract_number(row_props, "Min Spend") if "Min Spend" in row_props else None
+            if n is not None:
+                entry["min_spend"] = n
+            n = extract_number(row_props, "Min Single Spend") if "Min Single Spend" in row_props else None
+            if n is not None:
+                entry["min_single_spend"] = n
+            n = extract_number(row_props, "Req Mission Spend") if "Req Mission Spend" in row_props else None
+            if n is not None:
+                entry["req_mission_spend"] = n
+            rk = extract_rich_text(row_props, "Req Mission Key") if "Req Mission Key" in row_props else ""
+            if rk != "":
+                entry["req_mission_key"] = rk
+
         if not entry.get("promo_end") and entry.get("valid_to"):
             entry["promo_end"] = entry["valid_to"]
 
@@ -2060,7 +2099,10 @@ def ack_sync_to_repo(token, page_ids):
 def main():
     parser = argparse.ArgumentParser(description="Sync repo data to Notion (optional) and/or dump DATA JSON")
     parser.add_argument("--page-url", help="Notion page URL that contains the child databases")
-    parser.add_argument("--bootstrap", action="store_true", help="Create the expected child databases under the page if missing")
+    parser.add_argument("--bootstrap", action="store_true", help="Create expected child databases under the page if missing (bootstrap-only unless combined with pull flags)")
+    parser.add_argument("--bootstrap-db", action="append", help="Limit bootstrap to selected databases (repeatable, e.g. modules, campaigns, windows)")
+    parser.add_argument("--bootstrap-full", action="store_true", help="Bootstrap full legacy set of databases (Cards/Categories/Modules/Trackers/Conversions/Campaign* etc.)")
+    parser.add_argument("--sync-db", action="append", help="Limit repo->Notion sync tables (repeatable, e.g. cards, categories, modules)")
     parser.add_argument("--dump", help="Write a JSON dump of DATA to this file (for offline inspection)")
     parser.add_argument("--pull-all", action="store_true", help="Pull both overrides + core (single ack) into js/data_notion_overrides.js and js/data_notion_core_overrides.js")
     parser.add_argument("--pull-overrides", action="store_true", help="Pull Notion overrides into js/data_notion_overrides.js")
@@ -2097,11 +2139,16 @@ def main():
         page_id = extract_id_from_url(args.page_url)
         if not page_id:
             die("Could not parse page ID from URL")
-        bootstrap_child_databases(page_id, token)
+        selected = normalize_bootstrap_selection(args.bootstrap_db, full=bool(args.bootstrap_full))
+        bootstrap_child_databases(page_id, token, selected_titles=selected)
 
     pull_ops = int(bool(args.pull_all)) + int(bool(args.pull_overrides)) + int(bool(args.pull_core))
     if pull_ops > 1:
         die("Use only one of --pull-all, --pull-overrides, or --pull-core.")
+
+    # Keep --bootstrap as a pure setup action unless explicit pull is requested.
+    if args.bootstrap and pull_ops == 0:
+        return
 
     if args.pull_all:
         core_ids = pull_core(repo_root, args.page_url, token, args.core_out, core_dbs=args.core_db, ack=False)
@@ -2118,7 +2165,7 @@ def main():
         pull_core(repo_root, args.page_url, token, args.core_out, core_dbs=args.core_db, ack=args.ack)
         return
 
-    sync(repo_root, args.page_url, token)
+    sync(repo_root, args.page_url, token, sync_dbs=args.sync_db)
     print("Sync complete")
 
 
