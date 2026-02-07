@@ -183,13 +183,27 @@ function loadCoreOverrides(repoRoot, overridesPath) {
     return { version: 1, cards: {}, categories: {}, modules: {}, trackers: {}, campaigns: {} };
   }
 
-  const ctx = { console, window: null, global: null };
+  const ctx = { console, window: null, global: null, globalThis: null };
   ctx.window = ctx;
   ctx.global = ctx;
+  ctx.globalThis = ctx;
   vm.createContext(ctx);
   runScriptInContext(ctx, absPath);
-
-  const loaded = ctx.NOTION_CORE_OVERRIDES || {};
+  // data_notion_core_overrides.js declares `const NOTION_CORE_OVERRIDES = ...`,
+  // which is a lexical binding and not always exposed as a context property.
+  // Read it explicitly from the same VM global lexical scope.
+  let loaded = ctx.NOTION_CORE_OVERRIDES;
+  if (!loaded) {
+    try {
+      loaded = vm.runInContext(
+        "(typeof NOTION_CORE_OVERRIDES !== 'undefined') ? NOTION_CORE_OVERRIDES : undefined",
+        ctx
+      );
+    } catch (_) {
+      loaded = undefined;
+    }
+  }
+  loaded = loaded || {};
   return {
     version: 1,
     cards: loaded.cards && typeof loaded.cards === "object" ? loaded.cards : {},
