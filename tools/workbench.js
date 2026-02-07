@@ -84,7 +84,7 @@ function printUsage() {
   node tools/workbench.js audit [--out <path>]
   node tools/workbench.js export [--out <path>] [--audit-out <path>]
   node tools/workbench.js html [--out <path>]
-  node tools/workbench.js apply --edits <path> [--out <path>] [--dry-run]
+  node tools/workbench.js apply --edits <path|-> [--out <path>] [--dry-run]
 `);
 }
 
@@ -140,6 +140,14 @@ function normalizeForExport(input) {
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
+}
+
+function readJsonInput(pathOrDash) {
+  if (pathOrDash === "-") {
+    const raw = fs.readFileSync(0, "utf8");
+    return JSON.parse(raw || "{}");
+  }
+  return readJson(pathOrDash);
 }
 
 function writeJson(filePath, value) {
@@ -797,6 +805,8 @@ function buildHtmlReport(payload) {
     .editor-actions button.ghost { background: #f8fafc; }
     .editor-actions input[type="file"] { display: none; }
     .editor-hint { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .editor-inline-cmd { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .editor-inline-cmd .mono { background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
     .editor-steps { margin: 0 0 8px; padding-left: 18px; color: #374151; font-size: 12px; }
     .editor-steps li { margin: 3px 0; }
     .editor-advanced { margin-bottom: 8px; }
@@ -806,6 +816,15 @@ function buildHtmlReport(payload) {
     #editor-quick-table { min-width: 0; }
     #editor-quick-table th, #editor-quick-table td { font-size: 11px; padding: 6px 8px; }
     #editor-quick-table .q-actions { white-space: nowrap; }
+    #editor-entry-patch { min-height: 90px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
+    @media (min-width: 1100px) {
+      .panel-editor {
+        position: sticky;
+        top: 10px;
+        max-height: calc(100vh - 20px);
+        overflow: auto;
+      }
+    }
     .editor-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
     .editor-split pre {
       margin: 0;
@@ -845,7 +864,7 @@ function buildHtmlReport(payload) {
       <ul id="alerts"></ul>
     </div>
     <div class="grid">
-      <section class="panel">
+      <section class="panel panel-editor" id="panel-editor">
         <h3>Core Overrides Editor</h3>
         <div class="editor-hint">
           建議由 Card Review / 各表格的 Edit 按鈕入手，改完再下載 edits 套用。
@@ -895,12 +914,25 @@ function buildHtmlReport(payload) {
         <div class="editor-actions">
           <button id="editor-download" class="primary" type="button">Download Edits JSON</button>
           <button id="editor-copy" class="ghost" type="button">Copy Edits JSON</button>
+          <button id="editor-copy-apply-cmd" class="ghost" type="button">Copy Apply Command (macOS)</button>
           <label for="editor-import">Import Edits JSON<input type="file" id="editor-import" accept=".json,application/json"></label>
           <button id="editor-reset" class="warn" type="button">Reset Pending</button>
+        </div>
+        <div class="editor-inline-cmd">
+          <span class="small">No download flow:</span>
+          <span class="mono">pbpaste | node tools/workbench.js apply --edits -</span>
         </div>
         <div class="quick-box">
           <div class="small" style="margin-bottom:4px;">Quick Edit Fields (one column at a time)</div>
           <div class="table-wrap"><table id="editor-quick-table"></table></div>
+        </div>
+        <div class="quick-box">
+          <div class="small" style="margin-bottom:4px;">Bulk Patch For Selected Entry (edit multiple fields at once)</div>
+          <textarea id="editor-entry-patch" placeholder='{"rate":0.06,"cap_limit":500,"desc":"新描述"}'></textarea>
+          <div class="editor-actions" style="margin-top:8px;">
+            <button id="editor-load-entry" class="ghost" type="button">Load Pending Entry Patch</button>
+            <button id="editor-merge-entry" class="primary" type="button">Queue Entry Patch (Merge)</button>
+          </div>
         </div>
         <div class="editor-split">
           <div>
@@ -914,14 +946,6 @@ function buildHtmlReport(payload) {
         </div>
       </section>
       <section class="panel">
-        <h3>Unified Offers</h3>
-        <div class="toolbar">
-          <input id="q-offers" placeholder="Search offer id / title / source / type / card / module ...">
-          <span class="count" id="count-offers"></span>
-        </div>
-        <div class="table-wrap"><table id="table-offers"></table></div>
-      </section>
-      <section class="panel">
         <h3>Card Review</h3>
         <div class="toolbar">
           <select id="card-review-select"></select>
@@ -931,6 +955,14 @@ function buildHtmlReport(payload) {
         </div>
         <div id="card-review-meta" class="review-meta"></div>
         <div id="card-review-content"></div>
+      </section>
+      <section class="panel">
+        <h3>Unified Offers</h3>
+        <div class="toolbar">
+          <input id="q-offers" placeholder="Search offer id / title / source / type / card / module ...">
+          <span class="count" id="count-offers"></span>
+        </div>
+        <div class="table-wrap"><table id="table-offers"></table></div>
       </section>
       <section class="panel">
         <h3>Cards</h3>
@@ -1276,6 +1308,83 @@ function queueDeleteFieldPatch() {
   queueFieldPatch();
 }
 
+function loadEntryPatchJson() {
+  const bucketSel = document.getElementById("editor-bucket");
+  const idSel = document.getElementById("editor-id");
+  const input = document.getElementById("editor-entry-patch");
+  if (!bucketSel || !idSel || !input) return;
+  const entryPatch = getEntryPatch(bucketSel.value, idSel.value);
+  const out = {};
+  Object.keys(entryPatch).forEach((field) => {
+    if (field === "__delete") return;
+    out[field] = entryPatch[field];
+  });
+  input.value = Object.keys(out).length > 0 ? toJsonPreview(out) : "{}";
+  setEditorStatus("Loaded pending entry patch.", false);
+}
+
+function queueEntryPatchFromJson() {
+  const bucketSel = document.getElementById("editor-bucket");
+  const idSel = document.getElementById("editor-id");
+  const input = document.getElementById("editor-entry-patch");
+  if (!bucketSel || !idSel || !input) return;
+  const bucket = bucketSel.value;
+  const id = idSel.value;
+  if (!bucket || !id) {
+    setEditorStatus("Bucket/ID is required.", true);
+    return;
+  }
+  const raw = String(input.value || "").trim();
+  if (!raw) {
+    setEditorStatus("Bulk patch JSON is empty.", true);
+    return;
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    setEditorStatus("Bulk patch parse failed: " + (err.message || String(err)), true);
+    return;
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    setEditorStatus("Bulk patch must be a JSON object.", true);
+    return;
+  }
+
+  const allowedSet = new Set(getAllowedFields(bucket));
+  const bucketPatch = ensureBucketPatch(bucket);
+  if (!bucketPatch[id] || typeof bucketPatch[id] !== "object" || Array.isArray(bucketPatch[id])) {
+    bucketPatch[id] = {};
+  }
+  if (bucketPatch[id].__delete === true) delete bucketPatch[id].__delete;
+
+  let applied = 0;
+  const skipped = [];
+  Object.keys(parsed).forEach((field) => {
+    if (!allowedSet.has(field)) {
+      skipped.push(field);
+      return;
+    }
+    bucketPatch[id][field] = parsed[field];
+    applied += 1;
+  });
+
+  clearEmptyEntry(bucket, id);
+  refreshPendingPreview();
+  renderQuickFieldTable();
+  refreshEditorCurrentPreview();
+  if (applied === 0) {
+    setEditorStatus("No allowed fields in bulk patch.", true);
+    return;
+  }
+  if (skipped.length > 0) {
+    setEditorStatus("Bulk patch queued: " + applied + " field(s). Skipped: " + skipped.join(", "), false);
+    return;
+  }
+  setEditorStatus("Bulk patch queued: " + applied + " field(s).", false);
+}
+
 function clearEntryPatch() {
   const bucketSel = document.getElementById("editor-bucket");
   const idSel = document.getElementById("editor-id");
@@ -1374,6 +1483,18 @@ async function copyEditsJson() {
   setEditorStatus("Clipboard API unavailable. Please use Download.", true);
 }
 
+async function copyApplyCommand() {
+  const cmd = "pbpaste | node tools/workbench.js apply --edits - && node tools/run_golden_cases.js";
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(cmd);
+      setEditorStatus("Copied apply command for macOS.", false);
+      return;
+    }
+  } catch (_) {}
+  setEditorStatus("Clipboard API unavailable. Copy command manually.", true);
+}
+
 function handleImportEditsFile(file) {
   if (!file) return;
   const reader = new FileReader();
@@ -1425,7 +1546,7 @@ window.quickDeleteField = function (field) {
   queueDeleteFieldPatch();
 };
 
-window.openEditor = function (bucket, id) {
+window.openEditor = function (bucket, id, shouldScroll) {
   const bucketSel = document.getElementById("editor-bucket");
   if (!bucketSel) return;
   const bucketKey = String(bucket || "");
@@ -1441,7 +1562,7 @@ window.openEditor = function (bucket, id) {
   renderQuickFieldTable();
   setEditorStatus("Selected " + bucketKey + ":" + id + ".", false);
   const idSel = document.getElementById("editor-id");
-  if (idSel) idSel.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (shouldScroll && idSel) idSel.scrollIntoView({ behavior: "smooth", block: "center" });
 };
 
 function initEditor() {
@@ -1480,6 +1601,9 @@ function initEditor() {
   document.getElementById("editor-undo-entry-delete").addEventListener("click", undoEntryDelete);
   document.getElementById("editor-download").addEventListener("click", downloadEditsJson);
   document.getElementById("editor-copy").addEventListener("click", copyEditsJson);
+  document.getElementById("editor-copy-apply-cmd").addEventListener("click", copyApplyCommand);
+  document.getElementById("editor-load-entry").addEventListener("click", loadEntryPatchJson);
+  document.getElementById("editor-merge-entry").addEventListener("click", queueEntryPatchFromJson);
   document.getElementById("editor-reset").addEventListener("click", resetPendingEdits);
   document.getElementById("editor-import").addEventListener("change", (ev) => {
     const file = ev.target && ev.target.files ? ev.target.files[0] : null;
@@ -1844,7 +1968,7 @@ function runHtml(repoRoot, outPath) {
 }
 
 function runApply(repoRoot, editsPath, outPath, dryRun) {
-  const edits = readJson(editsPath);
+  const edits = readJsonInput(editsPath);
   const existing = loadCoreOverrides(repoRoot, path.relative(repoRoot, outPath));
   const result = applyEdits(existing, edits);
 
@@ -1894,7 +2018,8 @@ function main() {
       process.exit(1);
     }
     const out = path.resolve(ROOT, flags["--out"] || DEFAULT_CORE_OVERRIDES_PATH);
-    runApply(ROOT, path.resolve(ROOT, editsPath), out, !!flags["--dry-run"]);
+    const resolvedEdits = editsPath === "-" ? "-" : path.resolve(ROOT, editsPath);
+    runApply(ROOT, resolvedEdits, out, !!flags["--dry-run"]);
     return;
   }
 
