@@ -2,7 +2,9 @@
 "use strict";
 
 const fs = require("fs");
+const http = require("http");
 const path = require("path");
+const { spawnSync } = require("child_process");
 const vm = require("vm");
 
 const ROOT = path.resolve(__dirname, "..");
@@ -76,7 +78,7 @@ const ALLOWED_FIELDS = {
     "counter",
     "retroactive"
   ]),
-  campaigns: new Set(["period_policy", "promo_type"])
+  campaigns: new Set(["name", "period_policy", "promo_type"])
 };
 
 function printUsage() {
@@ -85,6 +87,7 @@ function printUsage() {
   node tools/workbench.js export [--out <path>] [--audit-out <path>]
   node tools/workbench.js html [--out <path>]
   node tools/workbench.js apply --edits <path|-> [--out <path>] [--dry-run]
+  node tools/workbench.js serve [--port <number>] [--host <host>]
 `);
 }
 
@@ -805,8 +808,6 @@ function buildHtmlReport(payload) {
     .editor-actions button.ghost { background: #f8fafc; }
     .editor-actions input[type="file"] { display: none; }
     .editor-hint { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
-    .editor-inline-cmd { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
-    .editor-inline-cmd .mono { background: #f8fafc; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; }
     .editor-steps { margin: 0 0 8px; padding-left: 18px; color: #374151; font-size: 12px; }
     .editor-steps li { margin: 3px 0; }
     .editor-advanced { margin-bottom: 8px; }
@@ -817,14 +818,6 @@ function buildHtmlReport(payload) {
     #editor-quick-table th, #editor-quick-table td { font-size: 11px; padding: 6px 8px; }
     #editor-quick-table .q-actions { white-space: nowrap; }
     #editor-entry-patch { min-height: 90px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; }
-    @media (min-width: 1100px) {
-      .panel-editor {
-        position: sticky;
-        top: 10px;
-        max-height: calc(100vh - 20px);
-        overflow: auto;
-      }
-    }
     .editor-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
     .editor-split pre {
       margin: 0;
@@ -850,6 +843,15 @@ function buildHtmlReport(payload) {
     .review-item-title { font-size: 12px; font-weight: 600; color: var(--ink); }
     .review-item-sub { font-size: 11px; color: var(--muted); }
     .review-empty { font-size: 12px; color: var(--muted); }
+    .review-group-title { margin: 0 0 8px; font-size: 12px; color: #374151; text-transform: uppercase; letter-spacing: .2px; }
+    .review-entity { border: 1px solid var(--line); border-radius: 8px; background: #f9fafb; margin-bottom: 8px; }
+    .review-entity summary { cursor: pointer; padding: 8px; list-style: none; }
+    .review-entity summary::-webkit-details-marker { display: none; }
+    .review-entity-body { padding: 0 8px 8px; }
+    .review-entity-body .table-wrap { border-radius: 8px; }
+    .review-table { min-width: 0; }
+    .review-table th, .review-table td { font-size: 11px; padding: 6px 8px; }
+    .review-actions { white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -867,12 +869,12 @@ function buildHtmlReport(payload) {
       <section class="panel panel-editor" id="panel-editor">
         <h3>Core Overrides Editor</h3>
         <div class="editor-hint">
-          建議由 Card Review / 各表格的 Edit 按鈕入手，改完再下載 edits 套用。
+          建議由 Card Review 直接編輯，完成後按 Save。
         </div>
         <ol class="editor-steps">
           <li>揀 Bucket、Entity ID、Field。</li>
           <li>Value 會自動載入目前值，直接改。</li>
-          <li>按「Save Field」，最後按「Download Edits JSON」。</li>
+          <li>按「Save Field」，完成後按「Save + Run Golden」。</li>
         </ol>
         <div id="editorStatus" class="status ok">Ready.</div>
         <div class="editor-grid">
@@ -904,23 +906,10 @@ function buildHtmlReport(payload) {
           <button id="editor-delete-field-btn" class="warn" type="button">Delete Field</button>
           <button id="editor-clear-entry" class="ghost" type="button">Clear This Entry Patch</button>
         </div>
-        <details class="editor-advanced">
-          <summary>Advanced actions</summary>
-          <div class="editor-actions">
-            <button id="editor-delete-entry" class="warn" type="button">Queue Entry Delete</button>
-            <button id="editor-undo-entry-delete" class="ghost" type="button">Undo Entry Delete</button>
-          </div>
-        </details>
         <div class="editor-actions">
-          <button id="editor-download" class="primary" type="button">Download Edits JSON</button>
-          <button id="editor-copy" class="ghost" type="button">Copy Edits JSON</button>
-          <button id="editor-copy-apply-cmd" class="ghost" type="button">Copy Apply Command (macOS)</button>
-          <label for="editor-import">Import Edits JSON<input type="file" id="editor-import" accept=".json,application/json"></label>
+          <button id="editor-save-repo" class="primary" type="button">Save To Repo</button>
+          <button id="editor-save-repo-golden" class="ghost" type="button">Save + Run Golden</button>
           <button id="editor-reset" class="warn" type="button">Reset Pending</button>
-        </div>
-        <div class="editor-inline-cmd">
-          <span class="small">No download flow:</span>
-          <span class="mono">pbpaste | node tools/workbench.js apply --edits -</span>
         </div>
         <div class="quick-box">
           <div class="small" style="margin-bottom:4px;">Quick Edit Fields (one column at a time)</div>
@@ -994,6 +983,7 @@ function buildHtmlReport(payload) {
 const WB = ${safeJson};
 const generated = new Date();
 document.getElementById("generatedAt").textContent = "Generated: " + generated.toLocaleString();
+const IS_APP_MODE = (window.location.protocol === "http:" || window.location.protocol === "https:");
 
 function esc(input) {
   return String(input ?? "")
@@ -1061,6 +1051,17 @@ function setEditorStatus(msg, isErr) {
   if (!el) return;
   el.className = "status " + (isErr ? "err" : "ok");
   el.textContent = msg;
+}
+
+function initAppModeActions() {
+  const saveBtn = document.getElementById("editor-save-repo");
+  const saveGoldenBtn = document.getElementById("editor-save-repo-golden");
+  if (!saveBtn || !saveGoldenBtn) return;
+  if (IS_APP_MODE) return;
+  saveBtn.disabled = true;
+  saveGoldenBtn.disabled = true;
+  saveBtn.title = "Use app mode: node tools/workbench.js serve";
+  saveGoldenBtn.title = "Use app mode: node tools/workbench.js serve";
 }
 
 function jsStr(input) {
@@ -1297,6 +1298,7 @@ function queueFieldPatch() {
   clearEmptyEntry(bucket, id);
   refreshPendingPreview();
   renderQuickFieldTable();
+  refreshCardReviewIfVisible();
   setEditorStatus(deleteFieldEl.checked ? "Field delete queued (set to null)." : "Field patch queued.", false);
   deleteFieldEl.checked = false;
 }
@@ -1373,6 +1375,7 @@ function queueEntryPatchFromJson() {
   clearEmptyEntry(bucket, id);
   refreshPendingPreview();
   renderQuickFieldTable();
+  refreshCardReviewIfVisible();
   refreshEditorCurrentPreview();
   if (applied === 0) {
     setEditorStatus("No allowed fields in bulk patch.", true);
@@ -1393,6 +1396,7 @@ function clearEntryPatch() {
   delete bucketPatch[idSel.value];
   refreshPendingPreview();
   renderQuickFieldTable();
+  refreshCardReviewIfVisible();
   setEditorStatus("Entry patch cleared.", false);
 }
 
@@ -1404,6 +1408,7 @@ function queueEntryDelete() {
   bucketPatch[idSel.value] = { __delete: true };
   refreshPendingPreview();
   renderQuickFieldTable();
+  refreshCardReviewIfVisible();
   setEditorStatus("Entry delete queued (__delete:true).", false);
 }
 
@@ -1421,6 +1426,7 @@ function undoEntryDelete() {
     clearEmptyEntry(bucketSel.value, idSel.value);
     refreshPendingPreview();
     renderQuickFieldTable();
+    refreshCardReviewIfVisible();
     setEditorStatus("Entry delete removed.", false);
     return;
   }
@@ -1495,6 +1501,51 @@ async function copyApplyCommand() {
   setEditorStatus("Clipboard API unavailable. Copy command manually.", true);
 }
 
+async function saveToRepo(runGolden) {
+  if (!IS_APP_MODE) {
+    setEditorStatus("Save To Repo requires app mode: node tools/workbench.js serve", true);
+    return;
+  }
+  const edits = buildExportEdits();
+  const saveBtn = document.getElementById("editor-save-repo");
+  const saveGoldenBtn = document.getElementById("editor-save-repo-golden");
+  if (saveBtn) saveBtn.disabled = true;
+  if (saveGoldenBtn) saveGoldenBtn.disabled = true;
+  setEditorStatus("Saving to repo...", false);
+  try {
+    const resp = await fetch("/api/apply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ edits, runGolden: !!runGolden })
+    });
+    const payload = await resp.json();
+    if (!resp.ok || !payload || payload.ok !== true) {
+      const errMsg = (payload && payload.error) ? payload.error : "Unknown save failure";
+      setEditorStatus("Save failed: " + errMsg, true);
+      return;
+    }
+    const warnings = Array.isArray(payload.warnings) ? payload.warnings : [];
+    if (payload.golden && payload.golden.ok === false) {
+      setEditorStatus("Saved, but golden failed. Check terminal output.", true);
+      return;
+    }
+    if (payload.golden && payload.golden.ok === true) {
+      setEditorStatus("Saved (" + payload.touched + " entries) and golden passed.", false);
+      return;
+    }
+    if (warnings.length > 0) {
+      setEditorStatus("Saved (" + payload.touched + " entries) with " + warnings.length + " warning(s).", false);
+      return;
+    }
+    setEditorStatus("Saved to repo (" + payload.touched + " entries).", false);
+  } catch (err) {
+    setEditorStatus("Save failed: " + (err && err.message ? err.message : String(err)), true);
+  } finally {
+    if (saveBtn) saveBtn.disabled = false;
+    if (saveGoldenBtn) saveGoldenBtn.disabled = false;
+  }
+}
+
 function handleImportEditsFile(file) {
   if (!file) return;
   const reader = new FileReader();
@@ -1504,6 +1555,7 @@ function handleImportEditsFile(file) {
       PENDING_EDITS = normalizeImportedPatch(raw);
       refreshPendingPreview();
       renderQuickFieldTable();
+      refreshCardReviewIfVisible();
       setEditorStatus("Imported edits JSON.", false);
     } catch (err) {
       setEditorStatus("Import failed: " + (err.message || String(err)), true);
@@ -1519,6 +1571,7 @@ function resetPendingEdits() {
   PENDING_EDITS = makeEmptyPatch();
   refreshPendingPreview();
   renderQuickFieldTable();
+  refreshCardReviewIfVisible();
   setEditorStatus("Pending edits reset.", false);
 }
 
@@ -1546,6 +1599,51 @@ window.quickDeleteField = function (field) {
   queueDeleteFieldPatch();
 };
 
+function setEditorTarget(bucket, id, field) {
+  const bucketSel = document.getElementById("editor-bucket");
+  if (!bucketSel) return false;
+  const bucketKey = String(bucket || "");
+  if (!EDITOR_ALLOWED[bucketKey]) {
+    setEditorStatus("Unknown bucket: " + bucketKey, true);
+    return false;
+  }
+  bucketSel.value = bucketKey;
+  refreshIdOptions(String(id || ""));
+  refreshFieldOptions(field ? String(field) : undefined);
+  refreshEditorCurrentPreview();
+  loadCurrentFieldValue();
+  renderQuickFieldTable();
+  return true;
+}
+
+window.reviewSetField = function (bucket, id, field) {
+  if (!setEditorTarget(bucket, id, field)) return;
+  const valueEl = document.getElementById("editor-value");
+  const deleteFieldEl = document.getElementById("editor-delete-field");
+  if (!valueEl || !deleteFieldEl) return;
+  const next = window.prompt(
+    "Set " + String(field || "") + " (" + String(bucket || "") + ":" + String(id || "") + ")",
+    valueEl.value
+  );
+  if (next === null) {
+    setEditorStatus("Review edit cancelled.", false);
+    return;
+  }
+  valueEl.value = next;
+  deleteFieldEl.checked = false;
+  queueFieldPatch();
+};
+
+window.reviewDeleteField = function (bucket, id, field) {
+  if (!setEditorTarget(bucket, id, field)) return;
+  const deleteFieldEl = document.getElementById("editor-delete-field");
+  if (!deleteFieldEl) return;
+  const ok = window.confirm("Delete field " + String(field || "") + " from " + String(bucket || "") + ":" + String(id || "") + "?");
+  if (!ok) return;
+  deleteFieldEl.checked = true;
+  queueFieldPatch();
+};
+
 window.openEditor = function (bucket, id, shouldScroll) {
   const bucketSel = document.getElementById("editor-bucket");
   if (!bucketSel) return;
@@ -1562,7 +1660,7 @@ window.openEditor = function (bucket, id, shouldScroll) {
   renderQuickFieldTable();
   setEditorStatus("Selected " + bucketKey + ":" + id + ".", false);
   const idSel = document.getElementById("editor-id");
-  if (shouldScroll && idSel) idSel.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (shouldScroll !== false && idSel) idSel.scrollIntoView({ behavior: "smooth", block: "center" });
 };
 
 function initEditor() {
@@ -1577,6 +1675,7 @@ function initEditor() {
   loadCurrentFieldValue();
   refreshPendingPreview();
   renderQuickFieldTable();
+  initAppModeActions();
 
   bucketSel.addEventListener("change", () => {
     refreshIdOptions();
@@ -1597,19 +1696,11 @@ function initEditor() {
   document.getElementById("editor-set").addEventListener("click", queueFieldPatch);
   document.getElementById("editor-delete-field-btn").addEventListener("click", queueDeleteFieldPatch);
   document.getElementById("editor-clear-entry").addEventListener("click", clearEntryPatch);
-  document.getElementById("editor-delete-entry").addEventListener("click", queueEntryDelete);
-  document.getElementById("editor-undo-entry-delete").addEventListener("click", undoEntryDelete);
-  document.getElementById("editor-download").addEventListener("click", downloadEditsJson);
-  document.getElementById("editor-copy").addEventListener("click", copyEditsJson);
-  document.getElementById("editor-copy-apply-cmd").addEventListener("click", copyApplyCommand);
+  document.getElementById("editor-save-repo").addEventListener("click", () => saveToRepo(false));
+  document.getElementById("editor-save-repo-golden").addEventListener("click", () => saveToRepo(true));
   document.getElementById("editor-load-entry").addEventListener("click", loadEntryPatchJson);
   document.getElementById("editor-merge-entry").addEventListener("click", queueEntryPatchFromJson);
   document.getElementById("editor-reset").addEventListener("click", resetPendingEdits);
-  document.getElementById("editor-import").addEventListener("change", (ev) => {
-    const file = ev.target && ev.target.files ? ev.target.files[0] : null;
-    handleImportEditsFile(file);
-    ev.target.value = "";
-  });
 }
 
 function toArray(input) {
@@ -1623,17 +1714,109 @@ function cardLabel(card) {
   return bank ? (name + " (" + bank + ")") : name;
 }
 
-function reviewItemHtml(title, subtitle, bucket, id) {
-  const editBtn = (bucket && id)
-    ? '<button class="edit-btn" onclick="openEditor(' + jsStr(bucket) + ',' + jsStr(id) + ')">Edit</button>'
-    : "";
-  return '<li class="review-item">' +
-    '<div class="review-item-top">' +
-      '<span class="review-item-title mono">' + esc(title) + '</span>' +
-      editBtn +
-    '</div>' +
-    '<div class="review-item-sub">' + esc(subtitle || "-") + '</div>' +
-  '</li>';
+function renderReviewEntityFieldTable(bucket, id) {
+  const allowed = getAllowedFields(bucket);
+  const entity = getCurrentEntity(bucket, id) || {};
+  const entryPatch = getEntryPatch(bucket, id);
+  if (!Array.isArray(allowed) || allowed.length === 0) {
+    return '<div class="review-empty">No editable fields.</div>';
+  }
+  const rows = allowed.map((field) => {
+    const hasPending = Object.prototype.hasOwnProperty.call(entryPatch, field);
+    const pendingVal = hasPending ? entryPatch[field] : undefined;
+    return "<tr>"
+      + '<td><span class="mono">' + esc(field) + "</span></td>"
+      + "<td>" + formatInlineValue(entity[field]) + "</td>"
+      + "<td>" + formatInlineValue(pendingVal) + "</td>"
+      + '<td class="review-actions">'
+      + '<button class="edit-btn" onclick="reviewSetField(' + jsStr(bucket) + ',' + jsStr(id) + ',' + jsStr(field) + ')">Set</button> '
+      + '<button class="edit-btn" onclick="reviewDeleteField(' + jsStr(bucket) + ',' + jsStr(id) + ',' + jsStr(field) + ')">Delete</button>'
+      + "</td>"
+      + "</tr>";
+  }).join("");
+  return '<div class="table-wrap"><table class="review-table">'
+    + "<thead><tr><th>Field</th><th>Current</th><th>Pending</th><th>Actions</th></tr></thead>"
+    + "<tbody>" + rows + "</tbody>"
+    + "</table></div>";
+}
+
+function buildCardReviewGroups(card, offers) {
+  const moduleEntities = (WB.editor && WB.editor.entities && WB.editor.entities.modules) ? WB.editor.entities.modules : {};
+  const trackerEntities = (WB.editor && WB.editor.entities && WB.editor.entities.trackers) ? WB.editor.entities.trackers : {};
+  const trackerMap = {};
+  toArray(WB.trackers).forEach((t) => { if (t && t.id) trackerMap[t.id] = t; });
+
+  const groups = {
+    card: [],
+    modules: [],
+    trackers: [],
+    offerSources: []
+  };
+  const seen = {};
+  const pushEntity = (groupKey, bucket, id, title, subtitle) => {
+    if (!bucket || !id || !EDITOR_ALLOWED[bucket]) return;
+    const key = bucket + ":" + id;
+    if (seen[key]) return;
+    seen[key] = true;
+    groups[groupKey].push({
+      bucket,
+      id,
+      title: title || id,
+      subtitle: subtitle || ""
+    });
+  };
+
+  pushEntity("card", "cards", card.id, card.id, cardLabel(card));
+
+  toArray(card.rewardModules).forEach((id) => {
+    const mod = moduleEntities[id] || {};
+    const rate = Number.isFinite(Number(mod.rate)) ? ("rate=" + mod.rate)
+      : (Number.isFinite(Number(mod.rate_per_x)) ? ("rate_per_x=" + mod.rate_per_x)
+        : (Number.isFinite(Number(mod.multiplier)) ? ("multiplier=" + mod.multiplier) : ""));
+    const cap = Number.isFinite(Number(mod.cap_limit)) ? ("cap=" + mod.cap_limit) : "";
+    const mission = mod.req_mission_key
+      ? (mod.req_mission_key + (Number.isFinite(Number(mod.req_mission_spend)) ? (">=" + mod.req_mission_spend) : ""))
+      : "";
+    const subtitle = [mod.desc || "", rate, cap, mission].filter(Boolean).join(" | ");
+    pushEntity("modules", "modules", id, id, subtitle);
+  });
+
+  toArray(card.trackers).forEach((id) => {
+    const t = trackerMap[id] || trackerEntities[id] || {};
+    const subtitle = [t.desc || "", t.reqMissionKey || t.req_mission_key || "", t.missionId || t.mission_id || ""].filter(Boolean).join(" | ");
+    pushEntity("trackers", "trackers", id, id, subtitle);
+  });
+
+  toArray(offers).forEach((offer) => {
+    const bucket = offer.editBucket || "";
+    const id = offer.editId || "";
+    if (!bucket || !id) return;
+    const subtitle = [offer.id || "", offer.title || "", offer.sourceType || "", offer.offerType || ""].filter(Boolean).join(" | ");
+    pushEntity("offerSources", bucket, id, (offer.id || (bucket + ":" + id)) + " -> " + bucket + ":" + id, subtitle);
+  });
+
+  return groups;
+}
+
+function renderReviewEntityItem(entity) {
+  const head = '<summary><div class="review-item-top">'
+    + '<span class="review-item-title mono">' + esc(entity.title) + "</span>"
+    + '<button class="edit-btn" onclick="openEditor(' + jsStr(entity.bucket) + ',' + jsStr(entity.id) + ')">Open Editor</button>'
+    + "</div>"
+    + '<div class="review-item-sub">' + esc(entity.subtitle || (entity.bucket + ":" + entity.id)) + "</div>"
+    + "</summary>";
+  const body = '<div class="review-entity-body">' + renderReviewEntityFieldTable(entity.bucket, entity.id) + "</div>";
+  return '<details class="review-entity" open>' + head + body + "</details>";
+}
+
+function renderReviewGroup(title, entities) {
+  const body = (!Array.isArray(entities) || entities.length === 0)
+    ? '<div class="review-empty">None</div>'
+    : entities.map((entity) => renderReviewEntityItem(entity)).join("");
+  return '<div class="review-block">'
+    + '<h4 class="review-group-title">' + esc(title) + ' <span class="small">(' + esc((entities || []).length) + ")</span></h4>"
+    + body
+    + "</div>";
 }
 
 function renderCardReviewSections(card) {
@@ -1645,49 +1828,12 @@ function renderCardReviewSections(card) {
   }
 
   const offers = toArray(WB.offers).filter((offer) => toArray(offer.cards).includes(card.id));
-  const moduleEntities = (WB.editor && WB.editor.entities && WB.editor.entities.modules) ? WB.editor.entities.modules : {};
-  const trackerEntities = (WB.editor && WB.editor.entities && WB.editor.entities.trackers) ? WB.editor.entities.trackers : {};
-  const trackerMap = {};
-  toArray(WB.trackers).forEach((t) => { if (t && t.id) trackerMap[t.id] = t; });
-
-  const moduleItems = toArray(card.rewardModules).map((id) => {
-    const mod = moduleEntities[id] || {};
-    const rate = Number.isFinite(Number(mod.rate)) ? ("rate=" + mod.rate) :
-      (Number.isFinite(Number(mod.rate_per_x)) ? ("rate_per_x=" + mod.rate_per_x) :
-        (Number.isFinite(Number(mod.multiplier)) ? ("multiplier=" + mod.multiplier) : ""));
-    const cap = Number.isFinite(Number(mod.cap_limit)) ? ("cap=" + mod.cap_limit) : "";
-    const mission = mod.req_mission_key
-      ? (mod.req_mission_key + (Number.isFinite(Number(mod.req_mission_spend)) ? (">=" + mod.req_mission_spend) : ""))
-      : "";
-    const parts = [mod.desc || "", rate, cap, mission].filter(Boolean);
-    return reviewItemHtml(id, parts.join(" | "), "modules", id);
-  });
-
-  const trackerItems = toArray(card.trackers).map((id) => {
-    const t = trackerMap[id] || trackerEntities[id] || {};
-    const parts = [t.desc || "", t.reqMissionKey || t.req_mission_key || "", t.missionId || t.mission_id || ""].filter(Boolean);
-    return reviewItemHtml(id, parts.join(" | "), "trackers", id);
-  });
-
-  const offerItems = offers.map((offer) => {
-    const subtitle = [offer.sourceType || "", offer.offerType || "", offer.settingKey || ""].filter(Boolean).join(" | ");
-    return reviewItemHtml(
-      offer.id,
-      (offer.title || offer.id) + (subtitle ? (" | " + subtitle) : ""),
-      offer.editBucket || "",
-      offer.editId || ""
-    );
-  });
-
-  const section = (title, count, body) => '<div class="review-block">' +
-    '<h4>' + esc(title) + ' <span class="small">(' + esc(count) + ')</span></h4>' +
-    (count > 0 ? ('<ul class="review-list">' + body.join("") + '</ul>') : '<div class="review-empty">None</div>') +
-  '</div>';
-
+  const groups = buildCardReviewGroups(card, offers);
   contentEl.innerHTML = [
-    section("Related Offers", offerItems.length, offerItems),
-    section("Module Rules", moduleItems.length, moduleItems),
-    section("Trackers", trackerItems.length, trackerItems)
+    renderReviewGroup("Card", groups.card),
+    renderReviewGroup("Modules", groups.modules),
+    renderReviewGroup("Trackers", groups.trackers),
+    renderReviewGroup("Offer Sources", groups.offerSources)
   ].join("");
 }
 
@@ -1709,6 +1855,12 @@ function renderCardReviewMeta(card) {
 function getSelectedCardId() {
   const sel = document.getElementById("card-review-select");
   return sel ? String(sel.value || "") : "";
+}
+
+function refreshCardReviewIfVisible() {
+  const sel = document.getElementById("card-review-select");
+  if (!sel || !sel.value) return;
+  renderCardReview(sel.value);
 }
 
 function getCardById(cardId) {
@@ -1967,21 +2119,116 @@ function runHtml(repoRoot, outPath) {
   console.log(`Workbench HTML written to ${outPath}`);
 }
 
-function runApply(repoRoot, editsPath, outPath, dryRun) {
-  const edits = readJsonInput(editsPath);
+function applyAndMaybeWrite(repoRoot, edits, outPath, dryRun) {
   const existing = loadCoreOverrides(repoRoot, path.relative(repoRoot, outPath));
   const result = applyEdits(existing, edits);
+
+  if (!dryRun) {
+    ensureDir(outPath);
+    fs.writeFileSync(outPath, buildCoreOverridesJs(result.next), "utf8");
+  }
+  return result;
+}
+
+function runApply(repoRoot, editsPath, outPath, dryRun) {
+  const edits = readJsonInput(editsPath);
+  const result = applyAndMaybeWrite(repoRoot, edits, outPath, dryRun);
 
   result.warnings.forEach((w) => console.warn(w));
   if (dryRun) {
     console.log(`[dry-run] Would update ${result.touched} override entries`);
     return;
   }
-
-  ensureDir(outPath);
-  fs.writeFileSync(outPath, buildCoreOverridesJs(result.next), "utf8");
   console.log(`Updated core overrides: ${outPath}`);
   console.log(`Touched entries: ${result.touched}`);
+}
+
+function runGoldenCases(repoRoot) {
+  const proc = spawnSync(process.execPath, [path.join("tools", "run_golden_cases.js")], {
+    cwd: repoRoot,
+    encoding: "utf8"
+  });
+  return {
+    ok: proc.status === 0,
+    status: Number.isFinite(proc.status) ? proc.status : 1,
+    stdout: proc.stdout || "",
+    stderr: proc.stderr || ""
+  };
+}
+
+function runServe(repoRoot, port, host) {
+  const server = http.createServer((req, res) => {
+    const reqUrl = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+    const sendJson = (status, payload) => {
+      res.writeHead(status, {
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": "no-store"
+      });
+      res.end(JSON.stringify(payload));
+    };
+    const sendHtml = (status, html) => {
+      res.writeHead(status, {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "no-store"
+      });
+      res.end(html);
+    };
+
+    if (req.method === "GET" && (reqUrl.pathname === "/" || reqUrl.pathname === "/reports/workbench.html")) {
+      try {
+        const data = loadData(repoRoot);
+        const rel = buildRelationships(data);
+        const audit = buildAudit(data, rel);
+        const payload = buildHtmlPayload(data, rel, audit);
+        sendHtml(200, buildHtmlReport(payload));
+      } catch (err) {
+        sendHtml(500, `<pre>Failed to render workbench: ${String(err && err.stack ? err.stack : err)}</pre>`);
+      }
+      return;
+    }
+
+    if (req.method === "POST" && reqUrl.pathname === "/api/apply") {
+      let raw = "";
+      req.on("data", (chunk) => {
+        raw += chunk;
+        if (raw.length > 5 * 1024 * 1024) req.destroy();
+      });
+      req.on("end", () => {
+        try {
+          const body = raw ? JSON.parse(raw) : {};
+          const edits = (body && body.edits && typeof body.edits === "object") ? body.edits : body;
+          const dryRun = !!(body && body.dryRun);
+          const runGolden = !!(body && body.runGolden);
+          const out = path.resolve(repoRoot, DEFAULT_CORE_OVERRIDES_PATH);
+          const result = applyAndMaybeWrite(repoRoot, edits || {}, out, dryRun);
+          const response = {
+            ok: true,
+            touched: result.touched,
+            warnings: result.warnings,
+            dryRun
+          };
+          if (runGolden && !dryRun) {
+            response.golden = runGoldenCases(repoRoot);
+          }
+          sendJson(200, response);
+        } catch (err) {
+          sendJson(400, { ok: false, error: String(err && err.message ? err.message : err) });
+        }
+      });
+      return;
+    }
+
+    sendJson(404, { ok: false, error: "Not found" });
+  });
+
+  server.listen(port, host, () => {
+    console.log(`Workbench server running at http://${host}:${port}/`);
+    console.log("Use Save To Repo button directly in the page.");
+  });
+  server.on("error", (err) => {
+    console.error("Failed to start workbench server:", err && err.message ? err.message : String(err));
+    process.exit(1);
+  });
 }
 
 function main() {
@@ -2020,6 +2267,14 @@ function main() {
     const out = path.resolve(ROOT, flags["--out"] || DEFAULT_CORE_OVERRIDES_PATH);
     const resolvedEdits = editsPath === "-" ? "-" : path.resolve(ROOT, editsPath);
     runApply(ROOT, resolvedEdits, out, !!flags["--dry-run"]);
+    return;
+  }
+
+  if (cmd === "serve") {
+    const host = (typeof flags["--host"] === "string" && flags["--host"]) ? String(flags["--host"]) : "127.0.0.1";
+    const portNum = Number(flags["--port"] || 8788);
+    const port = Number.isFinite(portNum) && portNum > 0 ? Math.floor(portNum) : 8788;
+    runServe(ROOT, port, host);
     return;
   }
 

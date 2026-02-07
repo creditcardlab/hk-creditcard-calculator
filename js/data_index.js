@@ -257,7 +257,7 @@
             "counter",
             "retroactive"
         ];
-        const allowedCampaignCoreFields = ["period_policy", "promo_type"];
+        const allowedCampaignCoreFields = ["name", "period_policy", "promo_type"];
 
         if (core.modules && data.modules) {
             Object.keys(core.modules).forEach((id) => {
