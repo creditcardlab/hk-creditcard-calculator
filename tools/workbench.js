@@ -29,7 +29,6 @@ const DATA_SCRIPT_ORDER = [
 const ALLOWED_FIELDS = {
   cards: new Set([
     "name",
-    "display_name_zhhk",
     "currency",
     "type",
     "fcf",
@@ -798,6 +797,15 @@ function buildHtmlReport(payload) {
     .editor-actions button.ghost { background: #f8fafc; }
     .editor-actions input[type="file"] { display: none; }
     .editor-hint { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .editor-steps { margin: 0 0 8px; padding-left: 18px; color: #374151; font-size: 12px; }
+    .editor-steps li { margin: 3px 0; }
+    .editor-advanced { margin-bottom: 8px; }
+    .editor-advanced summary { cursor: pointer; font-size: 12px; color: var(--muted); }
+    .editor-advanced .editor-actions { margin-top: 8px; margin-bottom: 0; }
+    .quick-box { margin-bottom: 10px; }
+    #editor-quick-table { min-width: 0; }
+    #editor-quick-table th, #editor-quick-table td { font-size: 11px; padding: 6px 8px; }
+    #editor-quick-table .q-actions { white-space: nowrap; }
     .editor-split { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
     .editor-split pre {
       margin: 0;
@@ -813,6 +821,16 @@ function buildHtmlReport(payload) {
     .status { font-size: 12px; margin-bottom: 8px; }
     .status.ok { color: #065f46; }
     .status.err { color: #9f1239; }
+    .review-meta { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    .review-meta .mono { color: var(--ink); }
+    .review-block { border: 1px solid var(--line); border-radius: 10px; padding: 10px; background: #fff; margin-bottom: 10px; }
+    .review-block h4 { margin: 0 0 8px; font-size: 13px; }
+    .review-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+    .review-item { border: 1px solid var(--line); border-radius: 8px; padding: 8px; display: grid; gap: 4px; background: #f9fafb; }
+    .review-item-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+    .review-item-title { font-size: 12px; font-weight: 600; color: var(--ink); }
+    .review-item-sub { font-size: 11px; color: var(--muted); }
+    .review-empty { font-size: 12px; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -830,8 +848,13 @@ function buildHtmlReport(payload) {
       <section class="panel">
         <h3>Core Overrides Editor</h3>
         <div class="editor-hint">
-          編輯後先「Download Edits JSON」，再用 <span class="mono">node tools/workbench.js apply --edits ...</span> 套用到 <span class="mono">js/data_notion_core_overrides.js</span>。
+          建議由 Card Review / 各表格的 Edit 按鈕入手，改完再下載 edits 套用。
         </div>
+        <ol class="editor-steps">
+          <li>揀 Bucket、Entity ID、Field。</li>
+          <li>Value 會自動載入目前值，直接改。</li>
+          <li>按「Save Field」，最後按「Download Edits JSON」。</li>
+        </ol>
         <div id="editorStatus" class="status ok">Ready.</div>
         <div class="editor-grid">
           <div>
@@ -847,26 +870,37 @@ function buildHtmlReport(payload) {
             <select id="editor-field"></select>
           </div>
           <div>
-            <label for="editor-delete-field">Delete Field</label>
-            <label><input type="checkbox" id="editor-delete-field"> Queue as <span class="mono">null</span></label>
+            <label>Current Selection</label>
+            <div class="small">Use Save/Delete buttons below.</div>
           </div>
           <div style="grid-column: 1 / -1;">
             <label for="editor-value">Value (plain text or JSON)</label>
             <textarea id="editor-value" placeholder='Example: 0.06, "新描述", {"type":"month","startDay":1}'></textarea>
           </div>
         </div>
+        <input type="checkbox" id="editor-delete-field" hidden>
         <div class="editor-actions">
-          <button id="editor-load" class="ghost" type="button">Load Current Value</button>
-          <button id="editor-set" class="primary" type="button">Queue Field Patch</button>
-          <button id="editor-clear-entry" class="ghost" type="button">Clear Entry Patch</button>
-          <button id="editor-delete-entry" class="warn" type="button">Queue Entry Delete</button>
-          <button id="editor-undo-entry-delete" class="ghost" type="button">Undo Entry Delete</button>
+          <button id="editor-load" class="ghost" type="button">Reload Current Value</button>
+          <button id="editor-set" class="primary" type="button">Save Field</button>
+          <button id="editor-delete-field-btn" class="warn" type="button">Delete Field</button>
+          <button id="editor-clear-entry" class="ghost" type="button">Clear This Entry Patch</button>
         </div>
+        <details class="editor-advanced">
+          <summary>Advanced actions</summary>
+          <div class="editor-actions">
+            <button id="editor-delete-entry" class="warn" type="button">Queue Entry Delete</button>
+            <button id="editor-undo-entry-delete" class="ghost" type="button">Undo Entry Delete</button>
+          </div>
+        </details>
         <div class="editor-actions">
           <button id="editor-download" class="primary" type="button">Download Edits JSON</button>
           <button id="editor-copy" class="ghost" type="button">Copy Edits JSON</button>
           <label for="editor-import">Import Edits JSON<input type="file" id="editor-import" accept=".json,application/json"></label>
           <button id="editor-reset" class="warn" type="button">Reset Pending</button>
+        </div>
+        <div class="quick-box">
+          <div class="small" style="margin-bottom:4px;">Quick Edit Fields (one column at a time)</div>
+          <div class="table-wrap"><table id="editor-quick-table"></table></div>
         </div>
         <div class="editor-split">
           <div>
@@ -886,6 +920,17 @@ function buildHtmlReport(payload) {
           <span class="count" id="count-offers"></span>
         </div>
         <div class="table-wrap"><table id="table-offers"></table></div>
+      </section>
+      <section class="panel">
+        <h3>Card Review</h3>
+        <div class="toolbar">
+          <select id="card-review-select"></select>
+          <button id="card-review-prev" type="button">Prev</button>
+          <button id="card-review-next" type="button">Next</button>
+          <button id="card-review-edit-card" type="button">Edit Card</button>
+        </div>
+        <div id="card-review-meta" class="review-meta"></div>
+        <div id="card-review-content"></div>
       </section>
       <section class="panel">
         <h3>Cards</h3>
@@ -987,7 +1032,10 @@ function setEditorStatus(msg, isErr) {
 }
 
 function jsStr(input) {
-  return JSON.stringify(String(input ?? ""));
+  return "'" + String(input ?? "")
+    .replaceAll("\\\\", "\\\\\\\\")
+    .replaceAll("'", "\\'")
+    + "'";
 }
 
 function toJsonPreview(value) {
@@ -1071,6 +1119,51 @@ function refreshEditorCurrentPreview() {
   pre.textContent = entity ? toJsonPreview(entity) : "{}";
 }
 
+function formatInlineValue(v) {
+  if (v === undefined) return '<span class="small">-</span>';
+  if (v === null) return '<span class="mono">null</span>';
+  let raw = (typeof v === "string") ? v : toJsonPreview(v);
+  raw = raw.replaceAll("\\n", " ").replaceAll("\\r", " ").replaceAll("\\t", " ");
+  raw = raw.trim();
+  if (raw.length > 90) raw = raw.slice(0, 87) + "...";
+  return '<span class="mono">' + esc(raw) + '</span>';
+}
+
+function getEntryPatch(bucket, id) {
+  const bucketPatch = PENDING_EDITS[bucket];
+  if (!bucketPatch || typeof bucketPatch !== "object" || Array.isArray(bucketPatch)) return {};
+  const entryPatch = bucketPatch[id];
+  if (!entryPatch || typeof entryPatch !== "object" || Array.isArray(entryPatch)) return {};
+  return entryPatch;
+}
+
+function renderQuickFieldTable() {
+  const table = document.getElementById("editor-quick-table");
+  const bucketSel = document.getElementById("editor-bucket");
+  const idSel = document.getElementById("editor-id");
+  if (!table || !bucketSel || !idSel) return;
+  const bucket = bucketSel.value;
+  const id = idSel.value;
+  const fields = getAllowedFields(bucket);
+  const entity = getCurrentEntity(bucket, id) || {};
+  const entryPatch = getEntryPatch(bucket, id);
+  const thead = "<thead><tr><th>Field</th><th>Current</th><th>Pending</th><th>Actions</th></tr></thead>";
+  const body = fields.map((field) => {
+    const hasPending = Object.prototype.hasOwnProperty.call(entryPatch, field);
+    const pendingVal = hasPending ? entryPatch[field] : undefined;
+    return "<tr>"
+      + '<td><span class="mono">' + esc(field) + "</span></td>"
+      + "<td>" + formatInlineValue(entity[field]) + "</td>"
+      + "<td>" + formatInlineValue(pendingVal) + "</td>"
+      + '<td class="q-actions">'
+      + '<button class="edit-btn" onclick="quickSetField(' + jsStr(field) + ')">Set</button> '
+      + '<button class="edit-btn" onclick="quickDeleteField(' + jsStr(field) + ')">Delete</button>'
+      + "</td>"
+      + "</tr>";
+  }).join("");
+  table.innerHTML = thead + "<tbody>" + body + "</tbody>";
+}
+
 function refreshIdOptions(preferredId) {
   const bucketSel = document.getElementById("editor-bucket");
   const idSel = document.getElementById("editor-id");
@@ -1101,11 +1194,11 @@ function parseEditorValue(rawInput) {
   const raw = String(rawInput ?? "");
   const trimmed = raw.trim();
   if (trimmed === "") return "";
-  const jsonLike = /^[\[{"]/.test(trimmed)
+  const jsonLike = /^[\\[{"]/.test(trimmed)
     || trimmed === "true"
     || trimmed === "false"
     || trimmed === "null"
-    || /^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(trimmed);
+    || /^-?\\d+(\\.\\d+)?([eE][+-]?\\d+)?$/.test(trimmed);
   if (!jsonLike) return raw;
   try {
     return JSON.parse(trimmed);
@@ -1171,7 +1264,16 @@ function queueFieldPatch() {
   }
   clearEmptyEntry(bucket, id);
   refreshPendingPreview();
-  setEditorStatus("Field patch queued.", false);
+  renderQuickFieldTable();
+  setEditorStatus(deleteFieldEl.checked ? "Field delete queued (set to null)." : "Field patch queued.", false);
+  deleteFieldEl.checked = false;
+}
+
+function queueDeleteFieldPatch() {
+  const deleteFieldEl = document.getElementById("editor-delete-field");
+  if (!deleteFieldEl) return;
+  deleteFieldEl.checked = true;
+  queueFieldPatch();
 }
 
 function clearEntryPatch() {
@@ -1181,6 +1283,7 @@ function clearEntryPatch() {
   const bucketPatch = ensureBucketPatch(bucketSel.value);
   delete bucketPatch[idSel.value];
   refreshPendingPreview();
+  renderQuickFieldTable();
   setEditorStatus("Entry patch cleared.", false);
 }
 
@@ -1191,6 +1294,7 @@ function queueEntryDelete() {
   const bucketPatch = ensureBucketPatch(bucketSel.value);
   bucketPatch[idSel.value] = { __delete: true };
   refreshPendingPreview();
+  renderQuickFieldTable();
   setEditorStatus("Entry delete queued (__delete:true).", false);
 }
 
@@ -1207,6 +1311,7 @@ function undoEntryDelete() {
     delete bucketPatch[idSel.value].__delete;
     clearEmptyEntry(bucketSel.value, idSel.value);
     refreshPendingPreview();
+    renderQuickFieldTable();
     setEditorStatus("Entry delete removed.", false);
     return;
   }
@@ -1277,6 +1382,7 @@ function handleImportEditsFile(file) {
       const raw = JSON.parse(String(ev.target && ev.target.result ? ev.target.result : "{}"));
       PENDING_EDITS = normalizeImportedPatch(raw);
       refreshPendingPreview();
+      renderQuickFieldTable();
       setEditorStatus("Imported edits JSON.", false);
     } catch (err) {
       setEditorStatus("Import failed: " + (err.message || String(err)), true);
@@ -1291,8 +1397,33 @@ function handleImportEditsFile(file) {
 function resetPendingEdits() {
   PENDING_EDITS = makeEmptyPatch();
   refreshPendingPreview();
+  renderQuickFieldTable();
   setEditorStatus("Pending edits reset.", false);
 }
+
+window.quickSetField = function (field) {
+  const fieldSel = document.getElementById("editor-field");
+  const valueEl = document.getElementById("editor-value");
+  const deleteFieldEl = document.getElementById("editor-delete-field");
+  if (!fieldSel || !valueEl || !deleteFieldEl) return;
+  fieldSel.value = String(field || "");
+  loadCurrentFieldValue();
+  const next = window.prompt("Set value for " + field + " (text or JSON)", valueEl.value);
+  if (next === null) {
+    setEditorStatus("Quick edit cancelled.", false);
+    return;
+  }
+  valueEl.value = next;
+  deleteFieldEl.checked = false;
+  queueFieldPatch();
+};
+
+window.quickDeleteField = function (field) {
+  const fieldSel = document.getElementById("editor-field");
+  if (!fieldSel) return;
+  fieldSel.value = String(field || "");
+  queueDeleteFieldPatch();
+};
 
 window.openEditor = function (bucket, id) {
   const bucketSel = document.getElementById("editor-bucket");
@@ -1306,6 +1437,8 @@ window.openEditor = function (bucket, id) {
   refreshIdOptions(String(id || ""));
   refreshFieldOptions();
   refreshEditorCurrentPreview();
+  loadCurrentFieldValue();
+  renderQuickFieldTable();
   setEditorStatus("Selected " + bucketKey + ":" + id + ".", false);
   const idSel = document.getElementById("editor-id");
   if (idSel) idSel.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1320,19 +1453,28 @@ function initEditor() {
   refreshIdOptions();
   refreshFieldOptions();
   refreshEditorCurrentPreview();
+  loadCurrentFieldValue();
   refreshPendingPreview();
+  renderQuickFieldTable();
 
   bucketSel.addEventListener("change", () => {
     refreshIdOptions();
     refreshFieldOptions();
     refreshEditorCurrentPreview();
+    loadCurrentFieldValue();
+    renderQuickFieldTable();
   });
-  document.getElementById("editor-id").addEventListener("change", refreshEditorCurrentPreview);
+  document.getElementById("editor-id").addEventListener("change", () => {
+    refreshEditorCurrentPreview();
+    loadCurrentFieldValue();
+    renderQuickFieldTable();
+  });
   document.getElementById("editor-field").addEventListener("change", () => {
-    setEditorStatus("Field changed.", false);
+    loadCurrentFieldValue();
   });
   document.getElementById("editor-load").addEventListener("click", loadCurrentFieldValue);
   document.getElementById("editor-set").addEventListener("click", queueFieldPatch);
+  document.getElementById("editor-delete-field-btn").addEventListener("click", queueDeleteFieldPatch);
   document.getElementById("editor-clear-entry").addEventListener("click", clearEntryPatch);
   document.getElementById("editor-delete-entry").addEventListener("click", queueEntryDelete);
   document.getElementById("editor-undo-entry-delete").addEventListener("click", undoEntryDelete);
@@ -1344,6 +1486,158 @@ function initEditor() {
     handleImportEditsFile(file);
     ev.target.value = "";
   });
+}
+
+function toArray(input) {
+  return Array.isArray(input) ? input : [];
+}
+
+function cardLabel(card) {
+  if (!card) return "";
+  const name = String(card.name || card.id || "");
+  const bank = String(card.bank || "");
+  return bank ? (name + " (" + bank + ")") : name;
+}
+
+function reviewItemHtml(title, subtitle, bucket, id) {
+  const editBtn = (bucket && id)
+    ? '<button class="edit-btn" onclick="openEditor(' + jsStr(bucket) + ',' + jsStr(id) + ')">Edit</button>'
+    : "";
+  return '<li class="review-item">' +
+    '<div class="review-item-top">' +
+      '<span class="review-item-title mono">' + esc(title) + '</span>' +
+      editBtn +
+    '</div>' +
+    '<div class="review-item-sub">' + esc(subtitle || "-") + '</div>' +
+  '</li>';
+}
+
+function renderCardReviewSections(card) {
+  const contentEl = document.getElementById("card-review-content");
+  if (!contentEl) return;
+  if (!card) {
+    contentEl.innerHTML = '<div class="review-empty">No card selected.</div>';
+    return;
+  }
+
+  const offers = toArray(WB.offers).filter((offer) => toArray(offer.cards).includes(card.id));
+  const moduleEntities = (WB.editor && WB.editor.entities && WB.editor.entities.modules) ? WB.editor.entities.modules : {};
+  const trackerEntities = (WB.editor && WB.editor.entities && WB.editor.entities.trackers) ? WB.editor.entities.trackers : {};
+  const trackerMap = {};
+  toArray(WB.trackers).forEach((t) => { if (t && t.id) trackerMap[t.id] = t; });
+
+  const moduleItems = toArray(card.rewardModules).map((id) => {
+    const mod = moduleEntities[id] || {};
+    const rate = Number.isFinite(Number(mod.rate)) ? ("rate=" + mod.rate) :
+      (Number.isFinite(Number(mod.rate_per_x)) ? ("rate_per_x=" + mod.rate_per_x) :
+        (Number.isFinite(Number(mod.multiplier)) ? ("multiplier=" + mod.multiplier) : ""));
+    const cap = Number.isFinite(Number(mod.cap_limit)) ? ("cap=" + mod.cap_limit) : "";
+    const mission = mod.req_mission_key
+      ? (mod.req_mission_key + (Number.isFinite(Number(mod.req_mission_spend)) ? (">=" + mod.req_mission_spend) : ""))
+      : "";
+    const parts = [mod.desc || "", rate, cap, mission].filter(Boolean);
+    return reviewItemHtml(id, parts.join(" | "), "modules", id);
+  });
+
+  const trackerItems = toArray(card.trackers).map((id) => {
+    const t = trackerMap[id] || trackerEntities[id] || {};
+    const parts = [t.desc || "", t.reqMissionKey || t.req_mission_key || "", t.missionId || t.mission_id || ""].filter(Boolean);
+    return reviewItemHtml(id, parts.join(" | "), "trackers", id);
+  });
+
+  const offerItems = offers.map((offer) => {
+    const subtitle = [offer.sourceType || "", offer.offerType || "", offer.settingKey || ""].filter(Boolean).join(" | ");
+    return reviewItemHtml(
+      offer.id,
+      (offer.title || offer.id) + (subtitle ? (" | " + subtitle) : ""),
+      offer.editBucket || "",
+      offer.editId || ""
+    );
+  });
+
+  const section = (title, count, body) => '<div class="review-block">' +
+    '<h4>' + esc(title) + ' <span class="small">(' + esc(count) + ')</span></h4>' +
+    (count > 0 ? ('<ul class="review-list">' + body.join("") + '</ul>') : '<div class="review-empty">None</div>') +
+  '</div>';
+
+  contentEl.innerHTML = [
+    section("Related Offers", offerItems.length, offerItems),
+    section("Module Rules", moduleItems.length, moduleItems),
+    section("Trackers", trackerItems.length, trackerItems)
+  ].join("");
+}
+
+function renderCardReviewMeta(card) {
+  const metaEl = document.getElementById("card-review-meta");
+  if (!metaEl) return;
+  if (!card) {
+    metaEl.innerHTML = "No card selected.";
+    return;
+  }
+  const modulesCount = toArray(card.rewardModules).length;
+  const trackersCount = toArray(card.trackers).length;
+  const offersCount = toArray(WB.offers).filter((offer) => toArray(offer.cards).includes(card.id)).length;
+  metaEl.innerHTML = 'Card <span class="mono">' + esc(card.id) + '</span> | Modules: <span class="mono">' +
+    esc(modulesCount) + '</span> | Trackers: <span class="mono">' + esc(trackersCount) +
+    '</span> | Related Offers: <span class="mono">' + esc(offersCount) + '</span>';
+}
+
+function getSelectedCardId() {
+  const sel = document.getElementById("card-review-select");
+  return sel ? String(sel.value || "") : "";
+}
+
+function getCardById(cardId) {
+  return toArray(WB.cards).find((c) => c && c.id === cardId) || null;
+}
+
+function renderCardReview(cardId) {
+  const sel = document.getElementById("card-review-select");
+  if (!sel) return;
+  const id = cardId || getSelectedCardId();
+  if (id) sel.value = id;
+  const card = getCardById(sel.value);
+  renderCardReviewMeta(card);
+  renderCardReviewSections(card);
+}
+
+window.reviewCard = function (cardId) {
+  const sel = document.getElementById("card-review-select");
+  if (!sel) return;
+  if (cardId) sel.value = cardId;
+  renderCardReview(sel.value);
+  sel.scrollIntoView({ behavior: "smooth", block: "center" });
+};
+
+function stepCardReview(delta) {
+  const sel = document.getElementById("card-review-select");
+  if (!sel) return;
+  const opts = toArray(Array.from(sel.options || []));
+  const cur = opts.findIndex((o) => o.value === sel.value);
+  if (cur < 0 || opts.length === 0) return;
+  const next = Math.max(0, Math.min(opts.length - 1, cur + delta));
+  sel.value = opts[next].value;
+  renderCardReview(sel.value);
+}
+
+function initCardReview() {
+  const sel = document.getElementById("card-review-select");
+  if (!sel) return;
+  const cards = toArray(WB.cards);
+  sel.innerHTML = cards
+    .map((card) => '<option value="' + esc(card.id) + '">' + esc(cardLabel(card)) + '</option>')
+    .join("");
+  if (cards.length > 0) sel.value = cards[0].id;
+
+  sel.addEventListener("change", () => renderCardReview(sel.value));
+  document.getElementById("card-review-prev").addEventListener("click", () => stepCardReview(-1));
+  document.getElementById("card-review-next").addEventListener("click", () => stepCardReview(1));
+  document.getElementById("card-review-edit-card").addEventListener("click", () => {
+    const id = getSelectedCardId();
+    if (!id) return;
+    openEditor("cards", id);
+  });
+  renderCardReview(sel.value);
 }
 
 function setupTable({ inputId, tableId, countId, rows, columns, toSearch }) {
@@ -1394,6 +1688,7 @@ setupTable({
   columns: [
     { title: "Card", render: r => '<span class="mono">' + esc(r.id) + "</span>" },
     { title: "Edit", render: r => '<button class="edit-btn" onclick="openEditor(' + jsStr("cards") + ',' + jsStr(r.id) + ')">Edit</button>' },
+    { title: "Review", render: r => '<button class="ghost" onclick="reviewCard(' + jsStr(r.id) + ')">Review</button>' },
     { title: "Name", render: r => text(r.name) },
     { title: "Bank", render: r => text(r.bank) },
     { title: "Currency", render: r => text(r.currency) },
@@ -1442,6 +1737,7 @@ setupTable({
 });
 
 initEditor();
+initCardReview();
 </script>
 </body>
 </html>

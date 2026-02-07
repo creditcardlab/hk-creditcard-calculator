@@ -219,7 +219,7 @@
         };
 
         // Intentionally conservative for existing entities; allow full object insert for new dynamic entities.
-        const allowedCardCoreFields = ["name", "display_name_zhhk", "currency", "type", "fcf", "bank", "status", "hidden"];
+        const allowedCardCoreFields = ["name", "currency", "type", "fcf", "bank", "status", "hidden"];
         const allowedCategoryCoreFields = ["label", "parent", "hidden"];
         const allowedModuleCoreFields = [
             "desc",
@@ -348,7 +348,7 @@
             });
         };
 
-        const cardFields = ["display_name_zhhk", "note_zhhk", "status", "last_verified_at", "source_url", "source_title"];
+        const cardFields = ["note_zhhk", "status", "last_verified_at", "source_url", "source_title"];
         const moduleFields = ["display_name_zhhk", "note_zhhk", "status", "last_verified_at", "source_url", "source_title", "unit_override"];
         const campaignFields = ["display_name_zhhk", "note_zhhk", "status", "last_verified_at", "source_url", "source_title"];
         const conversionFields = ["note_zhhk", "last_verified_at", "source_url", "source_title"];
