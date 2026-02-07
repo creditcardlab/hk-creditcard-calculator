@@ -7,6 +7,7 @@ const vm = require("vm");
 
 const ROOT = path.resolve(__dirname, "..");
 const CASES_PATH = path.resolve(__dirname, "golden_cases.json");
+let BASE_PROFILE = null;
 
 function createLocalStorage() {
   const store = new Map();
@@ -61,7 +62,7 @@ function deepClone(obj) {
 }
 
 function buildProfile(input) {
-  const base = deepClone(global.userProfile || {});
+  const base = deepClone(BASE_PROFILE || global.userProfile || {});
   const profile = {
     ownedCards: Array.isArray(input.ownedCards) ? [...input.ownedCards] : (base.ownedCards || []),
     settings: { ...(base.settings || {}), ...(input.settings || {}) },
@@ -111,6 +112,12 @@ function computeExpected(input) {
   // Match app.js semantics: anything not "physical" counts as mobile pay unless explicitly overridden.
   const isMobilePay = input.isMobilePay !== undefined ? !!input.isMobilePay : paymentMethod !== "physical";
   const profile = buildProfile(input);
+  // Keep global userProfile aligned with the per-case profile so cap checks
+  // (which read the shared profile state) match real app runtime behavior.
+  global.userProfile = profile;
+  if (typeof userProfile !== "undefined") {
+    userProfile = profile;
+  }
   const isHoliday = typeof HolidayManager !== "undefined" && typeof HolidayManager.isHoliday === "function"
     ? HolidayManager.isHoliday(input.date)
     : false;
@@ -151,6 +158,7 @@ function computeExpected(input) {
 
 function main() {
   bootAppContext();
+  BASE_PROFILE = deepClone(global.userProfile || {});
 
   const raw = fs.readFileSync(CASES_PATH, "utf8");
   const payload = JSON.parse(raw);

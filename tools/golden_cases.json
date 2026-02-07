@@ -72,11 +72,11 @@
       },
       "expected": {
         "topCardId": "hsbc_red",
-        "topValue": 400,
+        "topValue": 20,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
-          "hasPartial": false
+          "hasPartial": true
         }
       }
     },
@@ -99,10 +99,10 @@
       },
       "expected": {
         "topCardId": "hsbc_red",
-        "topValue": 40,
+        "topValue": 4,
         "breakdownFlags": {
           "hasLocked": false,
-          "hasCapped": false,
+          "hasCapped": true,
           "hasPartial": false
         }
       }
@@ -135,7 +135,7 @@
         "topCardId": "hsbc_vs",
         "topValue": 6,
         "breakdownFlags": {
-          "hasLocked": true,
+          "hasLocked": false,
           "hasCapped": false,
           "hasPartial": false
         }
@@ -221,10 +221,10 @@
       },
       "expected": {
         "topCardId": "hsbc_everymile",
-        "topValue": 75,
+        "topValue": 30,
         "breakdownFlags": {
           "hasLocked": false,
-          "hasCapped": false,
+          "hasCapped": true,
           "hasPartial": false
         }
       }
@@ -253,7 +253,7 @@
         "topCardId": "hsbc_red",
         "topValue": 4.8,
         "breakdownFlags": {
-          "hasLocked": true,
+          "hasLocked": false,
           "hasCapped": false,
           "hasPartial": false
         }
@@ -780,6 +780,78 @@
         "breakdownFlags": {
           "hasLocked": true,
           "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_029_red_hot_reward_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2026-02-01",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_vs"
+        ],
+        "settings": {
+          "red_hot_rewards_enabled": true,
+          "red_hot_allocation": {
+            "dining": 5,
+            "world": 0,
+            "home": 0,
+            "enjoyment": 0,
+            "style": 0
+          }
+        },
+        "usage": {
+          "red_hot_variable_cap": 1999
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_vs",
+        "topValue": 17,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_030_red_hot_reward_cap_capped",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2026-02-01",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_vs"
+        ],
+        "settings": {
+          "red_hot_rewards_enabled": true,
+          "red_hot_allocation": {
+            "dining": 5,
+            "world": 0,
+            "home": 0,
+            "enjoyment": 0,
+            "style": 0
+          }
+        },
+        "usage": {
+          "red_hot_variable_cap": 2000
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_vs",
+        "topValue": 16,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
           "hasPartial": false
         }
       }

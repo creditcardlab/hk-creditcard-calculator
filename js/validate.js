@@ -24,6 +24,9 @@ function validateData(data) {
     const modules = data.modules || {};
     const categories = data.categories || {};
     const campaigns = Array.isArray(data.campaigns) ? data.campaigns : [];
+    const specialPromoModels = (data.specialPromoModels && typeof data.specialPromoModels === "object")
+        ? data.specialPromoModels
+        : {};
     const trackers = data.trackers || {};
     const defaults = data.periodDefaults || {};
 
@@ -157,6 +160,84 @@ function validateData(data) {
         if (typeof spec === "object") return { periodType: spec.type || "none", anchorRef: spec };
         return { periodType: "none", anchorRef: null };
     };
+    const getSectionModuleRefs = (section, singleKey, listKey) => {
+        const out = [];
+        if (!section || typeof section !== "object") return out;
+        if (typeof section[singleKey] === "string" && section[singleKey]) out.push(section[singleKey]);
+        if (Array.isArray(section[listKey])) {
+            section[listKey].forEach((id) => {
+                if (typeof id === "string" && id) out.push(id);
+            });
+        }
+        return Array.from(new Set(out));
+    };
+    const getSectionCapLimit = (section) => {
+        if (!section || typeof section !== "object") return null;
+        const sectionCap = Number(section.cap);
+        if (Number.isFinite(sectionCap) && sectionCap > 0) return sectionCap;
+        if (section.capModule && modules[section.capModule]) {
+            const moduleCap = Number(modules[section.capModule].cap_limit);
+            if (Number.isFinite(moduleCap) && moduleCap > 0) return moduleCap;
+        }
+        return null;
+    };
+    const inferCampaignPromoType = (campaign) => {
+        const sections = Array.isArray(campaign && campaign.sections) ? campaign.sections : [];
+        let missionCount = 0;
+        let capCount = 0;
+        let capRateCount = 0;
+        let tierCount = 0;
+        let uncappedCapLikeCount = 0;
+
+        sections.forEach((sec) => {
+            if (!sec || typeof sec !== "object") return;
+            if (sec.type === "mission") missionCount += 1;
+            if (sec.type === "cap") {
+                capCount += 1;
+                if (getSectionCapLimit(sec) === null) uncappedCapLikeCount += 1;
+            }
+            if (sec.type === "cap_rate") {
+                capRateCount += 1;
+                if (getSectionCapLimit(sec) === null) uncappedCapLikeCount += 1;
+            }
+            if (sec.type === "tier_cap") tierCount += 1;
+        });
+
+        if (tierCount > 0) return "tiered_cap";
+        if (missionCount > 0 && capRateCount > 0) {
+            if ((capCount + capRateCount) === uncappedCapLikeCount) return "mission_uncapped";
+            return "mission_cap_rate";
+        }
+        if (missionCount > 0 && (capCount + capRateCount) > 0) {
+            if ((capCount + capRateCount) === uncappedCapLikeCount) return "mission_uncapped";
+            if ((capCount + capRateCount) > 1) return "mission_multi_cap";
+            return "mission_cap";
+        }
+        if (missionCount > 0 && sections.length === 1) return "mission_only";
+        return "custom";
+    };
+    const campaignSectionStats = (campaign) => {
+        const sections = Array.isArray(campaign && campaign.sections) ? campaign.sections : [];
+        let mission = 0;
+        let cap = 0;
+        let capRate = 0;
+        let tierCap = 0;
+        let uncappedCapLike = 0;
+        sections.forEach((sec) => {
+            if (!sec || typeof sec !== "object") return;
+            if (sec.type === "mission") mission += 1;
+            if (sec.type === "cap") {
+                cap += 1;
+                if (getSectionCapLimit(sec) === null) uncappedCapLike += 1;
+            }
+            if (sec.type === "cap_rate") {
+                capRate += 1;
+                if (getSectionCapLimit(sec) === null) uncappedCapLike += 1;
+            }
+            if (sec.type === "tier_cap") tierCap += 1;
+        });
+        return { mission, cap, capRate, tierCap, capLike: cap + capRate, uncappedCapLike, sections };
+    };
 
     // Period definitions on modules
     Object.keys(modules).forEach((modId) => {
@@ -254,11 +335,136 @@ function validateData(data) {
             addError(`[data] campaign ${campaign.id} missing period_policy`);
         }
 
+        const declaredPromoType = (typeof campaign.promo_type === "string" && campaign.promo_type.trim())
+            ? campaign.promo_type.trim()
+            : "";
+        const inferredPromoType = inferCampaignPromoType(campaign);
+        const allowedPromoTypes = new Set([
+            "mission_cap",
+            "mission_cap_rate",
+            "mission_multi_cap",
+            "tiered_cap",
+            "mission_uncapped",
+            "mission_only",
+            "level_lifecycle",
+            "custom"
+        ]);
+        if (!declaredPromoType) {
+            addWarning(`[data] campaign ${campaign.id} missing promo_type (inferred: ${inferredPromoType})`);
+        } else if (!allowedPromoTypes.has(declaredPromoType)) {
+            addError(`[data] campaign ${campaign.id} promo_type unsupported: ${declaredPromoType}`);
+        } else if (declaredPromoType !== inferredPromoType && declaredPromoType !== "custom") {
+            addWarning(`[data] campaign ${campaign.id} promo_type=${declaredPromoType} but inferred=${inferredPromoType}`);
+        }
+
+        const promoType = declaredPromoType || inferredPromoType;
+        const stats = campaignSectionStats(campaign);
+        const typeLabel = `campaign ${campaign.id} promo_type=${promoType}`;
+        if (promoType === "mission_cap") {
+            if (stats.mission < 1) addWarning(`[data] ${typeLabel} expects >=1 mission section`);
+            if (stats.capLike < 1) addWarning(`[data] ${typeLabel} expects >=1 cap/cap_rate section`);
+        }
+        if (promoType === "mission_cap_rate") {
+            if (stats.mission < 1) addWarning(`[data] ${typeLabel} expects >=1 mission section`);
+            if (stats.capRate < 1) addWarning(`[data] ${typeLabel} expects >=1 cap_rate section`);
+        }
+        if (promoType === "mission_multi_cap") {
+            if (stats.mission < 1) addWarning(`[data] ${typeLabel} expects >=1 mission section`);
+            if (stats.capLike < 2) addWarning(`[data] ${typeLabel} expects >=2 cap/cap_rate sections`);
+        }
+        if (promoType === "tiered_cap") {
+            if (stats.tierCap < 1) addWarning(`[data] ${typeLabel} expects >=1 tier_cap section`);
+            stats.sections.forEach((sec, idx) => {
+                if (sec.type !== "tier_cap") return;
+                if (!Array.isArray(sec.tiers) || sec.tiers.length < 2) {
+                    addError(`[data] campaign ${campaign.id}.section${idx + 1} tier_cap requires at least 2 tiers`);
+                    return;
+                }
+                sec.tiers.forEach((tier, tierIdx) => {
+                    if (!tier || typeof tier !== "object") {
+                        addError(`[data] campaign ${campaign.id}.section${idx + 1} tier ${tierIdx + 1} is not an object`);
+                        return;
+                    }
+                    if (!Number.isFinite(Number(tier.threshold))) {
+                        addError(`[data] campaign ${campaign.id}.section${idx + 1} tier ${tierIdx + 1} missing threshold`);
+                    }
+                    if (!Number.isFinite(Number(tier.cap))) {
+                        addError(`[data] campaign ${campaign.id}.section${idx + 1} tier ${tierIdx + 1} missing cap`);
+                    }
+                    if (!Number.isFinite(Number(tier.rate))) {
+                        addError(`[data] campaign ${campaign.id}.section${idx + 1} tier ${tierIdx + 1} missing rate`);
+                    }
+                });
+            });
+        }
+        if (promoType === "mission_uncapped") {
+            if (stats.mission < 1) addWarning(`[data] ${typeLabel} expects >=1 mission section`);
+            if (stats.capLike < 1) addWarning(`[data] ${typeLabel} expects >=1 cap/cap_rate section`);
+            if (stats.capLike > stats.uncappedCapLike) {
+                addWarning(`[data] ${typeLabel} has capped cap/cap_rate sections; expected uncapped only`);
+            }
+        }
+        if (promoType === "mission_only" && stats.capLike > 0) {
+            addWarning(`[data] ${typeLabel} should not include cap/cap_rate sections`);
+        }
+
         if (campaign.period !== undefined) {
             addWarning(`[data] campaign ${campaign.id} has deprecated field: period (ignored)`);
         }
         if (campaign.badge !== undefined) {
             addWarning(`[data] campaign ${campaign.id} has deprecated field: badge (ignored)`);
+        }
+    });
+
+    Object.keys(specialPromoModels).forEach((modelId) => {
+        const model = specialPromoModels[modelId] || {};
+        const promoType = (typeof model.promo_type === "string" && model.promo_type.trim()) ? model.promo_type.trim() : "";
+        if (!promoType) {
+            addWarning(`[data] specialPromoModels.${modelId} missing promo_type`);
+            return;
+        }
+        if (promoType === "level_lifecycle") {
+            if (!model.module || !modules[model.module]) {
+                addError(`[data] specialPromoModels.${modelId} module missing: ${model.module}`);
+            } else if (modules[model.module].type !== "guru_capped") {
+                addWarning(`[data] specialPromoModels.${modelId} module ${model.module} is not guru_capped`);
+            }
+
+            const spendKey = model.usage && model.usage.spendKey;
+            const rewardKey = model.usage && model.usage.rewardKey;
+            if (!spendKey || !knownUsageKeys.has(spendKey)) {
+                addError(`[data] specialPromoModels.${modelId} usage.spendKey missing/unknown: ${spendKey}`);
+            }
+            if (!rewardKey || !knownUsageKeys.has(rewardKey)) {
+                addError(`[data] specialPromoModels.${modelId} usage.rewardKey missing/unknown: ${rewardKey}`);
+            }
+
+            if (!model.levels || typeof model.levels !== "object" || Array.isArray(model.levels)) {
+                addError(`[data] specialPromoModels.${modelId} levels must be an object`);
+            } else {
+                Object.keys(model.levels).forEach((levelKey) => {
+                    const level = model.levels[levelKey] || {};
+                    if (!Number.isFinite(Number(level.targetSpend))) {
+                        addError(`[data] specialPromoModels.${modelId} levels.${levelKey}.targetSpend invalid`);
+                    }
+                    if (!Number.isFinite(Number(level.rewardCap))) {
+                        addError(`[data] specialPromoModels.${modelId} levels.${levelKey}.rewardCap invalid`);
+                    }
+                });
+            }
+
+            if (Array.isArray(model.cards)) {
+                model.cards.forEach((cardId) => {
+                    const card = cards.find((c) => c && c.id === cardId);
+                    if (!card) {
+                        addError(`[data] specialPromoModels.${modelId} card missing: ${cardId}`);
+                        return;
+                    }
+                    if (model.module && Array.isArray(card.rewardModules) && !card.rewardModules.includes(model.module)) {
+                        addWarning(`[data] specialPromoModels.${modelId} card ${cardId} missing module ${model.module}`);
+                    }
+                });
+            }
         }
     });
 
@@ -286,12 +492,30 @@ function validateData(data) {
         const sections = Array.isArray(promo.sections) ? promo.sections : [];
         sections.forEach((sec, idx) => {
             const label = `${promoId}.section${idx + 1}`;
+            const allowedSectionTypes = new Set(["mission", "cap", "cap_rate", "tier_cap"]);
+            if (!allowedSectionTypes.has(sec.type)) {
+                addWarning(`[data] ${label} section type unsupported: ${sec.type}`);
+            }
             if (sec.capModule && !modules[sec.capModule]) {
                 addError(`[data] ${label} capModule missing: ${sec.capModule}`);
             }
             if (sec.rateModule && !modules[sec.rateModule]) {
                 addError(`[data] ${label} rateModule missing: ${sec.rateModule}`);
             }
+            if ((sec.type === "cap" || sec.type === "cap_rate") && sec.capModule && modules[sec.capModule]) {
+                const moduleCap = Number(modules[sec.capModule].cap_limit);
+                const sectionCap = Number(sec.cap);
+                const hasCap = Number.isFinite(moduleCap) || Number.isFinite(sectionCap);
+                if (!hasCap) {
+                    addWarning(`[data] ${label} cap section has no cap_limit in module ${sec.capModule} and no sec.cap`);
+                }
+            }
+            getSectionModuleRefs(sec, "missionModule", "missionModules").forEach((moduleId) => {
+                if (!modules[moduleId]) addError(`[data] ${label} missionModule missing: ${moduleId}`);
+            });
+            getSectionModuleRefs(sec, "unlockModule", "unlockModules").forEach((moduleId) => {
+                if (!modules[moduleId]) addError(`[data] ${label} unlockModule missing: ${moduleId}`);
+            });
             if (sec.usageKey && !knownUsageKeys.has(sec.usageKey)) {
                 addError(`[data] ${label} usageKey missing: ${sec.usageKey}`);
             }
@@ -310,6 +534,21 @@ function validateData(data) {
                         addError(`[data] ${label} usageKeys missing: ${k}`);
                     }
                 });
+            }
+            if (
+                sec.type === "mission" &&
+                !sec.usageKey &&
+                (!Array.isArray(sec.usageKeys) || sec.usageKeys.length === 0) &&
+                getSectionModuleRefs(sec, "missionModule", "missionModules").length === 0
+            ) {
+                addWarning(`[data] ${label} mission section has no usageKey/usageKeys/missionModule`);
+            }
+            if (sec.type === "tier_cap") {
+                if (!sec.totalKey) addWarning(`[data] ${label} tier_cap missing totalKey`);
+                if (!sec.eligibleKey) addWarning(`[data] ${label} tier_cap missing eligibleKey`);
+                if (!Array.isArray(sec.tiers) || sec.tiers.length < 2) {
+                    addError(`[data] ${label} tier_cap requires at least 2 tiers`);
+                }
             }
         });
     });

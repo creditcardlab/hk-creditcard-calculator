@@ -130,6 +130,277 @@ function getForeignFeeRate(card, category) {
     return base;
 }
 
+function inferPromoTypeFromSections(promo) {
+    const sections = Array.isArray(promo && promo.sections) ? promo.sections : [];
+    let hasMission = false;
+    let capCount = 0;
+    let hasCapRate = false;
+    let hasTierCap = false;
+
+    sections.forEach((sec) => {
+        if (!sec || typeof sec !== "object") return;
+        if (sec.type === "mission") hasMission = true;
+        if (sec.type === "cap") capCount += 1;
+        if (sec.type === "cap_rate") hasCapRate = true;
+        if (sec.type === "tier_cap") hasTierCap = true;
+    });
+
+    if (hasTierCap) return "tiered_cap";
+    if (hasMission && hasCapRate) return "mission_cap_rate";
+    if (hasMission && capCount > 1) return "mission_multi_cap";
+    if (hasMission && capCount === 1) return "mission_cap";
+    if (hasMission && sections.length === 1) return "mission_only";
+    return "custom";
+}
+
+function getPromoType(promo) {
+    if (!promo || typeof promo !== "object") return "custom";
+    const explicit = typeof promo.promo_type === "string" ? promo.promo_type.trim() : "";
+    if (explicit) return explicit;
+    return inferPromoTypeFromSections(promo);
+}
+
+function getSpecialPromoModel(modelId) {
+    if (!modelId || typeof DATA === "undefined" || !DATA || !DATA.specialPromoModels) return null;
+    const model = DATA.specialPromoModels[modelId];
+    return (model && typeof model === "object") ? model : null;
+}
+
+function getTravelGuruFallbackLevels() {
+    return {
+        1: { name: "GO級", targetSpend: 30000, rewardCap: 500, nextName: "GING級" },
+        2: { name: "GING級", targetSpend: 70000, rewardCap: 1200, nextName: "GURU級" },
+        3: { name: "GURU級", targetSpend: 70000, rewardCap: 2200, nextName: "保級" }
+    };
+}
+
+function getLevelLifecycleModelDefaults(modelId) {
+    if (modelId === "travel_guru") {
+        return {
+            title: "Travel Guru",
+            icon: "fas fa-trophy",
+            theme: "yellow",
+            settingKey: "guru_level",
+            spendKey: "guru_spend_accum",
+            rewardKey: "guru_rc_used",
+            rewardUnit: "RC",
+            upgradeAction: "handleGuruUpgrade()",
+            levels: getTravelGuruFallbackLevels()
+        };
+    }
+    return {
+        title: modelId,
+        icon: "fas fa-chart-line",
+        theme: "gray",
+        settingKey: "",
+        spendKey: "",
+        rewardKey: "",
+        rewardUnit: "",
+        upgradeAction: null,
+        levels: {}
+    };
+}
+
+function normalizeLevelLifecycleLevels(levels, fallbackLevels) {
+    const source = (levels && typeof levels === "object" && !Array.isArray(levels))
+        ? levels
+        : (fallbackLevels || {});
+    const normalized = {};
+    Object.keys(source).forEach((key) => {
+        const lv = Number(key);
+        if (!Number.isFinite(lv) || lv <= 0) return;
+        const cfg = source[key] || {};
+        normalized[lv] = {
+            name: cfg.name || `${lv}級`,
+            targetSpend: Math.max(0, Number(cfg.targetSpend) || 0),
+            rewardCap: Math.max(0, Number(cfg.rewardCap) || 0),
+            nextName: cfg.nextName || null
+        };
+    });
+
+    if (Object.keys(normalized).length > 0) return normalized;
+
+    const fallback = {};
+    Object.keys(fallbackLevels || {}).forEach((key) => {
+        const lv = Number(key);
+        if (!Number.isFinite(lv) || lv <= 0) return;
+        const cfg = fallbackLevels[key] || {};
+        fallback[lv] = {
+            name: cfg.name || `${lv}級`,
+            targetSpend: Math.max(0, Number(cfg.targetSpend) || 0),
+            rewardCap: Math.max(0, Number(cfg.rewardCap) || 0),
+            nextName: cfg.nextName || null
+        };
+    });
+    return fallback;
+}
+
+function getLevelLifecycleModel(modelId) {
+    if (!modelId) return null;
+    const raw = getSpecialPromoModel(modelId);
+    if (!raw) return null;
+    const promoType = (typeof raw.promo_type === "string" && raw.promo_type.trim()) ? raw.promo_type.trim() : "";
+    if (promoType !== "level_lifecycle") return null;
+
+    const defaults = getLevelLifecycleModelDefaults(modelId);
+    const usage = (raw.usage && typeof raw.usage === "object" && !Array.isArray(raw.usage)) ? raw.usage : {};
+    const spendKey = usage.spendKey || usage.spend_key || defaults.spendKey;
+    const rewardKey = usage.rewardKey || usage.reward_key || defaults.rewardKey;
+    const levels = normalizeLevelLifecycleLevels(raw.levels, defaults.levels);
+    return {
+        id: modelId,
+        promoType,
+        title: raw.title || raw.display_name_zhhk || raw.name || defaults.title,
+        icon: raw.icon || defaults.icon,
+        theme: raw.theme || defaults.theme,
+        settingKey: raw.settingKey || raw.setting_key || defaults.settingKey,
+        rewardUnit: raw.rewardUnit || raw.reward_unit || defaults.rewardUnit,
+        upgradeAction: raw.upgradeAction || raw.upgrade_action || defaults.upgradeAction,
+        cards: Array.isArray(raw.cards) ? raw.cards.slice() : [],
+        module: raw.module || "",
+        usage: { spendKey, rewardKey },
+        levels
+    };
+}
+
+function getLevelLifecycleModelIds() {
+    if (typeof DATA === "undefined" || !DATA) return [];
+    if (Array.isArray(DATA.offers)) {
+        const ids = DATA.offers
+            .filter((offer) => offer && offer.renderType === "level_lifecycle")
+            .map((offer) => offer.modelId || offer.id)
+            .filter((id) => !!id && !!getLevelLifecycleModel(id));
+        if (ids.length > 0) return Array.from(new Set(ids));
+    }
+    if (!DATA.specialPromoModels) return [];
+    return Object.keys(DATA.specialPromoModels).filter((id) => !!getLevelLifecycleModel(id));
+}
+
+function getLevelLifecycleState(modelId, profile) {
+    if (!profile || !profile.settings || !profile.usage) return null;
+    const model = getLevelLifecycleModel(modelId);
+    if (!model) return null;
+
+    const eligibleCards = Array.isArray(model.cards) ? model.cards : [];
+    if (eligibleCards.length > 0) {
+        const owned = Array.isArray(profile.ownedCards) ? profile.ownedCards : [];
+        const eligible = eligibleCards.some((id) => owned.includes(id));
+        if (!eligible) return { eligible: false, active: false, model };
+    }
+
+    const settingKey = model.settingKey || "";
+    const level = settingKey ? (Number(profile.settings[settingKey]) || 0) : 0;
+    if (level <= 0) return { eligible: true, active: false, model };
+
+    const levels = model.levels || {};
+    const levelCfg = levels[level] || null;
+    if (!levelCfg) return { eligible: true, active: false, model };
+
+    const maxLevel = Math.max(0, ...Object.keys(levels).map((k) => Number(k)).filter((n) => Number.isFinite(n)));
+    const nextCfg = levels[level + 1] || null;
+    const nextLevelName = levelCfg.nextName || (nextCfg && nextCfg.name) || "";
+    const levelName = levelCfg.name || `${level}級`;
+    const spendAccum = Number(profile.usage[model.usage.spendKey]) || 0;
+    const rewardUsed = Number(profile.usage[model.usage.rewardKey]) || 0;
+    const targetSpend = Number(levelCfg.targetSpend) || 0;
+    const rewardCap = Number(levelCfg.rewardCap) || 0;
+
+    const upgPct = targetSpend > 0 ? Math.min(100, (spendAccum / targetSpend) * 100) : 0;
+    const rebatePct = rewardCap > 0 ? Math.min(100, (rewardUsed / rewardCap) * 100) : 0;
+    const isMaxed = rewardCap > 0 ? (rewardUsed >= rewardCap) : false;
+    const canUpgrade = !!model.upgradeAction && targetSpend > 0 && spendAccum >= targetSpend && level < maxLevel;
+    const rewardUnit = model.rewardUnit || "";
+    const rewardSuffix = rewardUnit ? ` ${rewardUnit}` : "";
+
+    return {
+        eligible: true,
+        active: true,
+        model,
+        level,
+        maxLevel,
+        title: model.title,
+        icon: model.icon,
+        theme: model.theme,
+        badge: levelName,
+        actionButton: canUpgrade
+            ? {
+                label: `🎉 升級至 ${nextLevelName || `${level + 1}級`}`,
+                icon: "fas fa-level-up-alt",
+                onClick: model.upgradeAction
+            }
+            : null,
+        sections: [
+            {
+                kind: "mission",
+                label: "🚀 升級進度",
+                valueText: `$${spendAccum.toLocaleString()} / $${targetSpend.toLocaleString()}`,
+                progress: upgPct,
+                state: "active",
+                lockedReason: spendAccum >= targetSpend ? null : `尚差 $${Math.max(0, targetSpend - spendAccum).toLocaleString()}`,
+                markers: null,
+                overlayModel: null,
+                meta: { spendAccum, target: targetSpend, unlocked: spendAccum >= targetSpend, unlockedText: "可升級" }
+            },
+            {
+                kind: "cap",
+                label: "💰 本級回贈",
+                valueText: `${Math.floor(rewardUsed).toLocaleString()}${rewardSuffix} / ${Math.floor(rewardCap).toLocaleString()}${rewardSuffix}`,
+                progress: rebatePct,
+                state: isMaxed ? "capped" : "active",
+                lockedReason: null,
+                markers: null,
+                overlayModel: null,
+                meta: {
+                    used: rewardUsed,
+                    cap: rewardCap,
+                    remaining: Math.max(0, rewardCap - rewardUsed),
+                    prefix: "",
+                    unit: rewardSuffix,
+                    unlocked: true
+                }
+            }
+        ]
+    };
+}
+
+function getTravelGuruLevelMap() {
+    const model = getLevelLifecycleModel("travel_guru");
+    return (model && model.levels) ? model.levels : getTravelGuruFallbackLevels();
+}
+
+function getTravelGuruUsageKeys() {
+    const model = getLevelLifecycleModel("travel_guru");
+    const usage = (model && model.usage) ? model.usage : {};
+    return {
+        spendKey: usage.spendKey || "guru_spend_accum",
+        rewardKey: usage.rewardKey || "guru_rc_used"
+    };
+}
+
+function getTravelGuruLevelConfig(level) {
+    const levels = getTravelGuruLevelMap();
+    const lv = Number(level);
+    return Number.isFinite(lv) ? (levels[lv] || null) : null;
+}
+
+function getTravelGuruMaxLevel() {
+    const levels = getTravelGuruLevelMap();
+    const keys = Object.keys(levels).map((k) => Number(k)).filter((n) => Number.isFinite(n));
+    return keys.length > 0 ? Math.max(...keys) : 0;
+}
+
+function getTravelGuruLevelName(level) {
+    const cfg = getTravelGuruLevelConfig(level);
+    return cfg && cfg.name ? cfg.name : "";
+}
+
+function getTravelGuruNextLevelName(level) {
+    const cfg = getTravelGuruLevelConfig(level);
+    if (cfg && cfg.nextName) return cfg.nextName;
+    const next = getTravelGuruLevelConfig(Number(level) + 1);
+    return next && next.name ? next.name : "";
+}
+
 function buildPromoStatus(promo, userProfile, modulesDB) {
     if (!promo || !userProfile) return null;
     const policyMeta = (typeof DATA !== "undefined" && DATA.periodPolicy && DATA.periodPolicy.byCampaignId && promo.id)
@@ -146,7 +417,8 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
     let missionUnlockTarget = null;
     let missionUnlockValue = null;
 
-    const isWinterPromo = promo.id === "winter_promo";
+    const promoType = getPromoType(promo);
+    const isWinterPromo = promoType === "tiered_cap" || promo.id === "winter_promo";
     const winterTier1 = Math.max(0, Number(userProfile.settings && userProfile.settings.winter_tier1_threshold) || 0);
     const winterTier2Raw = Math.max(0, Number(userProfile.settings && userProfile.settings.winter_tier2_threshold) || 0);
     const winterTier2 = Math.max(winterTier1, winterTier2Raw);
@@ -156,17 +428,98 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
         const m = getModule(key);
         return m && m.cap_limit ? { cap: m.cap_limit, capKey: m.cap_key || null } : null;
     };
+    const toFiniteNumber = (value) => {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : null;
+    };
+    const toPositiveNumber = (value) => {
+        const n = toFiniteNumber(value);
+        return (n !== null && n > 0) ? n : null;
+    };
+    const uniqueList = (values) => Array.from(new Set((values || []).filter(Boolean)));
+    const getModuleRefs = (sec, singleKey, listKey) => {
+        const refs = [];
+        const single = sec && sec[singleKey];
+        if (typeof single === "string" && single) refs.push(single);
+        const list = sec && sec[listKey];
+        if (Array.isArray(list)) {
+            list.forEach((id) => {
+                if (typeof id === "string" && id) refs.push(id);
+            });
+        }
+        return uniqueList(refs);
+    };
+    const deriveMissionSpec = (sec) => {
+        let usageKey = sec.usageKey || null;
+        let usageKeys = Array.isArray(sec.usageKeys) ? uniqueList(sec.usageKeys) : [];
+        let target = toFiniteNumber(sec.target);
+        const refs = getModuleRefs(sec, "missionModule", "missionModules");
+        const derivedKeys = [];
+        const derivedTargets = [];
+
+        refs.forEach((id) => {
+            const mod = getModule(id);
+            if (!mod) return;
+            if (mod.req_mission_key) derivedKeys.push(mod.req_mission_key);
+            const spend = toFiniteNumber(mod.req_mission_spend);
+            if (spend !== null) derivedTargets.push(spend);
+        });
+
+        const uniqKeys = uniqueList(derivedKeys);
+        if (!usageKey && usageKeys.length === 0) {
+            if (uniqKeys.length === 1) usageKey = uniqKeys[0];
+            else if (uniqKeys.length > 1) usageKeys = uniqKeys;
+        }
+
+        if (target === null && derivedTargets.length > 0) {
+            const uniqTargets = uniqueList(derivedTargets);
+            if (uniqTargets.length === 1) target = Number(uniqTargets[0]);
+            else target = Math.max(...uniqTargets.map((n) => Number(n) || 0));
+        }
+
+        return { usageKey, usageKeys, target };
+    };
+    const deriveUnlockSpec = (sec) => {
+        let unlockKey = sec.unlockKey || null;
+        let unlockTarget = toFiniteNumber(sec.unlockTarget);
+        const refs = getModuleRefs(sec, "unlockModule", "unlockModules");
+        const derivedKeys = [];
+        const derivedTargets = [];
+
+        refs.forEach((id) => {
+            const mod = getModule(id);
+            if (!mod) return;
+            if (mod.req_mission_key) derivedKeys.push(mod.req_mission_key);
+            const spend = toFiniteNumber(mod.req_mission_spend);
+            if (spend !== null) derivedTargets.push(spend);
+        });
+
+        const uniqKeys = uniqueList(derivedKeys);
+        if (!unlockKey && uniqKeys.length === 1) unlockKey = uniqKeys[0];
+
+        if (unlockTarget === null && derivedTargets.length > 0) {
+            const uniqTargets = uniqueList(derivedTargets);
+            if (uniqTargets.length === 1) unlockTarget = Number(uniqTargets[0]);
+            else unlockTarget = Math.max(...uniqTargets.map((n) => Number(n) || 0));
+        }
+
+        return { unlockKey, unlockTarget };
+    };
 
     (promo.sections || []).forEach(sec => {
         if (sec.type === "mission") {
+            const missionSpec = deriveMissionSpec(sec);
             let spend = 0;
-            if (sec.usageKeys) spend = sec.usageKeys.reduce((s, k) => s + (Number(userProfile.usage[k]) || 0), 0);
-            else spend = Number(userProfile.usage[sec.usageKey]) || 0;
-            const target = isWinterPromo ? winterTier2 : sec.target;
+            if (missionSpec.usageKeys && missionSpec.usageKeys.length > 0) {
+                spend = missionSpec.usageKeys.reduce((s, k) => s + (Number(userProfile.usage[k]) || 0), 0);
+            } else if (missionSpec.usageKey) {
+                spend = Number(userProfile.usage[missionSpec.usageKey]) || 0;
+            }
+            const target = isWinterPromo ? winterTier2 : (toFiniteNumber(missionSpec.target) || 0);
             missionUnlockTarget = target;
             missionUnlockValue = spend;
             const pct = target > 0 ? Math.min(100, (spend / target) * 100) : 0;
-            const unlocked = spend >= target;
+            const unlocked = target > 0 ? (spend >= target) : true;
             let markers = null;
             const markersSrc = isWinterPromo ? [winterTier1, winterTier2] : sec.markers;
             if (markersSrc) {
@@ -191,10 +544,10 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 
 	        if (sec.type === "cap_rate") {
 	            const used = Number(userProfile.usage[sec.usageKey]) || 0;
-	            let capVal = sec.cap;
+	            let capVal = toPositiveNumber(sec.cap);
 	            if (sec.capModule) {
 	                const capInfo = getCapFromModule(sec.capModule);
-	                if (capInfo && capInfo.cap) capVal = capInfo.cap;
+	                if (capInfo && capInfo.cap) capVal = toPositiveNumber(capInfo.cap);
 	            }
 	            let rate = Number(sec.rate);
 	            if (!Number.isFinite(rate) && sec.rateModule) {
@@ -206,29 +559,38 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 	                if (rm && Number.isFinite(Number(rm.rate))) rate = Number(rm.rate);
 	            }
 	            if (!Number.isFinite(rate)) rate = 0;
+                const unlockSpec = deriveUnlockSpec(sec);
+                const fallbackTarget = toFiniteNumber(missionUnlockTarget);
+                const unlockTarget = unlockSpec.unlockTarget !== null ? unlockSpec.unlockTarget : fallbackTarget;
+                const unlockValue = unlockSpec.unlockKey ? (Number(userProfile.usage[unlockSpec.unlockKey]) || 0) : missionUnlockValue;
+                const hasCap = capVal !== null;
 
-	            const reward = Math.min(capVal, used * rate);
-	            const pct = Math.min(100, (reward / capVal) * 100);
-	            const unlocked = missionUnlockValue !== null ? missionUnlockValue >= sec.unlockTarget : true;
+	            const rewardRaw = used * rate;
+                const reward = hasCap ? Math.min(capVal, rewardRaw) : rewardRaw;
+	            const pct = hasCap ? Math.min(100, (reward / capVal) * 100) : ((unlockTarget && unlockTarget > 0) ? Math.min(100, ((unlockValue || 0) / unlockTarget) * 100) : 100);
+	            const unlocked = (unlockTarget !== null && unlockValue !== null) ? unlockValue >= unlockTarget : true;
 	            const unit = sec.unit || "";
 	            const isCurrencyUnit = (unit === "" || unit === "$" || unit === "HKD" || unit === "元" || unit === "HK$");
 	            const prefix = isCurrencyUnit ? "$" : "";
 	            const suffix = isCurrencyUnit ? "" : (unit ? ` ${unit}` : "");
-	            const state = unlocked ? (reward >= capVal ? "capped" : "active") : "locked";
+	            const state = unlocked ? (hasCap && reward >= capVal ? "capped" : "active") : "locked";
 	            const lockedReason = !unlocked ? "未解鎖" : null;
+                const valueText = hasCap
+                    ? `${prefix}${Math.floor(reward).toLocaleString()}${suffix} / ${prefix}${capVal.toLocaleString()}${suffix}`.trim()
+                    : (unlocked ? "已達門檻（不設上限）" : "未達門檻");
 
 	            sections.push({
 	                kind: "cap_rate",
 	                label: sec.label || "回贈進度",
-	                valueText: `${prefix}${Math.floor(reward).toLocaleString()}${suffix} / ${prefix}${capVal.toLocaleString()}${suffix}`.trim(),
+	                valueText,
 	                progress: pct,
 	                state,
 	                lockedReason,
 	                meta: {
                     reward,
-                    cap: capVal,
+                    cap: hasCap ? capVal : 0,
                     unit,
-                    remaining: Math.max(0, capVal - reward),
+                    remaining: hasCap ? Math.max(0, capVal - reward) : 0,
                     unlocked
                 }
             });
@@ -315,37 +677,45 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
         }
 
 	        if (sec.type === "cap") {
+                const unlockSpec = deriveUnlockSpec(sec);
 	            let capKey = sec.capKey;
-	            let capVal = sec.cap;
+	            let capVal = toPositiveNumber(sec.cap);
 	            if (sec.capModule) {
 	                const capInfo = getCapFromModule(sec.capModule);
 	                if (capInfo) {
-	                    capVal = capInfo.cap;
+	                    capVal = toPositiveNumber(capInfo.cap);
 	                    capKey = capInfo.capKey || capKey;
 	                }
 	            }
 	            const used = Number(userProfile.usage[capKey]) || 0;
-	            const pct = Math.min(100, (used / capVal) * 100);
-	            const unlocked = missionUnlockTarget ? (missionUnlockValue >= missionUnlockTarget) : true;
+                const fallbackTarget = toFiniteNumber(missionUnlockTarget);
+                const unlockTarget = unlockSpec.unlockTarget !== null ? unlockSpec.unlockTarget : fallbackTarget;
+                const unlockValue = unlockSpec.unlockKey ? (Number(userProfile.usage[unlockSpec.unlockKey]) || 0) : missionUnlockValue;
+	            const unlocked = (unlockTarget !== null && unlockValue !== null) ? (unlockValue >= unlockTarget) : true;
+                const hasCap = capVal !== null;
+	            const pct = hasCap ? Math.min(100, (used / capVal) * 100) : ((unlockTarget && unlockTarget > 0) ? Math.min(100, ((unlockValue || 0) / unlockTarget) * 100) : 100);
 	            const unitRaw = sec.unit || '';
 	            const isCurrencyUnit = (unitRaw === "" || unitRaw === "$" || unitRaw === "HKD" || unitRaw === "元" || unitRaw === "HK$");
 	            const prefix = isCurrencyUnit ? '$' : (unitRaw ? '' : '$');
 	            const unit = isCurrencyUnit ? '' : unitRaw;
-	            const state = used >= capVal ? "capped" : (unlocked ? "active" : "locked");
+	            const state = hasCap ? (used >= capVal ? "capped" : (unlocked ? "active" : "locked")) : (unlocked ? "active" : "locked");
+                const valueText = hasCap
+                    ? `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${capVal.toLocaleString()}${unit}`
+                    : (unlocked ? "已達門檻（不設上限）" : "未達門檻");
 
 	            sections.push({
 	                kind: "cap",
 	                label: sec.label || "回贈進度",
-	                valueText: `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${capVal.toLocaleString()}${unit}`,
+	                valueText,
 	                progress: pct,
 	                state,
 	                lockedReason: unlocked ? null : "未解鎖",
 	                meta: {
 	                    used,
-	                    cap: capVal,
+	                    cap: hasCap ? capVal : 0,
 	                    unit,
 	                    prefix,
-	                    remaining: Math.max(0, capVal - used),
+	                    remaining: hasCap ? Math.max(0, capVal - used) : 0,
 	                    unlocked
 	                }
 	            });
@@ -357,6 +727,7 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 
     return {
         eligible: true,
+        promoType,
         sections: sections,
         renderedCaps: Array.from(renderedCaps),
         capKeys: promo.capKeys || []
@@ -689,6 +1060,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         let tempDesc = null;
         let hit = false;
         let rate = 0;
+        let capDisplayHandled = false;
         if (mod.setting_key && userProfile.settings[mod.setting_key] === false) return;
 
         // [NEW] Min Spend Check (Single Transaction)
@@ -733,7 +1105,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                 if (!matchOk) return;
                 if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod })) return;
                 if (mod.cap_limit) {
-                    if (applyCurrent) trackingKey = mod.cap_key;
+                    if (applyCurrent && mod.cap_mode !== 'reward') trackingKey = mod.cap_key;
 
                 // [UPDATED] Check Cap Mode (Spending vs Reward)
                 if (mod.cap_mode === 'reward') {
@@ -779,6 +1151,50 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         }
             else if (mod.type === "always") { rate = mod.rate; hit = true; }
 
+            // Enforce cap for non-category modules (e.g. red_hot_allocation / red_hot_fixed_bonus).
+            // Category cap logic is already handled in the category branch above.
+            if (hit && mod.type !== "guru_capped" && mod.type !== "category" && mod.cap_limit && mod.cap_key) {
+                if (applyCurrent && mod.cap_mode !== 'reward') trackingKey = mod.cap_key;
+
+                if (mod.cap_mode === 'reward') {
+                    const rewardCapCheck = checkCap(mod.cap_key, mod.cap_limit);
+                    let remaining = rewardCapCheck.remaining;
+                    let isMaxed = rewardCapCheck.isMaxed;
+
+                    if (mod.secondary_cap_key && mod.secondary_cap_limit) {
+                        const secCap = checkCap(mod.secondary_cap_key, mod.secondary_cap_limit);
+                        if (secCap.isMaxed) isMaxed = true;
+                        remaining = Math.min(remaining, secCap.remaining);
+                    }
+
+                    if (isMaxed) {
+                        addBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
+                        hit = false;
+                    } else {
+                        const projectedReward = amount * rate;
+                        if (projectedReward <= remaining) {
+                            addBreakdown(tempDesc || mod.desc);
+                        } else {
+                            rate = remaining / amount;
+                            addBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
+                        }
+                    }
+                    capDisplayHandled = true;
+                } else {
+                    const capCheck = checkCap(mod.cap_key, mod.cap_limit);
+                    if (capCheck.isMaxed) {
+                        addBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
+                        hit = false;
+                    } else if (amount > capCheck.remaining) {
+                        rate = (capCheck.remaining * rate) / amount;
+                        addBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
+                    } else {
+                        addBreakdown(tempDesc || mod.desc);
+                    }
+                    capDisplayHandled = true;
+                }
+            }
+
             if (hit && mod.type !== "guru_capped") {
                 const skipCurrent = mod.type === "always" && replacerModuleCurrent;
                 const skipPotential = mod.type === "always" && replacerModulePotential;
@@ -790,7 +1206,11 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                 if (allowPotential) totalRatePotential += rate;
 
                 const descText = tempDesc || mod.desc;
-                if (!mod.cap_limit && (allowCurrent || allowPotential)) addBreakdown(descText);
+                // Category modules with cap already render capped/partial state in their own branch.
+                // Other module types (e.g. red_hot_*) may still carry cap metadata via overrides
+                // and should remain visible in the equation breakdown.
+                const capDisplayHandledInBranch = (mod.type === "category" && !!mod.cap_limit) || capDisplayHandled;
+                if (!capDisplayHandledInBranch && (allowCurrent || allowPotential)) addBreakdown(descText);
 
                 // [UPDATED] Capture Reward Tracking Info (current only)
                 if (allowCurrent && mod.cap_mode === 'reward' && mod.cap_limit) {
@@ -836,12 +1256,26 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     }
 
     // ... (Mission Tags Logic 保持不變) ...
+    const campaignById = {};
+    if (typeof DATA !== "undefined" && DATA && Array.isArray(DATA.offers)) {
+        DATA.offers
+            .filter((offer) => offer && offer.renderType === "campaign_sections" && offer.id)
+            .forEach((offer) => { campaignById[offer.id] = offer; });
+    }
+
     missionTags.forEach(tag => {
         let label = tag.desc;
-        let tone = tag.id === 'winter_promo' ? 'danger' : 'accent';
+        const campaign = campaignById[tag.id] || null;
+        const tagPromoType = getPromoType(campaign);
+        let tone = tagPromoType === "tiered_cap" ? 'danger' : 'accent';
         let flags = {};
-        const emTotal = userProfile.usage["em_q1_total"] || 0;
-        const winterTotal = userProfile.usage["winter_total"] || 0;
+        const promoStatus = campaign ? buildPromoStatus(campaign, userProfile, modules) : null;
+        const promoSections = (promoStatus && Array.isArray(promoStatus.sections)) ? promoStatus.sections : [];
+        const rewardSections = promoSections.filter((sec) => sec && (sec.kind === "cap" || sec.kind === "cap_rate" || sec.kind === "tier_cap"));
+        const missionSections = promoSections.filter((sec) => sec && sec.kind === "mission");
+        const hasCappedReward = rewardSections.some((sec) => sec.state === "capped");
+        const hasLockedReward = rewardSections.some((sec) => sec.state === "locked");
+        const missionLocked = missionSections.some((sec) => sec.meta && sec.meta.unlocked === false);
         if (tag.eligible) {
             // [NEW] Redundancy Check: If breakdown already mentions this mission as "Not Met", skip the generic tracker line.
             // This prevents: "Basic... + Bonus (Not Met) + Tracker (Accumulating)"
@@ -861,41 +1295,18 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                 return;
             }
 
-            let isCapped = false;
-            if (tag.id === 'em_promo') {
-                if ((userProfile.usage["em_q1_eligible"] || 0) * 0.015 >= 225) isCapped = true;
-                if (isCapped) {
-                    label = "🚫 EM推廣(爆Cap)";
-                    tone = "muted";
-                    flags = { capped: true, strike: true };
-                } else if (emTotal < 12000) {
-                    label = "🔒 EM推廣(累積中)";
-                    tone = "muted";
-                    flags = { locked: true };
-                }
-            }
-            if (tag.id === 'winter_promo') {
-                const e = userProfile.usage["winter_eligible"] || 0;
-                let max = 0, r = 0;
-                if (winterTotal >= 40000) { max = 800; r = 0.06 }
-                else if (winterTotal >= 20000) { max = 250; r = 0.03 }
-                if (max > 0 && (e * r) >= max) isCapped = true;
-                if (isCapped) {
-                    label = "🚫 冬日賞(爆Cap)";
-                    tone = "muted";
-                    flags = { capped: true, strike: true };
-                } else if (winterTotal < 20000) {
-                    label = "🔒 冬日賞(累積中)";
-                    tone = "muted";
-                    flags = { locked: true };
-                }
+            if (hasCappedReward) {
+                label = `🚫 ${cleanTagDesc}(爆Cap)`;
+                tone = "muted";
+                flags = { capped: true, strike: true };
+            } else if (hasLockedReward || missionLocked) {
+                label = `🔒 ${cleanTagDesc}(累積中)`;
+                tone = "muted";
+                flags = { locked: true };
             }
             addBreakdown(label, tone, flags);
         } else {
-            let show = false;
-            if (tag.id === 'em_promo' && emTotal < 12000) show = true;
-            if (tag.id === 'winter_promo' && winterTotal < 40000) show = true;
-            if (show) addBreakdown(`🎯 計入${tag.desc}門檻`, "muted");
+            if (missionLocked && campaign) addBreakdown(`🎯 計入${tag.desc}門檻`, "muted");
         }
     });
 

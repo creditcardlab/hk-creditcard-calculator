@@ -1,0 +1,40 @@
+{
+  "cards": {
+    "hsbc_everymile": {
+      "display_name_zhhk": "HSBC EveryMile"
+    }
+  },
+  "categories": {
+    "travel_plus_tier1": {
+      "label": "Travel+ 指定外幣"
+    }
+  },
+  "modules": {
+    "em_overseas_bonus": {
+      "desc": "EM推廣 (+1.5%)",
+      "rate": 0.015,
+      "req_mission_spend": 12000,
+      "req_mission_key": "em_q1_total",
+      "cap_mode": "reward",
+      "cap_limit": 225,
+      "cap_key": "em_promo_cap"
+    }
+  },
+  "trackers": {
+    "em_overseas_mission": {
+      "desc": "🌏 EM推廣"
+    }
+  },
+  "campaigns": {
+    "em_promo": {
+      "period_policy": {
+        "mode": "fixed",
+        "period": {
+          "type": "promo",
+          "startDate": "2026-01-01",
+          "endDate": "2026-03-31"
+        }
+      }
+    }
+  }
+}

@@ -11,7 +11,9 @@ function init() {
         if (shouldValidate) validateData(DATA);
     }
     loadUserData();
-    if (!userProfile.usage["guru_spend_accum"]) userProfile.usage["guru_spend_accum"] = 0;
+    const guruUsageKeys = getGuruUsageKeys();
+    if (!userProfile.usage[guruUsageKeys.spendKey]) userProfile.usage[guruUsageKeys.spendKey] = 0;
+    if (!userProfile.usage[guruUsageKeys.rewardKey]) userProfile.usage[guruUsageKeys.rewardKey] = 0;
     if (userProfile.settings.deduct_fcf_ranking === undefined) userProfile.settings.deduct_fcf_ranking = false;
     migrateWinterUsage();
     resetCountersForPeriod("month");
@@ -30,6 +32,16 @@ function init() {
             if (typeof runCalc === 'function') runCalc();
         });
     }
+}
+
+function getGuruUsageKeys() {
+    if (typeof getTravelGuruUsageKeys === "function") return getTravelGuruUsageKeys();
+    return { spendKey: "guru_spend_accum", rewardKey: "guru_rc_used" };
+}
+
+function isGuruOverseasCategory(category) {
+    if (typeof isCategoryMatch === "function") return isCategoryMatch(["overseas"], category);
+    return ['overseas', 'overseas_jkt', 'overseas_tw', 'overseas_cn', 'overseas_mo', 'overseas_other'].includes(category);
 }
 
 function migrateWinterUsage() {
@@ -336,9 +348,10 @@ function rebuildUsageAndStatsFromTransactions() {
             userProfile.usage[`spend_${cardId}`] = (userProfile.usage[`spend_${cardId}`] || 0) + amount;
         }
 
-        const isOverseas = ['overseas', 'overseas_jkt', 'overseas_tw', 'overseas_cn', 'overseas_other'].includes(category);
+        const guruUsageKeys = getGuruUsageKeys();
+        const isOverseas = isGuruOverseasCategory(category);
         if (parseInt(userProfile.settings.guru_level) > 0 && isOverseas) {
-            userProfile.usage["guru_spend_accum"] = (userProfile.usage["guru_spend_accum"] || 0) + amount;
+            userProfile.usage[guruUsageKeys.spendKey] = (userProfile.usage[guruUsageKeys.spendKey] || 0) + amount;
         }
 
         const card = DATA.cards.find(c => c.id === cardId);
@@ -356,7 +369,8 @@ function rebuildUsageAndStatsFromTransactions() {
         }
 
         if (res.guruRC > 0) {
-            userProfile.usage["guru_rc_used"] = (userProfile.usage["guru_rc_used"] || 0) + res.guruRC;
+            const guruUsageKeys = getGuruUsageKeys();
+            userProfile.usage[guruUsageKeys.rewardKey] = (userProfile.usage[guruUsageKeys.rewardKey] || 0) + res.guruRC;
         }
 
         trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday);
@@ -419,12 +433,16 @@ function commitTransaction(data) {
     }
     // Track mission spends (e.g. sim non-online tracker) attached to the current card
     trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod, txDateSafe, isHoliday);
-    if (guruRC > 0) userProfile.usage["guru_rc_used"] = (userProfile.usage["guru_rc_used"] || 0) + guruRC;
+    if (guruRC > 0) {
+        const guruUsageKeys = getGuruUsageKeys();
+        userProfile.usage[guruUsageKeys.rewardKey] = (userProfile.usage[guruUsageKeys.rewardKey] || 0) + guruRC;
+    }
 
     const level = parseInt(userProfile.settings.guru_level);
     // Track all overseas spending for Guru upgrade progress
-    const isOverseas = ['overseas', 'overseas_jkt', 'overseas_tw', 'overseas_cn', 'overseas_mo', 'overseas_other'].includes(category);
-    if (level > 0 && isOverseas) userProfile.usage["guru_spend_accum"] = (userProfile.usage["guru_spend_accum"] || 0) + amount;
+    const guruUsageKeys = getGuruUsageKeys();
+    const isOverseas = isGuruOverseasCategory(category);
+    if (level > 0 && isOverseas) userProfile.usage[guruUsageKeys.spendKey] = (userProfile.usage[guruUsageKeys.spendKey] || 0) + amount;
 
     let alertMsg = "";
     // Mission progress keys are now updated via tracker effects (trackMissionSpend).
@@ -524,16 +542,22 @@ function applyPendingUnlocks() {
 
 function upgradeGuruLevel() {
     let current = parseInt(userProfile.settings.guru_level);
-    if (current < 3) {
+    if (!Number.isFinite(current) || current < 0) current = 0;
+    const maxLevel = (typeof getTravelGuruMaxLevel === "function") ? getTravelGuruMaxLevel() : 3;
+    if (current < maxLevel) {
         userProfile.settings.guru_level = current + 1;
     }
+    const guruUsageKeys = getGuruUsageKeys();
     // Deep Reset
-    userProfile.usage["guru_spend_accum"] = 0;
-    userProfile.usage["guru_rc_used"] = 0;
+    userProfile.usage[guruUsageKeys.spendKey] = 0;
+    userProfile.usage[guruUsageKeys.rewardKey] = 0;
     saveUserData();
 
-    const names = { 1: "GO級", 2: "GING級", 3: "GURU級" };
-    return `成功升級至 ${names[userProfile.settings.guru_level]}！\n數據已重置，開始新旅程 🚀`;
+    const newLevel = Number(userProfile.settings.guru_level) || 0;
+    const levelName = (typeof getTravelGuruLevelName === "function")
+        ? (getTravelGuruLevelName(newLevel) || `${newLevel}級`)
+        : ({ 1: "GO級", 2: "GING級", 3: "GURU級" }[newLevel] || `${newLevel}級`);
+    return `成功升級至 ${levelName}！\n數據已重置，開始新旅程 🚀`;
 }
 
 // Settings Handlers

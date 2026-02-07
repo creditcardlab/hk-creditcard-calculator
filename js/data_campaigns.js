@@ -1,4 +1,4 @@
-// js/data_campaigns.js - Campaign definitions (display metadata only)
+// js/data_campaigns.js - Campaign display layout + module/tracker bindings
 
 const CAMPAIGN_REGISTRY = {
     em_promo: {
@@ -51,6 +51,7 @@ const CAMPAIGN_REGISTRY = {
 const CAMPAIGNS = [
     {
         id: "em_promo",
+        promo_type: "mission_cap_rate",
         name: "EveryMile 海外",
         icon: "fas fa-plane",
         theme: "purple",
@@ -60,13 +61,14 @@ const CAMPAIGNS = [
         },
         cards: ["hsbc_everymile"],
         sections: [
-            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "em_q1_total", target: 12000 },
-            { type: "cap_rate", label: "💰 回贈進度", usageKey: "em_q1_eligible", capModule: "em_overseas_bonus", rateModule: "em_overseas_bonus", unit: "RC", unlockKey: "em_q1_total", unlockTarget: 12000 }
+            { type: "mission", label: "🎯 簽賬任務進度", missionModule: "em_overseas_bonus" },
+            { type: "cap_rate", label: "💰 回贈進度", usageKey: "em_q1_eligible", capModule: "em_overseas_bonus", rateModule: "em_overseas_bonus", unit: "RC", unlockModule: "em_overseas_bonus" }
         ],
         capKeys: ["em_promo_cap"]
     },
     {
         id: "winter_promo",
+        promo_type: "tiered_cap",
         name: "最紅冬日賞",
         icon: "fas fa-gift",
         theme: "red",
@@ -92,6 +94,7 @@ const CAMPAIGNS = [
     },
     {
         id: "boc_amazing",
+        promo_type: "mission_multi_cap",
         name: "狂賞派",
         icon: "fas fa-fire",
         theme: "blue",
@@ -102,15 +105,16 @@ const CAMPAIGNS = [
         cards: ["boc_cheers_vi", "boc_cheers_vs"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", usageKeys: ["spend_boc_cheers_vi", "spend_boc_cheers_vs"], target: 6000 },
-            { type: "cap", label: "💰 回贈進度 (平日)", capModule: "boc_amazing_weekday", unit: "元", unlockTarget: 6000 },
-            { type: "cap", label: "💰 回贈進度 (紅日)", capModule: "boc_amazing_holiday", unit: "元", unlockTarget: 6000 },
-            { type: "cap", label: "💰 網購回贈進度 (平日)", capModule: "boc_amazing_online_weekday", unit: "元", unlockTarget: 6000 },
-            { type: "cap", label: "💰 網購回贈進度 (紅日)", capModule: "boc_amazing_online_holiday", unit: "元", unlockTarget: 6000 }
+            { type: "cap", label: "💰 回贈進度 (平日)", capModule: "boc_amazing_weekday", unit: "元" },
+            { type: "cap", label: "💰 回贈進度 (紅日)", capModule: "boc_amazing_holiday", unit: "元" },
+            { type: "cap", label: "💰 網購回贈進度 (平日)", capModule: "boc_amazing_online_weekday", unit: "元" },
+            { type: "cap", label: "💰 網購回贈進度 (紅日)", capModule: "boc_amazing_online_holiday", unit: "元" }
         ],
         capKeys: ["boc_amazing_local_weekday_cap", "boc_amazing_local_holiday_cap", "boc_amazing_online_weekday_cap", "boc_amazing_online_holiday_cap"]
     },
     {
         id: "boc_amazing_fly",
+        promo_type: "mission_multi_cap",
         name: "狂賞飛 (外幣) 季度任務",
         icon: "fas fa-plane",
         theme: "blue",
@@ -120,14 +124,15 @@ const CAMPAIGNS = [
         },
         cards: ["boc_cheers_vi", "boc_cheers_vs"],
         sections: [
-            { type: "mission", label: "🎯 簽賬任務進度", usageKeys: ["spend_boc_cheers_vi", "spend_boc_cheers_vs"], target: 5000 },
-            { type: "cap", label: "💰 回贈進度 (中澳)", capModule: "boc_amazing_fly_cn", unit: "分", unlockTarget: 5000 },
-            { type: "cap", label: "💰 回贈進度 (其他)", capModule: "boc_amazing_fly_other", unit: "分", unlockTarget: 5000 }
+            { type: "mission", label: "🎯 簽賬任務進度", missionModules: ["boc_amazing_fly_cn", "boc_amazing_fly_cn_vs"] },
+            { type: "cap", label: "💰 回贈進度 (中澳)", capModule: "boc_amazing_fly_cn", unit: "分" },
+            { type: "cap", label: "💰 回贈進度 (其他)", capModule: "boc_amazing_fly_other", unit: "分" }
         ],
         capKeys: ["boc_amazing_fly_cn_cap", "boc_amazing_fly_other_cap"]
     },
     {
         id: "mmpower_promo",
+        promo_type: "mission_cap",
         name: "MMPower +FUN Dollars",
         icon: "fas fa-bolt",
         theme: "yellow",
@@ -137,13 +142,14 @@ const CAMPAIGNS = [
         },
         cards: ["hangseng_mmpower"],
         sections: [
-            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_hangseng_mmpower", target: 5000 },
-            { type: "cap", label: "💰 回贈進度", capModule: "mmpower_overseas_bonus", unit: "元", unlockTarget: 5000 }
+            { type: "mission", label: "🎯 簽賬任務進度", missionModule: "mmpower_overseas_bonus" },
+            { type: "cap", label: "💰 回贈進度", capModule: "mmpower_overseas_bonus", unit: "元", unlockModule: "mmpower_overseas_bonus" }
         ],
         capKeys: ["mmpower_reward_cap"]
     },
     {
         id: "travel_plus_promo",
+        promo_type: "mission_cap",
         name: "Travel+ 外幣回贈",
         icon: "fas fa-plane",
         theme: "purple",
@@ -153,13 +159,14 @@ const CAMPAIGNS = [
         },
         cards: ["hangseng_travel_plus"],
         sections: [
-            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_hangseng_travel_plus", target: 6000 },
-            { type: "cap", label: "💰 回贈進度", capModule: "travel_plus_tier1_bonus", unit: "元", unlockTarget: 6000 }
+            { type: "mission", label: "🎯 簽賬任務進度", missionModule: "travel_plus_tier1_bonus" },
+            { type: "cap", label: "💰 回贈進度", capModule: "travel_plus_tier1_bonus", unit: "元", unlockModule: "travel_plus_tier1_bonus" }
         ],
         capKeys: ["travel_plus_reward_cap"]
     },
     {
         id: "fubon_in_promo",
+        promo_type: "mission_cap",
         name: "Fubon iN 網購20X",
         icon: "fas fa-bolt",
         theme: "purple",
@@ -169,13 +176,14 @@ const CAMPAIGNS = [
         },
         cards: ["fubon_in_platinum"],
         sections: [
-            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_fubon_in_platinum", target: 1000 },
-            { type: "cap", label: "💰 回贈進度", capModule: "fubon_in_online", unit: "分", unlockTarget: 1000 }
+            { type: "mission", label: "🎯 簽賬任務進度", missionModule: "fubon_in_online" },
+            { type: "cap", label: "💰 回贈進度", capModule: "fubon_in_online", unit: "分", unlockModule: "fubon_in_online" }
         ],
         capKeys: ["fubon_in_bonus_cap"]
     },
     {
         id: "dbs_black_promo",
+        promo_type: "mission_uncapped",
         name: "DBS Black $2/里推廣",
         icon: "fas fa-gem",
         theme: "gray",
@@ -185,12 +193,13 @@ const CAMPAIGNS = [
         },
         cards: ["dbs_black"],
         sections: [
-            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_dbs_black", target: 20000 },
-            { type: "cap", label: "💰 回贈進度", capModule: "dbs_black_overseas_promo", unit: "里", unlockTarget: 20000 }
+            { type: "mission", label: "🎯 簽賬任務進度", missionModule: "dbs_black_overseas_promo" },
+            { type: "cap", label: "💰 回贈進度", capModule: "dbs_black_overseas_promo", unit: "里", unlockModule: "dbs_black_overseas_promo" }
         ]
     },
     {
         id: "sim_promo",
+        promo_type: "mission_cap",
         name: "sim 8% 網購推廣",
         icon: "fas fa-percent",
         theme: "green",
@@ -200,9 +209,38 @@ const CAMPAIGNS = [
         },
         cards: ["sim_credit"],
         sections: [
-            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "sim_non_online_spend", target: 500 },
-            { type: "cap", label: "💰 回贈進度", capModule: "sim_online", unit: "元", unlockTarget: 500 }
+            { type: "mission", label: "🎯 簽賬任務進度", missionModule: "sim_online" },
+            { type: "cap", label: "💰 回贈進度", capModule: "sim_online", unit: "元", unlockModule: "sim_online" }
         ],
         capKeys: ["sim_online_cap"]
     }
 ];
+
+// Special lifecycle models rendered by dedicated UI blocks (not standard campaign sections yet).
+const SPECIAL_PROMO_MODELS = {
+    travel_guru: {
+        id: "travel_guru",
+        promo_type: "level_lifecycle",
+        module: "travel_guru_v2",
+        usage: {
+            spendKey: "guru_spend_accum",
+            rewardKey: "guru_rc_used"
+        },
+        levels: {
+            1: { name: "GO級", targetSpend: 30000, rewardCap: 500, nextName: "GING級" },
+            2: { name: "GING級", targetSpend: 70000, rewardCap: 1200, nextName: "GURU級" },
+            3: { name: "GURU級", targetSpend: 70000, rewardCap: 2200, nextName: "保級" }
+        },
+        cards: [
+            "hsbc_everymile",
+            "hsbc_vs",
+            "hsbc_red",
+            "hsbc_pulse",
+            "hsbc_unionpay_std",
+            "hsbc_easy",
+            "hsbc_gold_student",
+            "hsbc_gold",
+            "hsbc_premier"
+        ]
+    }
+};

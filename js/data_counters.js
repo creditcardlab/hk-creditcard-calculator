@@ -28,6 +28,27 @@ function buildCountersRegistry(data) {
         if (typeof spec === "object") return { periodType: spec.type || "none", anchorRef: spec };
         return { periodType: "none", anchorRef: null };
     };
+    const getModuleRefs = (section, singleKey, listKey) => {
+        const refs = [];
+        const single = section && section[singleKey];
+        if (typeof single === "string" && single) refs.push(single);
+        const list = section && section[listKey];
+        if (Array.isArray(list)) {
+            list.forEach((id) => {
+                if (typeof id === "string" && id) refs.push(id);
+            });
+        }
+        return Array.from(new Set(refs));
+    };
+    const getMissionKeysFromModuleRefs = (section, singleKey, listKey) => {
+        const keys = [];
+        getModuleRefs(section, singleKey, listKey).forEach((moduleId) => {
+            const mod = modules[moduleId] || null;
+            if (!mod || !mod.req_mission_key) return;
+            keys.push(mod.req_mission_key);
+        });
+        return Array.from(new Set(keys));
+    };
 
     // From modules
     if (modules) {
@@ -71,7 +92,15 @@ function buildCountersRegistry(data) {
         const periodSpec = normalizePeriodSpec(compiled && compiled.counterPeriod ? compiled.counterPeriod : null);
         const anchor = periodSpec.anchorRef ? { ...periodSpec.anchorRef, promoId: campaignId } : null;
         const priority = periodSpec.periodType !== "none" ? 3 : 0;
-        (c.capKeys || []).forEach((k) => addKey(k, `campaign:${campaignId}.capKeys`, periodSpec.periodType, anchor, priority, "campaign", campaignId));
+
+        const campaignCapKeys = new Set(Array.isArray(c.capKeys) ? c.capKeys : []);
+        (c.sections || []).forEach((s) => {
+            if (!s || !s.capModule) return;
+            const capMod = modules[s.capModule] || null;
+            if (capMod && capMod.cap_key) campaignCapKeys.add(capMod.cap_key);
+        });
+        Array.from(campaignCapKeys).forEach((k) => addKey(k, `campaign:${campaignId}.capKeys`, periodSpec.periodType, anchor, priority, "campaign", campaignId));
+
         (c.sections || []).forEach((s, i) => {
             const secId = `${campaignId}.section${i + 1}`;
             if (s.usageKey) addKey(s.usageKey, `${secId}.usageKey`, periodSpec.periodType, anchor, priority, "campaign", campaignId);
@@ -79,6 +108,15 @@ function buildCountersRegistry(data) {
             if (s.unlockKey) addKey(s.unlockKey, `${secId}.unlockKey`, periodSpec.periodType, anchor, priority, "campaign", campaignId);
             if (s.totalKey) addKey(s.totalKey, `${secId}.totalKey`, periodSpec.periodType, anchor, priority, "campaign", campaignId);
             if (s.eligibleKey) addKey(s.eligibleKey, `${secId}.eligibleKey`, periodSpec.periodType, anchor, priority, "campaign", campaignId);
+            if (s.capModule) {
+                const capMod = modules[s.capModule] || null;
+                if (capMod && capMod.cap_key) addKey(capMod.cap_key, `${secId}.capModule`, periodSpec.periodType, anchor, priority, "campaign", campaignId);
+            }
+
+            const missionKeys = getMissionKeysFromModuleRefs(s, "missionModule", "missionModules");
+            missionKeys.forEach((k) => addKey(k, `${secId}.missionModule`, periodSpec.periodType, anchor, priority, "campaign", campaignId));
+            const unlockKeys = getMissionKeysFromModuleRefs(s, "unlockModule", "unlockModules");
+            unlockKeys.forEach((k) => addKey(k, `${secId}.unlockModule`, periodSpec.periodType, anchor, priority, "campaign", campaignId));
         });
     });
 

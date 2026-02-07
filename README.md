@@ -21,6 +21,7 @@
 - 計回贈規則（Modules）：`js/data_modules.js`
 - 任務/計數規則（Trackers）：`js/data_trackers.js`
 - Dashboard 顯示（Campaigns）：`js/data_campaigns.js`
+- Unified Offer View（derived）：`DATA.offers`（由 campaigns + special promo models + module rules 組裝）
 - Counter/Period Registry（重置邏輯 metadata）：`js/data_counters.js`
 - Data Bootstrap：`js/data_index.js`（組裝 `DATA`）
 
@@ -28,6 +29,17 @@
 
 - `rewardModules`：只放計回贈用嘅 module id（對應 `DATA.modules`）。
 - `trackers`：只放任務/計數用嘅 tracker id（對應 `DATA.trackers`）。
+
+Campaign 建議明確填 `promo_type`（Phase 2A）：
+- `mission_cap`：任務 + 單一 cap
+- `mission_cap_rate`：任務 + `cap_rate`
+- `mission_multi_cap`：任務 + 多個 cap
+- `tiered_cap`：分 tier（例如冬日賞）
+- `mission_uncapped`：有任務門檻但不設 cap（例如 DBS Black 推廣）
+- `mission_only` / `custom`：特殊情況
+
+`Travel Guru` 目前放喺 `SPECIAL_PROMO_MODELS.travel_guru`（`level_lifecycle`），
+保留獨立 UI rendering，但 metadata 已可被 audit/validate。
 
 ## 開發/測試
 
@@ -74,6 +86,44 @@ Campaign Registry (或 Promo Registry)
 Counters Registry (可選)
 ```
 
+## Local Workbench（Notion 替代：本地 audit + 編輯）
+
+如果 Notion 對複雜規則太難 audit，可以用本地 workbench：
+
+1. 產生本地審核報告：
+
+```bash
+node tools/workbench.js audit
+```
+
+2. 匯出可檢查資料（+ 審核報告）：
+
+```bash
+node tools/workbench.js export
+```
+
+會產生：
+- `tools/workbench_db.json`
+- `reports/workbench_audit.md`
+
+3. 產生可視化 HTML 報告（建議）：
+
+```bash
+node tools/workbench.js html
+```
+
+會產生：
+- `reports/workbench.html`
+
+4. 本地編輯 core overrides（不直接改 `js/data_*.js`）：
+
+```bash
+node tools/workbench.js apply --edits tools/workbench_edits.example.json --dry-run
+node tools/workbench.js apply --edits tools/workbench_edits.example.json
+```
+
+預設會更新：`js/data_notion_core_overrides.js`
+
 ## 私隱
 
 所有數據儲存在瀏覽器 localStorage，無後端、無伺服器儲存。
@@ -85,4 +135,3 @@ Counters Registry (可選)
 ## License
 
 MIT，見 `LICENSE`。
-

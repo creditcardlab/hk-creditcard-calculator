@@ -86,6 +86,26 @@ function getCampaignBadgeText(campaign) {
     return "";
 }
 
+function getCampaignOffers() {
+    if (typeof DATA === "undefined" || !DATA) return [];
+    const legacyCampaigns = Array.isArray(DATA.campaigns) ? DATA.campaigns : [];
+    const orderMap = {};
+    legacyCampaigns.forEach((campaign, idx) => {
+        if (campaign && campaign.id) orderMap[campaign.id] = idx;
+    });
+
+    const offers = (Array.isArray(DATA.offers) ? DATA.offers : [])
+        .filter((offer) => offer && offer.renderType === "campaign_sections" && offer.id)
+        .map((offer) => ({ ...offer }));
+    offers.sort((a, b) => {
+        const ai = Object.prototype.hasOwnProperty.call(orderMap, a.id) ? orderMap[a.id] : Number.MAX_SAFE_INTEGER;
+        const bi = Object.prototype.hasOwnProperty.call(orderMap, b.id) ? orderMap[b.id] : Number.MAX_SAFE_INTEGER;
+        if (ai !== bi) return ai - bi;
+        return String(a.id).localeCompare(String(b.id));
+    });
+    return offers;
+}
+
 function resolveAnchorForKeyUi(key, entry, userProfile) {
     const defaults = (typeof DATA !== "undefined" && DATA.periodDefaults) ? DATA.periodDefaults : {};
     const overrides = (userProfile && userProfile.settings && userProfile.settings.periodOverrides) ? userProfile.settings.periodOverrides : {};
@@ -195,6 +215,98 @@ function renderWarningCard(title, icon, description, settingKey) {
             </div>
         </div>
     </div>`;
+}
+
+function getPromoToggleThemeClasses(theme) {
+    const key = String(theme || "").toLowerCase();
+    if (key === "red") return { row: "bg-red-50", border: "border-red-100", checked: "peer-checked:bg-red-500" };
+    if (key === "blue") return { row: "bg-blue-50", border: "border-blue-100", checked: "peer-checked:bg-blue-600" };
+    if (key === "purple") return { row: "bg-purple-50", border: "border-purple-100", checked: "peer-checked:bg-purple-600" };
+    if (key === "green") return { row: "bg-green-50", border: "border-green-100", checked: "peer-checked:bg-green-600" };
+    if (key === "yellow") return { row: "bg-yellow-50", border: "border-yellow-100", checked: "peer-checked:bg-yellow-500" };
+    return { row: "bg-gray-100", border: "border-gray-300", checked: "peer-checked:bg-gray-800" };
+}
+
+function escapeJsSingleQuoted(input) {
+    return String(input || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
+function getCampaignToggleDefinitions() {
+    if (typeof DATA === "undefined") return [];
+    const campaigns = getCampaignOffers();
+    const registry = (DATA.campaignRegistry && typeof DATA.campaignRegistry === "object") ? DATA.campaignRegistry : {};
+    const bySettingKey = {};
+    const priorityOrder = [
+        "winter_promo_enabled",
+        "boc_amazing_enabled",
+        "dbs_black_promo_enabled",
+        "mmpower_promo_enabled",
+        "travel_plus_promo_enabled",
+        "fubon_in_promo_enabled",
+        "sim_promo_enabled",
+        "em_promo_enabled"
+    ];
+    const priorityMap = {};
+    priorityOrder.forEach((k, idx) => { priorityMap[k] = idx; });
+
+    campaigns.forEach((campaign, idx) => {
+        if (!campaign || !campaign.id) return;
+        const reg = registry[campaign.id] || {};
+        const settingKey = String(campaign.settingKey || reg.settingKey || "").trim();
+        if (!settingKey) return;
+        if (!bySettingKey[settingKey]) {
+            bySettingKey[settingKey] = {
+                settingKey,
+                labels: [],
+                themes: [],
+                order: idx
+            };
+        }
+        const fromRegistry = (typeof reg.warningTitle === "string" && reg.warningTitle.trim()) ? reg.warningTitle.trim() : "";
+        const fromDisplay = (typeof campaign.display_name_zhhk === "string" && campaign.display_name_zhhk.trim()) ? campaign.display_name_zhhk.trim() : "";
+        const fromName = (typeof campaign.name === "string" && campaign.name.trim()) ? campaign.name.trim() : "";
+        bySettingKey[settingKey].labels.push(fromRegistry || fromDisplay || fromName || campaign.id);
+        bySettingKey[settingKey].themes.push(campaign.theme || "");
+        bySettingKey[settingKey].order = Math.min(bySettingKey[settingKey].order, idx);
+    });
+
+    return Object.values(bySettingKey).map((entry) => {
+        const labels = Array.from(new Set((entry.labels || []).filter(Boolean)));
+        return {
+            settingKey: entry.settingKey,
+            label: labels.join(" / "),
+            theme: (entry.themes || []).find(Boolean) || "gray",
+            order: entry.order,
+            priority: Object.prototype.hasOwnProperty.call(priorityMap, entry.settingKey)
+                ? priorityMap[entry.settingKey]
+                : 1000
+        };
+    }).sort((a, b) => {
+        if (a.priority !== b.priority) return a.priority - b.priority;
+        if (a.order !== b.order) return a.order - b.order;
+        return a.settingKey.localeCompare(b.settingKey);
+    });
+}
+
+function renderCampaignToggleRows(userProfile, options) {
+    const opts = options || {};
+    const excludedKeys = new Set(Array.isArray(opts.excludeSettingKeys) ? opts.excludeSettingKeys : []);
+    const defs = getCampaignToggleDefinitions().filter((def) => !excludedKeys.has(def.settingKey));
+    if (defs.length === 0) return "";
+
+    return defs.map((def) => {
+        const classes = getPromoToggleThemeClasses(def.theme);
+        const checked = !!(userProfile && userProfile.settings && userProfile.settings[def.settingKey]);
+        const toggleSettingKey = escapeJsSingleQuoted(def.settingKey);
+        const inputId = `st-${def.settingKey.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+        return `<div class="flex justify-between items-center ${classes.row} p-2 rounded border ${classes.border}">
+            <span>${escapeHtml(def.label)}</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="${inputId}" class="sr-only peer" ${checked ? "checked" : ""} onchange="toggleSetting('${toggleSettingKey}')">
+                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full ${classes.checked} after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+            </label>
+        </div>`;
+    }).join("");
 }
 
 function renderPromoOverlay(overlayModel) {
@@ -651,72 +763,32 @@ function renderDashboard(userProfile) {
     const txCount = monthTotals.count;
     let html = `<div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white p-5 rounded-2xl shadow-lg mb-4"><div class="flex justify-between items-start"><div><h2 class="text-blue-100 text-xs font-bold uppercase tracking-wider">本月總簽賬</h2><div class="text-3xl font-bold mt-1">$${totalSpend.toLocaleString()}</div></div><div class="text-right"><h2 class="text-blue-100 text-xs font-bold uppercase tracking-wider">預估總回贈</h2><div class="text-xl font-bold mt-1 text-yellow-300">≈ $${Math.floor(totalVal).toLocaleString()}</div></div></div><div class="mt-4 pt-4 border-t border-blue-400/30 flex justify-between text-xs text-blue-100"><span>已記錄 ${txCount} 筆</span></div></div>`;
 
-    // 1. Travel Guru
-    const level = parseInt(userProfile.settings.guru_level);
-    if (level > 0) {
-        const upgConfig = { 1: { next: "GING級", target: 30000 }, 2: { next: "GURU級", target: 70000 }, 3: { next: "保級", target: 70000 } };
-        const rebateConfig = { 1: { cap: 500 }, 2: { cap: 1200 }, 3: { cap: 2200 } };
-        const curUpg = upgConfig[level]; const curRebate = rebateConfig[level];
-        const spendAccum = Number(userProfile.usage["guru_spend_accum"]) || 0;
-        const rcUsed = Number(userProfile.usage["guru_rc_used"]) || 0;
-        const upgPct = Math.min(100, (spendAccum / curUpg.target) * 100);
-        const rebatePct = Math.min(100, (rcUsed / curRebate.cap) * 100);
-        const isMaxed = rcUsed >= curRebate.cap;
-        const lvName = { 1: "GO級", 2: "GING級", 3: "GURU級" }[level];
-
-        // Show upgrade button if spending threshold met and not at max level
-        const canUpgrade = spendAccum >= curUpg.target && level < 3;
-        const upgradeButton = canUpgrade ? {
-            label: `🎉 升級至 ${curUpg.next}`,
-            icon: "fas fa-level-up-alt",
-            onClick: "handleGuruUpgrade()"
-        } : null;
-
-	        html += createProgressCard({
-	            title: "Travel Guru", icon: "fas fa-trophy", theme: "yellow", badge: lvName,
-	            sections: [
-	                {
-	                    kind: "mission",
-	                    label: "🚀 升級進度",
-	                    valueText: `$${spendAccum.toLocaleString()} / $${curUpg.target.toLocaleString()}`,
-	                    progress: upgPct,
-	                    state: "active",
-	                    lockedReason: spendAccum >= curUpg.target ? null : `尚差 $${Math.max(0, curUpg.target - spendAccum).toLocaleString()}`,
-	                    markers: null,
-	                    overlayModel: null,
-	                    meta: { spendAccum, target: curUpg.target, unlocked: spendAccum >= curUpg.target, unlockedText: "可升級" }
-	                },
-	                {
-	                    kind: "cap",
-	                    label: "💰 本級回贈",
-	                    valueText: `${Math.floor(rcUsed)} / ${curRebate.cap}`,
-	                    progress: rebatePct,
-	                    state: isMaxed ? "capped" : "active",
-	                    lockedReason: null,
-	                    markers: null,
-	                    overlayModel: null,
-	                    meta: {
-	                        used: rcUsed,
-	                        cap: curRebate.cap,
-	                        remaining: Math.max(0, curRebate.cap - rcUsed),
-	                        prefix: "",
-	                        unit: " RC",
-	                        unlocked: true
-	                    }
-	                }
-	            ],
-	            actionButton: upgradeButton
-	        });
-	    }
+    // 1. Special promo models with lifecycle (e.g. Travel Guru)
+    if (typeof getLevelLifecycleModelIds === "function" && typeof getLevelLifecycleState === "function") {
+        const lifecycleIds = getLevelLifecycleModelIds();
+        lifecycleIds.forEach((modelId) => {
+            const state = getLevelLifecycleState(modelId, userProfile);
+            if (!state || !state.eligible || !state.active) return;
+            html += createProgressCard({
+                title: state.title,
+                icon: state.icon,
+                theme: state.theme,
+                badge: state.badge,
+                sections: state.sections || [],
+                actionButton: state.actionButton || null
+            });
+        });
+    }
 
     // Campaigns (data-driven)
-    if (typeof DATA !== 'undefined' && Array.isArray(DATA.campaigns)) {
-        DATA.campaigns.forEach(campaign => {
+    if (typeof DATA !== 'undefined') {
+        const campaignOffers = getCampaignOffers();
+        campaignOffers.forEach(campaign => {
             const status = (typeof buildPromoStatus === "function") ? buildPromoStatus(campaign, userProfile, DATA.modules) : null;
             if (!status || !status.eligible) return;
             const campaignTitle = (campaign.display_name_zhhk && String(campaign.display_name_zhhk).trim())
                 ? String(campaign.display_name_zhhk).trim()
-                : campaign.name;
+                : (campaign.name || campaign.id);
 
             const reg = (DATA.campaignRegistry && campaign && campaign.id) ? DATA.campaignRegistry[campaign.id] : null;
 	        if (reg && reg.settingKey && userProfile.settings[reg.settingKey] === false) {
@@ -1057,7 +1129,16 @@ function renderSettings(userProfile) {
     });
 
     html += `</div></div><div class="bg-white p-5 rounded-2xl shadow-sm mt-4"><h2 class="text-sm font-bold text-gray-800 uppercase mb-4 border-b pb-2">設定</h2><div class="space-y-4">`;
-    html += `<div class="mb-4"><label class="text-xs font-bold text-gray-500">Travel Guru</label><select id="st-guru" class="w-full p-2 bg-gray-50 rounded" onchange="saveDrop('guru_level',this.value)"><option value="0">無</option><option value="1">GO級</option><option value="2">GING級</option><option value="3">GURU級</option></select></div>`;
+    const guruLevels = (typeof getTravelGuruLevelMap === "function")
+        ? getTravelGuruLevelMap()
+        : { 1: { name: "GO級" }, 2: { name: "GING級" }, 3: { name: "GURU級" } };
+    const guruOptions = Object.keys(guruLevels)
+        .map((key) => Number(key))
+        .filter((n) => Number.isFinite(n) && n > 0)
+        .sort((a, b) => a - b)
+        .map((lv) => `<option value="${lv}">${escapeHtml((guruLevels[lv] && guruLevels[lv].name) || `${lv}級`)}</option>`)
+        .join("");
+    html += `<div class="mb-4"><label class="text-xs font-bold text-gray-500">Travel Guru</label><select id="st-guru" class="w-full p-2 bg-gray-50 rounded" onchange="saveDrop('guru_level',this.value)"><option value="0">無</option>${guruOptions}</select></div>`;
 
     // Live Fresh Preference
     html += `<div class="mb-4"><label class="text-xs font-bold text-teal-600">DBS Live Fresh 自選類別 (4選1)</label>
@@ -1084,14 +1165,8 @@ function renderSettings(userProfile) {
             <input id="st-winter-tier2" type="number" min="0" class="w-full p-2 rounded bg-white border border-red-100" value="${Number(userProfile.settings.winter_tier2_threshold) || 0}" onchange="saveWinterThresholds()">
         </div>
     </div>`;
-    html += `<div class="flex justify-between items-center bg-blue-50 p-2 rounded border border-blue-100"><span>BOC 狂賞派 + 狂賞飛</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-boc-amazing" class="sr-only peer" ${userProfile.settings.boc_amazing_enabled ? 'checked' : ''} onchange="toggleSetting('boc_amazing_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-blue-600"></div></label></div>`;
-    html += `<div class="flex justify-between items-center bg-gray-100 p-2 rounded border border-gray-300"><span>DBS Black $2/里推廣</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-dbs-black" class="sr-only peer" ${userProfile.settings.dbs_black_promo_enabled ? 'checked' : ''} onchange="toggleSetting('dbs_black_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-gray-800"></div></label></div>`;
-    html += `<div class="flex justify-between items-center bg-gray-200 p-2 rounded border border-gray-300"><span>MMPower +FUN Dollars</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-mmpower" class="sr-only peer" ${userProfile.settings.mmpower_promo_enabled ? 'checked' : ''} onchange="toggleSetting('mmpower_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-gray-800"></div></label></div>`;
-    html += `<div class="flex justify-between items-center bg-purple-50 p-2 rounded border border-purple-100"><span>Travel+ 外幣回贈</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-travel-plus" class="sr-only peer" ${userProfile.settings.travel_plus_promo_enabled ? 'checked' : ''} onchange="toggleSetting('travel_plus_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-purple-600"></div></label></div>`;
-    html += `<div class="flex justify-between items-center bg-purple-50 p-2 rounded border border-purple-100"><span>Fubon iN 網購20X</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-fubon-in" class="sr-only peer" ${userProfile.settings.fubon_in_promo_enabled ? 'checked' : ''} onchange="toggleSetting('fubon_in_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-purple-600"></div></label></div>`;
-    html += `<div class="flex justify-between items-center bg-green-50 p-2 rounded border border-green-100"><span>sim 8%網購推廣</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-sim" class="sr-only peer" ${userProfile.settings.sim_promo_enabled ? 'checked' : ''} onchange="toggleSetting('sim_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-green-600"></div></label></div>`;
+    html += renderCampaignToggleRows(userProfile, { excludeSettingKeys: ["winter_promo_enabled"] });
     html += `<div class="flex justify-between items-center bg-gray-800 text-white p-2 rounded border border-gray-600"><span>Mox 活期任務 (+$250k)</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-mox" class="sr-only peer" ${userProfile.settings.mox_deposit_task_enabled ? 'checked' : ''} onchange="toggleSetting('mox_deposit_task_enabled')"><div class="w-9 h-5 bg-gray-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-green-400"></div></label></div>`;
-    html += `<div class="flex justify-between items-center bg-purple-50 p-2 rounded border border-purple-100"><span>EM 推廣</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-em" class="sr-only peer" ${userProfile.settings.em_promo_enabled ? 'checked' : ''} onchange="toggleSetting('em_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-purple-600"></div></label></div>`;
     html += `</div><div class="text-center mt-4"><button onclick="if(confirm('清除資料?')){localStorage.clear();location.reload();}" class="text-red-400 text-xs">Reset All</button></div></div>`;
 
     list.innerHTML = html;
