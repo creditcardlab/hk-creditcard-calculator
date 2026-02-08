@@ -40,6 +40,7 @@ const modulesDB = {
         type: "category", match: ["overseas"], rate: 0.015, desc: "EM推廣 (+1.5%)",
         mode: "add", setting_key: "em_promo_enabled",
         req_mission_spend: 12000, req_mission_key: "em_q1_total",
+        progress_mission_key: "em_q1_eligible",
         cap_mode: "reward", cap_limit: 225, cap_key: "em_promo_cap" // $225 RC cap (approx $15,000 usage capped at bonus?) No, wait.
         // User said: "Math.floor(pot) / 225". Limit is $225 RC.
         // 1.5% of $15,000 = $225. So Cap is indeed $225 Reward.
@@ -47,18 +48,33 @@ const modulesDB = {
     "travel_guru_v2": { type: "guru_capped", category: "overseas", config: { 1: { rate: 0.03, cap_rc: 500, desc: "GO級 (+3%)" }, 2: { rate: 0.04, cap_rc: 1200, desc: "GING級 (+4%)" }, 3: { rate: 0.06, cap_rc: 2200, desc: "GURU級 (+6%)" } }, usage_key: "guru_rc_used" },
 
     // --- SC ---
-    "sc_cathay_base": { type: "always", rate: 0.1666, desc: "基本 $6/里" },
-    "sc_cathay_dining_hotel": { type: "category", match: ["dining", "hotel"], rate: 0.0834, desc: "食肆/酒店 $4/里" },
-    "sc_cathay_overseas_std": { type: "category", match: ["overseas"], rate: 0.0834, desc: "海外 $4/里" },
-    "sc_cathay_overseas_priority": { type: "category", match: ["overseas"], rate: 0.1667, desc: "優先理財: 海外 $3/里" },
-    "sc_cathay_private": { type: "category", match: ["overseas"], rate: 0.3334, desc: "優先私人: 海外 $2/里" },
-    "sc_cathay_airlines": { type: "category", match: ["cathay_hkexpress"], rate: 0.3334, desc: "CX/UO 加碼至 $2/里" },
+    "sc_cathay_base": { type: "always", rate: 1 / 6, desc: "基本 $6/里" },
+    "sc_cathay_dining_hotel": { type: "category", match: ["dining", "hotel"], rate: 0.25, desc: "食肆/酒店 $4/里", mode: "replace" },
+    "sc_cathay_overseas_std": { type: "category", match: ["overseas"], rate: 0.25, desc: "海外 $4/里", mode: "replace" },
+    "sc_cathay_overseas_priority": { type: "category", match: ["overseas"], rate: 1 / 3, desc: "優先理財: 海外 $3/里", mode: "replace" },
+    "sc_cathay_private": { type: "category", match: ["overseas"], rate: 0.5, desc: "優先私人: 海外 $2/里", mode: "replace" },
+    "sc_cathay_airlines": {
+        type: "category",
+        match: ["cathay_hkexpress"],
+        rate: 2667 / 8000,
+        desc: "CX/UO 每季累積滿$8,000 +2,667里",
+        mode: "add",
+        req_mission_spend: 8000,
+        req_mission_key: "sc_cathay_cxuo_spend",
+        cap_mode: "reward",
+        cap_limit: 2667,
+        cap_key: "sc_cathay_cxuo_bonus_cap",
+        cap: { key: "sc_cathay_cxuo_bonus_cap", period: { type: "quarter", startMonth: 1, startDay: 1 } },
+        valid_from: "2026-01-01",
+        valid_to: "2026-06-30",
+        promo_end: "2026-06-30"
+    },
     "sc_simply_cash_base": { type: "always", rate: 0.015, desc: "本地 1.5%" },
     "sc_simply_cash_foreign": { type: "category", match: ["overseas"], rate: 0.02, desc: "外幣 2%", mode: "replace" },
     "sc_smart_base": { type: "always", rate: 0.0055, desc: "基本 0.55%" },
     "sc_smart_designated": { type: "category", match: ["smart_designated"], rate: 0.05, desc: "指定商戶 5%", mode: "replace", cap_limit: 60000, cap_key: "sc_smart_cap" },
 
-"sc_cathay_overseas_private": { type: "category", match: ["overseas"], rate: 0.3334, desc: "Private: Overseas $2/mi" },
+"sc_cathay_overseas_private": { type: "category", match: ["overseas"], rate: 0.5, desc: "Private: Overseas $2/mi", mode: "replace" },
 
     // --- Citi ---
     "citi_pm_base": { type: "always", rate: 1.5, desc: "基本 1.5X ($8/里)" },

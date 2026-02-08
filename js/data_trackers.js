@@ -28,6 +28,21 @@ const trackersDB = {
             { key: "winter_eligible", amount: "tx_amount" }
         ]
     },
+    "sc_cathay_cxuo_tracker": {
+        type: "mission_tracker",
+        match: ["cathay_hkexpress"],
+        desc: "✈️ CX/UO 累積簽賬",
+        hide_in_equation: true,
+        mission_id: "sc_cathay_cxuo_bonus",
+        promo_end: "2026-06-30",
+        valid_from: "2026-01-01",
+        valid_to: "2026-06-30",
+        effects_on_eligible: [{ key: "sc_cathay_cxuo_spend", amount: "tx_amount" }],
+        counter: {
+            key: "sc_cathay_cxuo_spend",
+            period: { type: "quarter", startMonth: 1, startDay: 1 }
+        }
+    },
 
     // --- sim Credit ---
     "sim_non_online_tracker": {

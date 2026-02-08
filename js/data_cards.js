@@ -112,7 +112,7 @@ const cardsDB = [
         type: "master",
         fcf: 0.0195,
         rewardModules: ["sc_cathay_base", "sc_cathay_dining_hotel", "sc_cathay_overseas_std", "sc_cathay_airlines"],
-        trackers: []
+        trackers: ["sc_cathay_cxuo_tracker"]
     },
     {
         id: "sc_cathay_priority",
@@ -121,7 +121,7 @@ const cardsDB = [
         type: "master",
         fcf: 0.0195,
         rewardModules: ["sc_cathay_base", "sc_cathay_dining_hotel", "sc_cathay_overseas_priority", "sc_cathay_airlines"],
-        trackers: []
+        trackers: ["sc_cathay_cxuo_tracker"]
     },
     {
         id: "sc_cathay_private",
@@ -130,7 +130,7 @@ const cardsDB = [
         type: "master",
         fcf: 0.0195,
         rewardModules: ["sc_cathay_base", "sc_cathay_dining_hotel", "sc_cathay_overseas_private", "sc_cathay_airlines"],
-        trackers: []
+        trackers: ["sc_cathay_cxuo_tracker"]
     },
     {
         id: "sc_simply_cash",

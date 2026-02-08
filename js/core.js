@@ -618,6 +618,7 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
             let overlayModel = null;
             let markers = null;
             let lockedReason = null;
+            let rewardDisplay = reward;
 
             if (isWinterPromo) {
                 const cap1 = tiers[0].cap || 0;
@@ -648,26 +649,29 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
                     { label: cap2.toLocaleString(), pos: 100 }
                 ];
 
-	                if (total >= t2) {
-	                    lockedReason = null;
-	                } else if (total >= t1) {
-	                    lockedReason = `第 2 階未解鎖：${Math.floor(rewardTier2).toLocaleString()} / ${tiers[1].cap}`;
-	                } else {
-	                    lockedReason = "第 1 階未解鎖";
-	                }
-	            }
+                if (total >= t2) {
+                    lockedReason = null;
+                } else if (total >= t1) {
+                    lockedReason = `第 2 階未解鎖：${Math.floor(rewardTier2).toLocaleString()} / ${tiers[1].cap}`;
+                } else {
+                    lockedReason = "第 1 階未解鎖";
+                    // 未達第1階時也顯示可累積的預估回贈，避免長期顯示 0。
+                    rewardDisplay = rewardTier1;
+                }
+            }
 
-	            sections.push({
-	                kind: "tier_cap",
-	                label: sec.label || "回贈進度",
-	                valueText: `$${Math.floor(reward).toLocaleString()} / $${cap.toLocaleString()}`,
-	                progress: isWinterPromo ? 100 : pct,
-	                state,
-	                markers,
-	                overlayModel,
-	                lockedReason,
+            sections.push({
+                kind: "tier_cap",
+                label: sec.label || "回贈進度",
+                valueText: `$${Math.floor(rewardDisplay).toLocaleString()} / $${cap.toLocaleString()}`,
+                progress: isWinterPromo ? 100 : pct,
+                state,
+                markers,
+                overlayModel,
+                lockedReason,
                 meta: {
                     reward,
+                    rewardDisplay,
                     cap,
                     remaining: Math.max(0, cap - reward),
                     unlocked,
@@ -1264,6 +1268,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     }
 
     missionTags.forEach(tag => {
+        if (tag && tag.hideInEquation) return;
         let label = tag.desc;
         const campaign = campaignById[tag.id] || null;
         const tagPromoType = getPromoType(campaign);

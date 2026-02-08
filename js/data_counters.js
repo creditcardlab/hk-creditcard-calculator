@@ -58,6 +58,7 @@ function buildCountersRegistry(data) {
             addKey(mod.secondary_cap_key, `module:${k}.secondary_cap_key`, "none", null, 0, "module", k);
             addKey(mod.usage_key, `module:${k}.usage_key`, "none", null, 0, "module", k);
             addKey(mod.req_mission_key, `module:${k}.req_mission_key`, "none", null, 0, "module", k);
+            addKey(mod.progress_mission_key, `module:${k}.progress_mission_key`, "none", null, 0, "module", k);
 
             if (mod.cap && mod.cap.period) {
                 const capKey = mod.cap.key || mod.cap_key;

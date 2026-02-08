@@ -344,26 +344,33 @@ function renderPromoOverlay(overlayModel) {
         const rewardTier2 = Number(overlayModel.rewardTier2) || 0;
         const tier1Unlocked = !!overlayModel.tier1Unlocked;
         const tier2Unlocked = !!overlayModel.tier2Unlocked;
-        const rewardLocked = !tier1Unlocked;
 
         const capTotal = cap2 || 1;
         const seg1Width = (cap1 / capTotal) * 100;
         const seg2Width = 100 - seg1Width;
-        const seg1Fill = tier1Unlocked && cap1 > 0 ? Math.min(1, rewardTier1 / cap1) * seg1Width : 0;
-        const seg2Fill = tier2Unlocked && cap2 > cap1 ? Math.min(1, Math.max(0, rewardTier2 - cap1) / (cap2 - cap1)) * seg2Width : 0;
+        const seg1Ratio = cap1 > 0 ? Math.min(1, rewardTier1 / cap1) : 0;
+        const seg2Ratio = cap2 > cap1 ? Math.min(1, Math.max(0, rewardTier2 - cap1) / (cap2 - cap1)) : 0;
+        const seg1Fill = tier1Unlocked ? seg1Ratio * seg1Width : 0;
+        const seg2Fill = tier2Unlocked ? seg2Ratio * seg2Width : 0;
+        const seg1Preview = !tier1Unlocked ? seg1Ratio * seg1Width : 0;
+        const seg2Preview = (tier1Unlocked && !tier2Unlocked) ? seg2Ratio * seg2Width : 0;
         const seg1WidthSafe = Math.max(0, Math.min(100, seg1Width));
         const seg2WidthSafe = Math.max(0, Math.min(100, seg2Width));
 
         return `<div class="absolute inset-0">
-            ${rewardLocked ? '' : `<div class="absolute inset-0 flex">
+            <div class="absolute inset-0 flex">
                 <div style="width:${seg1WidthSafe}%" class="h-3"></div>
                 <div style="width:${seg2WidthSafe}%" class="bg-gray-200 h-3"></div>
-            </div>`}
+            </div>
+            <div class="absolute inset-0 flex">
+                <div style="width:${seg1Preview}%; background:repeating-linear-gradient(135deg, rgba(16,185,129,0.40) 0, rgba(16,185,129,0.40) 6px, rgba(16,185,129,0.22) 6px, rgba(16,185,129,0.22) 12px)" class="h-3"></div>
+                <div style="width:${seg2Preview}%; background:repeating-linear-gradient(135deg, rgba(5,150,105,0.40) 0, rgba(5,150,105,0.40) 6px, rgba(5,150,105,0.22) 6px, rgba(5,150,105,0.22) 12px)" class="h-3"></div>
+            </div>
             <div class="absolute inset-0 flex">
                 <div style="width:${seg1Fill}%" class="bg-green-500 h-3"></div>
                 <div style="width:${seg2Fill}%" class="bg-green-600 h-3"></div>
             </div>
-            ${rewardLocked ? '' : `<div class="absolute top-0 bottom-0" style="left:${seg1WidthSafe}%; width:1px; background:rgba(0,0,0,0.08)"></div>`}
+            <div class="absolute top-0 bottom-0" style="left:${seg1WidthSafe}%; width:1px; background:rgba(0,0,0,0.08)"></div>
         </div>`;
     }
 
@@ -837,10 +844,9 @@ function renderDashboard(userProfile) {
             if (mod.cap_key === 'boc_amazing_local_weekday_cap' || mod.cap_key === 'boc_amazing_local_holiday_cap' || mod.cap_key === 'boc_amazing_online_weekday_cap' || mod.cap_key === 'boc_amazing_online_holiday_cap') return;
             if (renderedCaps.has(mod.cap_key)) return;
 	        if (mod.setting_key && userProfile.settings[mod.setting_key] === false) {
-                const isShared = (capKeyCounts[mod.cap_key] || 0) > 1;
                 const title = (mod.display_name_zhhk && String(mod.display_name_zhhk).trim())
                     ? String(mod.display_name_zhhk).trim()
-                    : (isShared ? String(mod.desc || "").trim() : `${card.name} ${mod.desc}`);
+                    : String(mod.desc || mod.id || "").trim();
 
 	            html += renderWarningCard(
 	                title,
@@ -852,60 +858,101 @@ function renderDashboard(userProfile) {
 	            return;
 	        }
 
-            const isShared = (capKeyCounts[mod.cap_key] || 0) > 1;
             const title = (mod.display_name_zhhk && String(mod.display_name_zhhk).trim())
                 ? String(mod.display_name_zhhk).trim()
-                : (isShared ? String(mod.desc || "").trim() : `${card.name} ${mod.desc}`);
+                : String(mod.desc || mod.id || "").trim();
 
             renderedCaps.add(mod.cap_key);
 
             const rawUsage = Number(userProfile.usage[mod.cap_key]) || 0;
             const isRewardCap = mod.cap_mode === 'reward';
-            const currentVal = isRewardCap ? rawUsage : rawUsage * (mod.rate || 0);
-            const maxVal = isRewardCap ? mod.cap_limit : mod.cap_limit * (mod.rate || 0);
-            const pct = Math.min(100, (currentVal / maxVal) * 100);
-            const remaining = Math.max(0, maxVal - currentVal);
+            const spendingCap = Number(mod.cap_limit) || 0;
+            const hasMissionGate = !!(mod.req_mission_spend && mod.req_mission_key);
+            const thresholdTarget = hasMissionGate ? (Number(mod.req_mission_spend) || 0) : 0;
+            const thresholdSpend = hasMissionGate ? (Number(userProfile.usage[mod.req_mission_key]) || 0) : 0;
+            const progressSpendKey = (hasMissionGate && mod.progress_mission_key) ? mod.progress_mission_key : (hasMissionGate ? mod.req_mission_key : null);
+            const progressSpend = progressSpendKey ? (Number(userProfile.usage[progressSpendKey]) || 0) : thresholdSpend;
+            let unlockMet = !hasMissionGate || thresholdSpend >= thresholdTarget;
 
-            let unit = '';
-            if (card.redemption && card.redemption.unit) unit = String(card.redemption.unit);
-            const isCurrencyUnit = (unit === "" || unit === "$" || unit === "HKD" || unit === "元" || unit === "HK$");
-            const displayPrefix = isCurrencyUnit ? '$' : '';
-            const displayUnit = isCurrencyUnit ? '' : unit;
+            let displayPrefix = '$';
+            let displayUnit = '';
+            let displayCurrentVal = rawUsage;
+            let displayMaxVal = spendingCap;
+
+            let rewardUnit = (card.redemption && card.redemption.unit) ? String(card.redemption.unit) : '';
+            if (!rewardUnit && typeof DATA !== "undefined" && DATA && Array.isArray(DATA.conversions)) {
+                const conv = DATA.conversions.find((c) => c && c.src === card.currency) || null;
+                if (conv) {
+                    const milesRate = Number(conv.miles_rate) || 0;
+                    const cashRate = Number(conv.cash_rate) || 0;
+                    if (milesRate > 0 && cashRate === 0) rewardUnit = "里";
+                }
+            }
+            const rewardIsCurrency = (rewardUnit === "" || rewardUnit === "$" || rewardUnit === "HKD" || rewardUnit === "元" || rewardUnit === "HK$");
+
+            if (isRewardCap) {
+                displayPrefix = rewardIsCurrency ? '$' : '';
+                displayUnit = rewardIsCurrency ? '' : rewardUnit;
+
+                if (!unlockMet && hasMissionGate && mod.retroactive !== false) {
+                    let projectedRate = NaN;
+                    if (Number.isFinite(Number(mod.rate))) projectedRate = Number(mod.rate);
+                    else if (Number.isFinite(Number(mod.rate_per_x)) && Number.isFinite(Number(mod.multiplier))) {
+                        projectedRate = Number(mod.rate_per_x) * Number(mod.multiplier);
+                    }
+                    if (Number.isFinite(projectedRate) && projectedRate > 0) {
+                        displayCurrentVal = Math.min(displayMaxVal, progressSpend * projectedRate);
+                    }
+                }
+            } else {
+                let nativeRate = NaN;
+                if (Number.isFinite(Number(mod.rate))) nativeRate = Number(mod.rate);
+                else if (Number.isFinite(Number(mod.rate_per_x)) && Number.isFinite(Number(mod.multiplier))) {
+                    nativeRate = Number(mod.rate_per_x) * Number(mod.multiplier);
+                }
+
+                if (Number.isFinite(nativeRate) && nativeRate > 0) {
+                    displayPrefix = rewardIsCurrency ? '$' : '';
+                    displayUnit = rewardIsCurrency ? '' : rewardUnit;
+                    displayCurrentVal = rawUsage * nativeRate;
+                    displayMaxVal = spendingCap * nativeRate;
+                }
+            }
+
+            const pct = displayMaxVal > 0 ? Math.min(100, (displayCurrentVal / displayMaxVal) * 100) : 0;
+            const remaining = Math.max(0, displayMaxVal - displayCurrentVal);
 
 	            const sections = [];
-	            let unlockMet = true;
 
-	            if (mod.req_mission_spend && mod.req_mission_key) {
-	                const thresholdSpend = Number(userProfile.usage[mod.req_mission_key]) || 0;
-	                const thresholdPct = Math.min(100, (thresholdSpend / mod.req_mission_spend) * 100);
-	                const thresholdMet = thresholdSpend >= mod.req_mission_spend;
-	                unlockMet = thresholdMet;
+	            if (hasMissionGate) {
+	                const thresholdPct = thresholdTarget > 0 ? Math.min(100, (thresholdSpend / thresholdTarget) * 100) : 0;
+	                const thresholdMet = unlockMet;
 	                sections.push({
 	                    kind: "mission",
 	                    label: "🎯 簽賬任務進度",
-	                    valueText: `$${thresholdSpend.toLocaleString()} / $${mod.req_mission_spend.toLocaleString()}`,
+	                    valueText: `$${thresholdSpend.toLocaleString()} / $${thresholdTarget.toLocaleString()}`,
 	                    progress: thresholdPct,
 	                    state: "active",
-	                    lockedReason: thresholdMet ? null : `尚差 $${Math.max(0, mod.req_mission_spend - thresholdSpend).toLocaleString()}`,
+	                    lockedReason: thresholdMet ? null : `尚差 $${Math.max(0, thresholdTarget - thresholdSpend).toLocaleString()}`,
 	                    markers: null,
 	                    overlayModel: null,
-	                    meta: { spend: thresholdSpend, target: mod.req_mission_spend, unlocked: thresholdMet }
+	                    meta: { spend: thresholdSpend, target: thresholdTarget, unlocked: thresholdMet }
 	                });
 	            }
 
-	            const rewardState = currentVal >= maxVal ? "capped" : (unlockMet ? "active" : "locked");
+	            const rewardState = rawUsage >= spendingCap ? "capped" : (unlockMet ? "active" : "locked");
 	            sections.push({
 	                kind: "cap",
 	                label: "💰 回贈進度",
-	                valueText: `${displayPrefix}${Math.floor(currentVal).toLocaleString()}${displayUnit} / ${displayPrefix}${Math.floor(maxVal).toLocaleString()}${displayUnit}`,
+	                valueText: `${displayPrefix}${Math.floor(displayCurrentVal).toLocaleString()}${displayUnit} / ${displayPrefix}${Math.floor(displayMaxVal).toLocaleString()}${displayUnit}`,
 	                progress: pct,
 	                state: rewardState,
 	                lockedReason: unlockMet ? null : cget("status.locked", "未解鎖"),
 	                markers: null,
 	                overlayModel: null,
 	                meta: {
-	                    used: currentVal,
-	                    cap: maxVal,
+	                    used: displayCurrentVal,
+	                    cap: displayMaxVal,
 	                    remaining: Math.max(0, remaining),
 	                    prefix: displayPrefix,
 	                    unit: displayUnit,

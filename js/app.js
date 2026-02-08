@@ -16,6 +16,8 @@ function init() {
     if (!userProfile.usage[guruUsageKeys.rewardKey]) userProfile.usage[guruUsageKeys.rewardKey] = 0;
     if (userProfile.settings.deduct_fcf_ranking === undefined) userProfile.settings.deduct_fcf_ranking = false;
     migrateWinterUsage();
+    migrateCathayCxuoQuarterly();
+    migrateDualCapUsageTracking();
     resetCountersForPeriod("month");
     resetCountersForPeriod("quarter");
     resetCountersForPeriod("year");
@@ -63,6 +65,33 @@ function migrateWinterUsage() {
     userProfile.usage.winter_total = total;
     userProfile.usage.winter_eligible = eligible;
     userProfile.usage.winter_recalc_v2 = true;
+    saveUserData();
+}
+
+function migrateDualCapUsageTracking() {
+    if (!userProfile.usage) userProfile.usage = {};
+    if (userProfile.usage.dual_cap_tracking_v1) return;
+    rebuildUsageAndStatsFromTransactions();
+    userProfile.usage.dual_cap_tracking_v1 = true;
+    saveUserData();
+}
+
+function migrateCathayCxuoQuarterly() {
+    if (!userProfile.usage) userProfile.usage = {};
+    if (userProfile.usage.sc_cathay_cxuo_quarterly_v1) return;
+
+    const p2Spend = Number(userProfile.usage.sc_cathay_cxuo_spend_p2) || 0;
+    const p2Bonus = Number(userProfile.usage.sc_cathay_cxuo_bonus_cap_p2) || 0;
+    if (p2Spend > 0) {
+        userProfile.usage.sc_cathay_cxuo_spend = (Number(userProfile.usage.sc_cathay_cxuo_spend) || 0) + p2Spend;
+    }
+    if (p2Bonus > 0) {
+        userProfile.usage.sc_cathay_cxuo_bonus_cap = (Number(userProfile.usage.sc_cathay_cxuo_bonus_cap) || 0) + p2Bonus;
+    }
+    delete userProfile.usage.sc_cathay_cxuo_spend_p2;
+    delete userProfile.usage.sc_cathay_cxuo_bonus_cap_p2;
+
+    userProfile.usage.sc_cathay_cxuo_quarterly_v1 = true;
     saveUserData();
 }
 
@@ -175,7 +204,9 @@ function validateUsageRegistry() {
         "monthly_cap_month",
         "red_cap_month",
         "bea_month",
-        "winter_recalc_v2"
+        "winter_recalc_v2",
+        "dual_cap_tracking_v1",
+        "sc_cathay_cxuo_quarterly_v1"
     ]);
     const unknown = Object.keys(usage).filter(k => !internalKeys.has(k) && !registry[k] && !String(k).startsWith("spend_"));
     if (unknown.length) {
@@ -231,6 +262,8 @@ function clearUsageAndStats() {
     if (prevUsage.bea_month) userProfile.usage.bea_month = prevUsage.bea_month;
     if (prevUsage.monthly_cap_month) userProfile.usage.monthly_cap_month = prevUsage.monthly_cap_month;
     if (prevUsage.winter_recalc_v2) userProfile.usage.winter_recalc_v2 = prevUsage.winter_recalc_v2;
+    if (prevUsage.dual_cap_tracking_v1) userProfile.usage.dual_cap_tracking_v1 = prevUsage.dual_cap_tracking_v1;
+    if (prevUsage.sc_cathay_cxuo_quarterly_v1) userProfile.usage.sc_cathay_cxuo_quarterly_v1 = prevUsage.sc_cathay_cxuo_quarterly_v1;
     userProfile.stats = { totalSpend: 0, totalVal: 0, txCount: 0 };
 }
 
@@ -327,6 +360,8 @@ function rebuildUsageAndStatsFromTransactions() {
     if (prevUsage.bea_month) userProfile.usage.bea_month = prevUsage.bea_month;
     if (prevUsage.monthly_cap_month) userProfile.usage.monthly_cap_month = prevUsage.monthly_cap_month;
     if (prevUsage.winter_recalc_v2) userProfile.usage.winter_recalc_v2 = prevUsage.winter_recalc_v2;
+    if (prevUsage.dual_cap_tracking_v1) userProfile.usage.dual_cap_tracking_v1 = prevUsage.dual_cap_tracking_v1;
+    if (prevUsage.sc_cathay_cxuo_quarterly_v1) userProfile.usage.sc_cathay_cxuo_quarterly_v1 = prevUsage.sc_cathay_cxuo_quarterly_v1;
 
     if (!Array.isArray(userProfile.transactions)) return;
     const txs = [...userProfile.transactions].reverse();
@@ -364,7 +399,8 @@ function rebuildUsageAndStatsFromTransactions() {
             if (res.secondaryRewardTrackingKey) {
                 userProfile.usage[res.secondaryRewardTrackingKey] = (userProfile.usage[res.secondaryRewardTrackingKey] || 0) + res.generatedReward;
             }
-        } else if (res.trackingKey) {
+        }
+        if (res.trackingKey) {
             userProfile.usage[res.trackingKey] = (userProfile.usage[res.trackingKey] || 0) + amount;
         }
 
@@ -381,6 +417,8 @@ function rebuildUsageAndStatsFromTransactions() {
         userProfile.usage.red_cap_month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     }
     userProfile.usage.winter_recalc_v2 = true;
+    userProfile.usage.dual_cap_tracking_v1 = true;
+    userProfile.usage.sc_cathay_cxuo_quarterly_v1 = true;
 }
 
 window.handleDeleteTx = function (id) {
@@ -423,7 +461,8 @@ function commitTransaction(data) {
         if (secondaryRewardTrackingKey) {
             userProfile.usage[secondaryRewardTrackingKey] = (userProfile.usage[secondaryRewardTrackingKey] || 0) + generatedReward;
         }
-    } else if (trackingKey) {
+    }
+    if (trackingKey) {
         userProfile.usage[trackingKey] = (userProfile.usage[trackingKey] || 0) + amount;
     }
 

@@ -42,7 +42,12 @@ function evaluateTrackers(cardId, ctx, userProfile, data) {
             eligible = !!tracker.eligible_check(resolvedCategory, { isOnline, isMobilePay, paymentMethod });
         }
 
-        missionTags.push({ id: tracker.mission_id, eligible, desc: tracker.desc });
+        missionTags.push({
+            id: tracker.mission_id,
+            eligible,
+            desc: tracker.desc,
+            hideInEquation: tracker.hide_in_equation === true
+        });
 
         if (match) pushEffectList(tracker.effects_on_match);
         if (eligible) {

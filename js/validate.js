@@ -106,11 +106,29 @@ function validateData(data) {
         addKnown(mod.secondary_cap_key);
         addKnown(mod.usage_key);
         addKnown(mod.req_mission_key);
+        addKnown(mod.progress_mission_key);
     });
 
     Object.keys(trackers).forEach((id) => {
         const tracker = trackers[id] || {};
         addKnown(tracker.req_mission_key);
+    });
+
+    const distinctEligibleByReqKey = {};
+    Object.keys(trackers).forEach((id) => {
+        const tracker = trackers[id] || {};
+        const matchKeys = Array.isArray(tracker.effects_on_match)
+            ? tracker.effects_on_match.map((e) => (e && e.key) ? e.key : null).filter(Boolean)
+            : [];
+        const eligibleKeys = Array.isArray(tracker.effects_on_eligible)
+            ? tracker.effects_on_eligible.map((e) => (e && e.key) ? e.key : null).filter(Boolean)
+            : [];
+        matchKeys.forEach((reqKey) => {
+            const distinct = eligibleKeys.filter((k) => k !== reqKey);
+            if (distinct.length === 0) return;
+            if (!distinctEligibleByReqKey[reqKey]) distinctEligibleByReqKey[reqKey] = new Set();
+            distinct.forEach((k) => distinctEligibleByReqKey[reqKey].add(k));
+        });
     });
 
     // Manual usage keys referenced in app/core logic
@@ -266,6 +284,12 @@ function validateData(data) {
         } else if (strictPeriods && mod.req_mission_key) {
             // Only warn in strict mode: many mission keys are intended to be lifetime or promo-scoped.
             addWarning(`[data] module ${modId} req_mission_key has no counter.period (defaults to none): ${mod.req_mission_key}`);
+        }
+        if (mod.req_mission_key && mod.req_mission_spend && !mod.progress_mission_key) {
+            const distinct = distinctEligibleByReqKey[mod.req_mission_key];
+            if (distinct && distinct.size > 0) {
+                addWarning(`[data] module ${modId} mission has distinct eligible keys [${Array.from(distinct).join(", ")}] but progress_mission_key is missing`);
+            }
         }
     });
 
