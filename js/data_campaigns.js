@@ -110,6 +110,33 @@ const CAMPAIGNS = [
         capKeys: ["sc_smart_cap"]
     },
     {
+        id: "citi_octopus_tier",
+        promo_type: "tiered_cap",
+        name: "Citi Octopus 交通/隧道回贈",
+        icon: "fas fa-subway",
+        theme: "blue",
+        period_policy: {
+            mode: "recurring",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["citi_octopus"],
+        sections: [
+            { type: "mission", label: "🎯 月簽任務進度", usageKey: "spend_citi_octopus", target: 10000, markers: [4000, 10000] },
+            {
+                type: "tier_cap",
+                label: "💰 回贈進度",
+                totalKey: "spend_citi_octopus",
+                eligibleKey: "citi_octopus_reward_cap",
+                tiers: [
+                    { threshold: 4000, cap: 300, rate: 1 },
+                    { threshold: 10000, cap: 500, rate: 1 }
+                ],
+                unit: "元"
+            }
+        ],
+        capKeys: ["citi_octopus_reward_cap"]
+    },
+    {
         id: "boc_amazing",
         promo_type: "mission_multi_cap",
         name: "狂賞派",

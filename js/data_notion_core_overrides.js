@@ -81,6 +81,12 @@ const NOTION_CORE_OVERRIDES = {
   },
   "categories": {},
   "modules": {
+    "citi_cb_base": {
+      "desc": "基本簽賬回贈 (1%)"
+    },
+    "citi_cb_special": {
+      "desc": "本地食肆、酒店及外幣(2%)"
+    },
     "easy_moneyback_bonus": {
       "desc": "Easy Card 易賞錢6倍 (2.4%)",
       "promo_end": "2026-12-31",

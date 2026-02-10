@@ -418,7 +418,7 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
     let missionUnlockValue = null;
 
     const promoType = getPromoType(promo);
-    const isWinterPromo = promoType === "tiered_cap" || promo.id === "winter_promo";
+    const isWinterPromo = promo.id === "winter_promo";
     const winterTier1 = Math.max(0, Number(userProfile.settings && userProfile.settings.winter_tier1_threshold) || 0);
     const winterTier2Raw = Math.max(0, Number(userProfile.settings && userProfile.settings.winter_tier2_threshold) || 0);
     const winterTier2 = Math.max(winterTier1, winterTier2Raw);
@@ -620,7 +620,7 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
             let lockedReason = null;
             let rewardDisplay = reward;
 
-            if (isWinterPromo) {
+            if (Array.isArray(tiers) && tiers.length >= 2) {
                 const cap1 = tiers[0].cap || 0;
                 const cap2 = Math.max(cap1, tiers[1].cap || 0);
                 const rewardTier1 = Math.min(cap1, eligibleVal * tiers[0].rate);
@@ -631,7 +631,7 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
                 const tier2Unlocked = total >= t2;
 
                 overlayModel = {
-                    type: "winter_reward",
+                    type: isWinterPromo ? "winter_reward" : "tier_reward",
                     cap1,
                     cap2,
                     rewardTier1,
@@ -655,8 +655,8 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
                     lockedReason = `第 2 階未解鎖：${Math.floor(rewardTier2).toLocaleString()} / ${tiers[1].cap}`;
                 } else {
                     lockedReason = "第 1 階未解鎖";
-                    // 未達第1階時也顯示可累積的預估回贈，避免長期顯示 0。
-                    rewardDisplay = rewardTier1;
+                    // 冬日賞在第1階未解鎖時顯示預估值；其他 tier 保持顯示實際值。
+                    if (isWinterPromo) rewardDisplay = rewardTier1;
                 }
             }
 
@@ -1036,7 +1036,12 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
 
     // Check for Replacer Module first (Optimization)
     // This replacerModule is for category-specific 'replace' mode modules
-    const ctx = { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod };
+    const ctx = {
+        isOnline: !!isOnline,
+        isMobilePay: !!isMobilePay,
+        paymentMethod: paymentMethod,
+        getMissionSpend: (key) => (Number(userProfile.usage[key]) || 0) + (Number(missionDeltaByKey[key]) || 0)
+    };
     let replacerModuleCurrentId = activeModules.find(mid => {
         const m = modules[mid];
         return isReplacerEligible(m, amount, resolvedCategory, userProfile, false, ctx, missionDeltaByKey);
@@ -1146,7 +1151,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             else if (mod.type === "category") {
                 const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline) : true;
                 if (!matchOk) return;
-                if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod })) return;
+                if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, ctx)) return;
                 if (mod.cap_limit) {
                     if (applyCurrent && mod.cap_mode !== 'reward') trackingKey = mod.cap_key;
 

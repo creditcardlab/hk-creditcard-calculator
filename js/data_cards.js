@@ -201,8 +201,14 @@ const cardsDB = [
         currency: "CLUB_PTS",
         type: "master",
         fcf: 0.0195,
-        rewardModules: ["citi_club_base", "citi_club_designated"],
-        trackers: []
+        rewardModules: ["citi_club_base", "citi_club_designated", "citi_club_shopping_bonus", "citi_club_telecom_autopay"],
+        trackers: [],
+        redemption: {
+          unit: "The Club積分",
+          min: 5,
+          fee: "免費",
+          ratio: "5積分 = HK$1"
+        }
     },
     {
         id: "citi_cashback",
@@ -219,7 +225,7 @@ const cardsDB = [
         currency: "CASH_Direct",
         type: "visa",
         fcf: 0.0195,
-        rewardModules: ["citi_octopus_base", "citi_octopus_transport", "citi_octopus_tunnel"],
+        rewardModules: ["citi_octopus_base", "citi_octopus_transport_tier2", "citi_octopus_transport_tier1", "citi_octopus_tunnel"],
         trackers: []
     },
     {

@@ -598,11 +598,13 @@
           "hsbc_red"
         ],
         "settings": {},
-        "usage": {}
+        "usage": {
+          "spend_citi_octopus": 6000
+        }
       },
       "expected": {
         "topCardId": "citi_octopus",
-        "topValue": 120,
+        "topValue": 90,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -877,6 +879,324 @@
       "expected": {
         "topCardId": "sc_smart",
         "topValue": 43,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_032_citi_cb_uk_eea_physical_excluded",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_uk_eea",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_cashback"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_cashback",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_033_citi_cb_uk_eea_online_allowed",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_uk_eea",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_cashback"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_cashback",
+        "topValue": 20,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_034_citi_club_designated_under_cap",
+      "input": {
+        "amount": 1000,
+        "category": "citi_club_merchant",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_club"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_club",
+        "topValue": 40,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_035_citi_club_designated_partial_cap",
+      "input": {
+        "amount": 1000,
+        "category": "citi_club_merchant",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_club"
+        ],
+        "settings": {},
+        "usage": {
+          "citi_club_designated_bonus_cap": 1450
+        }
+      },
+      "expected": {
+        "topCardId": "citi_club",
+        "topValue": 20,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_036_citi_club_designated_capped_fallback_base",
+      "input": {
+        "amount": 1000,
+        "category": "citi_club_merchant",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_club"
+        ],
+        "settings": {},
+        "usage": {
+          "citi_club_designated_bonus_cap": 1500
+        }
+      },
+      "expected": {
+        "topCardId": "citi_club",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_037_citi_club_shopping_under_cap",
+      "input": {
+        "amount": 1000,
+        "category": "club_shopping",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_club"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_club",
+        "topValue": 20,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_038_citi_club_shopping_capped_fallback_base",
+      "input": {
+        "amount": 1000,
+        "category": "club_shopping",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_club"
+        ],
+        "settings": {},
+        "usage": {
+          "citi_club_shopping_bonus_cap": 500
+        }
+      },
+      "expected": {
+        "topCardId": "citi_club",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_039_citi_club_telecom_autopay_total_3pct",
+      "input": {
+        "amount": 1000,
+        "category": "citi_club_telecom",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_club"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_club",
+        "topValue": 30,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_040_octopus_tunnel_split_5pct",
+      "input": {
+        "amount": 600,
+        "category": "tunnel",
+        "date": "2025-06-18",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_octopus",
+          "hsbc_red"
+        ],
+        "settings": {},
+        "usage": {
+          "spend_citi_octopus": 12000
+        }
+      },
+      "expected": {
+        "topCardId": "citi_octopus",
+        "topValue": 30,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_041_octopus_tunnel_capped_fallback_base",
+      "input": {
+        "amount": 1000,
+        "category": "tunnel",
+        "date": "2025-06-18",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_octopus"
+        ],
+        "settings": {},
+        "usage": {
+          "spend_citi_octopus": 12000,
+          "citi_octopus_reward_cap": 500
+        }
+      },
+      "expected": {
+        "topCardId": "citi_octopus",
+        "topValue": 5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_042_octopus_transport_locked_below_threshold",
+      "input": {
+        "amount": 600,
+        "category": "transport",
+        "date": "2025-06-18",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_octopus",
+          "hsbc_red"
+        ],
+        "settings": {},
+        "usage": {
+          "spend_citi_octopus": 0
+        }
+      },
+      "expected": {
+        "topCardId": "citi_octopus",
+        "topValue": 3,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_043_octopus_transport_tier2_cap500_partial",
+      "input": {
+        "amount": 1000,
+        "category": "transport",
+        "date": "2025-06-18",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_octopus"
+        ],
+        "settings": {},
+        "usage": {
+          "spend_citi_octopus": 12000,
+          "citi_octopus_reward_cap": 450
+        }
+      },
+      "expected": {
+        "topCardId": "citi_octopus",
+        "topValue": 50,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,

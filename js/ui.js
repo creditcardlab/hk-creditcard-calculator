@@ -337,7 +337,7 @@ function renderPromoOverlay(overlayModel) {
         </div>`;
     }
 
-    if (overlayModel.type === "winter_reward") {
+    if (overlayModel.type === "winter_reward" || overlayModel.type === "tier_reward") {
         const cap1 = Number(overlayModel.cap1) || 0;
         const cap2 = Math.max(cap1, Number(overlayModel.cap2) || 0);
         const rewardTier1 = Number(overlayModel.rewardTier1) || 0;
@@ -578,7 +578,7 @@ function renderPromoSections(sections, theme) {
         const progress = Number.isFinite(sec.progress) ? sec.progress : 0;
 
         const ui = getSectionUi(sec, theme);
-        if (sec.overlayModel && sec.overlayModel.type === "winter_reward" && sec.lockedReason && sec.state !== "capped") {
+        if (sec.overlayModel && (sec.overlayModel.type === "winter_reward" || sec.overlayModel.type === "tier_reward") && sec.lockedReason && sec.state !== "capped") {
             // Winter tier bars can be "active" but still have a meaningful lockedReason
             // (e.g. "Tier 2 Locked ..."). Prefer showing it over generic Remaining/In Progress.
             ui.subText = sec.lockedReason;
@@ -673,9 +673,12 @@ function toggleCategoryHelp() {
         'red_designated': showRedMerchantList,
         'em_designated_spend': showEveryMileMerchantList,
         'grocery': showSupermarketList,
+        'tunnel': showOctopusTips,
         'china_consumption': showChinaTips,
         'smart_designated': showSmartMerchantList,
-        'citi_club_merchant': showClubMerchantList
+        'citi_club_merchant': showClubMerchantList,
+        'club_shopping': showClubShoppingTips,
+        'citi_club_telecom': showClubTelecomTips
     };
 
     let handler = helpMap[cat];
@@ -691,9 +694,20 @@ function toggleCategoryHelp() {
     }
 }
 
-function showClubMerchantList() { alert("【Citi The Club 指定商戶 (4%)】\n\n🛍️ Club Shopping\n☕ Starbucks\n🍔 McDonald's\n🐼 Foodpanda (部分)\n📱 1010 / csl 服務月費\n\n回贈為 Clubpoints。"); }
+function showClubMerchantList() {
+    const pdfUrl = "https://www.citibank.com.hk/chinese/credit-cards/cititheclub/merchants.pdf";
+    const msg = "【Citi The Club 指定商戶】\n\n✅ 指定商戶總回贈 4%（基本1% + 額外3%）\n✅ 額外3%每月上限 1,500 Club積分\n\n📄 商戶清單以 Citi 官方 PDF 為準。";
+    const shouldOpen = confirm(`${msg}\n\n按「確定」開啟官方商戶清單 PDF。`);
+    if (shouldOpen) window.open(pdfUrl, "_blank", "noopener");
+}
+function showClubShoppingTips() {
+    alert("【Club Shopping】\n\n✅ 總回贈 2%（基本1% + 額外1%）\n✅ 額外1%每月上限 500 Club積分\n\n提示：商戶清單可按「The Club 指定商戶」類別旁 ? 查看官方 PDF。");
+}
+function showClubTelecomTips() {
+    alert("【The Club 電訊】\n\n適用：csl / 1010 / Now TV / 網上行\n\n✅ 目前以總回贈 3% 計算（replace）\n⚠️ 若你之後想細分條款（例如特定付款方式），可以再加子分類。");
+}
 function showOctopusTips() { alert("【Citi Octopus 交通神卡攻略 (15%)】\n\n🚌 適用：九巴、港鐵、渡輪、電車\n\n💰 門檻/上限：\n1. 月簽 $4,000：回贈上限 $300 (即交通簽 $2,000)\n2. 月簽 $10,000：回贈上限 $500\n\n⚡ 0成本達標大法：\n每月增值電子錢包 (PayMe/Alipay/WeChat) 各 $1,000，輕鬆達標 $3,000！\n\n🎁 疊加政府補貼：可賺高達 30%+ 回贈！"); }
-function showSmartMerchantList() { alert("【SC Smart 指定商戶 (5%)】\n\n🥦 超市：百佳, 759, Donki\n🍽️ 餐飲：麥當勞, Deliveroo, Foodpanda\n💊 零售：HKTVmall, 屈臣氏, Klook, Decathlon\n\n⚠️ 每年最高簽賬 HK$60,000。"); }
+function showSmartMerchantList() { alert("【SC Smart 指定商戶 (5%)】\n\n🥦 超市：百佳, 759, Donki\n🍽️ 餐飲：麥當勞, Deliveroo, Foodpanda\n💊 零售：HKTVmall, 屈臣氏, Klook, Decathlon\n\n⚠️ 指定商戶每月可計回贈簽賬上限 HK$5,000。"); }
 function showSupermarketList() { alert("【🥦 超市類別定義】\n\n✅ 認可：百佳, Donki, 759, AEON\n⚠️ HSBC陷阱：❌ 不包惠康, Market Place, 萬寧"); }
 function showRedMerchantList() { alert("【HSBC Red 指定 (8%)】\n\n🍽️ 壽司郎, 譚仔, Coffee Academïcs\n👕 GU, Decathlon, Uniqlo\n🎮 NAMCO"); }
 function showEveryMileMerchantList() { alert("【EveryMile 指定 ($2/里)】\n\n🚌 交通 (港鐵/巴士/Uber)\n☕ 咖啡 (Starbucks/Pacific)\n🌏 旅遊 (Klook/Agoda)"); }

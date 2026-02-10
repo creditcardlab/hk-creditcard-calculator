@@ -138,29 +138,102 @@ const modulesDB = {
     },
 
     "citi_club_base": { type: "always", rate: 0.05, desc: "基本 1%" },
-    "citi_club_designated": { type: "category", match: ["citi_club_merchant"], rate: 0.2, desc: "Club商戶 4%", mode: "replace" },
+    "citi_club_designated": {
+        type: "category",
+        match: ["citi_club_merchant"],
+        rate: 0.15,
+        desc: "The Club 指定商戶額外 3%（每月上限 1,500 Club積分）",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 1500,
+        cap_key: "citi_club_designated_bonus_cap",
+        cap: { key: "citi_club_designated_bonus_cap", period: "month" }
+    },
+    "citi_club_shopping_bonus": {
+        type: "category",
+        match: ["club_shopping"],
+        rate: 0.05,
+        desc: "Club Shopping 額外 1%（每月上限 500 Club積分）",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 500,
+        cap_key: "citi_club_shopping_bonus_cap",
+        cap: { key: "citi_club_shopping_bonus_cap", period: "month" }
+    },
+    "citi_club_telecom_autopay": {
+        type: "category",
+        match: ["citi_club_telecom"],
+        rate: 0.15,
+        desc: "The Club 電訊（csl/1010/Now TV/網上行）總回贈 3%",
+        mode: "replace"
+    },
     "citi_cb_base": { type: "always", rate: 0.01, desc: "基本 (1%)" },
-    "citi_cb_special": { type: "category", match: ["dining", "hotel", "overseas"], rate: 0.02, desc: "特選類別 (2%)", mode: "replace" },
+    "citi_cb_special": {
+        type: "category",
+        match: ["dining", "hotel", "overseas"],
+        rate: 0.02,
+        desc: "特選類別 (2%)｜英國/歐洲經濟區(EEA) 實體簽賬除外（網上適用）",
+        mode: "replace",
+        eligible_check: (cat, ctx) => !(cat === "overseas_uk_eea" && !(ctx && ctx.isOnline))
+    },
     "citi_octopus_base": { type: "always", rate: 0.005, desc: "基本 0.5%" },
 
-    // 交通 15% (Merged into standard "transport" category)
-    "citi_octopus_transport": {
-        type: "category",
-        match: ["transport"], // <--- 改這裡：直接匹配標準交通類別
-        rate: 0.15,
-        desc: "交通 15% (需月簽$4k*)",
-        mode: "replace",
-        cap_limit: 2000,
-        cap_key: "citi_oct_transport_cap"
-    },
-
-    // 隧道 5% (保留，但在 transport 類別下，由於 15% 排在前面且 mode:replace，通常會優先顯示 15% 的計算結果，這符合用戶期望)
-    "citi_octopus_tunnel": {
+    // Citi Octopus tiered model:
+    // - 月簽 >= 4,000：交通 15%，共享回贈上限 $300
+    // - 月簽 >= 10,000：交通 15% / 隧道5%，共享回贈上限 $500
+    "citi_octopus_transport_tier2": {
         type: "category",
         match: ["transport"],
+        rate: 0.15,
+        desc: "交通 15%（Tier 2）",
+        mode: "replace",
+        eligible_check: (cat, ctx) => {
+            if (cat === "tunnel") return false;
+            if (!ctx || typeof ctx.getMissionSpend !== "function") return true;
+            return ctx.getMissionSpend("spend_citi_octopus") >= 10000;
+        },
+        req_mission_spend: 10000,
+        req_mission_key: "spend_citi_octopus",
+        cap_mode: "reward",
+        cap_limit: 500,
+        cap_key: "citi_octopus_reward_cap",
+        cap: { key: "citi_octopus_reward_cap", period: "month" },
+        counter: { key: "spend_citi_octopus", period: "month" }
+    },
+    "citi_octopus_transport_tier1": {
+        type: "category",
+        match: ["transport"],
+        rate: 0.15,
+        desc: "交通 15%（Tier 1）",
+        mode: "replace",
+        eligible_check: (cat, ctx) => {
+            if (cat === "tunnel") return false;
+            if (!ctx || typeof ctx.getMissionSpend !== "function") return true;
+            return ctx.getMissionSpend("spend_citi_octopus") < 10000;
+        },
+        req_mission_spend: 4000,
+        req_mission_key: "spend_citi_octopus",
+        cap_mode: "reward",
+        cap_limit: 300,
+        cap_key: "citi_octopus_reward_cap",
+        cap: { key: "citi_octopus_reward_cap", period: "month" },
+        counter: { key: "spend_citi_octopus", period: "month" }
+    },
+
+    // 隧道/泊車 5%（月簽 >= 10,000；與交通共享 Tier 2 回贈上限）
+    "citi_octopus_tunnel": {
+        type: "category",
+        match: ["tunnel"],
         rate: 0.05,
-        desc: "隧道/泊車 5% (需月簽$10k)",
-        mode: "replace"
+        desc: "隧道/泊車 5%",
+        mode: "replace",
+        req_mission_spend: 10000,
+        req_mission_key: "spend_citi_octopus",
+        cap_mode: "reward",
+        cap_limit: 500,
+        cap_key: "citi_octopus_reward_cap",
+        cap: { key: "citi_octopus_reward_cap", period: "month" },
+        counter: { key: "spend_citi_octopus", period: "month" }
     },
 
     // --- Other Banks ---
