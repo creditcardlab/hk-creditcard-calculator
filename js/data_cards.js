@@ -147,8 +147,8 @@ const cardsDB = [
         currency: "CASH_Direct",
         type: "visa",
         fcf: 0,
-        rewardModules: ["sc_smart_base", "sc_smart_designated"],
-        trackers: []
+        rewardModules: ["sc_smart_base", "sc_smart_base_tier2_bonus", "sc_smart_designated", "sc_smart_designated_tier2_adjust"],
+        trackers: ["sc_smart_monthly_tracker"]
     },
     {
         id: "citi_pm",

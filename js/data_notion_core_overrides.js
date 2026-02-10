@@ -62,6 +62,21 @@ const NOTION_CORE_OVERRIDES = {
     },
     "hsbc_unionpay_std": {
       "name": "HSBC 銀聯雙幣"
+    },
+    "sc_cathay_priority": {
+      "name": "渣打國泰 Mastercard (優先理財)"
+    },
+    "sc_cathay_private": {
+      "name": "渣打國泰 Mastercard (優先私人)"
+    },
+    "sc_cathay_std": {
+      "name": "渣打國泰 Mastercard"
+    },
+    "sc_simply_cash": {
+      "name": "渣打 Simply Cash Visa"
+    },
+    "sc_smart": {
+      "name": "渣打 Smart Card"
     }
   },
   "categories": {},
@@ -133,6 +148,12 @@ const NOTION_CORE_OVERRIDES = {
     },
     "sc_cathay_dining_hotel": {
       "desc": "食肆/酒店 $4/里"
+    },
+    "sc_simply_cash_base": {
+      "desc": "任何港幣消費 (1.5%)"
+    },
+    "sc_simply_cash_foreign": {
+      "desc": "任何外幣消費 (2%)"
     },
     "student_tuition_bonus": {
       "cap_key": "student_tuition_cap",

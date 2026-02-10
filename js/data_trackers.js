@@ -43,6 +43,14 @@ const trackersDB = {
             period: { type: "quarter", startMonth: 1, startDay: 1 }
         }
     },
+    "sc_smart_monthly_tracker": {
+        type: "mission_tracker",
+        desc: "💳 Smart 每月合資格簽賬",
+        hide_in_equation: true,
+        mission_id: "sc_smart_monthly",
+        effects_on_eligible: [{ key: "sc_smart_monthly_eligible", amount: "tx_amount" }],
+        counter: { key: "sc_smart_monthly_eligible", period: "month" }
+    },
 
     // --- sim Credit ---
     "sim_non_online_tracker": {

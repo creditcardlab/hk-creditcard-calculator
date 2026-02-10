@@ -93,6 +93,23 @@ const CAMPAIGNS = [
         ]
     },
     {
+        id: "sc_smart_monthly",
+        promo_type: "mission_cap",
+        name: "渣打 Smart 每月回贈",
+        icon: "fas fa-credit-card",
+        theme: "blue",
+        period_policy: {
+            mode: "recurring",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["sc_smart"],
+        sections: [
+            { type: "mission", label: "🎯 合資格簽賬進度", usageKey: "sc_smart_monthly_eligible", target: 15000, markers: [4000, 15000] },
+            { type: "cap", label: "💳 指定商戶簽賬上限", capModule: "sc_smart_designated", unlockKey: "sc_smart_monthly_eligible", unlockTarget: 4000, unit: "元" }
+        ],
+        capKeys: ["sc_smart_cap"]
+    },
+    {
         id: "boc_amazing",
         promo_type: "mission_multi_cap",
         name: "狂賞派",

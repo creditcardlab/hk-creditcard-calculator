@@ -387,9 +387,9 @@
       },
       "expected": {
         "topCardId": "sc_smart",
-        "topValue": 27.5,
+        "topValue": 28,
         "breakdownFlags": {
-          "hasLocked": false,
+          "hasLocked": true,
           "hasCapped": false,
           "hasPartial": false
         }
@@ -853,6 +853,34 @@
           "hasLocked": false,
           "hasCapped": true,
           "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_031_sc_smart_designated_cap_overflow_fallback_basic",
+      "input": {
+        "amount": 2000,
+        "category": "smart_designated",
+        "date": "2026-01-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "sc_smart"
+        ],
+        "settings": {},
+        "usage": {
+          "sc_smart_monthly_eligible": 16000,
+          "sc_smart_cap": 4500
+        }
+      },
+      "expected": {
+        "topCardId": "sc_smart",
+        "topValue": 43,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
         }
       }
     }

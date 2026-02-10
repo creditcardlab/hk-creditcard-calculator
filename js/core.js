@@ -855,9 +855,12 @@ function isForeignCategory(category) {
     return false;
 }
 
-function isMissionMet(mod, userProfile) {
+function isMissionMet(mod, userProfile, missionDeltaByKey) {
     if (!mod.req_mission_spend || !mod.req_mission_key) return true;
-    const currentSpend = userProfile.usage[mod.req_mission_key] || 0;
+    let currentSpend = userProfile.usage[mod.req_mission_key] || 0;
+    if (missionDeltaByKey && mod.req_mission_key) {
+        currentSpend += Number(missionDeltaByKey[mod.req_mission_key] || 0);
+    }
     return currentSpend >= mod.req_mission_spend;
 }
 
@@ -866,7 +869,7 @@ function isRetroactive(mod) {
     return !!(mod.req_mission_spend && mod.req_mission_key);
 }
 
-function isReplacerEligible(mod, amount, resolvedCategory, userProfile, includeLocked, ctx) {
+function isReplacerEligible(mod, amount, resolvedCategory, userProfile, includeLocked, ctx, missionDeltaByKey) {
     if (!mod || mod.type !== 'category' || mod.mode !== 'replace') return false;
     const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, ctx && ctx.isOnline) : true;
     if (!matchOk) return false;
@@ -875,7 +878,7 @@ function isReplacerEligible(mod, amount, resolvedCategory, userProfile, includeL
     if (mod.min_spend && amount < mod.min_spend) return false;
 
     if (mod.req_mission_spend && mod.req_mission_key) {
-        const met = isMissionMet(mod, userProfile);
+        const met = isMissionMet(mod, userProfile, missionDeltaByKey);
         if (!met && !(includeLocked && isRetroactive(mod))) return false;
     }
     return true;
@@ -1008,9 +1011,17 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     }
 
     // Trackers (mission tags)
+    let missionDeltaByKey = {};
     if (typeof evaluateTrackers === "function") {
         const trackerRes = evaluateTrackers(card.id, { category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday }, userProfile, DATA);
         if (trackerRes && Array.isArray(trackerRes.missionTags)) missionTags = trackerRes.missionTags;
+        if (trackerRes && Array.isArray(trackerRes.effects)) {
+            missionDeltaByKey = {};
+            trackerRes.effects.forEach((effect) => {
+                if (!effect || !effect.key) return;
+                missionDeltaByKey[effect.key] = (Number(missionDeltaByKey[effect.key]) || 0) + (Number(effect.amount) || 0);
+            });
+        }
     }
 
     // [Module Logic]
@@ -1028,11 +1039,11 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     const ctx = { isOnline: !!isOnline, isMobilePay: !!isMobilePay, paymentMethod: paymentMethod };
     let replacerModuleCurrentId = activeModules.find(mid => {
         const m = modules[mid];
-        return isReplacerEligible(m, amount, resolvedCategory, userProfile, false, ctx);
+        return isReplacerEligible(m, amount, resolvedCategory, userProfile, false, ctx, missionDeltaByKey);
     });
     let replacerModulePotentialId = activeModules.find(mid => {
         const m = modules[mid];
-        return isReplacerEligible(m, amount, resolvedCategory, userProfile, true, ctx);
+        return isReplacerEligible(m, amount, resolvedCategory, userProfile, true, ctx, missionDeltaByKey);
     });
     let replacerModuleCurrent = replacerModuleCurrentId ? modules[replacerModuleCurrentId] : null;
     let replacerModulePotential = replacerModulePotentialId ? modules[replacerModulePotentialId] : null;
@@ -1055,6 +1066,24 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     if (replaceModuleCapped(replacerModuleCurrent)) replacerModuleCurrent = null;
     if (replaceModuleCapped(replacerModulePotential)) replacerModulePotential = null;
 
+    const nextMissionThresholdByKey = {};
+    activeModules.forEach((modID) => {
+        const mod = modules[modID];
+        if (!mod || !mod.req_mission_key || !mod.req_mission_spend) return;
+        const key = mod.req_mission_key;
+        const threshold = Number(mod.req_mission_spend) || 0;
+        if (threshold <= 0) return;
+        const spendNow = (Number(userProfile.usage[key]) || 0) + (Number(missionDeltaByKey[key]) || 0);
+        if (spendNow >= threshold) return;
+        if (!Object.prototype.hasOwnProperty.call(nextMissionThresholdByKey, key)) {
+            nextMissionThresholdByKey[key] = threshold;
+            return;
+        }
+        if (threshold < nextMissionThresholdByKey[key]) {
+            nextMissionThresholdByKey[key] = threshold;
+        }
+    });
+
     // ... (Module Logic 保持 V10.7 不變) ...
     activeModules.forEach(modID => {
         const mod = modules[modID];
@@ -1075,10 +1104,20 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
 
         // [NEW] Mission Spend Check (Monthly Cumulative)
         const missionRequired = !!(mod.req_mission_spend && mod.req_mission_key);
-        const missionMet = missionRequired ? isMissionMet(mod, userProfile) : true;
+        const missionMet = missionRequired ? isMissionMet(mod, userProfile, missionDeltaByKey) : true;
         const retroactive = missionRequired ? isRetroactive(mod) : false;
         const applyCurrent = missionMet;
         const applyPotential = missionMet || retroactive;
+        const nextThreshold = (missionRequired && mod.req_mission_key)
+            ? nextMissionThresholdByKey[mod.req_mission_key]
+            : null;
+        const showLockedBreakdown = !missionRequired || applyCurrent
+            ? true
+            : (nextThreshold === null || nextThreshold === undefined || Number(mod.req_mission_spend) === Number(nextThreshold));
+        const addModuleBreakdown = (text, tone, flags) => {
+            if (!showLockedBreakdown) return;
+            addBreakdown(text, tone, flags);
+        };
 
         if (!applyPotential) return;
         if (!applyCurrent && retroactive) {
@@ -1126,29 +1165,29 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                     }
 
                         if (isMaxed) {
-                            addBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
+                            addModuleBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
                         } else {
                             const projectedReward = amount * mod.rate;
                             if (projectedReward <= remaining) {
                                 rate = mod.rate;
                                 hit = true;
-                                addBreakdown(tempDesc || mod.desc);
+                                addModuleBreakdown(tempDesc || mod.desc);
                             } else {
                                 rate = remaining / amount;
-                                addBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
+                                addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
                                 hit = true;
                             }
                         }
                 } else {
                     // Standard Spending-based Cap
                     const capCheck = checkCap(mod.cap_key, mod.cap_limit);
-                    if (capCheck.isMaxed) addBreakdown(tempDesc || mod.desc, "muted", { capped: true, strike: true });
-                    else if (amount > capCheck.remaining) { rate = (capCheck.remaining * mod.rate) / amount; addBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true }); hit = true; }
+                    if (capCheck.isMaxed) addModuleBreakdown(tempDesc || mod.desc, "muted", { capped: true, strike: true });
+                    else if (amount > capCheck.remaining) { rate = (capCheck.remaining * mod.rate) / amount; addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true }); hit = true; }
                     else {
                         rate = mod.rate;
                         hit = true;
                         // [FIXED] Push description when within spending cap
-                        addBreakdown(tempDesc || mod.desc);
+                        addModuleBreakdown(tempDesc || mod.desc);
                     }
                 }
             } else { rate = mod.rate; hit = true; }
@@ -1172,28 +1211,28 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                     }
 
                     if (isMaxed) {
-                        addBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
+                        addModuleBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
                         hit = false;
                     } else {
                         const projectedReward = amount * rate;
                         if (projectedReward <= remaining) {
-                            addBreakdown(tempDesc || mod.desc);
+                            addModuleBreakdown(tempDesc || mod.desc);
                         } else {
                             rate = remaining / amount;
-                            addBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
+                            addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
                         }
                     }
                     capDisplayHandled = true;
                 } else {
                     const capCheck = checkCap(mod.cap_key, mod.cap_limit);
                     if (capCheck.isMaxed) {
-                        addBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
+                        addModuleBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
                         hit = false;
                     } else if (amount > capCheck.remaining) {
                         rate = (capCheck.remaining * rate) / amount;
-                        addBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
+                        addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
                     } else {
-                        addBreakdown(tempDesc || mod.desc);
+                        addModuleBreakdown(tempDesc || mod.desc);
                     }
                     capDisplayHandled = true;
                 }
@@ -1214,7 +1253,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                 // Other module types (e.g. red_hot_*) may still carry cap metadata via overrides
                 // and should remain visible in the equation breakdown.
                 const capDisplayHandledInBranch = (mod.type === "category" && !!mod.cap_limit) || capDisplayHandled;
-                if (!capDisplayHandledInBranch && (allowCurrent || allowPotential)) addBreakdown(descText);
+                if (!capDisplayHandledInBranch && (allowCurrent || allowPotential) && showLockedBreakdown) addBreakdown(descText);
 
                 // [UPDATED] Capture Reward Tracking Info (current only)
                 if (allowCurrent && mod.cap_mode === 'reward' && mod.cap_limit) {

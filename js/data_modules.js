@@ -71,8 +71,46 @@ const modulesDB = {
     },
     "sc_simply_cash_base": { type: "always", rate: 0.015, desc: "本地 1.5%" },
     "sc_simply_cash_foreign": { type: "category", match: ["overseas"], rate: 0.02, desc: "外幣 2%", mode: "replace" },
-    "sc_smart_base": { type: "always", rate: 0.0055, desc: "基本 0.55%" },
-    "sc_smart_designated": { type: "category", match: ["smart_designated"], rate: 0.05, desc: "指定商戶 5%", mode: "replace", cap_limit: 60000, cap_key: "sc_smart_cap" },
+    "sc_smart_base": {
+        type: "always",
+        rate: 0.0056,
+        desc: "每月合資格簽賬滿 $4,000：基本 0.56%",
+        req_mission_spend: 4000,
+        req_mission_key: "sc_smart_monthly_eligible"
+    },
+    "sc_smart_base_tier2_bonus": {
+        type: "always",
+        rate: 0.0064,
+        desc: "每月合資格簽賬滿 $15,000：額外 +0.64%（合共 1.2%）",
+        req_mission_spend: 15000,
+        req_mission_key: "sc_smart_monthly_eligible"
+    },
+    "sc_smart_designated": {
+        type: "category",
+        match: ["smart_designated"],
+        rate: 0.0444,
+        desc: "指定商戶加碼（達門檻後合共 5%，每月上限 $5,000）",
+        mode: "add",
+        req_mission_spend: 4000,
+        req_mission_key: "sc_smart_monthly_eligible",
+        cap_mode: "spending",
+        cap_limit: 5000,
+        cap_key: "sc_smart_cap",
+        cap: { key: "sc_smart_cap", period: "month" }
+    },
+    "sc_smart_designated_tier2_adjust": {
+        type: "category",
+        match: ["smart_designated"],
+        rate: -0.0064,
+        desc: "指定商戶高階調整（維持合共 5%）",
+        mode: "add",
+        req_mission_spend: 15000,
+        req_mission_key: "sc_smart_monthly_eligible",
+        cap_mode: "spending",
+        cap_limit: 5000,
+        cap_key: "sc_smart_cap",
+        cap: { key: "sc_smart_cap", period: "month" }
+    },
 
 "sc_cathay_overseas_private": { type: "category", match: ["overseas"], rate: 0.5, desc: "Private: Overseas $2/mi", mode: "replace" },
 
