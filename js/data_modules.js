@@ -247,11 +247,15 @@ const modulesDB = {
     },
 
     // --- Other Banks ---
-    "dbs_black_base": { type: "always", rate: 0.008, desc: "本地 ($6/里)" }, // 1/125 = 0.008 DBS$ (approx) if $125=$1DBS$. Wait, $6=1Mile. DBS$48=1000Mile. 1Mile=0.048DBS$. 0.048/6 = 0.008. Correct.
-    "dbs_black_overseas_std": { type: "category", match: ["overseas"], rate: 0.012, desc: "海外 ($4/里)", mode: "replace" }, // 0.048/4 = 0.012
+    "dbs_black_base": { type: "always", rate: 0.008, desc: "本地 ($6/里)" },
+    "dbs_black_overseas_std": { type: "category", match: ["overseas"], rate: 0.012, desc: "海外 ($4/里)", mode: "replace" },
     "dbs_black_overseas_promo": {
-        type: "category", match: ["overseas"], rate: 0.024, desc: "海外 ($2/里)", mode: "replace",
-        setting_key: "dbs_black_promo_enabled", req_mission_key: "spend_dbs_black", req_mission_spend: 20000
+        type: "category", match: ["overseas"], rate: 0.012, desc: "海外推廣額外（合共$2/里）", mode: "add",
+        setting_key: "dbs_black_promo_enabled", req_mission_key: "spend_dbs_black_qual", req_mission_spend: 20000,
+        valid_from: "2026-01-01", valid_to: "2026-12-31",
+        cap_mode: "reward", cap_limit: 240, cap_key: "dbs_black_bonus_cap_monthly",
+        cap: { key: "dbs_black_bonus_cap_monthly", period: "month" },
+        secondary_cap_key: "dbs_black_bonus_cap_2026", secondary_cap_limit: 2880
     },
 
     "dbs_eminent_bonus": {

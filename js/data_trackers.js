@@ -51,6 +51,58 @@ const trackersDB = {
         effects_on_eligible: [{ key: "sc_smart_monthly_eligible", amount: "tx_amount" }],
         counter: { key: "sc_smart_monthly_eligible", period: "month" }
     },
+    // DBS Black World 2026 promo:
+    // - Mission spend uses qualified retail spending
+    // - E-wallet spending only counts up to HK$5,000 per month toward mission threshold
+    "dbs_black_qual_non_ewallet_tracker": {
+        type: "mission_tracker",
+        setting_key: "dbs_black_promo_enabled",
+        desc: "💎 DBS Black 每月合資格簽賬（非電子錢包）",
+        hide_in_equation: true,
+        mission_id: "dbs_black_promo",
+        valid_from: "2026-01-01",
+        valid_to: "2026-12-31",
+        eligible_check: (cat, ctx) => {
+            const ewalletCats = new Set(["alipay", "wechat", "payme", "oepay"]);
+            return !(ctx && (ctx.isMobilePay || ewalletCats.has(cat)));
+        },
+        effects_on_eligible: [{ key: "spend_dbs_black_qual", amount: "tx_amount" }],
+        counter: { key: "spend_dbs_black_qual", period: "month" }
+    },
+    "dbs_black_qual_ewallet_tracker": {
+        type: "mission_tracker",
+        setting_key: "dbs_black_promo_enabled",
+        desc: "💎 DBS Black 每月合資格簽賬（電子錢包首$5,000）",
+        hide_in_equation: true,
+        mission_id: "dbs_black_promo",
+        valid_from: "2026-01-01",
+        valid_to: "2026-12-31",
+        eligible_check: (cat, ctx) => {
+            const ewalletCats = new Set(["alipay", "wechat", "payme", "oepay"]);
+            return !!(ctx && (ctx.isMobilePay || ewalletCats.has(cat)));
+        },
+        effects_on_eligible: [
+            {
+                key: "spend_dbs_black_qual",
+                amount: (cat, ctx) => {
+                    const used = (ctx && typeof ctx.getUsage === "function") ? Number(ctx.getUsage("spend_dbs_black_ewallet_qual")) || 0 : 0;
+                    const remaining = Math.max(0, 5000 - used);
+                    const txAmt = Number(ctx && ctx.amount) || 0;
+                    return Math.max(0, Math.min(txAmt, remaining));
+                }
+            },
+            {
+                key: "spend_dbs_black_ewallet_qual",
+                amount: (cat, ctx) => {
+                    const used = (ctx && typeof ctx.getUsage === "function") ? Number(ctx.getUsage("spend_dbs_black_ewallet_qual")) || 0 : 0;
+                    const remaining = Math.max(0, 5000 - used);
+                    const txAmt = Number(ctx && ctx.amount) || 0;
+                    return Math.max(0, Math.min(txAmt, remaining));
+                }
+            }
+        ],
+        counter: { key: "spend_dbs_black_ewallet_qual", period: "month" }
+    },
 
     // --- sim Credit ---
     "sim_non_online_tracker": {

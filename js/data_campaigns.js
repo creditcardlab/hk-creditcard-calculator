@@ -245,19 +245,23 @@ const CAMPAIGNS = [
     },
     {
         id: "dbs_black_promo",
-        promo_type: "mission_uncapped",
+        promo_type: "mission_cap",
         name: "DBS Black $2/里推廣",
         icon: "fas fa-gem",
         theme: "gray",
         period_policy: {
             mode: "recurring",
+            startDate: "2026-01-01",
+            endDate: "2026-12-31",
             period: { type: "month", startDay: 1 }
         },
         cards: ["dbs_black"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", missionModule: "dbs_black_overseas_promo" },
-            { type: "cap", label: "💰 回贈進度", capModule: "dbs_black_overseas_promo", unit: "里", unlockModule: "dbs_black_overseas_promo" }
-        ]
+            { type: "cap", label: "💰 每月額外回贈進度", capModule: "dbs_black_overseas_promo", unit: "DBS$", unlockModule: "dbs_black_overseas_promo" },
+            { type: "cap", label: "🧮 推廣期額外回贈進度", capKey: "dbs_black_bonus_cap_2026", cap: 2880, unit: "DBS$", unlockModule: "dbs_black_overseas_promo" }
+        ],
+        capKeys: ["dbs_black_bonus_cap_monthly"]
     },
     {
         id: "sim_promo",

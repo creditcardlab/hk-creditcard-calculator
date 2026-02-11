@@ -231,6 +231,21 @@ function escapeJsSingleQuoted(input) {
     return String(input || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
+function renderSettingsToggle(options) {
+    const opts = options || {};
+    const id = opts.id ? String(opts.id) : "";
+    const checked = !!opts.checked;
+    const onchange = opts.onchange ? String(opts.onchange) : "";
+    const checkedClass = opts.checkedClass ? String(opts.checkedClass) : "peer-checked:bg-blue-500";
+    const idAttr = id ? ` id="${escapeHtml(id)}"` : "";
+    const onchangeAttr = onchange ? ` onchange="${onchange}"` : "";
+
+    return `<label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox"${idAttr} class="sr-only peer" ${checked ? "checked" : ""}${onchangeAttr}>
+        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer ${checkedClass} peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+    </label>`;
+}
+
 function getCampaignToggleDefinitions() {
     if (typeof DATA === "undefined") return [];
     const campaigns = getCampaignOffers();
@@ -301,10 +316,7 @@ function renderCampaignToggleRows(userProfile, options) {
         const inputId = `st-${def.settingKey.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
         return `<div class="flex justify-between items-center ${classes.row} p-2 rounded border ${classes.border}">
             <span>${escapeHtml(def.label)}</span>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="${inputId}" class="sr-only peer" ${checked ? "checked" : ""} onchange="toggleSetting('${toggleSettingKey}')">
-                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full ${classes.checked} after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-            </label>
+            ${renderSettingsToggle({ id: inputId, checked, onchange: `toggleSetting('${toggleSettingKey}')` })}
         </div>`;
     }).join("");
 }
@@ -1208,7 +1220,7 @@ function renderSettings(userProfile) {
             html += `<div><h3 class="text-xs font-bold text-gray-400 uppercase mb-2 pl-1 tracking-wider">${group.name}</h3><div class="bg-gray-50 rounded-xl px-3 py-1 border border-gray-100">`;
             groupCards.forEach(c => {
                 const ch = userProfile.ownedCards.includes(c.id) ? 'checked' : '';
-                html += `<div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-0"><span class="text-sm text-gray-700 font-medium">${escapeHtml(c.name)}</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" class="sr-only peer" ${ch} onchange="toggleCard('${c.id}')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div></label></div>`;
+                html += `<div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-0"><span class="text-sm text-gray-700 font-medium">${escapeHtml(c.name)}</span>${renderSettingsToggle({ checked: ch === 'checked', onchange: `toggleCard('${escapeJsSingleQuoted(c.id)}')` })}</div>`;
             });
             html += `</div></div>`;
         }
@@ -1262,10 +1274,7 @@ function renderSettings(userProfile) {
     html += `<div class="mb-4 border p-3 rounded-xl bg-yellow-50 border-yellow-100">
         <div class="flex justify-between items-center">
             <label class="text-xs font-bold text-yellow-800">Hang Seng enJoy：已綁定 yuu（Points4X 生效）</label>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="st-enjoy-points4x" class="sr-only peer" ${userProfile.settings.hangseng_enjoy_points4x_enabled ? 'checked' : ''} onchange="toggleSetting('hangseng_enjoy_points4x_enabled')">
-                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-yellow-500"></div>
-            </label>
+            ${renderSettingsToggle({ id: "st-enjoy-points4x", checked: !!userProfile.settings.hangseng_enjoy_points4x_enabled, onchange: "toggleSetting('hangseng_enjoy_points4x_enabled')" })}
         </div>
         <div class="mt-2 text-[11px] text-yellow-800">未綁定時建議關閉，上面 enJoy 4X/3X/2X 類別會回落基本 1X（0.5%）。</div>
     </div>`;
@@ -1283,10 +1292,7 @@ function renderSettings(userProfile) {
     html += `<div class="mb-4 border p-3 rounded-xl bg-blue-50 border-blue-100">
         <div class="flex justify-between items-center mb-2">
             <label class="text-xs font-bold text-blue-700">Citi Prestige 年資額外積分</label>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="st-prestige-bonus" class="sr-only peer" ${prestigeEnabled ? 'checked' : ''} onchange="toggleSetting('citi_prestige_bonus_enabled')">
-                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-blue-500"></div>
-            </label>
+            ${renderSettingsToggle({ id: "st-prestige-bonus", checked: prestigeEnabled, onchange: "toggleSetting('citi_prestige_bonus_enabled')" })}
         </div>
         <div class="grid grid-cols-2 gap-2 text-xs">
             <div>
@@ -1294,31 +1300,52 @@ function renderSettings(userProfile) {
                 <input id="st-prestige-years" type="number" min="1" class="w-full p-2 rounded bg-white border border-blue-100" value="${prestigeYears}" onchange="savePrestigeTenureYears()">
             </div>
             <div class="flex items-end">
-                <label class="w-full flex justify-between items-center bg-white border border-blue-100 rounded p-2">
+                <div class="w-full flex justify-between items-center bg-white border border-blue-100 rounded p-2">
                     <span class="text-blue-700 font-bold">Citigold/私人客戶</span>
-                    <input type="checkbox" ${prestigeWealth ? 'checked' : ''} onchange="toggleSetting('citi_prestige_wealth_client')">
-                </label>
+                    ${renderSettingsToggle({ id: "st-prestige-wealth", checked: prestigeWealth, onchange: "toggleSetting('citi_prestige_wealth_client')" })}
+                </div>
             </div>
         </div>
         <div class="mt-2 text-[11px] text-blue-700">現時對應年資獎賞：<span class="font-bold">${prestigePct}%</span>（以有效簽賬計）</div>
     </div>`;
 
     const rhEnabled = userProfile.settings.red_hot_rewards_enabled !== false;
-    html += `<div class="mb-4 border p-3 rounded-xl bg-gray-50"><div class="flex justify-between items-center mb-2"><label class="text-xs font-bold text-red-600">已登記「最紅自主獎賞」</label><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-rh-enabled" class="sr-only peer" ${rhEnabled ? 'checked' : ''} onchange="toggleSetting('red_hot_rewards_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-red-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"></div></label></div><div id="rh-allocator-container" class="${rhEnabled ? '' : 'hidden'} space-y-2 transition-all"><div class="text-[10px] text-gray-400 mb-2">分配 5X 獎賞錢 (總和: <span id="rh-total" class="text-blue-600">5</span>/5)</div>${renderAllocatorRow("dining", "賞滋味 (Dining)", userProfile.settings.red_hot_allocation.dining)}${renderAllocatorRow("world", "賞世界 (World)", userProfile.settings.red_hot_allocation.world)}${renderAllocatorRow("enjoyment", "賞享受 (Enjoyment)", userProfile.settings.red_hot_allocation.enjoyment)}${renderAllocatorRow("home", "賞家居 (Home)", userProfile.settings.red_hot_allocation.home)}${renderAllocatorRow("style", "賞購物 (Style)", userProfile.settings.red_hot_allocation.style)}</div></div>`;
-
-    html += `<div class="flex justify-between items-center bg-red-50 p-2 rounded border border-red-100"><span>冬日賞 2026</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-winter" class="sr-only peer" ${userProfile.settings.winter_promo_enabled ? 'checked' : ''} onchange="toggleSetting('winter_promo_enabled')"><div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-red-500"></div></label></div>`;
-    html += `<div class="grid grid-cols-2 gap-2 text-xs bg-red-50/50 border border-red-100 rounded-lg p-2">
-        <div>
-            <label class="block text-red-700 font-bold mb-1">Tier 1 門檻</label>
-            <input id="st-winter-tier1" type="number" min="0" class="w-full p-2 rounded bg-white border border-red-100" value="${Number(userProfile.settings.winter_tier1_threshold) || 0}" onchange="saveWinterThresholds()">
+    html += `<div class="mb-4 border p-3 rounded-xl bg-gray-50">
+        <div class="flex justify-between items-center mb-2">
+            <label class="text-xs font-bold text-red-600">已登記「最紅自主獎賞」</label>
+            ${renderSettingsToggle({ id: "st-rh-enabled", checked: rhEnabled, onchange: "toggleSetting('red_hot_rewards_enabled')" })}
         </div>
-        <div>
-            <label class="block text-red-700 font-bold mb-1">Tier 2 門檻</label>
-            <input id="st-winter-tier2" type="number" min="0" class="w-full p-2 rounded bg-white border border-red-100" value="${Number(userProfile.settings.winter_tier2_threshold) || 0}" onchange="saveWinterThresholds()">
+        <div id="rh-allocator-container" class="${rhEnabled ? '' : 'hidden'} space-y-2 transition-all">
+            <div class="text-[10px] text-gray-400 mb-2">分配 5X 獎賞錢 (總和: <span id="rh-total" class="text-blue-600">5</span>/5)</div>
+            ${renderAllocatorRow("dining", "賞滋味 (Dining)", userProfile.settings.red_hot_allocation.dining)}
+            ${renderAllocatorRow("world", "賞世界 (World)", userProfile.settings.red_hot_allocation.world)}
+            ${renderAllocatorRow("enjoyment", "賞享受 (Enjoyment)", userProfile.settings.red_hot_allocation.enjoyment)}
+            ${renderAllocatorRow("home", "賞家居 (Home)", userProfile.settings.red_hot_allocation.home)}
+            ${renderAllocatorRow("style", "賞購物 (Style)", userProfile.settings.red_hot_allocation.style)}
+        </div>
+    </div>`;
+
+    html += `<div class="mb-4 border p-3 rounded-xl bg-red-50 border-red-100">
+        <div class="flex justify-between items-center mb-2">
+            <label class="text-xs font-bold text-red-700">HSBC 最紅冬日賞</label>
+            ${renderSettingsToggle({ id: "st-winter", checked: !!userProfile.settings.winter_promo_enabled, onchange: "toggleSetting('winter_promo_enabled')" })}
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+            <div>
+                <label class="block text-red-700 font-bold mb-1">Tier 1 門檻</label>
+                <input id="st-winter-tier1" type="number" min="0" class="w-full p-2 rounded bg-white border border-red-100" value="${Number(userProfile.settings.winter_tier1_threshold) || 0}" onchange="saveWinterThresholds()">
+            </div>
+            <div>
+                <label class="block text-red-700 font-bold mb-1">Tier 2 門檻</label>
+                <input id="st-winter-tier2" type="number" min="0" class="w-full p-2 rounded bg-white border border-red-100" value="${Number(userProfile.settings.winter_tier2_threshold) || 0}" onchange="saveWinterThresholds()">
+            </div>
         </div>
     </div>`;
     html += renderCampaignToggleRows(userProfile, { excludeSettingKeys: ["winter_promo_enabled"] });
-    html += `<div class="flex justify-between items-center bg-gray-800 text-white p-2 rounded border border-gray-600"><span>Mox 活期任務 (+$250k)</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="st-mox" class="sr-only peer" ${userProfile.settings.mox_deposit_task_enabled ? 'checked' : ''} onchange="toggleSetting('mox_deposit_task_enabled')"><div class="w-9 h-5 bg-gray-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-green-400"></div></label></div>`;
+    html += `<div class="flex justify-between items-center bg-gray-800 text-white p-2 rounded border border-gray-600">
+        <span>Mox 活期任務 (+$250k)</span>
+        ${renderSettingsToggle({ id: "st-mox", checked: !!userProfile.settings.mox_deposit_task_enabled, onchange: "toggleSetting('mox_deposit_task_enabled')" })}
+    </div>`;
     html += `</div><div class="text-center mt-4"><button onclick="if(confirm('清除資料?')){localStorage.clear();location.reload();}" class="text-red-400 text-xs">Reset All</button></div></div>`;
 
     list.innerHTML = html;

@@ -1638,6 +1638,124 @@
           "hasPartial": false
         }
       }
+    },
+    {
+      "id": "case_059_dbs_black_overseas_locked_below_mission",
+      "input": {
+        "amount": 2000,
+        "category": "overseas_other",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_black"
+        ],
+        "settings": {
+          "dbs_black_promo_enabled": true
+        },
+        "usage": {
+          "spend_dbs_black_qual": 17000
+        }
+      },
+      "expected": {
+        "topCardId": "dbs_black",
+        "topValue": 24,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_060_dbs_black_overseas_promo_met",
+      "input": {
+        "amount": 2000,
+        "category": "overseas_other",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_black"
+        ],
+        "settings": {
+          "dbs_black_promo_enabled": true
+        },
+        "usage": {
+          "spend_dbs_black_qual": 20000
+        }
+      },
+      "expected": {
+        "topCardId": "dbs_black",
+        "topValue": 48,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_061_dbs_black_overseas_bonus_monthly_cap_partial",
+      "input": {
+        "amount": 2000,
+        "category": "overseas_other",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_black"
+        ],
+        "settings": {
+          "dbs_black_promo_enabled": true
+        },
+        "usage": {
+          "spend_dbs_black_qual": 60000,
+          "dbs_black_bonus_cap_monthly": 230
+        }
+      },
+      "expected": {
+        "topCardId": "dbs_black",
+        "topValue": 34,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_062_dbs_black_ewallet_only_counts_first_5k_for_mission",
+      "input": {
+        "amount": 2000,
+        "category": "overseas_other",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "dbs_black"
+        ],
+        "settings": {
+          "dbs_black_promo_enabled": true
+        },
+        "usage": {
+          "spend_dbs_black_qual": 18500,
+          "spend_dbs_black_ewallet_qual": 4500
+        }
+      },
+      "expected": {
+        "topCardId": "dbs_black",
+        "topValue": 24,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
     }
   ],
   "period_cases": [

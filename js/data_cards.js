@@ -235,7 +235,7 @@ const cardsDB = [
         type: "master",
         fcf: 0.0195,
         rewardModules: ["dbs_black_overseas_promo", "dbs_black_overseas_std", "dbs_black_base"],
-        trackers: [],
+        trackers: ["dbs_black_qual_non_ewallet_tracker", "dbs_black_qual_ewallet_tracker"],
         redemption: {
           unit: "DBS$",
           min: 0,
