@@ -137,6 +137,22 @@ const CAMPAIGNS = [
         capKeys: ["citi_octopus_reward_cap"]
     },
     {
+        id: "citi_rewards_bonus",
+        promo_type: "cap",
+        name: "Citi Rewards Bonus 積分",
+        icon: "fas fa-star",
+        theme: "blue",
+        period_policy: {
+            mode: "recurring",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["citi_rewards"],
+        sections: [
+            { type: "cap", label: "💰 Bonus 積分進度", capModule: "citi_rewards_mobile", unit: "積分" }
+        ],
+        capKeys: ["citi_rewards_bonus_cap"]
+    },
+    {
         id: "boc_amazing",
         promo_type: "mission_multi_cap",
         name: "狂賞派",
@@ -199,12 +215,14 @@ const CAMPAIGNS = [
         theme: "purple",
         period_policy: {
             mode: "recurring",
+            startDate: "2026-01-01",
+            endDate: "2026-12-31",
             period: { type: "month", startDay: 1 }
         },
         cards: ["hangseng_travel_plus"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", missionModule: "travel_plus_tier1_bonus" },
-            { type: "cap", label: "💰 回贈進度", capModule: "travel_plus_tier1_bonus", unit: "元", unlockModule: "travel_plus_tier1_bonus" }
+            { type: "cap", label: "💰 回贈進度", capModule: "travel_plus_tier1_bonus", unit: "+FUN Dollars", unlockModule: "travel_plus_tier1_bonus" }
         ],
         capKeys: ["travel_plus_reward_cap"]
     },

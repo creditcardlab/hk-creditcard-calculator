@@ -119,22 +119,32 @@ const modulesDB = {
     "citi_pm_overseas": { type: "category", match: ["overseas"], rate: 3, desc: "海外 3X ($4/里)", mode: "replace" },
     "citi_prestige_base": { type: "always", rate: 2, desc: "基本 2X ($6/里)" },
     "citi_prestige_overseas": { type: "category", match: ["overseas"], rate: 3, desc: "海外 3X ($4/里)", mode: "replace" },
+    "citi_prestige_annual_bonus": { type: "prestige_annual_bonus", desc: "Citi Prestige 高達額外年資獎賞" },
 
-    // Rewards 2026 Rules
+    // Citi Rewards: base + bonus model.
     "citi_rewards_base": { type: "always", rate: 1, desc: "基本 1X積分" },
     "citi_rewards_mobile": {
         type: "category",
         match: ["dining", "grocery", "transport", "telecom", "general", "moneyback_merchant", "moneyback_pns_watsons", "moneyback_fortress", "smart_designated", "citi_club_merchant"],
-        rate: 2.7,
-        desc: "手機支付 2.7X (HK$5.5/里)",
-        mode: "replace"
+        rate: 1.7,
+        desc: "流動支付（Apple/Google/Samsung Pay，港幣零售）額外 +1.7X（連基本 1X 合共 2.7X，相當於 1%）",
+        mode: "add",
+        eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "google_pay", "samsung_pay"].includes(ctx.paymentMethod)),
+        cap_mode: "reward",
+        cap_limit: 113400,
+        cap_key: "citi_rewards_bonus_cap",
+        cap: { key: "citi_rewards_bonus_cap", period: "month" }
     },
     "citi_rewards_shopping": {
         type: "category",
         match: ["department_store", "apparel", "entertainment"],
-        rate: 8.1,
-        desc: "購物/娛樂 8.1X (HK$1.85/里!)",
-        mode: "replace"
+        rate: 7.1,
+        desc: "購物/娛樂額外 +7.1X（合共 8.1X；與手機支付同時符合時取較高者）",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 113400,
+        cap_key: "citi_rewards_bonus_cap",
+        cap: { key: "citi_rewards_bonus_cap", period: "month" }
     },
 
     "citi_club_base": { type: "always", rate: 0.05, desc: "基本 1%" },
@@ -277,14 +287,16 @@ const modulesDB = {
     // MMPower (Base 0.4% + Bonus)
     // Overseas: 6% Total => 5.6% Bonus. Cap $500 Reward.
     "mmpower_overseas_bonus": {
-        type: "category", match: ["overseas"], rate: 0.056, desc: "MMP+海外 (5.6%)",
+        type: "category", match: ["overseas"], rate: 0.056, desc: "+FUN Dollars 獎賞計劃 海外簽賬 (+5.6%)",
         mode: "add", setting_key: "mmpower_promo_enabled",
         cap_mode: "reward", cap_limit: 500, cap_key: "mmpower_reward_cap",
-        req_mission_spend: 5000, req_mission_key: "spend_hangseng_mmpower"
+        req_mission_spend: 5000, req_mission_key: "spend_hangseng_mmpower",
+        // T&C: overseas / online / selected are non-overlapping; online takes precedence for online transactions.
+        eligible_check: (cat, ctx) => !(ctx && ctx.isOnline)
     },
     // Online: 5% Total => 4.6% Bonus. Cap $500 Reward (Shared).
     "mmpower_online_bonus": {
-        type: "category", match: ["online"], rate: 0.046, desc: "MMP+網購 (4.6%)",
+        type: "category", match: ["online"], rate: 0.046, desc: "+FUN Dollars 獎賞計劃 網上簽賬 (+4.6%)",
         mode: "add", setting_key: "mmpower_promo_enabled",
         cap_mode: "reward", cap_limit: 500, cap_key: "mmpower_reward_cap",
         req_mission_spend: 5000, req_mission_key: "spend_hangseng_mmpower"
@@ -294,40 +306,51 @@ const modulesDB = {
     // If it's 1%, and base is 0.4%, bonus is 0.6%.
     // Match: dining, electronics, entertainment
     "mmpower_selected_bonus": {
-        type: "category", match: ["dining", "electronics", "entertainment"], rate: 0.006, desc: "MMP+自選 (0.6%)",
+        type: "category", match: ["dining", "electronics", "entertainment", "streaming"], rate: 0.006, desc: "+FUN Dollars 獎賞計劃 自選類別 (+0.6%，3選2)",
         mode: "add", setting_key: "mmpower_promo_enabled",
         cap_mode: "reward", cap_limit: 500, cap_key: "mmpower_reward_cap",
-        req_mission_spend: 5000, req_mission_key: "spend_hangseng_mmpower"
+        req_mission_spend: 5000, req_mission_key: "spend_hangseng_mmpower",
+        eligible_check: (cat, ctx) => {
+            const settings = (ctx && ctx.settings) ? ctx.settings : {};
+            const pickedRaw = Array.isArray(settings.mmpower_selected_categories)
+                ? settings.mmpower_selected_categories
+                : ["dining", "electronics"];
+            const allow = new Set(["dining", "electronics", "entertainment"]);
+            const picked = Array.from(new Set(pickedRaw.map(x => String(x)).filter(x => allow.has(x)))).slice(0, 2);
+            const selected = picked.length > 0 ? picked : ["dining", "electronics"];
+            if (ctx && ctx.isOnline) return false; // T&C: if online + selected, count as online only.
+            const normalized = (cat === "streaming") ? "entertainment" : cat;
+            return selected.includes(normalized);
+        }
     },
 
-    // Travel+ (Base 0.4% + Bonus)
-    // Tier 1 Foreign (Japan, Korea, Thai, Aus, Euro, UK...): 7% Total => 6.6% Bonus.
-    // Need new category tag `designated_action_foreign` or just map countries?
-    // Simplified: match `designated_foreign_currencies` or just `overseas` if specific.
-    // User listed:日、韓、泰、澳、歐、英.
-    // I need to add these currencies to `js/data.js` or assume `overseas` covers it?
-    // User requested "Designated Foreign" vs "Other Foreign".
-    // I will assume `designated_foreign` is a category tag I need to ensure exists or logic maps.
-    // For now, I will use `travel_plus_tier1` and `overseas`.
+    // Travel+ (2026 promo period: 2026-01-01 to 2026-12-31)
+    // Base 0.4% + bonus modules below.
+    // Tier 1 designated foreign: 7% total => +6.6% bonus.
     "travel_plus_tier1_bonus": {
-        type: "category", match: ["travel_plus_tier1"], rate: 0.066, desc: "T+指定外幣 (6.6%)",
+        type: "category", match: ["travel_plus_tier1"], rate: 0.066, desc: "Travel+ 指定外幣 (6.6%)",
         mode: "add", setting_key: "travel_plus_promo_enabled",
         cap_mode: "reward", cap_limit: 500, cap_key: "travel_plus_reward_cap",
-        req_mission_spend: 6000, req_mission_key: "spend_hangseng_travel_plus"
+        req_mission_spend: 6000, req_mission_key: "spend_hangseng_travel_plus",
+        valid_from: "2026-01-01", valid_to: "2026-12-31",
+        eligible_check: (cat, ctx) => !ctx.isOnline // T&C: designated foreign spend is physical-store only.
     },
-    // Tier 2 Foreign (Other Overseas): 5% Total => 4.6% Bonus.
+    // Tier 2 other foreign: 5% total => +4.6% bonus.
     "travel_plus_tier2_bonus": {
-        type: "category", match: ["overseas"], rate: 0.046, desc: "T+其他外幣 (4.6%)",
+        type: "category", match: ["overseas"], rate: 0.046, desc: "Travel+ 其他外幣 (4.6%)",
         mode: "add", setting_key: "travel_plus_promo_enabled",
         cap_mode: "reward", cap_limit: 500, cap_key: "travel_plus_reward_cap",
-        req_mission_spend: 6000, req_mission_key: "spend_hangseng_travel_plus"
+        req_mission_spend: 6000, req_mission_key: "spend_hangseng_travel_plus",
+        valid_from: "2026-01-01", valid_to: "2026-12-31",
+        eligible_check: (cat, ctx) => !ctx.isOnline && cat !== "travel_plus_tier1" // Exclude designated tier1 bucket to avoid double-count.
     },
     // Dining: 5% Total => 4.6% Bonus.
     "travel_plus_dining_bonus": {
-        type: "category", match: ["dining"], rate: 0.046, desc: "T+餐飲 (4.6%)",
+        type: "category", match: ["dining"], rate: 0.046, desc: "Travel+ 餐飲 (4.6%)",
         mode: "add", setting_key: "travel_plus_promo_enabled",
         cap_mode: "reward", cap_limit: 500, cap_key: "travel_plus_reward_cap",
-        req_mission_spend: 6000, req_mission_key: "spend_hangseng_travel_plus"
+        req_mission_spend: 6000, req_mission_key: "spend_hangseng_travel_plus",
+        valid_from: "2026-01-01", valid_to: "2026-12-31"
     },
 
     // University
@@ -355,9 +378,46 @@ const modulesDB = {
 
     // enJoy
     // Points system.
-    "enjoy_base": { type: "always", rate: 0.005, desc: "基本 (0.5%)" }, // 1X
-    "enjoy_dining": { type: "category", match: ["dining_enjoy"], rate: 0.015, desc: "指定食肆 (+1.5%)" }, // 4X Total (2%)
-    "enjoy_retail": { type: "category", match: ["retail_enjoy"], rate: 0.01, desc: "指定零售 (+1%)" },  // 3X Total (1.5%)
+    "enjoy_base": { type: "always", rate: 1, desc: "基本 1X" },
+    "enjoy_4x": {
+        type: "category",
+        match: ["enjoy_4x"],
+        rate: 4,
+        desc: "enJoy 指定商戶 4X",
+        mode: "replace",
+        setting_key: "hangseng_enjoy_points4x_enabled"
+    },
+    "enjoy_3x": {
+        type: "category",
+        match: ["enjoy_3x"],
+        rate: 3,
+        desc: "enJoy 指定商戶 3X",
+        mode: "replace",
+        setting_key: "hangseng_enjoy_points4x_enabled"
+    },
+    "enjoy_2x": {
+        type: "category",
+        match: ["enjoy_2x"],
+        rate: 2,
+        desc: "enJoy 指定商戶 2X",
+        mode: "replace",
+        setting_key: "hangseng_enjoy_points4x_enabled"
+    },
+    // Legacy hidden categories (kept for existing ledger data)
+    "enjoy_dining": {
+        type: "category",
+        match: ["dining_enjoy"],
+        rate: 3,
+        desc: "enJoy 指定餐飲（舊）+3X",
+        setting_key: "hangseng_enjoy_points4x_enabled"
+    },
+    "enjoy_retail": {
+        type: "category",
+        match: ["retail_enjoy"],
+        rate: 2,
+        desc: "enJoy 指定零售（舊）+2X",
+        setting_key: "hangseng_enjoy_points4x_enabled"
+    },
 
     // --- BOC Modules ---
     // Cheers VI

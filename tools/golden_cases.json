@@ -297,7 +297,7 @@
         "date": "2025-11-10",
         "displayMode": "miles",
         "isOnline": false,
-        "paymentMethod": "mobile",
+        "paymentMethod": "apple_pay",
         "ownedCards": [
           "citi_rewards",
           "hsbc_red"
@@ -333,7 +333,7 @@
       },
       "expected": {
         "topCardId": "citi_rewards",
-        "topValue": 144,
+        "topValue": 53.333333,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -675,7 +675,7 @@
       "input": {
         "amount": 2500,
         "category": "travel_plus_tier1",
-        "date": "2025-04-02",
+        "date": "2026-04-02",
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
@@ -703,7 +703,7 @@
       "id": "case_026_travel_plus_tier1_mo_met",
       "input": {
         "amount": 2500,
-        "date": "2025-05-01",
+        "date": "2026-05-01",
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
@@ -732,7 +732,7 @@
       "id": "case_027_travel_plus_tier2_other_met",
       "input": {
         "amount": 2500,
-        "date": "2025-05-01",
+        "date": "2026-05-01",
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
@@ -761,7 +761,7 @@
       "id": "case_028_travel_plus_tier1_mo_locked",
       "input": {
         "amount": 2500,
-        "date": "2025-05-01",
+        "date": "2026-05-01",
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
@@ -1201,6 +1201,441 @@
           "hasLocked": false,
           "hasCapped": false,
           "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_044_citi_rewards_shopping_mobile_higher_only",
+      "input": {
+        "amount": 800,
+        "category": "apparel",
+        "date": "2025-11-10",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "citi_rewards"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_rewards",
+        "topValue": 432,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_045_citi_rewards_bonus_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "entertainment",
+        "date": "2025-11-10",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_rewards"
+        ],
+        "settings": {},
+        "usage": {
+          "citi_rewards_bonus_cap": 113300
+        }
+      },
+      "expected": {
+        "topCardId": "citi_rewards",
+        "topValue": 73.333333,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_046_citi_prestige_default_no_annual_bonus",
+      "input": {
+        "amount": 1200,
+        "category": "general",
+        "date": "2025-11-10",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_prestige"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_prestige",
+        "topValue": 200,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_047_citi_prestige_bonus_wealth_year10_local",
+      "input": {
+        "amount": 1200,
+        "category": "general",
+        "date": "2025-11-10",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_prestige"
+        ],
+        "settings": {
+          "citi_prestige_bonus_enabled": true,
+          "citi_prestige_tenure_years": 10,
+          "citi_prestige_wealth_client": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_prestige",
+        "topValue": 230,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_048_citi_prestige_bonus_wealth_year10_overseas",
+      "input": {
+        "amount": 1200,
+        "category": "overseas_other",
+        "date": "2025-11-10",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "citi_prestige"
+        ],
+        "settings": {
+          "citi_prestige_bonus_enabled": true,
+          "citi_prestige_tenure_years": 10,
+          "citi_prestige_wealth_client": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_prestige",
+        "topValue": 330,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_049_hangseng_enjoy_4x_enabled",
+      "input": {
+        "amount": 1000,
+        "category": "enjoy_4x",
+        "date": "2025-11-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_enjoy"
+        ],
+        "settings": {
+          "hangseng_enjoy_points4x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hangseng_enjoy",
+        "topValue": 20,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_050_hangseng_enjoy_4x_disabled_fallback_base",
+      "input": {
+        "amount": 1000,
+        "category": "enjoy_4x",
+        "date": "2025-11-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_enjoy"
+        ],
+        "settings": {
+          "hangseng_enjoy_points4x_enabled": false
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hangseng_enjoy",
+        "topValue": 5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_051_hangseng_enjoy_legacy_dining_compatible",
+      "input": {
+        "amount": 1000,
+        "category": "dining_enjoy",
+        "date": "2025-11-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_enjoy"
+        ],
+        "settings": {
+          "hangseng_enjoy_points4x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hangseng_enjoy",
+        "topValue": 20,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_052_mmpower_selected_category_enabled",
+      "input": {
+        "amount": 1000,
+        "category": "electronics",
+        "date": "2025-11-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_mmpower"
+        ],
+        "settings": {
+          "mmpower_promo_enabled": true,
+          "mmpower_selected_categories": [
+            "dining",
+            "electronics"
+          ]
+        },
+        "usage": {
+          "spend_hangseng_mmpower": 6000
+        }
+      },
+      "expected": {
+        "topCardId": "hangseng_mmpower",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_053_mmpower_unselected_category_base_only",
+      "input": {
+        "amount": 1000,
+        "category": "entertainment",
+        "date": "2025-11-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_mmpower"
+        ],
+        "settings": {
+          "mmpower_promo_enabled": true,
+          "mmpower_selected_categories": [
+            "dining",
+            "electronics"
+          ]
+        },
+        "usage": {
+          "spend_hangseng_mmpower": 6000
+        }
+      },
+      "expected": {
+        "topCardId": "hangseng_mmpower",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_054_mmpower_fastfood_excluded_from_selected_dining",
+      "input": {
+        "amount": 1000,
+        "category": "fastfood",
+        "date": "2025-11-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_mmpower"
+        ],
+        "settings": {
+          "mmpower_promo_enabled": true,
+          "mmpower_selected_categories": [
+            "dining",
+            "electronics"
+          ]
+        },
+        "usage": {
+          "spend_hangseng_mmpower": 6000
+        }
+      },
+      "expected": {
+        "topCardId": "hangseng_mmpower",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_055_mmpower_online_foreign_no_double_count",
+      "input": {
+        "amount": 2000,
+        "category": "overseas_other",
+        "date": "2025-11-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_mmpower"
+        ],
+        "settings": {
+          "mmpower_promo_enabled": true
+        },
+        "usage": {
+          "spend_hangseng_mmpower": 6000
+        }
+      },
+      "expected": {
+        "topCardId": "hangseng_mmpower",
+        "topValue": 100,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_056_mmpower_online_selected_no_double_count",
+      "input": {
+        "amount": 2000,
+        "category": "entertainment",
+        "date": "2025-11-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_mmpower"
+        ],
+        "settings": {
+          "mmpower_promo_enabled": true,
+          "mmpower_selected_categories": [
+            "entertainment",
+            "dining"
+          ]
+        },
+        "usage": {
+          "spend_hangseng_mmpower": 6000
+        }
+      },
+      "expected": {
+        "topCardId": "hangseng_mmpower",
+        "topValue": 100,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_057_travel_plus_online_foreign_no_bonus",
+      "input": {
+        "amount": 2500,
+        "category": "overseas_jkt",
+        "date": "2026-06-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_travel_plus"
+        ],
+        "settings": {
+          "travel_plus_promo_enabled": true
+        },
+        "usage": {
+          "spend_hangseng_travel_plus": 8000
+        }
+      },
+      "expected": {
+        "topCardId": "hangseng_travel_plus",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_058_travel_plus_outside_2026_window",
+      "input": {
+        "amount": 2500,
+        "category": "overseas_mo",
+        "date": "2027-01-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_travel_plus"
+        ],
+        "settings": {
+          "travel_plus_promo_enabled": true
+        },
+        "usage": {
+          "spend_hangseng_travel_plus": 8000
+        }
+      },
+      "expected": {
+        "topCardId": "hangseng_travel_plus",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
         }
       }
     }

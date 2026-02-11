@@ -9,6 +9,11 @@ const DATA_RULES = {
             default: "grocery",
             byPrefix: { hsbc: "style" },
             byCardId: { mox_credit: "grocery" }
+        },
+        fastfood: {
+            // Most cards treat fast food as dining; MMPower excludes it from the selected dining bonus.
+            default: "dining",
+            byCardId: { hangseng_mmpower: "fastfood" }
         }
     },
     cardCategoryOverrides: {

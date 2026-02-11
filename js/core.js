@@ -78,6 +78,11 @@ let userProfile = {
         winter_tier2_threshold: 40000,
         red_hot_rewards_enabled: true,
         red_hot_allocation: { dining: 5, world: 0, home: 0, enjoyment: 0, style: 0 },
+        mmpower_selected_categories: ["dining", "electronics"],
+        hangseng_enjoy_points4x_enabled: true,
+        citi_prestige_bonus_enabled: false,
+        citi_prestige_tenure_years: 1,
+        citi_prestige_wealth_client: false,
         boc_amazing_enabled: false,      // 狂賞派 + 狂賞飛
         dbs_black_promo_enabled: false,  // DBS Black $2/里推廣
         fubon_in_promo_enabled: false,   // Fubon iN 網購20X
@@ -100,6 +105,18 @@ function loadUserData() {
             userProfile.settings.winter_tier2_threshold = userProfile.settings.winter_tier1_threshold;
         }
         if (!userProfile.settings.red_hot_allocation) userProfile.settings.red_hot_allocation = { dining: 5, world: 0, home: 0, enjoyment: 0, style: 0 };
+        const mmpowerAllowed = ["dining", "electronics", "entertainment"];
+        const mmpowerRaw = Array.isArray(userProfile.settings.mmpower_selected_categories)
+            ? userProfile.settings.mmpower_selected_categories.map(x => String(x))
+            : [];
+        const mmpowerNormalized = Array.from(new Set(mmpowerRaw.filter(x => mmpowerAllowed.includes(x)))).slice(0, 2);
+        userProfile.settings.mmpower_selected_categories = mmpowerNormalized.length > 0
+            ? mmpowerNormalized
+            : ["dining", "electronics"];
+        if (userProfile.settings.hangseng_enjoy_points4x_enabled === undefined) userProfile.settings.hangseng_enjoy_points4x_enabled = true;
+        if (userProfile.settings.citi_prestige_bonus_enabled === undefined) userProfile.settings.citi_prestige_bonus_enabled = false;
+        if (userProfile.settings.citi_prestige_tenure_years === undefined) userProfile.settings.citi_prestige_tenure_years = 1;
+        if (userProfile.settings.citi_prestige_wealth_client === undefined) userProfile.settings.citi_prestige_wealth_client = false;
         if (!userProfile.stats) userProfile.stats = { totalSpend: 0, totalVal: 0, txCount: 0 };
         if (!userProfile.usage) userProfile.usage = {};
         if (!userProfile.transactions) userProfile.transactions = [];
@@ -120,6 +137,20 @@ function saveUserData() {
 }
 
 function checkCap(key, limit) { const u = userProfile.usage[key] || 0; return { used: u, remaining: Math.max(0, limit - u), isMaxed: u >= limit }; }
+
+function getCitiPrestigeBonusPercentForSettings(settings) {
+    const s = settings || {};
+    if (!s.citi_prestige_bonus_enabled) return 0;
+
+    let years = Math.floor(Number(s.citi_prestige_tenure_years) || 1);
+    if (!Number.isFinite(years) || years < 1) years = 1;
+    const hasWealth = !!s.citi_prestige_wealth_client;
+
+    if (years >= 10) return hasWealth ? 30 : 15;
+    if (years >= 6) return hasWealth ? 20 : 10;
+    if (years >= 2) return hasWealth ? 15 : 7;
+    return hasWealth ? 10 : 5;
+}
 
 function getForeignFeeRate(card, category) {
     if (!card) return 0;
@@ -871,6 +902,7 @@ function isRetroactive(mod) {
 
 function isReplacerEligible(mod, amount, resolvedCategory, userProfile, includeLocked, ctx, missionDeltaByKey) {
     if (!mod || mod.type !== 'category' || mod.mode !== 'replace') return false;
+    if (mod.setting_key && userProfile && userProfile.settings && userProfile.settings[mod.setting_key] === false) return false;
     const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, ctx && ctx.isOnline) : true;
     if (!matchOk) return false;
     if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, ctx || {})) return false;
@@ -1040,6 +1072,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         isOnline: !!isOnline,
         isMobilePay: !!isMobilePay,
         paymentMethod: paymentMethod,
+        settings: userProfile.settings || {},
         getMissionSpend: (key) => (Number(userProfile.usage[key]) || 0) + (Number(missionDeltaByKey[key]) || 0)
     };
     let replacerModuleCurrentId = activeModules.find(mid => {
@@ -1139,6 +1172,14 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             }
         }
         else if (mod.type === "red_hot_fixed_bonus") { const rhCat = getRedHotCategory(category); if (rhCat) { rate = mod.multiplier * mod.rate_per_x; hit = true; } }
+            else if (mod.type === "prestige_annual_bonus") {
+                const pct = getCitiPrestigeBonusPercentForSettings(userProfile.settings);
+                if (pct > 0) {
+                    rate = pct / 100;
+                    tempDesc = `${mod.desc} (+${pct}%)`;
+                    hit = true;
+                }
+            }
             else if (mod.type === "guru_capped") {
                 const res = calculateGuru(mod, amount, parseInt(userProfile.settings.guru_level), category);
                 if (res.entry) {

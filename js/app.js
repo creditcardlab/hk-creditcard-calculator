@@ -15,6 +15,18 @@ function init() {
     if (!userProfile.usage[guruUsageKeys.spendKey]) userProfile.usage[guruUsageKeys.spendKey] = 0;
     if (!userProfile.usage[guruUsageKeys.rewardKey]) userProfile.usage[guruUsageKeys.rewardKey] = 0;
     if (userProfile.settings.deduct_fcf_ranking === undefined) userProfile.settings.deduct_fcf_ranking = false;
+    {
+        const allowed = ["dining", "electronics", "entertainment"];
+        const raw = Array.isArray(userProfile.settings.mmpower_selected_categories)
+            ? userProfile.settings.mmpower_selected_categories.map(x => String(x))
+            : [];
+        const normalized = Array.from(new Set(raw.filter(x => allowed.includes(x)))).slice(0, 2);
+        userProfile.settings.mmpower_selected_categories = normalized.length > 0 ? normalized : ["dining", "electronics"];
+    }
+    if (userProfile.settings.hangseng_enjoy_points4x_enabled === undefined) userProfile.settings.hangseng_enjoy_points4x_enabled = true;
+    if (userProfile.settings.citi_prestige_bonus_enabled === undefined) userProfile.settings.citi_prestige_bonus_enabled = false;
+    if (userProfile.settings.citi_prestige_tenure_years === undefined) userProfile.settings.citi_prestige_tenure_years = 1;
+    if (userProfile.settings.citi_prestige_wealth_client === undefined) userProfile.settings.citi_prestige_wealth_client = false;
     migrateWinterUsage();
     migrateCathayCxuoQuarterly();
     migrateDualCapUsageTracking();
@@ -620,6 +632,32 @@ window.saveDrop = function (k, v) {
     refreshUI();
 }
 
+window.toggleMmpowerSelected = function (key, checked) {
+    const valid = ["dining", "electronics", "entertainment"];
+    if (!valid.includes(key)) return;
+    const cur = Array.isArray(userProfile.settings.mmpower_selected_categories)
+        ? [...userProfile.settings.mmpower_selected_categories]
+        : ["dining", "electronics"];
+
+    const idx = cur.indexOf(key);
+    if (checked) {
+        if (idx === -1) {
+            if (cur.length >= 2) {
+                alert("MMPower 自選類別最多只可選 2 項。");
+                refreshUI();
+                return;
+            }
+            cur.push(key);
+        }
+    } else if (idx !== -1) {
+        cur.splice(idx, 1);
+    }
+
+    userProfile.settings.mmpower_selected_categories = cur;
+    saveUserData();
+    refreshUI();
+}
+
 window.saveWinterThresholds = function () {
     const t1El = document.getElementById('st-winter-tier1');
     const t2El = document.getElementById('st-winter-tier2');
@@ -631,6 +669,15 @@ window.saveWinterThresholds = function () {
 
     userProfile.settings.winter_tier1_threshold = tier1;
     userProfile.settings.winter_tier2_threshold = tier2;
+    saveUserData();
+    refreshUI();
+}
+
+window.savePrestigeTenureYears = function () {
+    const yearsEl = document.getElementById('st-prestige-years');
+    let years = yearsEl ? parseInt(yearsEl.value, 10) : 1;
+    if (!Number.isFinite(years) || years < 1) years = 1;
+    userProfile.settings.citi_prestige_tenure_years = years;
     saveUserData();
     refreshUI();
 }
@@ -693,6 +740,18 @@ window.importData = function (event) {
             if (userProfile.settings.winter_tier2_threshold < userProfile.settings.winter_tier1_threshold) {
                 userProfile.settings.winter_tier2_threshold = userProfile.settings.winter_tier1_threshold;
             }
+            {
+                const allowed = ["dining", "electronics", "entertainment"];
+                const raw = Array.isArray(userProfile.settings.mmpower_selected_categories)
+                    ? userProfile.settings.mmpower_selected_categories.map(x => String(x))
+                    : [];
+                const normalized = Array.from(new Set(raw.filter(x => allowed.includes(x)))).slice(0, 2);
+                userProfile.settings.mmpower_selected_categories = normalized.length > 0 ? normalized : ["dining", "electronics"];
+            }
+            if (userProfile.settings.hangseng_enjoy_points4x_enabled === undefined) userProfile.settings.hangseng_enjoy_points4x_enabled = true;
+            if (userProfile.settings.citi_prestige_bonus_enabled === undefined) userProfile.settings.citi_prestige_bonus_enabled = false;
+            if (userProfile.settings.citi_prestige_tenure_years === undefined) userProfile.settings.citi_prestige_tenure_years = 1;
+            if (userProfile.settings.citi_prestige_wealth_client === undefined) userProfile.settings.citi_prestige_wealth_client = false;
             saveUserData();
             refreshUI();
 

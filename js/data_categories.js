@@ -11,6 +11,7 @@ const categoriesDB = {
     // Core / UI
     general: { label: "一般 本地零售 (Local Retail)", order: 1 },
     dining: { label: "🍽️ 餐飲 (Dining)", order: 2, red_hot: "dining" },
+    fastfood: { label: "🍔 快餐店 (Fast Food)", order: 2.1 },
     online: { label: "💻 網上購物 (Online)", order: 3, hidden: true },
 
     overseas: { label: "🌍 海外 (母類)", hidden: true, red_hot: "world" },
@@ -47,7 +48,7 @@ const categoriesDB = {
     other: { label: "❓ 其他", hidden: true },
     online_foreign: { label: "🌐 網上外幣", hidden: true, parent: "overseas" },
     overseas_jktt: { label: "🇯🇵 海外 (日本-舊)", hidden: true, parent: "overseas" }, // legacy typo
-    travel_plus_tier1: { label: "✈️ Travel+ Tier1", hidden: true },
+    travel_plus_tier1: { label: "✈️ Travel+ Tier1", hidden: true, parent: "overseas" },
     charity: { label: "❤️ 慈善", hidden: true },
     streaming: { label: "🎬 串流/訂閱", hidden: true },
     wechat: { label: "💬 WeChat Pay", hidden: true },
@@ -71,8 +72,11 @@ const categoriesDB = {
     citi_club_telecom: { label: "📶 The Club 電訊 (csl/1010/Now TV/網上行)", order: 109, req: "citi_club" },
     chill_merchant: { label: "🎟️ Chill 指定商戶", order: 110, req: "boc_chill" },
     go_merchant: { label: "🛍️ Go 指定商戶", order: 111, req: "boc_go_diamond" },
+    enjoy_4x: { label: "🟡 enJoy 指定商戶 4X（2%）", order: 112, req: "hangseng_enjoy" },
+    enjoy_3x: { label: "🟠 enJoy 指定商戶 3X（1.5%）", order: 113, req: "hangseng_enjoy" },
+    enjoy_2x: { label: "🔵 enJoy 指定商戶 2X（1%）", order: 114, req: "hangseng_enjoy" },
 
     // Enjoy-specific (hidden)
-    dining_enjoy: { label: "🍽️ enJoy 指定餐飲", hidden: true },
-    retail_enjoy: { label: "🛍️ enJoy 指定零售", hidden: true }
+    dining_enjoy: { label: "🍽️ enJoy 指定餐飲（舊）", hidden: true },
+    retail_enjoy: { label: "🛍️ enJoy 指定零售（舊）", hidden: true }
 };

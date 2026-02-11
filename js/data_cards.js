@@ -171,7 +171,7 @@ const cardsDB = [
         currency: "CITI_PM_PTS",
         type: "master",
         fcf: 0.0195,
-        rewardModules: ["citi_prestige_base", "citi_prestige_overseas"],
+        rewardModules: ["citi_prestige_base", "citi_prestige_overseas", "citi_prestige_annual_bonus"],
         trackers: [],
         redemption: {
           unit: "積分",
@@ -339,7 +339,7 @@ const cardsDB = [
         currency: "YUU_Points",
         type: "visa",
         fcf: 0.0195,
-        rewardModules: ["enjoy_base", "enjoy_dining", "enjoy_retail"],
+        rewardModules: ["enjoy_base", "enjoy_4x", "enjoy_3x", "enjoy_2x", "enjoy_dining", "enjoy_retail"],
         trackers: [],
         redemption: {
           unit: "YUU",

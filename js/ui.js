@@ -673,12 +673,16 @@ function toggleCategoryHelp() {
         'red_designated': showRedMerchantList,
         'em_designated_spend': showEveryMileMerchantList,
         'grocery': showSupermarketList,
+        'fastfood': showFastfoodTips,
         'tunnel': showOctopusTips,
         'china_consumption': showChinaTips,
         'smart_designated': showSmartMerchantList,
         'citi_club_merchant': showClubMerchantList,
         'club_shopping': showClubShoppingTips,
-        'citi_club_telecom': showClubTelecomTips
+        'citi_club_telecom': showClubTelecomTips,
+        'enjoy_4x': showEnjoy4xInfo,
+        'enjoy_3x': showEnjoy3xInfo,
+        'enjoy_2x': showEnjoy2xInfo
     };
 
     let handler = helpMap[cat];
@@ -712,6 +716,27 @@ function showSupermarketList() { alert("【🥦 超市類別定義】\n\n✅ 認
 function showRedMerchantList() { alert("【HSBC Red 指定 (8%)】\n\n🍽️ 壽司郎, 譚仔, Coffee Academïcs\n👕 GU, Decathlon, Uniqlo\n🎮 NAMCO"); }
 function showEveryMileMerchantList() { alert("【EveryMile 指定 ($2/里)】\n\n🚌 交通 (港鐵/巴士/Uber)\n☕ 咖啡 (Starbucks/Pacific)\n🌏 旅遊 (Klook/Agoda)"); }
 function showChinaTips() { alert("【🇨🇳 中國內地/澳門】\n\n推薦：Pulse (手機支付+2%)、EveryMile ($2/里)、MMPower (6%)"); }
+function showFastfoodTips() { alert("【快餐店 (Fast Food)】\n\n💡 呢個分類主要俾 MMPower 用作「餐飲自選不包括快餐店」。\n\n- 一般其他卡：系統會當作 Dining 處理\n- Hang Seng MMPower：只計基本回贈，不食自選額外 1%"); }
+function showEnjoyPoints4xGuide(tierLabel) {
+    const url = "https://cms.hangseng.com/cms/emkt/pmo/grp06/p13/chi/index.html#Points4X";
+    const msg = `【Hang Seng enJoy ${tierLabel}】\n\n` +
+        "換算（本工具）：\n" +
+        "- 4X = 2%\n" +
+        "- 3X = 1.5%\n" +
+        "- 2X = 1%\n" +
+        "- 其他簽賬 = 1X = 0.5%\n\n" +
+        "快速記法（你可先用呢個分類）：\n" +
+        "- 2X（多為美心集團高檔食肆）\n" +
+        "- 3X（多為 yuu 旗下便利店及超市）\n" +
+        "- 4X（多為美心集團輕食/平民食肆）\n\n" +
+        "⚠️ 如唔肯定商戶屬於邊一檔，先用較保守檔位或一般簽賬；最終以官方列表為準。";
+    if (confirm(`${msg}\n\n按「確定」開啟恒生官方 Points4X 頁面。`)) {
+        window.open(url, "_blank", "noopener");
+    }
+}
+function showEnjoy4xInfo() { showEnjoyPoints4xGuide("4X（2%）"); }
+function showEnjoy3xInfo() { showEnjoyPoints4xGuide("3X（1.5%）"); }
+function showEnjoy2xInfo() { showEnjoyPoints4xGuide("2X（1%）"); }
 
 // Helper: Create Progress Card Component
 function createProgressCard(config) {
@@ -1210,6 +1235,72 @@ function renderSettings(userProfile) {
             <option value="fashion">潮流教主 (Fashionista)</option>
             <option value="charity">慈善關愛者 (Sustainability & Charity)</option>
         </select>
+    </div>`;
+    const mmpowerSelected = Array.isArray(userProfile.settings.mmpower_selected_categories)
+        ? userProfile.settings.mmpower_selected_categories
+        : ["dining", "electronics"];
+    const mmpowerSet = new Set(mmpowerSelected);
+    html += `<div class="mb-4 border p-3 rounded-xl bg-orange-50 border-orange-100">
+        <div class="text-xs font-bold text-orange-800 mb-2">MMPower 自選簽賬類別（3選2）</div>
+        <div class="space-y-2 text-xs">
+            <label class="flex justify-between items-center bg-white border border-orange-100 rounded p-2">
+                <span>🍽️ 餐飲（不包括快餐店）</span>
+                <input type="checkbox" ${mmpowerSet.has("dining") ? 'checked' : ''} onchange="toggleMmpowerSelected('dining', this.checked)">
+            </label>
+            <label class="flex justify-between items-center bg-white border border-orange-100 rounded p-2">
+                <span>🔌 電子產品</span>
+                <input type="checkbox" ${mmpowerSet.has("electronics") ? 'checked' : ''} onchange="toggleMmpowerSelected('electronics', this.checked)">
+            </label>
+            <label class="flex justify-between items-center bg-white border border-orange-100 rounded p-2">
+                <span>🎟️ 娛樂（含串流）</span>
+                <input type="checkbox" ${mmpowerSet.has("entertainment") ? 'checked' : ''} onchange="toggleMmpowerSelected('entertainment', this.checked)">
+            </label>
+        </div>
+        <div class="mt-2 text-[11px] text-orange-800">現已選：${mmpowerSelected.length}/2（最多 2 項）</div>
+    </div>`;
+
+    html += `<div class="mb-4 border p-3 rounded-xl bg-yellow-50 border-yellow-100">
+        <div class="flex justify-between items-center">
+            <label class="text-xs font-bold text-yellow-800">Hang Seng enJoy：已綁定 yuu（Points4X 生效）</label>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="st-enjoy-points4x" class="sr-only peer" ${userProfile.settings.hangseng_enjoy_points4x_enabled ? 'checked' : ''} onchange="toggleSetting('hangseng_enjoy_points4x_enabled')">
+                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-yellow-500"></div>
+            </label>
+        </div>
+        <div class="mt-2 text-[11px] text-yellow-800">未綁定時建議關閉，上面 enJoy 4X/3X/2X 類別會回落基本 1X（0.5%）。</div>
+    </div>`;
+
+    const prestigeEnabled = !!userProfile.settings.citi_prestige_bonus_enabled;
+    const prestigeYears = Math.max(1, parseInt(userProfile.settings.citi_prestige_tenure_years, 10) || 1);
+    const prestigeWealth = !!userProfile.settings.citi_prestige_wealth_client;
+    const prestigePct = (typeof getCitiPrestigeBonusPercentForSettings === "function")
+        ? getCitiPrestigeBonusPercentForSettings({
+            citi_prestige_bonus_enabled: prestigeEnabled,
+            citi_prestige_tenure_years: prestigeYears,
+            citi_prestige_wealth_client: prestigeWealth
+        })
+        : 0;
+    html += `<div class="mb-4 border p-3 rounded-xl bg-blue-50 border-blue-100">
+        <div class="flex justify-between items-center mb-2">
+            <label class="text-xs font-bold text-blue-700">Citi Prestige 年資額外積分</label>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="st-prestige-bonus" class="sr-only peer" ${prestigeEnabled ? 'checked' : ''} onchange="toggleSetting('citi_prestige_bonus_enabled')">
+                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer peer-checked:bg-blue-500"></div>
+            </label>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+            <div>
+                <label class="block text-blue-700 font-bold mb-1">於花旗年期（年）</label>
+                <input id="st-prestige-years" type="number" min="1" class="w-full p-2 rounded bg-white border border-blue-100" value="${prestigeYears}" onchange="savePrestigeTenureYears()">
+            </div>
+            <div class="flex items-end">
+                <label class="w-full flex justify-between items-center bg-white border border-blue-100 rounded p-2">
+                    <span class="text-blue-700 font-bold">Citigold/私人客戶</span>
+                    <input type="checkbox" ${prestigeWealth ? 'checked' : ''} onchange="toggleSetting('citi_prestige_wealth_client')">
+                </label>
+            </div>
+        </div>
+        <div class="mt-2 text-[11px] text-blue-700">現時對應年資獎賞：<span class="font-bold">${prestigePct}%</span>（以有效簽賬計）</div>
     </div>`;
 
     const rhEnabled = userProfile.settings.red_hot_rewards_enabled !== false;
