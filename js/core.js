@@ -1069,6 +1069,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     // Check for Replacer Module first (Optimization)
     // This replacerModule is for category-specific 'replace' mode modules
     const ctx = {
+        amount: Number(amount) || 0,
         isOnline: !!isOnline,
         isMobilePay: !!isMobilePay,
         paymentMethod: paymentMethod,

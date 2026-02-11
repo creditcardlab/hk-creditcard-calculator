@@ -245,11 +245,28 @@ const cardsDB = [
     },
     {
         id: "dbs_eminent",
-        name: "DBS Eminent Visa",
+        name: "DBS Eminent Signature",
         currency: "DBS_Dollar_Others",
         type: "visa",
+        variant: "signature",
         fcf: 0.0195,
-        rewardModules: ["dbs_eminent_bonus", "dbs_eminent_base"],
+        rewardModules: ["dbs_eminent_bonus", "dbs_eminent_other_bonus", "dbs_eminent_base"],
+        trackers: [],
+        redemption: {
+          unit: "DBS$",
+          min: 0,
+          fee: "HK$100/5,000里",
+          ratio: "DBS$72 = 1,000里 或 DBS$1 = $1"
+        }
+    },
+    {
+        id: "dbs_eminent_platinum",
+        name: "DBS Eminent Platinum",
+        currency: "DBS_Dollar_Others",
+        type: "visa",
+        variant: "platinum",
+        fcf: 0.0195,
+        rewardModules: ["dbs_eminent_bonus_platinum", "dbs_eminent_other_bonus_platinum", "dbs_eminent_base"],
         trackers: [],
         redemption: {
           unit: "DBS$",

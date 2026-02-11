@@ -258,11 +258,56 @@ const modulesDB = {
         secondary_cap_key: "dbs_black_bonus_cap_2026", secondary_cap_limit: 2880
     },
 
+    // DBS Eminent 2026 (Signature cap model):
+    // - Designated categories (single tx >= HK$300): 5% total = 0.4% base + 4.6% bonus
+    // - Other retail (incl. designated < HK$300): 1% total = 0.4% base + 0.6% bonus
     "dbs_eminent_bonus": {
-        type: "category", match: ["dining", "gym", "sportswear", "medical"], rate: 0.05, desc: "指定類別 (5%)", mode: "replace",
-        min_spend: 300, cap_limit: 8000, cap_key: "dbs_eminent_bonus_cap"
+        type: "category", match: ["dining", "gym", "sportswear", "medical"], rate: 0.046, desc: "指定類別額外 (+4.6%，單一簽賬滿$300)",
+        mode: "add", min_spend: 300,
+        display_name_zhhk: "DBS Eminent Signature 指定類別額外回贈",
+        cap_limit: 8000, cap_key: "dbs_eminent_bonus_cap",
+        cap: { key: "dbs_eminent_bonus_cap", period: "month" }
     },
-    "dbs_eminent_base": { type: "always", rate: 0.01, desc: "其他零售 (1%)", cap_limit: 20000, cap_key: "dbs_eminent_base_cap" },
+    "dbs_eminent_other_bonus": {
+        type: "category",
+        match: ["general", "dining", "gym", "sportswear", "medical", "transport", "grocery", "travel", "entertainment", "apparel", "health_beauty", "telecom", "electronics", "online", "overseas", "alipay", "wechat", "payme", "oepay", "streaming", "charity"],
+        rate: 0.006, desc: "其他零售額外 (+0.6%)",
+        mode: "add",
+        // For designated categories with single tx >= HK$300, only the 5% designated bucket should apply.
+        eligible_check: (cat, ctx) => {
+            const designated = new Set(["dining", "gym", "sportswear", "medical"]);
+            if (!designated.has(cat)) return true;
+            return Number((ctx && ctx.amount) || 0) < 300;
+        },
+        display_name_zhhk: "DBS Eminent Signature 其他零售額外回贈",
+        cap_limit: 20000, cap_key: "dbs_eminent_base_cap",
+        cap: { key: "dbs_eminent_base_cap", period: "month" }
+    },
+    // DBS Eminent Platinum 2026:
+    // - Same rates/threshold as Signature, lower caps:
+    //   designated cap HK$4,000 ; other retail cap HK$15,000 (monthly).
+    "dbs_eminent_bonus_platinum": {
+        type: "category", match: ["dining", "gym", "sportswear", "medical"], rate: 0.046, desc: "指定類別額外 (+4.6%，單一簽賬滿$300)",
+        mode: "add", min_spend: 300,
+        display_name_zhhk: "DBS Eminent Platinum 指定類別額外回贈",
+        cap_limit: 4000, cap_key: "dbs_eminent_bonus_cap_platinum",
+        cap: { key: "dbs_eminent_bonus_cap_platinum", period: "month" }
+    },
+    "dbs_eminent_other_bonus_platinum": {
+        type: "category",
+        match: ["general", "dining", "gym", "sportswear", "medical", "transport", "grocery", "travel", "entertainment", "apparel", "health_beauty", "telecom", "electronics", "online", "overseas", "alipay", "wechat", "payme", "oepay", "streaming", "charity"],
+        rate: 0.006, desc: "其他零售額外 (+0.6%)",
+        mode: "add",
+        eligible_check: (cat, ctx) => {
+            const designated = new Set(["dining", "gym", "sportswear", "medical"]);
+            if (!designated.has(cat)) return true;
+            return Number((ctx && ctx.amount) || 0) < 300;
+        },
+        display_name_zhhk: "DBS Eminent Platinum 其他零售額外回贈",
+        cap_limit: 15000, cap_key: "dbs_eminent_base_cap_platinum",
+        cap: { key: "dbs_eminent_base_cap_platinum", period: "month" }
+    },
+    "dbs_eminent_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
 
     "dbs_compass_grocery_wed": {
         type: "category", match: ["grocery"], rate: 0.08, desc: "超市 (8% 只限週三)", mode: "replace",

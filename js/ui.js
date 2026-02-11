@@ -912,6 +912,9 @@ function renderDashboard(userProfile) {
             const title = (mod.display_name_zhhk && String(mod.display_name_zhhk).trim())
                 ? String(mod.display_name_zhhk).trim()
                 : String(mod.desc || mod.id || "").trim();
+            const progressLabel = (mod.progress_label_zhhk && String(mod.progress_label_zhhk).trim())
+                ? String(mod.progress_label_zhhk).trim()
+                : "💰 回贈進度";
 
             renderedCaps.add(mod.cap_key);
 
@@ -994,7 +997,7 @@ function renderDashboard(userProfile) {
 	            const rewardState = rawUsage >= spendingCap ? "capped" : (unlockMet ? "active" : "locked");
 	            sections.push({
 	                kind: "cap",
-	                label: "💰 回贈進度",
+	                label: progressLabel,
 	                valueText: `${displayPrefix}${Math.floor(displayCurrentVal).toLocaleString()}${displayUnit} / ${displayPrefix}${Math.floor(displayMaxVal).toLocaleString()}${displayUnit}`,
 	                progress: pct,
 	                state: rewardState,

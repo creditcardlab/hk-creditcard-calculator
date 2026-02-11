@@ -1756,6 +1756,189 @@
           "hasPartial": false
         }
       }
+    },
+    {
+      "id": "case_063_dbs_eminent_designated_5pct",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_eminent"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_eminent",
+        "topValue": 50,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_064_dbs_eminent_designated_below_300_falls_to_1pct",
+      "input": {
+        "amount": 200,
+        "category": "dining",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_eminent"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_eminent",
+        "topValue": 2,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_065_dbs_eminent_other_bonus_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_eminent"
+        ],
+        "settings": {},
+        "usage": {
+          "dbs_eminent_base_cap": 19900
+        }
+      },
+      "expected": {
+        "topCardId": "dbs_eminent",
+        "topValue": 4.6,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_066_dbs_eminent_designated_cap_exceeded_base_only",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_eminent"
+        ],
+        "settings": {},
+        "usage": {
+          "dbs_eminent_bonus_cap": 8000
+        }
+      },
+      "expected": {
+        "topCardId": "dbs_eminent",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_067_dbs_eminent_platinum_designated_5pct",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_eminent_platinum"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_eminent_platinum",
+        "topValue": 50,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_068_dbs_eminent_platinum_designated_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_eminent_platinum"
+        ],
+        "settings": {},
+        "usage": {
+          "dbs_eminent_bonus_cap_platinum": 3980
+        }
+      },
+      "expected": {
+        "topCardId": "dbs_eminent_platinum",
+        "topValue": 4.92,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_069_dbs_eminent_platinum_other_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_eminent_platinum"
+        ],
+        "settings": {},
+        "usage": {
+          "dbs_eminent_base_cap_platinum": 14950
+        }
+      },
+      "expected": {
+        "topCardId": "dbs_eminent_platinum",
+        "topValue": 4.3,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
     }
   ],
   "period_cases": [
