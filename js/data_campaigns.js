@@ -13,12 +13,12 @@ const CAMPAIGN_REGISTRY = {
     },
     boc_amazing: {
         settingKey: "boc_amazing_enabled",
-        warningTitle: "狂賞派",
+        warningTitle: "中銀 狂賞派",
         warningDesc: "需登記以賺取回贈"
     },
     boc_amazing_fly: {
         settingKey: "boc_amazing_enabled",
-        warningTitle: "狂賞飛",
+        warningTitle: "中銀 狂賞飛",
         warningDesc: "需登記以賺取回贈"
     },
     mmpower_promo: {
@@ -31,10 +31,15 @@ const CAMPAIGN_REGISTRY = {
         warningTitle: "Travel+",
         warningDesc: "需登記以賺取回贈"
     },
-    fubon_in_promo: {
-        settingKey: "fubon_in_promo_enabled",
-        warningTitle: "Fubon iN",
-        warningDesc: "需登記以賺取回贈"
+    fubon_travel_upgrade_promo: {
+        settingKey: "fubon_travel_upgrade_enabled",
+        warningTitle: "Fubon Platinum 指定本地網購 10X",
+        warningDesc: "需致電 2566-8181 登記"
+    },
+    fubon_infinite_upgrade_promo: {
+        settingKey: "fubon_infinite_upgrade_enabled",
+        warningTitle: "Fubon Infinite 指定本地網購 10X",
+        warningDesc: "需致電 2566-8181 登記"
     },
     dbs_black_promo: {
         settingKey: "dbs_black_promo_enabled",
@@ -44,6 +49,26 @@ const CAMPAIGN_REGISTRY = {
     sim_promo: {
         settingKey: "sim_promo_enabled",
         warningTitle: "sim Credit",
+        warningDesc: "需登記以賺取回贈"
+    },
+    ae_explorer_075x_toggle: {
+        settingKey: "ae_explorer_075x_enabled",
+        warningTitle: "AE Explorer 海外/旅遊 +0.75X",
+        warningDesc: "需登記以賺取回贈"
+    },
+    ae_explorer_2026h1: {
+        settingKey: "ae_explorer_7x_enabled",
+        warningTitle: "AE Explorer 海外/旅遊 +7X",
+        warningDesc: "需登記以賺取回贈"
+    },
+    ae_explorer_online_2026: {
+        settingKey: "ae_explorer_online_5x_enabled",
+        warningTitle: "AE Explorer 指定網上 5X",
+        warningDesc: "需登記以賺取回贈"
+    },
+    ae_platinum_9x_2026h1: {
+        settingKey: "ae_platinum_9x_enabled",
+        warningTitle: "AE Platinum 高達9X",
         warningDesc: "需登記以賺取回贈"
     }
 };
@@ -155,40 +180,273 @@ const CAMPAIGNS = [
     {
         id: "boc_amazing",
         promo_type: "mission_multi_cap",
-        name: "狂賞派",
+        name: "中銀 狂賞派",
         icon: "fas fa-fire",
         theme: "blue",
         period_policy: {
             mode: "recurring",
+            startDate: "2026-01-01",
+            endDate: "2026-06-30",
             period: { type: "month", startDay: 1 }
         },
         cards: ["boc_cheers_vi", "boc_cheers_vs"],
         sections: [
-            { type: "mission", label: "🎯 簽賬任務進度", usageKeys: ["spend_boc_cheers_vi", "spend_boc_cheers_vs"], target: 6000 },
-            { type: "cap", label: "💰 回贈進度 (平日)", capModule: "boc_amazing_weekday", unit: "元" },
-            { type: "cap", label: "💰 回贈進度 (紅日)", capModule: "boc_amazing_holiday", unit: "元" },
-            { type: "cap", label: "💰 網購回贈進度 (平日)", capModule: "boc_amazing_online_weekday", unit: "元" },
-            { type: "cap", label: "💰 網購回贈進度 (紅日)", capModule: "boc_amazing_online_holiday", unit: "元" }
+            { type: "mission", label: "🎯 本地簽賬任務進度", usageKey: "spend_boc_amazing_local", target: 5000 },
+            { type: "cap", label: "💳 平日回贈進度", capModule: "boc_amazing_weekday", unit: "積分" },
+            { type: "cap", label: "💳 紅日回贈進度", capModule: "boc_amazing_holiday", unit: "積分" },
+            { type: "cap", label: "💳 網購平日回贈進度", capModule: "boc_amazing_online_weekday", unit: "積分" },
+            { type: "cap", label: "💳 網購紅日回贈進度", capModule: "boc_amazing_online_holiday", unit: "積分" }
         ],
         capKeys: ["boc_amazing_local_weekday_cap", "boc_amazing_local_holiday_cap", "boc_amazing_online_weekday_cap", "boc_amazing_online_holiday_cap"]
     },
     {
         id: "boc_amazing_fly",
         promo_type: "mission_multi_cap",
-        name: "狂賞飛 (外幣) 季度任務",
+        name: "中銀 狂賞飛 (外幣) 季度任務",
         icon: "fas fa-plane",
         theme: "blue",
         period_policy: {
-            mode: "recurring",
+            mode: "fixed",
+            startDate: "2026-01-01",
+            endDate: "2026-06-30",
             period: { type: "quarter", startMonth: 1, startDay: 1 }
         },
         cards: ["boc_cheers_vi", "boc_cheers_vs"],
         sections: [
-            { type: "mission", label: "🎯 簽賬任務進度", missionModules: ["boc_amazing_fly_cn", "boc_amazing_fly_cn_vs"] },
-            { type: "cap", label: "💰 回贈進度 (中澳)", capModule: "boc_amazing_fly_cn", unit: "分" },
-            { type: "cap", label: "💰 回贈進度 (其他)", capModule: "boc_amazing_fly_other", unit: "分" }
+            { type: "mission", label: "🎯 中澳門檻進度", missionModule: "boc_amazing_fly_cn" },
+            { type: "mission", label: "🎯 其他海外門檻進度", missionModule: "boc_amazing_fly_other" },
+            { type: "cap", label: "💰 回贈進度 (中澳)", capModule: "boc_amazing_fly_cn", unit: "積分" },
+            { type: "cap", label: "💰 回贈進度 (其他)", capModule: "boc_amazing_fly_other", unit: "積分" }
         ],
-        capKeys: ["boc_amazing_fly_cn_cap", "boc_amazing_fly_other_cap"]
+        capKeys: ["boc_amazing_fly_cn_cap_stage", "boc_amazing_fly_other_cap_stage"]
+    },
+    {
+        id: "boc_cheers_vi_2026h1",
+        promo_type: "mission_multi_cap",
+        name: "中銀 Cheers Visa Infinite 10X",
+        icon: "fas fa-star",
+        theme: "blue",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2026-01-01",
+            endDate: "2026-06-30",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["boc_cheers_vi"],
+        sections: [
+            { type: "mission", label: "🎯 每月簽賬任務進度", missionModule: "boc_cheers_vi_dining_2026h1" },
+            { type: "cap", label: "🍽️ 餐飲 10X 回贈進度", capModule: "boc_cheers_vi_dining_2026h1", unit: "積分", unlockModule: "boc_cheers_vi_dining_2026h1" },
+            { type: "cap", label: "🌍 外幣 10X 回贈進度", capModule: "boc_cheers_vi_fx_2026h1", unit: "積分", unlockModule: "boc_cheers_vi_fx_2026h1" },
+            { type: "cap", label: "🧮 10X 總額外積分進度", capKey: "boc_cheers_total_cap_vi", cap: 300000, unit: "積分", unlockModule: "boc_cheers_vi_dining_2026h1" }
+        ],
+        capKeys: ["boc_cheers_dining_cap", "boc_cheers_travel_cap", "boc_cheers_total_cap_vi"]
+    },
+    {
+        id: "boc_cheers_vs_2026h1",
+        promo_type: "mission_multi_cap",
+        name: "中銀 Cheers Visa Signature 8X",
+        icon: "fas fa-star",
+        theme: "blue",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2026-01-01",
+            endDate: "2026-06-30",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["boc_cheers_vs"],
+        sections: [
+            { type: "mission", label: "🎯 每月簽賬任務進度", missionModule: "boc_cheers_vs_dining_2026h1" },
+            { type: "cap", label: "🍽️ 餐飲 8X 回贈進度", capModule: "boc_cheers_vs_dining_2026h1", unit: "積分", unlockModule: "boc_cheers_vs_dining_2026h1" },
+            { type: "cap", label: "🌍 外幣 8X 回贈進度", capModule: "boc_cheers_vs_fx_2026h1", unit: "積分", unlockModule: "boc_cheers_vs_fx_2026h1" },
+            { type: "cap", label: "🧮 8X 總額外積分進度", capKey: "boc_cheers_total_cap_vs", cap: 180000, unit: "積分", unlockModule: "boc_cheers_vs_dining_2026h1" }
+        ],
+        capKeys: ["boc_cheers_dining_cap_vs", "boc_cheers_travel_cap_vs", "boc_cheers_total_cap_vs"]
+    },
+    {
+        id: "boc_chill_offer",
+        promo_type: "mission_cap",
+        name: "中銀 Chill Card 額外回贈",
+        icon: "fas fa-snowflake",
+        theme: "blue",
+        period_policy: {
+            mode: "recurring",
+            startDate: "2025-01-01",
+            endDate: "2026-06-30",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["boc_chill"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_boc_chill_monthly", target: 1500 },
+            { type: "cap", label: "💰 額外回贈進度（共用上限）", capKey: "boc_chill_bonus_cap_2026", cap: 37500, unit: "積分" }
+        ],
+        capKeys: ["boc_chill_bonus_cap_2026"]
+    },
+    {
+        id: "boc_go_offer",
+        promo_type: "cap",
+        name: "中銀 Go Card 額外回贈",
+        icon: "fas fa-mobile-alt",
+        theme: "blue",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2025-01-01",
+            endDate: "2026-06-30",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["boc_go_diamond"],
+        sections: [
+            { type: "cap", label: "🛍️ Go 指定商戶額外回贈進度", capModule: "boc_go_merchant", unit: "積分" },
+            { type: "cap", label: "📱 手機簽賬額外回贈進度", capModule: "boc_go_mobile", unit: "積分" }
+        ],
+        capKeys: ["boc_go_merchant_bonus_cap_2026", "boc_go_mobile_bonus_cap_2026"]
+    },
+    {
+        id: "boc_go_offer_platinum",
+        promo_type: "mission_cap",
+        name: "中銀 Go Card Platinum 額外回贈",
+        icon: "fas fa-mobile-alt",
+        theme: "blue",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2025-01-01",
+            endDate: "2026-06-30",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["boc_go_platinum"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_boc_go_platinum_monthly", target: 1000 },
+            { type: "cap", label: "🛍️ Go 指定商戶額外回贈進度", capModule: "boc_go_platinum_merchant", unit: "積分" },
+            { type: "cap", label: "📱 手機簽賬額外回贈進度", capModule: "boc_go_platinum_mobile", unit: "積分" }
+        ],
+        capKeys: ["boc_go_platinum_merchant_bonus_cap_2026", "boc_go_platinum_mobile_bonus_cap_2026"]
+    },
+    {
+        id: "boc_sogo_mobile_offer",
+        promo_type: "cap",
+        name: "中銀 SOGO Visa Signature 手機支付額外回贈",
+        icon: "fas fa-mobile-alt",
+        theme: "blue",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2026-01-01",
+            endDate: "2026-12-31",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["boc_sogo"],
+        sections: [
+            { type: "cap", label: "📱 手機支付額外回贈進度", capModule: "boc_sogo_mobile_pay", unit: "元" }
+        ],
+        capKeys: ["boc_sogo_mobile_bonus_cap_2026"]
+    },
+    {
+        id: "ae_explorer_075x_toggle",
+        promo_type: "custom",
+        name: "AE Explorer 海外/旅遊額外 +0.75X",
+        icon: "fas fa-globe-asia",
+        theme: "blue",
+        warningOnly: true,
+        period_policy: {
+            mode: "fixed",
+            startDate: "2026-01-02",
+            endDate: "2026-06-30",
+            period: { type: "quarter", startMonth: 1, startDay: 1 }
+        },
+        // 只用作 settings toggle + 未登記 warning（分開登記），不在 dashboard 顯示進度卡。
+        cards: ["ae_explorer"],
+        sections: []
+    },
+    {
+        id: "ae_explorer_2026h1",
+        promo_type: "cap",
+        name: "AE Explorer 海外/旅遊 2026H1",
+        icon: "fas fa-globe-asia",
+        theme: "blue",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2026-01-02",
+            endDate: "2026-06-30",
+            period: { type: "quarter", startMonth: 1, startDay: 1 }
+        },
+        cards: ["ae_explorer"],
+        sections: [
+            { type: "cap", label: "🌍 海外額外 7X（季度首$10,000）", capModule: "ae_explorer_fx_7x_bonus_2026h1", unit: "元" },
+            { type: "cap", label: "✈️ 旅遊/機票額外 7X（季度首$10,000）", capModule: "ae_explorer_travel_7x_bonus_2026h1", unit: "元" }
+        ],
+        capKeys: ["ae_explorer_fx_7x_qcap_2026", "ae_explorer_travel_7x_qcap_2026"]
+    },
+    {
+        id: "ae_explorer_online_2026",
+        promo_type: "cap",
+        name: "AE Explorer 指定網上商戶 5X",
+        icon: "fas fa-shopping-cart",
+        theme: "blue",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2026-01-02",
+            endDate: "2026-12-31",
+            period: { type: "quarter", startMonth: 1, startDay: 1 }
+        },
+        cards: ["ae_explorer"],
+        sections: [
+            { type: "cap", label: "🛒 額外積分進度（每季上限 90,000）", capModule: "ae_explorer_online_5x_bonus_2026", unit: "積分" }
+        ],
+        capKeys: ["ae_explorer_online_5x_bonus_qcap_2026"]
+    },
+    {
+        id: "ae_platinum_9x_2026h1",
+        promo_type: "cap",
+        name: "AE Platinum 外幣/指定商戶高達9X",
+        icon: "fas fa-gem",
+        theme: "blue",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2025-08-20",
+            endDate: "2026-06-30",
+            period: { type: "quarter", startMonth: 1, startDay: 1 }
+        },
+        cards: ["ae_platinum"],
+        sections: [
+            { type: "cap", label: "🌍 外幣額外 5X（每季首$15,000）", capModule: "ae_plat_fx_5x_promo_2026h1", unit: "元" },
+            { type: "cap", label: "✈️ 指定旅遊商戶額外 7X（每季首$15,000）", capModule: "ae_plat_travel", unit: "元" },
+            { type: "cap", label: "🛒 指定日常商戶額外 7X（每季首$15,000）", capModule: "ae_plat_daily", unit: "元" }
+        ],
+        capKeys: ["ae_plat_fx_9x_cap", "ae_plat_travel_cap", "ae_plat_daily_cap"]
+    },
+    {
+        id: "ae_pcc_program_3x_2026",
+        promo_type: "cap",
+        name: "AE Platinum Credit Program 3X 累積進度",
+        icon: "fas fa-layer-group",
+        theme: "blue",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2025-01-01",
+            endDate: "2026-12-31",
+            period: { type: "promo", startDate: "2025-01-01", endDate: "2026-12-31" }
+        },
+        cards: ["ae_platinum_credit"],
+        sections: [
+            { type: "cap", label: "🏁 Program 3X 累積簽賬進度（推廣期）", capModule: "ae_pcc_program_bonus_2x", unit: "元" }
+        ],
+        capKeys: ["ae_pcc_program_3x_cap"]
+    },
+    {
+        id: "ae_pcc_double_points_2026",
+        promo_type: "cap",
+        name: "AE Platinum Credit 指定商戶 Double Points",
+        icon: "fas fa-credit-card",
+        theme: "blue",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2025-01-01",
+            endDate: "2026-12-31",
+            period: { type: "promo", startDate: "2025-01-01", endDate: "2026-12-31" }
+        },
+        cards: ["ae_platinum_credit"],
+        sections: [
+            { type: "cap", label: "🏬 指定商戶額外積分進度（每月上限 30,000）", capModule: "ae_pcc_double_extra_3x_precap", unit: "積分" }
+        ],
+        capKeys: ["ae_pcc_double_cap"]
     },
     {
         id: "mmpower_promo",
@@ -234,6 +492,8 @@ const CAMPAIGNS = [
         theme: "purple",
         period_policy: {
             mode: "recurring",
+            startDate: "2026-01-01",
+            endDate: "2026-06-30",
             period: { type: "month", startDay: 1 }
         },
         cards: ["fubon_in_platinum"],
@@ -242,6 +502,69 @@ const CAMPAIGNS = [
             { type: "cap", label: "💰 回贈進度", capModule: "fubon_in_online", unit: "分", unlockModule: "fubon_in_online" }
         ],
         capKeys: ["fubon_in_bonus_cap"]
+    },
+    {
+        id: "fubon_travel_overseas_2026",
+        promo_type: "multi_cap",
+        name: "Fubon Platinum 海外額外積分",
+        icon: "fas fa-plane",
+        theme: "purple",
+        cards: ["fubon_travel"],
+        sections: [
+            { type: "cap", label: "💰 海外額外積分進度（每月）", capModule: "fubon_travel_tw", unit: "分" },
+            { type: "cap", label: "🧮 海外額外積分進度（全年）", capKey: "fubon_travel_bonus_annual_cap", cap: 240000, unit: "分" }
+        ],
+        capKeys: ["fubon_travel_bonus_monthly_cap", "fubon_travel_bonus_annual_cap"]
+    },
+    {
+        id: "fubon_travel_upgrade_promo",
+        promo_type: "cap",
+        name: "Fubon Platinum 指定本地網購 10X",
+        icon: "fas fa-shopping-bag",
+        theme: "purple",
+        period_policy: {
+            mode: "recurring",
+            startDate: "2026-01-01",
+            endDate: "2026-06-30",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["fubon_travel"],
+        sections: [
+            { type: "cap", label: "💰 回贈進度", capModule: "fubon_travel_upgrade_online", unit: "分" }
+        ],
+        capKeys: ["fubon_travel_upgrade_online_cap"]
+    },
+    {
+        id: "fubon_infinite_upgrade_promo",
+        promo_type: "mission_cap",
+        name: "Fubon Infinite 指定本地網購 10X",
+        icon: "fas fa-crown",
+        theme: "purple",
+        period_policy: {
+            mode: "recurring",
+            startDate: "2026-01-01",
+            endDate: "2026-06-30",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["fubon_infinite"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬任務進度", missionModule: "fubon_infinite_upgrade_online" },
+            { type: "cap", label: "💰 回贈進度", capModule: "fubon_infinite_upgrade_online", unit: "分", unlockModule: "fubon_infinite_upgrade_online" }
+        ],
+        capKeys: ["fubon_infinite_upgrade_online_cap"]
+    },
+    {
+        id: "fubon_infinite_overseas_2026",
+        promo_type: "multi_cap",
+        name: "Fubon Infinite 海外額外積分",
+        icon: "fas fa-plane",
+        theme: "purple",
+        cards: ["fubon_infinite"],
+        sections: [
+            { type: "cap", label: "💰 海外額外積分進度（每月）", capModule: "fubon_infinite_twd_bonus", unit: "分" },
+            { type: "cap", label: "🧮 海外額外積分進度（全年）", capKey: "fubon_infinite_bonus_annual_cap", cap: 240000, unit: "分" }
+        ],
+        capKeys: ["fubon_infinite_bonus_monthly_cap", "fubon_infinite_bonus_annual_cap"]
     },
     {
         id: "dbs_black_promo",
@@ -258,10 +581,34 @@ const CAMPAIGNS = [
         cards: ["dbs_black"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", missionModule: "dbs_black_overseas_promo" },
-            { type: "cap", label: "💰 每月額外回贈進度", capModule: "dbs_black_overseas_promo", unit: "DBS$", unlockModule: "dbs_black_overseas_promo" },
-            { type: "cap", label: "🧮 推廣期額外回贈進度", capKey: "dbs_black_bonus_cap_2026", cap: 2880, unit: "DBS$", unlockModule: "dbs_black_overseas_promo" }
+            { type: "cap", label: "💰 每月額外回贈進度", capModule: "dbs_black_overseas_promo", unit: "DBS$", unlockModule: "dbs_black_overseas_promo" }
         ],
         capKeys: ["dbs_black_bonus_cap_monthly"]
+    },
+    {
+        id: "dbs_compass_superwed",
+        promo_type: "custom",
+        name: "DBS COMPASS 週三超市 8%",
+        icon: "fas fa-shopping-basket",
+        theme: "green",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2026-01-07",
+            endDate: "2026-05-27",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["dbs_compass"],
+        sections: [
+            {
+                type: "cap_rate",
+                label: "💰 回贈進度",
+                usageKey: "dbs_compass_superwed_cap",
+                rate: 0.08,
+                cap: 160,
+                unit: "CD"
+            }
+        ],
+        capKeys: ["dbs_compass_superwed_cap"]
     },
     {
         id: "sim_promo",

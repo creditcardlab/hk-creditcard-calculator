@@ -9,6 +9,12 @@ const ROOT = path.resolve(__dirname, "..");
 const CASES_PATH = path.resolve(__dirname, "golden_cases.json");
 let BASE_PROFILE = null;
 
+function getRuntimeUserProfile() {
+  if (global.userProfile && typeof global.userProfile === "object") return global.userProfile;
+  if (typeof userProfile !== "undefined" && userProfile && typeof userProfile === "object") return userProfile;
+  return {};
+}
+
 function createLocalStorage() {
   const store = new Map();
   return {
@@ -62,7 +68,7 @@ function deepClone(obj) {
 }
 
 function buildProfile(input) {
-  const base = deepClone(BASE_PROFILE || global.userProfile || {});
+  const base = deepClone(BASE_PROFILE || getRuntimeUserProfile() || {});
   const profile = {
     ownedCards: Array.isArray(input.ownedCards) ? [...input.ownedCards] : (base.ownedCards || []),
     settings: { ...(base.settings || {}), ...(input.settings || {}) },
@@ -71,6 +77,7 @@ function buildProfile(input) {
     transactions: []
   };
 
+  if (typeof ensureBooleanSettingDefaults === "function") ensureBooleanSettingDefaults(profile.settings);
   if (profile.settings.deduct_fcf_ranking === undefined) profile.settings.deduct_fcf_ranking = false;
   if (!profile.settings.red_hot_allocation) {
     profile.settings.red_hot_allocation = { dining: 5, world: 0, home: 0, enjoyment: 0, style: 0 };
@@ -158,7 +165,7 @@ function computeExpected(input) {
 
 function main() {
   bootAppContext();
-  BASE_PROFILE = deepClone(global.userProfile || {});
+  BASE_PROFILE = deepClone(getRuntimeUserProfile() || {});
 
   const raw = fs.readFileSync(CASES_PATH, "utf8");
   const payload = JSON.parse(raw);

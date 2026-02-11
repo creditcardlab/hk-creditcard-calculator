@@ -21,19 +21,19 @@ const DATA_RULES = {
             preferenceKey: "live_fresh_pref",
             preferences: {
                 online_foreign: {
-                    matches: ["overseas", "overseas_jkt", "overseas_tw", "overseas_cn", "overseas_other"],
+                    matches: ["overseas", "overseas_jkt", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_cn", "overseas_mo", "overseas_uk_eea", "overseas_other", "online_foreign"],
                     mapTo: "live_fresh_selected"
                 },
                 travel: {
-                    matches: ["travel", "entertainment", "streaming", "cathay_hkexpress"],
+                    matches: ["travel", "entertainment", "streaming", "cathay_hkexpress", "airline", "hotel"],
                     mapTo: "live_fresh_selected"
                 },
                 fashion: {
-                    matches: ["apparel", "health_beauty", "online"],
+                    matches: ["apparel", "health_beauty"],
                     mapTo: "live_fresh_selected"
                 },
                 charity: {
-                    matches: ["charity", "general"],
+                    matches: ["charity"],
                     mapTo: "live_fresh_selected"
                 }
             }
@@ -45,6 +45,8 @@ const DATA_RULES = {
             map: {
                 overseas_cn: "travel_plus_tier1",
                 overseas_jkt: "travel_plus_tier1",
+                overseas_jpkr: "travel_plus_tier1",
+                overseas_th: "travel_plus_tier1",
                 overseas_tw: "travel_plus_tier1",
                 overseas_mo: "travel_plus_tier1"
             }

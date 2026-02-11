@@ -14,6 +14,7 @@ function init() {
     const guruUsageKeys = getGuruUsageKeys();
     if (!userProfile.usage[guruUsageKeys.spendKey]) userProfile.usage[guruUsageKeys.spendKey] = 0;
     if (!userProfile.usage[guruUsageKeys.rewardKey]) userProfile.usage[guruUsageKeys.rewardKey] = 0;
+    if (typeof ensureBooleanSettingDefaults === "function") ensureBooleanSettingDefaults(userProfile.settings);
     if (userProfile.settings.deduct_fcf_ranking === undefined) userProfile.settings.deduct_fcf_ranking = false;
     {
         const allowed = ["dining", "electronics", "entertainment"];
@@ -23,7 +24,6 @@ function init() {
         const normalized = Array.from(new Set(raw.filter(x => allowed.includes(x)))).slice(0, 2);
         userProfile.settings.mmpower_selected_categories = normalized.length > 0 ? normalized : ["dining", "electronics"];
     }
-    if (userProfile.settings.hangseng_enjoy_points4x_enabled === undefined) userProfile.settings.hangseng_enjoy_points4x_enabled = true;
     if (userProfile.settings.citi_prestige_bonus_enabled === undefined) userProfile.settings.citi_prestige_bonus_enabled = false;
     if (userProfile.settings.citi_prestige_tenure_years === undefined) userProfile.settings.citi_prestige_tenure_years = 1;
     if (userProfile.settings.citi_prestige_wealth_client === undefined) userProfile.settings.citi_prestige_wealth_client = false;
@@ -55,7 +55,7 @@ function getGuruUsageKeys() {
 
 function isGuruOverseasCategory(category) {
     if (typeof isCategoryMatch === "function") return isCategoryMatch(["overseas"], category);
-    return ['overseas', 'overseas_jkt', 'overseas_tw', 'overseas_cn', 'overseas_mo', 'overseas_other'].includes(category);
+    return ['overseas', 'overseas_jkt', 'overseas_jpkr', 'overseas_th', 'overseas_tw', 'overseas_cn', 'overseas_mo', 'overseas_other'].includes(category);
 }
 
 function migrateWinterUsage() {
@@ -735,6 +735,7 @@ window.importData = function (event) {
             // Restore data
             userProfile = { ...userProfile, ...importedData };
             if (!userProfile.settings) userProfile.settings = {};
+            if (typeof ensureBooleanSettingDefaults === "function") ensureBooleanSettingDefaults(userProfile.settings);
             if (userProfile.settings.winter_tier1_threshold === undefined) userProfile.settings.winter_tier1_threshold = 20000;
             if (userProfile.settings.winter_tier2_threshold === undefined) userProfile.settings.winter_tier2_threshold = 40000;
             if (userProfile.settings.winter_tier2_threshold < userProfile.settings.winter_tier1_threshold) {
@@ -748,7 +749,6 @@ window.importData = function (event) {
                 const normalized = Array.from(new Set(raw.filter(x => allowed.includes(x)))).slice(0, 2);
                 userProfile.settings.mmpower_selected_categories = normalized.length > 0 ? normalized : ["dining", "electronics"];
             }
-            if (userProfile.settings.hangseng_enjoy_points4x_enabled === undefined) userProfile.settings.hangseng_enjoy_points4x_enabled = true;
             if (userProfile.settings.citi_prestige_bonus_enabled === undefined) userProfile.settings.citi_prestige_bonus_enabled = false;
             if (userProfile.settings.citi_prestige_tenure_years === undefined) userProfile.settings.citi_prestige_tenure_years = 1;
             if (userProfile.settings.citi_prestige_wealth_client === undefined) userProfile.settings.citi_prestige_wealth_client = false;

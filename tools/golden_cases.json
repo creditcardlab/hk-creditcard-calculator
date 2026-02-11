@@ -253,7 +253,7 @@
         "topCardId": "hsbc_red",
         "topValue": 4.8,
         "breakdownFlags": {
-          "hasLocked": false,
+          "hasLocked": true,
           "hasCapped": false,
           "hasPartial": false
         }
@@ -1939,6 +1939,2760 @@
           "hasPartial": true
         }
       }
+    },
+    {
+      "id": "case_070_dbs_compass_superwed_eligible",
+      "input": {
+        "amount": 500,
+        "category": "grocery",
+        "date": "2026-02-11",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_compass"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_compass",
+        "topValue": 40,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_071_dbs_compass_superwed_non_wed_fallback_base",
+      "input": {
+        "amount": 500,
+        "category": "grocery",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_compass"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_compass",
+        "topValue": 2,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_072_dbs_compass_superwed_below_min_spend",
+      "input": {
+        "amount": 299,
+        "category": "grocery",
+        "date": "2026-02-11",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_compass"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_compass",
+        "topValue": 1.196,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_073_dbs_compass_superwed_monthly_cap_partial",
+      "input": {
+        "amount": 300,
+        "category": "grocery",
+        "date": "2026-02-11",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_compass"
+        ],
+        "settings": {},
+        "usage": {
+          "dbs_compass_superwed_cap": 1900
+        }
+      },
+      "expected": {
+        "topCardId": "dbs_compass",
+        "topValue": 8.8,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_074_dbs_compass_superwed_outside_window",
+      "input": {
+        "amount": 500,
+        "category": "grocery",
+        "date": "2026-06-03",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_compass"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_compass",
+        "topValue": 2,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_075_dbs_compass_com_ewallet_bonus_cap_partial",
+      "input": {
+        "amount": 10000,
+        "category": "alipay",
+        "date": "2026-03-11",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_compass"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_compass",
+        "topValue": 240,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_076_dbs_compass_com_ewallet_outside_window",
+      "input": {
+        "amount": 1000,
+        "category": "alipay",
+        "date": "2026-07-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_compass"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_compass",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_077_dbs_live_fresh_selected_online_54pct",
+      "input": {
+        "amount": 1000,
+        "category": "travel",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_live_fresh"
+        ],
+        "settings": {
+          "live_fresh_pref": "travel"
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_live_fresh",
+        "topValue": 54,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_078_dbs_live_fresh_selected_offline_base_only",
+      "input": {
+        "amount": 1000,
+        "category": "travel",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_live_fresh"
+        ],
+        "settings": {
+          "live_fresh_pref": "travel"
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_live_fresh",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_079_dbs_live_fresh_online_foreign_with_selected_6pct",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_live_fresh"
+        ],
+        "settings": {
+          "live_fresh_pref": "online_foreign"
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_live_fresh",
+        "topValue": 60,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_080_dbs_live_fresh_online_foreign_without_selected",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_live_fresh"
+        ],
+        "settings": {
+          "live_fresh_pref": "travel"
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_live_fresh",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_081_dbs_live_fresh_selected_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "travel",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_live_fresh"
+        ],
+        "settings": {
+          "live_fresh_pref": "travel"
+        },
+        "usage": {
+          "dbs_live_fresh_cap": 195
+        }
+      },
+      "expected": {
+        "topCardId": "dbs_live_fresh",
+        "topValue": 9,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_082_dbs_live_fresh_selected_outside_window",
+      "input": {
+        "amount": 1000,
+        "category": "travel",
+        "date": "2026-07-05",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_live_fresh"
+        ],
+        "settings": {
+          "live_fresh_pref": "travel"
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_live_fresh",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_083_dbs_live_fresh_online_foreign_outside_window",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2027-01-05",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "dbs_live_fresh"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_live_fresh",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_084_boc_cheers_vi_dining_locked_below_mission",
+      "input": {
+        "amount": 3000,
+        "category": "dining",
+        "date": "2026-03-15",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vi"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vi",
+        "topValue": 12,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_085_boc_cheers_vi_dining_mission_met",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2026-03-15",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vi"
+        ],
+        "settings": {},
+        "usage": {
+          "spend_boc_cheers_vi_qual": 5000
+        }
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vi",
+        "topValue": 40,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_086_boc_cheers_vi_fx_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-03-15",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vi"
+        ],
+        "settings": {},
+        "usage": {
+          "spend_boc_cheers_vi_qual": 5000,
+          "boc_cheers_travel_cap": 249500
+        }
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vi",
+        "topValue": 2,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_087_boc_cheers_vs_dining_mission_met",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2026-03-15",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vs"
+        ],
+        "settings": {},
+        "usage": {
+          "spend_boc_cheers_vs_qual": 5000
+        }
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vs",
+        "topValue": 32,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_088_boc_cheers_vi_total_cap_reached",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2026-03-15",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vi"
+        ],
+        "settings": {},
+        "usage": {
+          "spend_boc_cheers_vi_qual": 5000,
+          "boc_cheers_total_cap_vi": 300000
+        }
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vi",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_089_boc_cheers_vi_omycard_not_eligible_for_mission",
+      "input": {
+        "amount": 6000,
+        "category": "dining",
+        "date": "2026-03-15",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "omycard",
+        "ownedCards": [
+          "boc_cheers_vi"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vi",
+        "topValue": 24,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_090_boc_cheers_vi_unlocks_with_current_tx",
+      "input": {
+        "amount": 6000,
+        "category": "dining",
+        "date": "2026-03-15",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vi"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vi",
+        "topValue": 240,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_091_boc_cheers_vi_outside_promo_window",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2026-07-15",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vi"
+        ],
+        "settings": {},
+        "usage": {
+          "spend_boc_cheers_vi_qual": 5000
+        }
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vi",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_092_boc_amazing_vi_weekday_bonus_with_mission",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2026-03-16",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vi"
+        ],
+        "settings": {
+          "boc_amazing_enabled": true
+        },
+        "usage": {
+          "spend_boc_cheers_vi_qual": 5000,
+          "spend_boc_amazing_local": 5000
+        }
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vi",
+        "topValue": 60,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_093_boc_amazing_vi_online_red_day_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-15",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vi"
+        ],
+        "settings": {
+          "boc_amazing_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vi",
+        "topValue": 54,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_094_boc_amazing_fly_cn_locked_below_threshold",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_cn",
+        "date": "2026-03-16",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vi"
+        ],
+        "settings": {
+          "boc_amazing_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vi",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_095_boc_amazing_fly_cn_unlocked",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_cn",
+        "date": "2026-03-16",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vi"
+        ],
+        "settings": {
+          "boc_amazing_enabled": true
+        },
+        "usage": {
+          "spend_boc_cheers_vi_qual": 5000,
+          "spend_boc_fly_cn_stage": 5000
+        }
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vi",
+        "topValue": 100,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_096_boc_amazing_fly_cn_min_single_spend_500",
+      "input": {
+        "amount": 400,
+        "category": "overseas_cn",
+        "date": "2026-03-16",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vi"
+        ],
+        "settings": {
+          "boc_amazing_enabled": true
+        },
+        "usage": {
+          "spend_boc_cheers_vi_qual": 5000,
+          "spend_boc_fly_cn_stage": 5000
+        }
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vi",
+        "topValue": 16,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_097_boc_amazing_shared_progress_unlocks_vs",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2026-03-16",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vi",
+          "boc_cheers_vs"
+        ],
+        "settings": {
+          "boc_amazing_enabled": true
+        },
+        "usage": {
+          "spend_boc_amazing_local": 5000,
+          "spend_boc_cheers_vs_qual": 5000
+        }
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vs",
+        "topValue": 52,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_098_boc_chill_base_only",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_chill"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_chill",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_099_boc_chill_online_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "online",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_chill"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_chill",
+        "topValue": 54,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_100_boc_chill_merchant_locked_below_mission",
+      "input": {
+        "amount": 1000,
+        "category": "chill_merchant",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_chill"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_chill",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_101_boc_chill_merchant_unlocked",
+      "input": {
+        "amount": 1000,
+        "category": "chill_merchant",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_chill"
+        ],
+        "settings": {},
+        "usage": {
+          "spend_boc_chill_monthly": 1500
+        }
+      },
+      "expected": {
+        "topCardId": "boc_chill",
+        "topValue": 104,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_102_boc_chill_bonus_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "online",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_chill"
+        ],
+        "settings": {},
+        "usage": {
+          "boc_chill_bonus_cap_2026": 37000
+        }
+      },
+      "expected": {
+        "topCardId": "boc_chill",
+        "topValue": 6,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_103_boc_go_base_only",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_go_diamond"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_diamond",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_104_boc_go_merchant_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "go_merchant",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_go_diamond"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_diamond",
+        "topValue": 50,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_105_boc_go_mobile_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "boc_go_diamond"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_diamond",
+        "topValue": 12,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_106_boc_go_overseas_bonus_physical",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_go_diamond"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_diamond",
+        "topValue": 8,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_107_boc_go_overseas_mobile_prefers_mobile_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "boc_go_diamond"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_diamond",
+        "topValue": 12,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_108_boc_go_merchant_bonus_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "go_merchant",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_go_diamond"
+        ],
+        "settings": {},
+        "usage": {
+          "boc_go_merchant_bonus_cap_2026": 24900
+        }
+      },
+      "expected": {
+        "topCardId": "boc_go_diamond",
+        "topValue": 4.4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_109_boc_go_merchant_outside_window",
+      "input": {
+        "amount": 1000,
+        "category": "go_merchant",
+        "date": "2026-07-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_go_diamond"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_diamond",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_110_boc_go_platinum_base_only",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_go_platinum"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_platinum",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_111_boc_go_platinum_merchant_locked",
+      "input": {
+        "amount": 500,
+        "category": "go_merchant",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_go_platinum"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_platinum",
+        "topValue": 2,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_112_boc_go_platinum_merchant_unlocked",
+      "input": {
+        "amount": 1000,
+        "category": "go_merchant",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_go_platinum"
+        ],
+        "settings": {},
+        "usage": {
+          "spend_boc_go_platinum_monthly": 1000
+        }
+      },
+      "expected": {
+        "topCardId": "boc_go_platinum",
+        "topValue": 44,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_113_boc_go_platinum_mobile_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "boc_go_platinum"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_platinum",
+        "topValue": 8,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_114_boc_go_platinum_mobile_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "boc_go_platinum"
+        ],
+        "settings": {},
+        "usage": {
+          "boc_go_platinum_mobile_bonus_cap_2026": 24900
+        }
+      },
+      "expected": {
+        "topCardId": "boc_go_platinum",
+        "topValue": 4.4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_115_boc_sogo_base_only",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_sogo"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_sogo",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_116_boc_sogo_mobile_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "boc_sogo"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_sogo",
+        "topValue": 54,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_117_boc_sogo_designated_merchant",
+      "input": {
+        "amount": 1000,
+        "category": "sogo_merchant",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_sogo"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_sogo",
+        "topValue": 50,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_118_boc_sogo_designated_and_mobile_stack",
+      "input": {
+        "amount": 1000,
+        "category": "sogo_merchant",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "boc_sogo"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_sogo",
+        "topValue": 100,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_119_boc_sogo_mobile_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "boc_sogo"
+        ],
+        "settings": {},
+        "usage": {
+          "boc_sogo_mobile_bonus_cap_2026": 90
+        }
+      },
+      "expected": {
+        "topCardId": "boc_sogo",
+        "topValue": 14,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_120_boc_sogo_mobile_outside_window",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2027-01-05",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "boc_sogo"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_sogo",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_121_ae_explorer_base_only_no_registration",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_explorer"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_explorer",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_122_ae_explorer_overseas_2026h1_registered",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_explorer"
+        ],
+        "settings": {
+          "ae_explorer_075x_enabled": true,
+          "ae_explorer_7x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_explorer",
+        "topValue": 35.833333,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_123_ae_explorer_overseas_7x_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_explorer"
+        ],
+        "settings": {
+          "ae_explorer_075x_enabled": true,
+          "ae_explorer_7x_enabled": true
+        },
+        "usage": {
+          "ae_explorer_fx_7x_qcap_2026": 9500
+        }
+      },
+      "expected": {
+        "topCardId": "ae_explorer",
+        "topValue": 24.166667,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_124_ae_explorer_travel_2026h1_registered",
+      "input": {
+        "amount": 1000,
+        "category": "travel",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_explorer"
+        ],
+        "settings": {
+          "ae_explorer_075x_enabled": true,
+          "ae_explorer_7x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_explorer",
+        "topValue": 35.833333,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_125_ae_explorer_designated_online_5x",
+      "input": {
+        "amount": 1000,
+        "category": "ae_online_designated",
+        "date": "2026-09-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_explorer"
+        ],
+        "settings": {
+          "ae_explorer_online_5x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_explorer",
+        "topValue": 16.666667,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_126_ae_explorer_designated_online_5x_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "ae_online_designated",
+        "date": "2026-09-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_explorer"
+        ],
+        "settings": {
+          "ae_explorer_online_5x_enabled": true
+        },
+        "usage": {
+          "ae_explorer_online_5x_bonus_qcap_2026": 89900
+        }
+      },
+      "expected": {
+        "topCardId": "ae_explorer",
+        "topValue": 10.333333,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_127_ae_explorer_designated_online_travel_stack",
+      "input": {
+        "amount": 1000,
+        "category": "ae_online_travel_designated",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_explorer"
+        ],
+        "settings": {
+          "ae_explorer_075x_enabled": true,
+          "ae_explorer_7x_enabled": true,
+          "ae_explorer_online_5x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_explorer",
+        "topValue": 42.5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_128_ae_explorer_wallet_not_eligible_for_extra",
+      "input": {
+        "amount": 1000,
+        "category": "ae_online_designated",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "ae_explorer"
+        ],
+        "settings": {
+          "ae_explorer_075x_enabled": true,
+          "ae_explorer_7x_enabled": true,
+          "ae_explorer_online_5x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_explorer",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_129_ae_platinum_local_base_with_accelerator",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_platinum"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 6.666667,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_130_ae_platinum_accelerator_capped",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_platinum"
+        ],
+        "settings": {},
+        "usage": {
+          "ae_plat_accelerator_cap": 160000
+        }
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 3.333333,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_131_ae_platinum_overseas_base",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_platinum"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 13.333333,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_132_ae_platinum_overseas_9x_registered",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_platinum"
+        ],
+        "settings": {
+          "ae_platinum_9x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 30,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_133_ae_platinum_overseas_9x_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_platinum"
+        ],
+        "settings": {
+          "ae_platinum_9x_enabled": true
+        },
+        "usage": {
+          "ae_plat_fx_9x_cap": 14900
+        }
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 15,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_134_ae_platinum_travel_designated_9x",
+      "input": {
+        "amount": 1000,
+        "category": "ae_plat_travel_designated",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_platinum"
+        ],
+        "settings": {
+          "ae_platinum_9x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 30,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_135_ae_platinum_daily_designated_9x",
+      "input": {
+        "amount": 1000,
+        "category": "ae_plat_daily_designated",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_platinum"
+        ],
+        "settings": {
+          "ae_platinum_9x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 30,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_136_ae_platinum_promo_outside_window",
+      "input": {
+        "amount": 1000,
+        "category": "ae_plat_travel_designated",
+        "date": "2026-07-05",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_platinum"
+        ],
+        "settings": {
+          "ae_platinum_9x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 6.666667,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_137_ae_platinum_overseas_omycard_not_eligible_9x",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "omycard",
+        "ownedCards": [
+          "ae_platinum"
+        ],
+        "settings": {
+          "ae_platinum_9x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 13.333333,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_138_ae_pcc_general_pre_program_cap",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_platinum_credit"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum_credit",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_139_ae_pcc_general_post_program_cap",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_platinum_credit"
+        ],
+        "settings": {},
+        "usage": {
+          "ae_pcc_program_3x_cap": 120000
+        }
+      },
+      "expected": {
+        "topCardId": "ae_platinum_credit",
+        "topValue": 3.333333,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_140_ae_pcc_designated_pre_program_cap_double",
+      "input": {
+        "amount": 1000,
+        "category": "ae_pcc_designated",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_platinum_credit"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum_credit",
+        "topValue": 20,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_141_ae_pcc_designated_post_program_cap_double",
+      "input": {
+        "amount": 1000,
+        "category": "ae_pcc_designated",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_platinum_credit"
+        ],
+        "settings": {},
+        "usage": {
+          "ae_pcc_program_3x_cap": 120000
+        }
+      },
+      "expected": {
+        "topCardId": "ae_platinum_credit",
+        "topValue": 6.666667,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_142_ae_pcc_designated_monthly_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "ae_pcc_designated",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_platinum_credit"
+        ],
+        "settings": {},
+        "usage": {
+          "ae_pcc_double_cap": 29500
+        }
+      },
+      "expected": {
+        "topCardId": "ae_platinum_credit",
+        "topValue": 11.666667,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_143_ae_pcc_program_promo_outside_window",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2027-01-05",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "ae_platinum_credit"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum_credit",
+        "topValue": 3.333333,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_144_fubon_in_online_locked_below_threshold",
+      "input": {
+        "amount": 500,
+        "category": "general",
+        "date": "2026-02-15",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_in_platinum"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_in_platinum",
+        "topValue": 2.5,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_145_fubon_in_online_unlock_same_tx",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-02-15",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_in_platinum"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_in_platinum",
+        "topValue": 100,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_146_fubon_in_tuition_not_count_for_mission",
+      "input": {
+        "amount": 200,
+        "category": "tuition",
+        "date": "2026-02-15",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_in_platinum"
+        ],
+        "settings": {},
+        "usage": {
+          "fubon_in_monthly_eligible_spend": 900
+        }
+      },
+      "expected": {
+        "topCardId": "fubon_in_platinum",
+        "topValue": 1,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_147_fubon_in_online_bonus_partial_cap",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-02-15",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_in_platinum"
+        ],
+        "settings": {},
+        "usage": {
+          "fubon_in_monthly_eligible_spend": 1000,
+          "fubon_in_bonus_cap": 62000
+        }
+      },
+      "expected": {
+        "topCardId": "fubon_in_platinum",
+        "topValue": 7.5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_148_fubon_travel_weekday_local_base",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-02-11",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_travel"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_travel",
+        "topValue": 5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_149_fubon_travel_weekend_local_2x",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-02-14",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_travel"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_travel",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_150_fubon_travel_tw_20x",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_tw",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_travel"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_travel",
+        "topValue": 100,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_151_fubon_travel_jpkr_10x",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_jkt",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_travel"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_travel",
+        "topValue": 50,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_152_fubon_travel_fx_other_5x",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_travel"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_travel",
+        "topValue": 25,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_153_fubon_travel_overseas_bonus_partial_monthly_cap",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_tw",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_travel"
+        ],
+        "settings": {},
+        "usage": {
+          "fubon_travel_bonus_monthly_cap": 79000,
+          "fubon_travel_bonus_annual_cap": 100000
+        }
+      },
+      "expected": {
+        "topCardId": "fubon_travel",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_154_fubon_travel_overseas_bonus_capped_yearly",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_tw",
+        "date": "2026-11-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_travel"
+        ],
+        "settings": {},
+        "usage": {
+          "fubon_travel_bonus_monthly_cap": 0,
+          "fubon_travel_bonus_annual_cap": 240000
+        }
+      },
+      "expected": {
+        "topCardId": "fubon_travel",
+        "topValue": 5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_155_fubon_upgrade_online_unregistered",
+      "input": {
+        "amount": 1000,
+        "category": "fubon_upgrade_online",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_travel"
+        ],
+        "settings": {
+          "fubon_travel_upgrade_enabled": false
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_travel",
+        "topValue": 5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_156_fubon_upgrade_online_registered",
+      "input": {
+        "amount": 1000,
+        "category": "fubon_upgrade_online",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_travel"
+        ],
+        "settings": {
+          "fubon_travel_upgrade_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_travel",
+        "topValue": 50,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_157_fubon_upgrade_online_cap_partial",
+      "input": {
+        "amount": 1000,
+        "category": "fubon_upgrade_online",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_travel"
+        ],
+        "settings": {
+          "fubon_travel_upgrade_enabled": true
+        },
+        "usage": {
+          "fubon_travel_upgrade_online_cap": 62000
+        }
+      },
+      "expected": {
+        "topCardId": "fubon_travel",
+        "topValue": 2.5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_158_fubon_travel_jpkr_new_category",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_jpkr",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_travel"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_travel",
+        "topValue": 50,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_159_fubon_travel_th_new_category",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_th",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_travel"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_travel",
+        "topValue": 25,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_160_travel_plus_jpkr_tier1_mission_met",
+      "input": {
+        "amount": 2500,
+        "category": "overseas_jpkr",
+        "date": "2026-05-01",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hangseng_travel_plus"
+        ],
+        "settings": {
+          "travel_plus_promo_enabled": true
+        },
+        "usage": {
+          "spend_hangseng_travel_plus": 8000
+        }
+      },
+      "expected": {
+        "topCardId": "hangseng_travel_plus",
+        "topValue": 175,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_161_fubon_infinite_local_weekday_base",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-02-11",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_infinite"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_infinite",
+        "topValue": 5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_162_fubon_infinite_local_weekend_2x",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-02-14",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_infinite"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_infinite",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_163_fubon_infinite_local_weekend_below_300",
+      "input": {
+        "amount": 200,
+        "category": "general",
+        "date": "2026-02-14",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_infinite"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_infinite",
+        "topValue": 1,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_164_fubon_infinite_tw_20x",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_tw",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_infinite"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_infinite",
+        "topValue": 100,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_165_fubon_infinite_jpkr_10x",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_jpkr",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_infinite"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_infinite",
+        "topValue": 50,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_166_fubon_infinite_th_5x",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_th",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_infinite"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_infinite",
+        "topValue": 25,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_167_fubon_infinite_upgrade_unregistered",
+      "input": {
+        "amount": 1000,
+        "category": "fubon_upgrade_online",
+        "date": "2026-02-11",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_infinite"
+        ],
+        "settings": {
+          "fubon_infinite_upgrade_enabled": false
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_infinite",
+        "topValue": 5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_168_fubon_infinite_upgrade_registered_locked",
+      "input": {
+        "amount": 500,
+        "category": "fubon_upgrade_online",
+        "date": "2026-02-11",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_infinite"
+        ],
+        "settings": {
+          "fubon_infinite_upgrade_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_infinite",
+        "topValue": 2.5,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_169_fubon_infinite_upgrade_unlock_same_tx",
+      "input": {
+        "amount": 1000,
+        "category": "fubon_upgrade_online",
+        "date": "2026-02-11",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_infinite"
+        ],
+        "settings": {
+          "fubon_infinite_upgrade_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_infinite",
+        "topValue": 45,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_170_fubon_infinite_upgrade_weekend_10x",
+      "input": {
+        "amount": 1000,
+        "category": "fubon_upgrade_online",
+        "date": "2026-02-14",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_infinite"
+        ],
+        "settings": {
+          "fubon_infinite_upgrade_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_infinite",
+        "topValue": 50,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_171_fubon_infinite_upgrade_partial_cap",
+      "input": {
+        "amount": 1000,
+        "category": "fubon_upgrade_online",
+        "date": "2026-02-11",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_infinite"
+        ],
+        "settings": {
+          "fubon_infinite_upgrade_enabled": true
+        },
+        "usage": {
+          "fubon_infinite_upgrade_monthly_spend": 1000,
+          "fubon_infinite_upgrade_online_cap": 79000
+        }
+      },
+      "expected": {
+        "topCardId": "fubon_infinite",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_172_fubon_infinite_overseas_partial_monthly_cap",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_tw",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_infinite"
+        ],
+        "settings": {},
+        "usage": {
+          "fubon_infinite_bonus_monthly_cap": 79000,
+          "fubon_infinite_bonus_annual_cap": 100000
+        }
+      },
+      "expected": {
+        "topCardId": "fubon_infinite",
+        "topValue": 5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_173_fubon_infinite_overseas_capped_yearly",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_tw",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_infinite"
+        ],
+        "settings": {},
+        "usage": {
+          "fubon_infinite_bonus_monthly_cap": 0,
+          "fubon_infinite_bonus_annual_cap": 240000
+        }
+      },
+      "expected": {
+        "topCardId": "fubon_infinite",
+        "topValue": 5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
+          "hasPartial": false
+        }
+      }
     }
   ],
   "period_cases": [
@@ -2034,23 +4788,21 @@
   ],
   "tx_cases": [
     {
-      "id": "tx_001_txDate_used_for_holiday_bucket",
+      "id": "tx_001_txDate_used_for_valid_day_window",
       "ownedCards": [
-        "boc_cheers_vi"
+        "dbs_compass"
       ],
-      "settings": {
-        "boc_amazing_enabled": true
-      },
-      "cardId": "boc_cheers_vi",
-      "category": "dining",
-      "amount": 6000,
+      "settings": {},
+      "cardId": "dbs_compass",
+      "category": "grocery",
+      "amount": 500,
       "isOnline": false,
       "paymentMethod": "physical",
-      "txDate": "2026-02-17",
-      "date": "2026-02-18T10:00:00.000Z",
-      "expectedUsageKey": "boc_amazing_local_holiday_cap",
-      "unexpectedUsageKey": "boc_amazing_local_weekday_cap",
-      "expectedUsageValue": 60300
+      "txDate": "2026-05-27",
+      "date": "2026-06-05T10:00:00.000Z",
+      "expectedUsageKey": "dbs_compass_superwed_cap",
+      "unexpectedUsageKey": "dbs_compass_com_bonus_cap",
+      "expectedUsageValue": 500
     }
   ]
 }

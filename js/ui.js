@@ -73,17 +73,38 @@ function formatPeriodEndBadge(periodSpec, campaignId) {
 function getCampaignBadgeText(campaign) {
     if (!campaign || !campaign.id) return "";
     const meta = getCampaignPeriodMeta(campaign.id);
-    if (!meta || !meta.badge) return "";
-    const badge = meta.badge;
+    if (meta && meta.badge) {
+        const badge = meta.badge;
+        if (badge.type === "promo_end") return badge.endDate ? formatPromoDate(badge.endDate) : "推廣期至 待設定";
+        // "重置於" 一律放 subtitle；badge 只保留推廣期資訊。
+        if (badge.type === "period_end" && badge.period) return "";
+        if (badge.type === "month_end") return "";
+        if (badge.type === "quarter_end") return "";
+        if (badge.type === "year_end") return "";
+        if (badge.type === "static_date") return badge.date ? formatPromoDate(badge.date) : "推廣期至 待設定";
+        if (badge.type === "text") return badge.text ? String(badge.text) : "";
+    }
 
-    if (badge.type === "promo_end") return badge.endDate ? formatPromoDate(badge.endDate) : "";
-    if (badge.type === "period_end" && badge.period) return formatPeriodEndBadge(badge.period, campaign.id);
-    if (badge.type === "month_end") return formatPeriodEndBadge({ type: "month", startDay: 1 }, campaign.id);
-    if (badge.type === "quarter_end") return formatPeriodEndBadge({ type: "quarter", startMonth: 1, startDay: 1 }, campaign.id);
-    if (badge.type === "year_end") return formatPeriodEndBadge({ type: "year", startMonth: 1, startDay: 1 }, campaign.id);
-    if (badge.type === "static_date") return badge.date ? formatPromoDate(badge.date) : "";
-    if (badge.type === "text") return badge.text ? String(badge.text) : "";
-    return "";
+    // Fallback: infer from campaign period_policy dates.
+    const policy = (campaign && campaign.period_policy) ? campaign.period_policy : null;
+    const endFromPolicy = (policy && typeof policy.endDate === "string" && policy.endDate.trim())
+        ? policy.endDate.trim()
+        : ((policy && policy.period && typeof policy.period.endDate === "string" && policy.period.endDate.trim())
+            ? policy.period.endDate.trim()
+            : "");
+    if (endFromPolicy) return formatPromoDate(endFromPolicy);
+
+    // If still missing, force explicit data hygiene signal.
+    return "推廣期至 待設定";
+}
+
+function getCampaignResetSubTitle(campaign) {
+    if (!campaign || !campaign.id) return "";
+    const meta = getCampaignPeriodMeta(campaign.id);
+    if (!meta || !meta.counterPeriod || !meta.counterPeriod.type) return "";
+    const p = meta.counterPeriod;
+    if (p.type !== "month" && p.type !== "quarter" && p.type !== "year") return "";
+    return formatPeriodEndBadge(p, campaign.id);
 }
 
 function getCampaignOffers() {
@@ -137,20 +158,13 @@ function getResetBadgeForKey(key, userProfile) {
     const entry = DATA.countersRegistry[key];
     if (!entry || !entry.periodType) return "";
 
-    // Non-resettable caps: if the underlying module/campaign has an end date, show it as "promo end".
-    // Otherwise, show an explicit "no reset" badge so the card doesn't look broken/missing metadata.
+    // Non-resettable counters have no reset subtitle.
     if (entry.periodType === "none") {
-        const mod = (entry.refType === "module" && entry.refId && DATA.modules) ? DATA.modules[entry.refId] : null;
-        const endDate = mod && (mod.promo_end || mod.valid_to) ? (mod.promo_end || mod.valid_to) : null;
-        if (endDate) return formatPromoDate(endDate);
-        return "不重置";
+        return "";
     }
 
     const anchor = resolveAnchorForKeyUi(key, entry, userProfile);
-    if (entry.periodType === "promo") {
-        const endDate = anchor && anchor.endDate ? anchor.endDate : null;
-        return endDate ? formatPromoDate(endDate) : "";
-    }
+    if (entry.periodType === "promo") return "";
 
     const today = new Date();
     const bucketKey = getBucketKey(today, entry.periodType, anchor, anchor && anchor.promoId);
@@ -167,6 +181,14 @@ function getResetBadgeForKey(key, userProfile) {
     const resetDate = new Date(nextStart.getTime());
     resetDate.setDate(resetDate.getDate() - 1);
     return formatResetDate(formatDateKey(resetDate));
+}
+
+function getPromoBadgeForModule(mod) {
+    if (!mod || typeof mod !== "object") return "推廣期至 待設定";
+    const endDate = (typeof mod.promo_end === "string" && mod.promo_end.trim())
+        ? mod.promo_end.trim()
+        : ((typeof mod.valid_to === "string" && mod.valid_to.trim()) ? mod.valid_to.trim() : "");
+    return endDate ? formatPromoDate(endDate) : "推廣期至 待設定";
 }
 
 function getMonthTotals(transactions) {
@@ -257,8 +279,13 @@ function getCampaignToggleDefinitions() {
         "dbs_black_promo_enabled",
         "mmpower_promo_enabled",
         "travel_plus_promo_enabled",
-        "fubon_in_promo_enabled",
+        "fubon_travel_upgrade_enabled",
+        "fubon_infinite_upgrade_enabled",
         "sim_promo_enabled",
+        "ae_explorer_075x_enabled",
+        "ae_explorer_7x_enabled",
+        "ae_explorer_online_5x_enabled",
+        "ae_platinum_9x_enabled",
         "em_promo_enabled"
     ];
     const priorityMap = {};
@@ -690,6 +717,14 @@ function toggleCategoryHelp() {
         'china_consumption': showChinaTips,
         'smart_designated': showSmartMerchantList,
         'citi_club_merchant': showClubMerchantList,
+        'chill_merchant': showChillMerchantList,
+        'go_merchant': showGoMerchantList,
+        'sogo_merchant': showSogoMerchantList,
+        'ae_online_designated': showAeExplorerOnlineMerchantList,
+        'ae_online_travel_designated': showAeExplorerOfferInfo,
+        'ae_plat_travel_designated': showAePlatinumOfferInfo,
+        'ae_plat_daily_designated': showAePlatinumOfferInfo,
+        'ae_pcc_designated': showAePccOfferInfo,
         'club_shopping': showClubShoppingTips,
         'citi_club_telecom': showClubTelecomTips,
         'enjoy_4x': showEnjoy4xInfo,
@@ -716,6 +751,48 @@ function showClubMerchantList() {
     const shouldOpen = confirm(`${msg}\n\n按「確定」開啟官方商戶清單 PDF。`);
     if (shouldOpen) window.open(pdfUrl, "_blank", "noopener");
 }
+function showGoMerchantList() {
+    const url = "https://www.bochk.com/tc/creditcard/promotions/offers/gomerchants.html";
+    const msg = "【中銀 Go 指定商戶】\n\n✅ Go 指定商戶類別以中銀官方名單為準\n✅ 如唔肯定商戶是否合資格，請先查官方頁面";
+    const shouldOpen = confirm(`${msg}\n\n按「確定」開啟官方指定商戶名單。`);
+    if (shouldOpen) window.open(url, "_blank", "noopener");
+}
+function showChillMerchantList() {
+    const url = "https://www.bochk.com/tc/creditcard/promotions/offers/chillmerchants.html";
+    const msg = "【中銀 Chill 指定商戶】\n\n✅ Chill 指定商戶類別以中銀官方名單為準\n✅ 如唔肯定商戶是否合資格，請先查官方頁面";
+    const shouldOpen = confirm(`${msg}\n\n按「確定」開啟官方指定商戶名單。`);
+    if (shouldOpen) window.open(url, "_blank", "noopener");
+}
+function showSogoMerchantList() {
+    const url = "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf";
+    const msg = "【中銀 SOGO 指定商戶/產品】\n\n✅ SOGO 5% 只限官方指定商戶/產品\n✅ 以官方條款及崇光公布名單為準";
+    const shouldOpen = confirm(`${msg}\n\n按「確定」開啟官方條款 PDF。`);
+    if (shouldOpen) window.open(url, "_blank", "noopener");
+}
+function showAeExplorerOfferInfo() {
+    const url = "https://www.americanexpress.com/content/dam/amex/hk/ch/staticassets/pdf/cards/explorer-credit-card/MRTnC_CHI.pdf";
+    const msg = "【AE Explorer 指定網上/旅遊商戶】\n\n✅ 指定商戶/旅遊商戶以 AE 官方條款及商戶名單為準\n✅ 2026 推廣需登記；第三方電子錢包交易不適用於額外積分";
+    const shouldOpen = confirm(`${msg}\n\n按「確定」開啟官方條款 PDF。`);
+    if (shouldOpen) window.open(url, "_blank", "noopener");
+}
+function showAeExplorerOnlineMerchantList() {
+    const url = "https://www.americanexpress.com/zh-hk/benefits/offers/shopping/5x-offer/index.html";
+    const msg = "【AE Explorer 指定網上商戶（5X）】\n\n✅ 指定網上商戶名單以 AE 官方 5X Offer 頁面為準\n✅ 最終資格及細則以官方條款為準";
+    const shouldOpen = confirm(`${msg}\n\n按「確定」開啟 AE 指定網上商戶頁。`);
+    if (shouldOpen) window.open(url, "_blank", "noopener");
+}
+function showAePlatinumOfferInfo() {
+    const url = "https://www.americanexpress.com/content/dam/amex/hk/benefits/pdf/TnCs_platinum-membership-rewards-accelerator.pdf";
+    const msg = "【AE Platinum（細頭）高達9X】\n\n✅ 外幣額外 5X + 指定旅遊/指定日常額外 7X（每季各首$15,000）\n✅ 推廣需登記，指定商戶以官方條款名單為準";
+    const shouldOpen = confirm(`${msg}\n\n按「確定」開啟官方條款 PDF。`);
+    if (shouldOpen) window.open(url, "_blank", "noopener");
+}
+function showAePccOfferInfo() {
+    const url = "https://www.americanexpress.com/content/dam/amex/hk/benefits/shopping/offers/pdf/Double_Point_Plat_G_2026_TnC.pdf";
+    const msg = "【AE Platinum Credit（大頭）Double Points】\n\n✅ 指定商戶以官方名單為準（超市/百貨/便利店/個人護理/油站等）\n✅ 額外積分每月上限 30,000；推廣期內 Program 封頂後，指定商戶由6X變2X";
+    const shouldOpen = confirm(`${msg}\n\n按「確定」開啟官方條款 PDF。`);
+    if (shouldOpen) window.open(url, "_blank", "noopener");
+}
 function showClubShoppingTips() {
     alert("【Club Shopping】\n\n✅ 總回贈 2%（基本1% + 額外1%）\n✅ 額外1%每月上限 500 Club積分\n\n提示：商戶清單可按「The Club 指定商戶」類別旁 ? 查看官方 PDF。");
 }
@@ -723,10 +800,25 @@ function showClubTelecomTips() {
     alert("【The Club 電訊】\n\n適用：csl / 1010 / Now TV / 網上行\n\n✅ 目前以總回贈 3% 計算（replace）\n⚠️ 若你之後想細分條款（例如特定付款方式），可以再加子分類。");
 }
 function showOctopusTips() { alert("【Citi Octopus 交通神卡攻略 (15%)】\n\n🚌 適用：九巴、港鐵、渡輪、電車\n\n💰 門檻/上限：\n1. 月簽 $4,000：回贈上限 $300 (即交通簽 $2,000)\n2. 月簽 $10,000：回贈上限 $500\n\n⚡ 0成本達標大法：\n每月增值電子錢包 (PayMe/Alipay/WeChat) 各 $1,000，輕鬆達標 $3,000！\n\n🎁 疊加政府補貼：可賺高達 30%+ 回贈！"); }
-function showSmartMerchantList() { alert("【SC Smart 指定商戶 (5%)】\n\n🥦 超市：百佳, 759, Donki\n🍽️ 餐飲：麥當勞, Deliveroo, Foodpanda\n💊 零售：HKTVmall, 屈臣氏, Klook, Decathlon\n\n⚠️ 指定商戶每月可計回贈簽賬上限 HK$5,000。"); }
+function showSmartMerchantList() {
+    const url = "https://av.sc.com/hk/zh/content/docs/hk-promo-smart-tnc.pdf";
+    const msg = "【SC Smart 指定商戶 (5%)】\n\n✅ 以渣打 Smart 推廣條款內指定商戶名單為準\n⚠️ 指定商戶每月可計回贈簽賬上限 HK$5,000";
+    const shouldOpen = confirm(`${msg}\n\n按「確定」開啟官方條款 PDF。`);
+    if (shouldOpen) window.open(url, "_blank", "noopener");
+}
 function showSupermarketList() { alert("【🥦 超市類別定義】\n\n✅ 認可：百佳, Donki, 759, AEON\n⚠️ HSBC陷阱：❌ 不包惠康, Market Place, 萬寧"); }
-function showRedMerchantList() { alert("【HSBC Red 指定 (8%)】\n\n🍽️ 壽司郎, 譚仔, Coffee Academïcs\n👕 GU, Decathlon, Uniqlo\n🎮 NAMCO"); }
-function showEveryMileMerchantList() { alert("【EveryMile 指定 ($2/里)】\n\n🚌 交通 (港鐵/巴士/Uber)\n☕ 咖啡 (Starbucks/Pacific)\n🌏 旅遊 (Klook/Agoda)"); }
+function showRedMerchantList() {
+    const url = "https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/#3";
+    const msg = "【HSBC Red 指定商戶】\n\n✅ Red 指定商戶/類別以 HSBC 最紅自主獎賞頁面及條款為準";
+    const shouldOpen = confirm(`${msg}\n\n按「確定」開啟 HSBC 官方頁面。`);
+    if (shouldOpen) window.open(url, "_blank", "noopener");
+}
+function showEveryMileMerchantList() {
+    const url = "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf";
+    const msg = "【HSBC EveryMile 指定】\n\n✅ 指定簽賬/商戶以 EveryMile 官方推廣條款 PDF 為準";
+    const shouldOpen = confirm(`${msg}\n\n按「確定」開啟官方條款 PDF。`);
+    if (shouldOpen) window.open(url, "_blank", "noopener");
+}
 function showChinaTips() { alert("【🇨🇳 中國內地/澳門】\n\n推薦：Pulse (手機支付+2%)、EveryMile ($2/里)、MMPower (6%)"); }
 function showFastfoodTips() { alert("【快餐店 (Fast Food)】\n\n💡 呢個分類主要俾 MMPower 用作「餐飲自選不包括快餐店」。\n\n- 一般其他卡：系統會當作 Dining 處理\n- Hang Seng MMPower：只計基本回贈，不食自選額外 1%"); }
 function showEnjoyPoints4xGuide(tierLabel) {
@@ -843,13 +935,13 @@ function renderDashboard(userProfile) {
         const campaignOffers = getCampaignOffers();
         campaignOffers.forEach(campaign => {
             const status = (typeof buildPromoStatus === "function") ? buildPromoStatus(campaign, userProfile, DATA.modules) : null;
-            if (!status || !status.eligible) return;
             const campaignTitle = (campaign.display_name_zhhk && String(campaign.display_name_zhhk).trim())
                 ? String(campaign.display_name_zhhk).trim()
                 : (campaign.name || campaign.id);
 
             const reg = (DATA.campaignRegistry && campaign && campaign.id) ? DATA.campaignRegistry[campaign.id] : null;
 	        if (reg && reg.settingKey && userProfile.settings[reg.settingKey] === false) {
+                if (!status || !status.eligible) return;
 	            html += renderWarningCard(
 	                reg.warningTitle || campaignTitle,
 	                campaign.icon,
@@ -862,14 +954,18 @@ function renderDashboard(userProfile) {
 	            return;
 	        }
 
+            if (!status || !status.eligible) return;
+            if (campaign.warningOnly) return;
+
             const sections = status.sections || [];
             if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
             if (status.capKeys) status.capKeys.forEach(k => renderedCaps.add(k));
 
             const badgeText = getCampaignBadgeText(campaign);
+            const subTitle = getCampaignResetSubTitle(campaign);
 
             html += createProgressCard({
-                title: campaignTitle, icon: campaign.icon, theme: campaign.theme, badge: badgeText,
+                title: campaignTitle, icon: campaign.icon, theme: campaign.theme, badge: badgeText, subTitle,
                 sections: sections
             });
         });
@@ -881,7 +977,7 @@ function renderDashboard(userProfile) {
         card.rewardModules.forEach(modId => {
             const mod = DATA.modules[modId];
             if (!mod || !mod.cap_limit || !mod.cap_key) return;
-            if (mod.cap_key === 'boc_amazing_local_weekday_cap' || mod.cap_key === 'boc_amazing_local_holiday_cap' || mod.cap_key === 'boc_amazing_online_weekday_cap' || mod.cap_key === 'boc_amazing_online_holiday_cap') return;
+            if (String(mod.cap_key).startsWith('boc_amazing_')) return;
             capKeyCounts[mod.cap_key] = (capKeyCounts[mod.cap_key] || 0) + 1;
         });
     });
@@ -892,7 +988,7 @@ function renderDashboard(userProfile) {
         card.rewardModules.forEach(modId => {
             const mod = DATA.modules[modId];
             if (!mod || !mod.cap_limit || !mod.cap_key) return;
-            if (mod.cap_key === 'boc_amazing_local_weekday_cap' || mod.cap_key === 'boc_amazing_local_holiday_cap' || mod.cap_key === 'boc_amazing_online_weekday_cap' || mod.cap_key === 'boc_amazing_online_holiday_cap') return;
+            if (String(mod.cap_key).startsWith('boc_amazing_')) return;
             if (renderedCaps.has(mod.cap_key)) return;
 	        if (mod.setting_key && userProfile.settings[mod.setting_key] === false) {
                 const title = (mod.display_name_zhhk && String(mod.display_name_zhhk).trim())
@@ -1018,7 +1114,8 @@ function renderDashboard(userProfile) {
                 title,
                 icon: "fas fa-chart-line",
                 theme: "gray",
-                badge: getResetBadgeForKey(mod.cap_key, userProfile),
+                badge: getPromoBadgeForModule(mod),
+                subTitle: getResetBadgeForKey(mod.cap_key, userProfile),
                 sections: sections
             });
         });
@@ -1245,10 +1342,10 @@ function renderSettings(userProfile) {
     html += `<div class="mb-4"><label class="text-xs font-bold text-teal-600">DBS Live Fresh 自選類別 (4選1)</label>
         <select id="st-live-fresh" class="w-full p-2 bg-teal-50 rounded border border-teal-100" onchange="saveDrop('live_fresh_pref',this.value)">
             <option value="none">未設定</option>
-            <option value="online_foreign">網上外幣簽賬 (Online Foreign Currency)</option>
-            <option value="travel">旅遊娛樂探索達人 (Entertainment & Travel Expert)</option>
-            <option value="fashion">潮流教主 (Fashionista)</option>
-            <option value="charity">慈善關愛者 (Sustainability & Charity)</option>
+            <option value="online_foreign">網上外幣簽賬 (Online Foreign Currency Spending)</option>
+            <option value="travel">網上旅遊商戶、娛樂及指定服務訂閱</option>
+            <option value="fashion">網上美容、時尚服飾及指定網上商戶</option>
+            <option value="charity">指定商戶及網上慈善捐款</option>
         </select>
     </div>`;
     const mmpowerSelected = Array.isArray(userProfile.settings.mmpower_selected_categories)

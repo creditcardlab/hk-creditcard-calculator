@@ -78,27 +78,62 @@ let userProfile = {
         winter_tier2_threshold: 40000,
         red_hot_rewards_enabled: true,
         red_hot_allocation: { dining: 5, world: 0, home: 0, enjoyment: 0, style: 0 },
+        mmpower_promo_enabled: false,
         mmpower_selected_categories: ["dining", "electronics"],
+        travel_plus_promo_enabled: false,
+        fubon_travel_upgrade_enabled: false,
+        fubon_infinite_upgrade_enabled: false,
         hangseng_enjoy_points4x_enabled: true,
         citi_prestige_bonus_enabled: false,
         citi_prestige_tenure_years: 1,
         citi_prestige_wealth_client: false,
         boc_amazing_enabled: false,      // 狂賞派 + 狂賞飛
         dbs_black_promo_enabled: false,  // DBS Black $2/里推廣
-        fubon_in_promo_enabled: false,   // Fubon iN 網購20X
-        sim_promo_enabled: false         // sim 8%網購
+        mox_deposit_task_enabled: false, // Mox 存款任務
+        sim_promo_enabled: false,        // sim 8%網購
+        ae_explorer_075x_enabled: false,
+        ae_explorer_7x_enabled: false,
+        ae_explorer_online_5x_enabled: false,
+        ae_platinum_9x_enabled: false
     },
     usage: { "winter_total": 0, "winter_eligible": 0, "em_q1_total": 0, "em_q1_eligible": 0, "guru_rc_used": 0, "guru_spend_accum": 0 },
     stats: { totalSpend: 0, totalVal: 0, txCount: 0 },
     transactions: []
 };
 
+const SETTING_BOOLEAN_DEFAULTS = {
+    em_promo_enabled: false,
+    winter_promo_enabled: false,
+    red_hot_rewards_enabled: true,
+    mmpower_promo_enabled: false,
+    travel_plus_promo_enabled: false,
+    fubon_travel_upgrade_enabled: false,
+    fubon_infinite_upgrade_enabled: false,
+    hangseng_enjoy_points4x_enabled: true,
+    boc_amazing_enabled: false,
+    dbs_black_promo_enabled: false,
+    mox_deposit_task_enabled: false,
+    sim_promo_enabled: false,
+    ae_explorer_075x_enabled: false,
+    ae_explorer_7x_enabled: false,
+    ae_explorer_online_5x_enabled: false,
+    ae_platinum_9x_enabled: false
+};
+
+function ensureBooleanSettingDefaults(settings) {
+    const s = settings && typeof settings === "object" ? settings : {};
+    Object.keys(SETTING_BOOLEAN_DEFAULTS).forEach((key) => {
+        if (s[key] === undefined) s[key] = SETTING_BOOLEAN_DEFAULTS[key];
+    });
+    return s;
+}
+
 function loadUserData() {
     const s = localStorage.getItem(USER_DATA_KEY);
     if (s) {
         let loaded = JSON.parse(s);
         userProfile = { ...userProfile, ...loaded };
-        if (!userProfile.settings) userProfile.settings = {};
+        userProfile.settings = ensureBooleanSettingDefaults(userProfile.settings);
         if (userProfile.settings.winter_tier1_threshold === undefined) userProfile.settings.winter_tier1_threshold = 20000;
         if (userProfile.settings.winter_tier2_threshold === undefined) userProfile.settings.winter_tier2_threshold = 40000;
         if (userProfile.settings.winter_tier2_threshold < userProfile.settings.winter_tier1_threshold) {
@@ -113,10 +148,15 @@ function loadUserData() {
         userProfile.settings.mmpower_selected_categories = mmpowerNormalized.length > 0
             ? mmpowerNormalized
             : ["dining", "electronics"];
-        if (userProfile.settings.hangseng_enjoy_points4x_enabled === undefined) userProfile.settings.hangseng_enjoy_points4x_enabled = true;
         if (userProfile.settings.citi_prestige_bonus_enabled === undefined) userProfile.settings.citi_prestige_bonus_enabled = false;
         if (userProfile.settings.citi_prestige_tenure_years === undefined) userProfile.settings.citi_prestige_tenure_years = 1;
         if (userProfile.settings.citi_prestige_wealth_client === undefined) userProfile.settings.citi_prestige_wealth_client = false;
+        // Migration: 舊 AE Explorer 單一登記 key -> 新三個獨立登記 key
+        if (userProfile.settings.ae_explorer_2026_enabled === true) {
+            if (userProfile.settings.ae_explorer_075x_enabled === undefined) userProfile.settings.ae_explorer_075x_enabled = true;
+            if (userProfile.settings.ae_explorer_7x_enabled === undefined) userProfile.settings.ae_explorer_7x_enabled = true;
+            if (userProfile.settings.ae_explorer_online_5x_enabled === undefined) userProfile.settings.ae_explorer_online_5x_enabled = true;
+        }
         if (!userProfile.stats) userProfile.stats = { totalSpend: 0, totalVal: 0, txCount: 0 };
         if (!userProfile.usage) userProfile.usage = {};
         if (!userProfile.transactions) userProfile.transactions = [];
@@ -129,6 +169,7 @@ function loadUserData() {
             userProfile.usage[tuitionKey] = tuitionVal * 0.024;
         }
     }
+    userProfile.settings = ensureBooleanSettingDefaults(userProfile.settings);
     saveUserData();
 }
 
@@ -835,6 +876,8 @@ const CATEGORY_HIERARCHY = (DATA && DATA.rules && DATA.rules.categoryHierarchy) 
     "overseas_cn": ["overseas"],
     "overseas_mo": ["overseas"],
     "overseas_jkt": ["overseas"],
+    "overseas_jpkr": ["overseas"],
+    "overseas_th": ["overseas"],
     "overseas_tw": ["overseas"],
     "overseas_other": ["overseas"],
     "travel_plus_tier1": ["overseas"]
@@ -1073,6 +1116,8 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         isOnline: !!isOnline,
         isMobilePay: !!isMobilePay,
         paymentMethod: paymentMethod,
+        txDate: txDate || "",
+        isHoliday: !!isHoliday,
         settings: userProfile.settings || {},
         getMissionSpend: (key) => (Number(userProfile.usage[key]) || 0) + (Number(missionDeltaByKey[key]) || 0)
     };

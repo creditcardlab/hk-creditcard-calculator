@@ -371,13 +371,31 @@ const cardsDB = [
         currency: "BOC_Points",
         type: "visa",
         fcf: 0.0195,
-        rewardModules: ["boc_cheers_base", "boc_cheers_dining", "boc_cheers_travel", "boc_amazing_fly_cn", "boc_amazing_fly_other", "boc_cheers_overseas", "boc_amazing_weekday", "boc_amazing_holiday", "boc_amazing_online_weekday", "boc_amazing_online_holiday"],
-        trackers: [],
+        rewardModules: [
+            "boc_cheers_base",
+            "boc_cheers_vi_dining_2026h1",
+            "boc_cheers_vi_fx_2026h1",
+            "boc_cheers_dining",
+            "boc_cheers_travel",
+            "boc_cheers_overseas",
+            "boc_amazing_fly_cn",
+            "boc_amazing_fly_other",
+            "boc_amazing_weekday",
+            "boc_amazing_holiday",
+            "boc_amazing_online_weekday",
+            "boc_amazing_online_holiday"
+        ],
+        trackers: [
+          "boc_cheers_vi_mission_tracker",
+          "boc_amazing_vi_local_mission_tracker",
+          "boc_fly_vi_cn_tracker",
+          "boc_fly_vi_other_tracker"
+        ],
         redemption: {
           unit: "積分",
           min: 0,
           fee: "免手續費 ✅",
-          ratio: "15分 = 1里 | 餐飲: 10X (Cap 100k) | 旅遊/外幣: 10X (Cap 250k)"
+          ratio: "15分 = 1里 | 2026上半年餐飲: 10X (Cap 100k) | 外幣: 10X (Cap 250k)"
         }
     },
     {
@@ -386,13 +404,31 @@ const cardsDB = [
         currency: "BOC_Points",
         type: "visa",
         fcf: 0.0195,
-        rewardModules: ["boc_cheers_base", "boc_cheers_dining_vs", "boc_cheers_travel_vs", "boc_amazing_fly_cn_vs", "boc_amazing_fly_other_vs", "boc_cheers_overseas_vs", "boc_amazing_weekday_vs", "boc_amazing_holiday_vs", "boc_amazing_online_weekday_vs", "boc_amazing_online_holiday_vs"],
-        trackers: [],
+        rewardModules: [
+            "boc_cheers_base",
+            "boc_cheers_vs_dining_2026h1",
+            "boc_cheers_vs_fx_2026h1",
+            "boc_cheers_dining_vs",
+            "boc_cheers_travel_vs",
+            "boc_cheers_overseas_vs",
+            "boc_amazing_fly_cn_vs",
+            "boc_amazing_fly_other_vs",
+            "boc_amazing_weekday_vs",
+            "boc_amazing_holiday_vs",
+            "boc_amazing_online_weekday_vs",
+            "boc_amazing_online_holiday_vs"
+        ],
+        trackers: [
+          "boc_cheers_vs_mission_tracker",
+          "boc_amazing_vs_local_mission_tracker",
+          "boc_fly_vs_cn_tracker",
+          "boc_fly_vs_other_tracker"
+        ],
         redemption: {
           unit: "積分",
           min: 0,
           fee: "免手續費 ✅",
-          ratio: "15分 = 1里 | 餐飲: 8X (Cap 60k) | 旅遊/外幣: 8X (Cap 150k)"
+          ratio: "15分 = 1里 | 2026上半年餐飲: 8X (Cap 60k) | 外幣: 8X (Cap 150k)"
         }
     },
     {
@@ -402,12 +438,12 @@ const cardsDB = [
         type: "master",
         fcf: 0.0195,
         rewardModules: ["boc_chill_base", "boc_chill_merchant", "boc_chill_online_overseas"],
-        trackers: [],
+        trackers: ["boc_chill_mission_tracker"],
         redemption: {
           unit: "積分",
           min: 0,
           fee: "$50/5K里（最低$100，最高$300）",
-          ratio: "15分 = 1里 | Chill商戶: 10X | 網購/海外: 5X | 共用 15k分/月上限"
+          ratio: "15分 = 1里 | 基本 1X + Chill 指定商戶額外10%（需月簽$1,500）+ 網上/外幣額外5% | 額外回贈上限$150/月（至2026-06-30）"
         }
     },
     {
@@ -416,13 +452,28 @@ const cardsDB = [
         currency: "BOC_Points",
         type: "unionpay",
         fcf: 0,
-        rewardModules: ["boc_go_base", "boc_go_mobile", "boc_go_merchant"],
+        rewardModules: ["boc_go_base", "boc_go_mobile", "boc_go_merchant", "boc_go_overseas"],
         trackers: [],
         redemption: {
           unit: "積分",
           min: 0,
           fee: "$50/5K里（最低$100，最高$300）",
-          ratio: "15分 = 1里 | 手機支付: 4X (上限10k分/月) | Go商戶: 5X (上限10k分/月)"
+          ratio: "15分 = 1里 | 基本 1X | Go 指定商戶合共5%（額外上限25,000分/月）| 全球手機簽賬合共3X（額外上限25,000分/月）| 海外合共2X"
+        }
+    },
+    {
+        id: "boc_go_platinum",
+        name: "中銀 Go UnionPay Platinum",
+        currency: "BOC_Points",
+        type: "unionpay",
+        fcf: 0,
+        rewardModules: ["boc_go_platinum_base", "boc_go_platinum_mobile", "boc_go_platinum_merchant", "boc_go_platinum_overseas"],
+        trackers: ["boc_go_platinum_mission_tracker"],
+        redemption: {
+          unit: "積分",
+          min: 0,
+          fee: "$50/5K里（最低$100，最高$300）",
+          ratio: "15分 = 1里 | 基本 1X | Go 指定商戶合共4.4%（需月簽$1,000，額外上限25,000分/月）| 全球手機簽賬合共2X（額外上限25,000分/月）| 海外合共2X"
         }
     },
     {
@@ -431,8 +482,14 @@ const cardsDB = [
         currency: "CASH_Direct",
         type: "visa",
         fcf: 0.0195,
-        rewardModules: ["boc_sogo_mobile_pay"],
-        trackers: []
+        rewardModules: ["boc_sogo_base", "boc_sogo_designated", "boc_sogo_mobile_pay"],
+        trackers: [],
+        redemption: {
+          unit: "元",
+          min: 0,
+          fee: "N/A",
+          ratio: "基本 0.4% | SOGO 指定商戶 5% | 手機支付額外 +5%（每月上限$100，2026-01-01 至 2026-12-31）"
+        }
     },
     {
         id: "ae_explorer",
@@ -440,13 +497,19 @@ const cardsDB = [
         currency: "AE_MR",
         type: "ae",
         fcf: 0.02,
-        rewardModules: ["ae_explorer_base", "ae_explorer_overseas", "ae_explorer_selected"],
+        rewardModules: [
+            "ae_explorer_base",
+            "ae_explorer_fx_travel_bonus_075_2026h1",
+            "ae_explorer_fx_7x_bonus_2026h1",
+            "ae_explorer_travel_7x_bonus_2026h1",
+            "ae_explorer_online_5x_bonus_2026"
+        ],
         trackers: [],
         redemption: {
           unit: "積分",
           min: 0,
           fee: "免費",
-          ratio: "18分 = 1里 | 海外: 10.75X | 指定旅遊: 12X"
+          ratio: "18分 = 1里 | 基本 3X | 海外/旅遊額外 +0.75X + 7X（2026-01-02 至 2026-06-30，每季首$10,000）| 指定網上商戶合共 5X（額外積分每季上限90,000，至2026-12-31）"
         }
     },
     {
@@ -455,13 +518,13 @@ const cardsDB = [
         currency: "AE_MR",
         type: "ae",
         fcf: 0.02,
-        rewardModules: ["ae_plat_base", "ae_plat_overseas", "ae_plat_travel", "ae_plat_daily"],
+        rewardModules: ["ae_plat_base", "ae_plat_accelerator_bonus", "ae_plat_overseas", "ae_plat_fx_5x_promo_2026h1", "ae_plat_travel", "ae_plat_daily"],
         trackers: [],
         redemption: {
           unit: "積分",
           min: 0,
           fee: "免費",
-          ratio: "18分 = 1里 | Turbo: 2X | Accelerator: +5X/7X"
+          ratio: "18分 = 1里 | 基本 1X + 計倍計賞額外1X（每年首$160,000）| 外幣基本合共 3X | 推廣期外幣/指定旅遊/指定日常可達 9X（每季各首$15,000，需登記）"
         }
     },
     {
@@ -470,38 +533,23 @@ const cardsDB = [
         currency: "AE_MR",
         type: "ae",
         fcf: 0.02,
-        rewardModules: ["ae_pcc_base", "ae_pcc_special"],
+        rewardModules: ["ae_pcc_base", "ae_pcc_program_bonus_2x", "ae_pcc_double_extra_3x_precap", "ae_pcc_double_extra_1x_postcap"],
         trackers: [],
         redemption: {
           unit: "積分",
           min: 0,
           fee: "免費",
-          ratio: "18分 = 1里 | 超市/油站: 6X (Double Points)"
-        }
-    },
-    {
-        id: "ae_blue_cash",
-        name: "AE Blue Cash",
-        currency: "CASH_Direct",
-        type: "ae",
-        fcf: 0.02,
-        rewardModules: ["ae_blue_cash_base"],
-        trackers: [],
-        redemption: {
-          unit: "現金",
-          min: 0,
-          fee: "免費",
-          ratio: "1.2% 回贈"
+          ratio: "18分 = 1里 | 基本 1X + 計劃額外 2X（推廣期首$120,000）| 指定商戶 Double Points：Program未封頂合共6X / Program封頂後合共2X（額外積分每月上限30,000）"
         }
     },
     {
         id: "fubon_in_platinum",
-        name: "Fubon iN Visa Platinum",
+        name: "富邦iN VISA白金卡",
         currency: "Fubon_Points",
         type: "visa",
         fcf: 0.0195,
         rewardModules: ["fubon_in_base", "fubon_in_online"],
-        trackers: [],
+        trackers: ["fubon_in_eligible_spend_tracker"],
         redemption: {
           unit: "積分",
           min: 0,
@@ -511,17 +559,39 @@ const cardsDB = [
     },
     {
         id: "fubon_travel",
-        name: "Fubon Platinum/Titanium",
+        name: "富邦Visa白金卡",
         currency: "Fubon_Points",
         type: "master",
         fcf: 0.0195,
-        rewardModules: ["fubon_travel_base", "fubon_travel_tw", "fubon_travel_jpkr", "fubon_travel_euro"],
+        rewardModules: ["fubon_travel_base", "fubon_travel_tw", "fubon_travel_jpkr", "fubon_travel_fx_other", "fubon_travel_local_weekend", "fubon_travel_upgrade_online"],
         trackers: [],
         redemption: {
           unit: "積分",
           min: 0,
           fee: "HK$50/5000里",
-          ratio: "15分 = 1里 | 20X = $1.33/里"
+          ratio: "15分 = 1里 | 台灣20X / 日韓10X / 外幣5X | 本地週末2X（2026）"
+        }
+    },
+    {
+        id: "fubon_infinite",
+        name: "富邦Visa Infinite卡",
+        currency: "Fubon_Points",
+        type: "visa",
+        fcf: 0.0195,
+        rewardModules: [
+          "fubon_infinite_base",
+          "fubon_infinite_fx_other",
+          "fubon_infinite_jpkr_bonus",
+          "fubon_infinite_twd_bonus",
+          "fubon_infinite_local_weekend",
+          "fubon_infinite_upgrade_online"
+        ],
+        trackers: ["fubon_infinite_upgrade_tracker"],
+        redemption: {
+          unit: "積分",
+          min: 0,
+          fee: "HK$50/5000里",
+          ratio: "15分 = 1里 | 海外簽賬低至$0.75/里 | 本地指定網購高達$1.5/里（需登記）"
         }
     },
     {

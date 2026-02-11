@@ -132,6 +132,7 @@
                 id: campaign.id,
                 sourceType: "campaign",
                 renderType: "campaign_sections",
+                warningOnly: !!campaign.warningOnly,
                 offerType: campaign.promo_type || "custom",
                 title: campaign.display_name_zhhk || campaign.name || campaign.id,
                 name: campaign.name || "",

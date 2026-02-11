@@ -51,6 +51,166 @@ const trackersDB = {
         effects_on_eligible: [{ key: "sc_smart_monthly_eligible", amount: "tx_amount" }],
         counter: { key: "sc_smart_monthly_eligible", period: "month" }
     },
+    // BOC Cheers 2026 H1 mission threshold (per card, per month)
+    "boc_cheers_vi_mission_tracker": {
+        type: "mission_tracker",
+        desc: "🎯 Cheers VI 每月合資格簽賬",
+        hide_in_equation: true,
+        mission_id: "boc_cheers_vi_2026h1",
+        valid_from: "2026-01-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => {
+            const excludedCats = new Set(["alipay", "wechat"]);
+            const pm = ctx && ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
+            if (excludedCats.has(cat)) return false;
+            if (pm === "omycard") return false;
+            return true;
+        },
+        effects_on_eligible: [{ key: "spend_boc_cheers_vi_qual", amount: "tx_amount" }],
+        counter: { key: "spend_boc_cheers_vi_qual", period: "month" }
+    },
+    "boc_cheers_vs_mission_tracker": {
+        type: "mission_tracker",
+        desc: "🎯 Cheers VS 每月合資格簽賬",
+        hide_in_equation: true,
+        mission_id: "boc_cheers_vs_2026h1",
+        valid_from: "2026-01-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => {
+            const excludedCats = new Set(["alipay", "wechat"]);
+            const pm = ctx && ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
+            if (excludedCats.has(cat)) return false;
+            if (pm === "omycard") return false;
+            return true;
+        },
+        effects_on_eligible: [{ key: "spend_boc_cheers_vs_qual", amount: "tx_amount" }],
+        counter: { key: "spend_boc_cheers_vs_qual", period: "month" }
+    },
+    "boc_amazing_vi_local_mission_tracker": {
+        type: "mission_tracker",
+        setting_key: "boc_amazing_enabled",
+        desc: "🔥 狂賞派 VI 本地簽賬門檻",
+        hide_in_equation: true,
+        mission_id: "boc_amazing",
+        valid_from: "2026-01-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => {
+            if (!ctx || ctx.isOnline) return false;
+            if (Number(ctx.amount) < 500) return false;
+            if (cat === "alipay" || cat === "wechat") return false;
+            if (String(cat || "").startsWith("overseas")) return false;
+            const pm = ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
+            if (pm === "unionpay_cloud") return false;
+            return true;
+        },
+        effects_on_eligible: [{ key: "spend_boc_amazing_local", amount: "tx_amount" }],
+        counter: { key: "spend_boc_amazing_local", period: "month" }
+    },
+    "boc_amazing_vs_local_mission_tracker": {
+        type: "mission_tracker",
+        setting_key: "boc_amazing_enabled",
+        desc: "🔥 狂賞派 VS 本地簽賬門檻",
+        hide_in_equation: true,
+        mission_id: "boc_amazing",
+        valid_from: "2026-01-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => {
+            if (!ctx || ctx.isOnline) return false;
+            if (Number(ctx.amount) < 500) return false;
+            if (cat === "alipay" || cat === "wechat") return false;
+            if (String(cat || "").startsWith("overseas")) return false;
+            const pm = ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
+            if (pm === "unionpay_cloud") return false;
+            return true;
+        },
+        effects_on_eligible: [{ key: "spend_boc_amazing_local", amount: "tx_amount" }],
+        counter: { key: "spend_boc_amazing_local", period: "month" }
+    },
+    "boc_fly_vi_cn_tracker": {
+        type: "mission_tracker",
+        setting_key: "boc_amazing_enabled",
+        match: ["overseas_cn", "overseas_mo"],
+        desc: "✈️ 狂賞飛 VI 中澳階段簽賬",
+        hide_in_equation: true,
+        mission_id: "boc_amazing_fly",
+        valid_from: "2026-01-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => !!ctx && !ctx.isOnline && Number(ctx.amount) >= 500,
+        effects_on_eligible: [{ key: "spend_boc_fly_cn_stage", amount: "tx_amount" }],
+        counter: { key: "spend_boc_fly_cn_stage", period: { type: "quarter", startMonth: 1, startDay: 1 } }
+    },
+    "boc_fly_vi_other_tracker": {
+        type: "mission_tracker",
+        setting_key: "boc_amazing_enabled",
+        match: ["overseas_jkt", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
+        desc: "✈️ 狂賞飛 VI 海外階段簽賬",
+        hide_in_equation: true,
+        mission_id: "boc_amazing_fly",
+        valid_from: "2026-01-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => !!ctx && !ctx.isOnline && Number(ctx.amount) >= 500,
+        effects_on_eligible: [{ key: "spend_boc_fly_other_stage", amount: "tx_amount" }],
+        counter: { key: "spend_boc_fly_other_stage", period: { type: "quarter", startMonth: 1, startDay: 1 } }
+    },
+    "boc_fly_vs_cn_tracker": {
+        type: "mission_tracker",
+        setting_key: "boc_amazing_enabled",
+        match: ["overseas_cn", "overseas_mo"],
+        desc: "✈️ 狂賞飛 VS 中澳階段簽賬",
+        hide_in_equation: true,
+        mission_id: "boc_amazing_fly",
+        valid_from: "2026-01-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => !!ctx && !ctx.isOnline && Number(ctx.amount) >= 500,
+        effects_on_eligible: [{ key: "spend_boc_fly_cn_stage", amount: "tx_amount" }],
+        counter: { key: "spend_boc_fly_cn_stage", period: { type: "quarter", startMonth: 1, startDay: 1 } }
+    },
+    "boc_fly_vs_other_tracker": {
+        type: "mission_tracker",
+        setting_key: "boc_amazing_enabled",
+        match: ["overseas_jkt", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
+        desc: "✈️ 狂賞飛 VS 海外階段簽賬",
+        hide_in_equation: true,
+        mission_id: "boc_amazing_fly",
+        valid_from: "2026-01-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => !!ctx && !ctx.isOnline && Number(ctx.amount) >= 500,
+        effects_on_eligible: [{ key: "spend_boc_fly_other_stage", amount: "tx_amount" }],
+        counter: { key: "spend_boc_fly_other_stage", period: { type: "quarter", startMonth: 1, startDay: 1 } }
+    },
+    "boc_chill_mission_tracker": {
+        type: "mission_tracker",
+        desc: "🎯 Chill 每月合資格實體簽賬",
+        hide_in_equation: true,
+        mission_id: "boc_chill_offer",
+        valid_from: "2025-01-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => {
+            if (!ctx || ctx.isOnline) return false;
+            const excludedCats = new Set(["alipay", "wechat", "payme", "oepay", "tuition", "charity"]);
+            if (excludedCats.has(cat)) return false;
+            const pm = ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
+            if (pm === "omycard") return false;
+            return true;
+        },
+        effects_on_eligible: [{ key: "spend_boc_chill_monthly", amount: "tx_amount" }],
+        counter: { key: "spend_boc_chill_monthly", period: "month" }
+    },
+    "boc_go_platinum_mission_tracker": {
+        type: "mission_tracker",
+        desc: "🎯 Go Platinum 每月簽賬任務",
+        hide_in_equation: true,
+        mission_id: "boc_go_offer_platinum",
+        valid_from: "2025-01-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => {
+            const excludedCats = new Set(["alipay", "wechat", "payme", "oepay", "tuition", "charity"]);
+            if (excludedCats.has(cat)) return false;
+            return true;
+        },
+        effects_on_eligible: [{ key: "spend_boc_go_platinum_monthly", amount: "tx_amount" }],
+        counter: { key: "spend_boc_go_platinum_monthly", period: "month" }
+    },
     // DBS Black World 2026 promo:
     // - Mission spend uses qualified retail spending
     // - E-wallet spending only counts up to HK$5,000 per month toward mission threshold
@@ -102,6 +262,36 @@ const trackersDB = {
             }
         ],
         counter: { key: "spend_dbs_black_ewallet_qual", period: "month" }
+    },
+
+    // --- Fubon iN ---
+    "fubon_in_eligible_spend_tracker": {
+        type: "mission_tracker",
+        desc: "🎯 Fubon iN 每月合資格簽賬",
+        hide_in_equation: true,
+        mission_id: "fubon_in_promo",
+        valid_from: "2026-01-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => {
+            const excludedCats = new Set(["alipay", "wechat", "payme", "oepay", "tuition", "charity"]);
+            if (excludedCats.has(cat)) return false;
+            const pm = ctx && ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
+            if (pm === "omycard") return false;
+            return true;
+        },
+        effects_on_eligible: [{ key: "fubon_in_monthly_eligible_spend", amount: "tx_amount" }],
+        counter: { key: "fubon_in_monthly_eligible_spend", period: "month" }
+    },
+    "fubon_infinite_upgrade_tracker": {
+        type: "mission_tracker",
+        match: ["fubon_upgrade_online"],
+        desc: "🎯 Fubon Infinite 指定本地網購月簽進度",
+        hide_in_equation: true,
+        mission_id: "fubon_infinite_upgrade_promo",
+        valid_from: "2026-01-01",
+        valid_to: "2026-06-30",
+        effects_on_eligible: [{ key: "fubon_infinite_upgrade_monthly_spend", amount: "tx_amount" }],
+        counter: { key: "fubon_infinite_upgrade_monthly_spend", period: "month" }
     },
 
     // --- sim Credit ---
