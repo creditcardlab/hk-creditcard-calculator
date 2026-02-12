@@ -14,6 +14,7 @@ function init() {
     const guruUsageKeys = getGuruUsageKeys();
     if (!userProfile.usage[guruUsageKeys.spendKey]) userProfile.usage[guruUsageKeys.spendKey] = 0;
     if (!userProfile.usage[guruUsageKeys.rewardKey]) userProfile.usage[guruUsageKeys.rewardKey] = 0;
+    if (!userProfile.usage.spend_guru_unlock) userProfile.usage.spend_guru_unlock = 0;
     if (typeof ensureBooleanSettingDefaults === "function") ensureBooleanSettingDefaults(userProfile.settings);
     if (userProfile.settings.deduct_fcf_ranking === undefined) userProfile.settings.deduct_fcf_ranking = false;
     {
@@ -23,6 +24,16 @@ function init() {
             : [];
         const normalized = Array.from(new Set(raw.filter(x => allowed.includes(x)))).slice(0, 2);
         userProfile.settings.mmpower_selected_categories = normalized.length > 0 ? normalized : ["dining", "electronics"];
+    }
+    {
+        const allowed = ["mobile_pay", "travel", "overseas", "online_entertainment"];
+        const selected = String(userProfile.settings.wewa_selected_category || "mobile_pay");
+        userProfile.settings.wewa_selected_category = allowed.includes(selected) ? selected : "mobile_pay";
+    }
+    {
+        const allowed = ["cashback", "miles"];
+        const mode = String(userProfile.settings.mox_reward_mode || "cashback");
+        userProfile.settings.mox_reward_mode = allowed.includes(mode) ? mode : "cashback";
     }
     if (userProfile.settings.citi_prestige_bonus_enabled === undefined) userProfile.settings.citi_prestige_bonus_enabled = false;
     if (userProfile.settings.citi_prestige_tenure_years === undefined) userProfile.settings.citi_prestige_tenure_years = 1;
@@ -55,7 +66,7 @@ function getGuruUsageKeys() {
 
 function isGuruOverseasCategory(category) {
     if (typeof isCategoryMatch === "function") return isCategoryMatch(["overseas"], category);
-    return ['overseas', 'overseas_jkt', 'overseas_jpkr', 'overseas_th', 'overseas_tw', 'overseas_cn', 'overseas_mo', 'overseas_other'].includes(category);
+    return ['overseas', 'overseas_jkt', 'overseas_jp', 'overseas_jpkr', 'overseas_th', 'overseas_tw', 'overseas_cn', 'overseas_mo', 'overseas_other'].includes(category);
 }
 
 function migrateWinterUsage() {
@@ -364,6 +375,23 @@ window.handleGuruUpgrade = function () {
     }
 }
 
+window.handleTravelGuruStartGo = function () {
+    const unlockTarget = 8000;
+    const unlockSpend = Number(userProfile.usage.spend_guru_unlock) || 0;
+    if (unlockSpend < unlockTarget) {
+        alert(`尚未達標，仍需海外簽賬 $${(unlockTarget - unlockSpend).toLocaleString()}。`);
+        return;
+    }
+    if (parseInt(userProfile.settings.guru_level, 10) > 0) {
+        alert("已啟動 GO 級或以上。");
+        return;
+    }
+    if (!confirm("已完成解鎖，啟動 GO級？")) return;
+    userProfile.settings.guru_level = 1;
+    saveUserData();
+    refreshUI();
+}
+
 function rebuildUsageAndStatsFromTransactions() {
     const prevUsage = userProfile.usage || {};
     userProfile.usage = {};
@@ -397,8 +425,11 @@ function rebuildUsageAndStatsFromTransactions() {
 
         const guruUsageKeys = getGuruUsageKeys();
         const isOverseas = isGuruOverseasCategory(category);
-        if (parseInt(userProfile.settings.guru_level) > 0 && isOverseas) {
-            userProfile.usage[guruUsageKeys.spendKey] = (userProfile.usage[guruUsageKeys.spendKey] || 0) + amount;
+        if (userProfile.settings.travel_guru_registered && isOverseas) {
+            userProfile.usage.spend_guru_unlock = (userProfile.usage.spend_guru_unlock || 0) + amount;
+            if (parseInt(userProfile.settings.guru_level) > 0) {
+                userProfile.usage[guruUsageKeys.spendKey] = (userProfile.usage[guruUsageKeys.spendKey] || 0) + amount;
+            }
         }
 
         const card = DATA.cards.find(c => c.id === cardId);
@@ -493,7 +524,12 @@ function commitTransaction(data) {
     // Track all overseas spending for Guru upgrade progress
     const guruUsageKeys = getGuruUsageKeys();
     const isOverseas = isGuruOverseasCategory(category);
-    if (level > 0 && isOverseas) userProfile.usage[guruUsageKeys.spendKey] = (userProfile.usage[guruUsageKeys.spendKey] || 0) + amount;
+    if (userProfile.settings.travel_guru_registered && isOverseas) {
+        userProfile.usage.spend_guru_unlock = (userProfile.usage.spend_guru_unlock || 0) + amount;
+        if (level > 0) {
+            userProfile.usage[guruUsageKeys.spendKey] = (userProfile.usage[guruUsageKeys.spendKey] || 0) + amount;
+        }
+    }
 
     let alertMsg = "";
     // Mission progress keys are now updated via tracker effects (trackMissionSpend).

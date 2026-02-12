@@ -123,6 +123,7 @@ function buildCountersRegistry(data) {
 
     // Misc usage keys not captured in data files
     addKey("guru_spend_accum", "manual:misc", "none", null, 0, null, null);
+    addKey("spend_guru_unlock", "manual:misc", "none", null, 0, null, null);
 
     return registry;
 }

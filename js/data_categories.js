@@ -15,7 +15,8 @@ const categoriesDB = {
     online: { label: "💻 網上購物 (Online)", order: 3, hidden: true },
 
     overseas: { label: "🌍 海外 (母類)", hidden: true, red_hot: "world" },
-    overseas_jpkr: { label: "🇯🇵🇰🇷 海外 (日韓)", order: 4, parent: "overseas", red_hot: "world" },
+    overseas_jpkr: { label: "🇰🇷 海外 (韓國)", order: 4, parent: "overseas", red_hot: "world" },
+    overseas_jp: { label: "🇯🇵 海外 (日本)", order: 4.2, parent: "overseas", red_hot: "world" },
     overseas_th: { label: "🇹🇭 海外 (泰國)", order: 4.5, parent: "overseas", red_hot: "world" },
     // Legacy combined bucket kept for backward compatibility with existing transactions/rules.
     overseas_jkt: { label: "🇯🇵🇰🇷🇹🇭 海外 (日韓泰-舊)", hidden: true, parent: "overseas", red_hot: "world" },
@@ -85,6 +86,16 @@ const categoriesDB = {
     enjoy_3x: { label: "🟠 enJoy 指定商戶 3X（1.5%）", order: 119, req: "hangseng_enjoy" },
     enjoy_2x: { label: "🔵 enJoy 指定商戶 2X（1%）", order: 120, req: "hangseng_enjoy" },
     fubon_upgrade_online: { label: "🛒 Fubon 指定本地網購（升級10X，需登記）", order: 121, req: (cards) => cards.includes("fubon_travel") || cards.includes("fubon_infinite"), parent: "online" },
+    sim_designated_merchant: {
+        label: "🛍️ sim 指定商戶（3%）",
+        order: 122,
+        req: (cards) => cards.includes("sim_credit") || cards.includes("sim_world")
+    },
+    sim_billpay: {
+        label: "🧾 sim App 指定繳費（2%）",
+        order: 123,
+        req: (cards) => cards.includes("sim_credit") || cards.includes("sim_world")
+    },
 
     // Enjoy-specific (hidden)
     dining_enjoy: { label: "🍽️ enJoy 指定餐飲（舊）", hidden: true },

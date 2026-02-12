@@ -48,7 +48,17 @@ const CAMPAIGN_REGISTRY = {
     },
     sim_promo: {
         settingKey: "sim_promo_enabled",
-        warningTitle: "sim Credit",
+        warningTitle: "sim Credit 現金回贈推廣",
+        warningDesc: "需登記以賺取回贈"
+    },
+    sim_world_promo: {
+        settingKey: "sim_world_promo_enabled",
+        warningTitle: "sim World 現金回贈推廣",
+        warningDesc: "需登記以賺取回贈"
+    },
+    wewa_overseas_5pct_2026q1: {
+        settingKey: "wewa_overseas_5pct_enabled",
+        warningTitle: "WeWa 海外額外 +5%",
         warningDesc: "需登記以賺取回贈"
     },
     ae_explorer_075x_toggle: {
@@ -70,6 +80,16 @@ const CAMPAIGN_REGISTRY = {
         settingKey: "ae_platinum_9x_enabled",
         warningTitle: "AE Platinum 高達9X",
         warningDesc: "需登記以賺取回贈"
+    },
+    bea_world_flying_2025_2026h1: {
+        settingKey: "bea_world_flying_miles_enabled",
+        warningTitle: "BEA World BEA Flying Miles",
+        warningDesc: "需登記 BEA Flying Miles 計劃"
+    },
+    bea_ititanium_2025_2026: {
+        settingKey: "bea_ititanium_bonus_enabled",
+        warningTitle: "BEA i-Titanium 網上零售/手機支付",
+        warningDesc: "需登記 BEA Spending Points 計劃"
     }
 };
 
@@ -485,6 +505,61 @@ const CAMPAIGNS = [
         capKeys: ["travel_plus_reward_cap"]
     },
     {
+        id: "wewa_cash_rebate_program",
+        promo_type: "mission_cap",
+        name: "WeWa 自選現金回贈",
+        icon: "fas fa-wallet",
+        theme: "yellow",
+        period_policy: {
+            mode: "recurring",
+            startDate: "2025-07-01",
+            endDate: "2026-06-30",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["wewa"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬任務進度", missionModule: "wewa_selected_bonus" },
+            { type: "cap", label: "💰 回贈進度", capModule: "wewa_selected_bonus", unit: "元", unlockModule: "wewa_selected_bonus" }
+        ],
+        capKeys: ["wewa_selected_bonus_cap"]
+    },
+    {
+        id: "wewa_overseas_5pct_2026q1",
+        promo_type: "mission_cap",
+        name: "WeWa 海外額外 +5%",
+        icon: "fas fa-globe-asia",
+        theme: "yellow",
+        period_policy: {
+            mode: "composite",
+            windows: [
+                {
+                    id: "stage_1",
+                    startDate: "2026-01-05",
+                    endDate: "2026-01-31",
+                    period: { type: "promo", startDate: "2026-01-05", endDate: "2026-01-31" }
+                },
+                {
+                    id: "stage_2",
+                    startDate: "2026-02-01",
+                    endDate: "2026-02-28",
+                    period: { type: "promo", startDate: "2026-02-01", endDate: "2026-02-28" }
+                },
+                {
+                    id: "stage_3",
+                    startDate: "2026-03-01",
+                    endDate: "2026-03-31",
+                    period: { type: "promo", startDate: "2026-03-01", endDate: "2026-03-31" }
+                }
+            ]
+        },
+        cards: ["wewa"],
+        sections: [
+            { type: "mission", label: "🎯 階段簽賬任務進度", missionModule: "wewa_overseas_extra_2026q1" },
+            { type: "cap", label: "💰 回贈進度", capModule: "wewa_overseas_extra_2026q1", unit: "元", unlockModule: "wewa_overseas_extra_2026q1" }
+        ],
+        capKeys: ["wewa_overseas_stage_bonus_cap"]
+    },
+    {
         id: "fubon_in_promo",
         promo_type: "mission_cap",
         name: "Fubon iN 網購20X",
@@ -567,6 +642,100 @@ const CAMPAIGNS = [
         capKeys: ["fubon_infinite_bonus_monthly_cap", "fubon_infinite_bonus_annual_cap"]
     },
     {
+        id: "bea_goal_2025_2026h1",
+        promo_type: "mission_cap",
+        name: "BEA GOAL 額外現金回贈",
+        icon: "fas fa-bullseye",
+        theme: "gray",
+        period_policy: {
+            mode: "recurring",
+            startDate: "2025-01-01",
+            endDate: "2026-06-30",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["bea_goal"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬任務進度", missionModule: "bea_goal_travel_transport" },
+            { type: "cap", label: "💰 額外回贈進度", capModule: "bea_goal_travel_transport", unit: "$", unlockModule: "bea_goal_travel_transport" }
+        ],
+        capKeys: ["bea_goal_cap"]
+    },
+    {
+        id: "bea_world_spending_2025_2026h1",
+        promo_type: "mission_cap",
+        name: "BEA World Spending Points 12.5X",
+        icon: "fas fa-globe-asia",
+        theme: "gray",
+        period_policy: {
+            mode: "recurring",
+            startDate: "2025-01-01",
+            endDate: "2026-06-30",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["bea_world", "bea_world_privilege"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬任務進度", missionModule: "bea_world_bonus" },
+            { type: "cap", label: "💰 額外積分進度", capModule: "bea_world_bonus", unit: "BEA分", unlockModule: "bea_world_bonus" }
+        ],
+        capKeys: ["bea_world_cap"]
+    },
+    {
+        id: "bea_world_flying_2025_2026h1",
+        promo_type: "mission_cap",
+        name: "BEA World BEA Flying Miles",
+        icon: "fas fa-plane",
+        theme: "gray",
+        period_policy: {
+            mode: "recurring",
+            startDate: "2025-01-01",
+            endDate: "2026-06-30",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["bea_world", "bea_world_privilege"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬任務進度", missionModule: "bea_world_flying_overseas" },
+            { type: "cap", label: "✈️ 飛行里數積分進度", capModule: "bea_world_flying_overseas", unit: "BEA分", unlockModule: "bea_world_flying_overseas" }
+        ],
+        capKeys: ["bea_world_flying_cap"]
+    },
+    {
+        id: "bea_ititanium_2025_2026",
+        promo_type: "mission_cap",
+        name: "BEA i-Titanium 網上零售/手機支付",
+        icon: "fas fa-mobile-alt",
+        theme: "gray",
+        period_policy: {
+            mode: "recurring",
+            startDate: "2025-01-01",
+            endDate: "2026-12-31",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["bea_ititanium"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬任務進度", missionModule: "bea_ititanium_online_mobile" },
+            { type: "cap", label: "💰 額外回贈進度", capModule: "bea_ititanium_online_mobile", unit: "i-Dollar", unlockModule: "bea_ititanium_online_mobile" }
+        ],
+        capKeys: ["bea_ititanium_cap"]
+    },
+    {
+        id: "bea_unionpay_diamond_2025_2026h1",
+        promo_type: "cap",
+        name: "BEA 銀聯雙幣鑽石 額外積分",
+        icon: "fas fa-gem",
+        theme: "gray",
+        period_policy: {
+            mode: "recurring",
+            startDate: "2025-01-01",
+            endDate: "2026-06-30",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["bea_unionpay_diamond"],
+        sections: [
+            { type: "cap", label: "💰 額外積分進度", capModule: "bea_unionpay_rmb", unit: "BEA分" }
+        ],
+        capKeys: ["bea_unionpay_cap"]
+    },
+    {
         id: "dbs_black_promo",
         promo_type: "mission_cap",
         name: "DBS Black $2/里推廣",
@@ -612,20 +781,61 @@ const CAMPAIGNS = [
     },
     {
         id: "sim_promo",
-        promo_type: "mission_cap",
-        name: "sim 8% 網購推廣",
+        promo_type: "multi_cap",
+        name: "sim Credit 現金回贈推廣",
         icon: "fas fa-percent",
         theme: "green",
         period_policy: {
-            mode: "recurring",
+            mode: "fixed",
+            startDate: "2026-02-01",
+            endDate: "2026-04-30",
             period: { type: "month", startDay: 1 }
         },
         cards: ["sim_credit"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", missionModule: "sim_online" },
-            { type: "cap", label: "💰 回贈進度", capModule: "sim_online", unit: "元", unlockModule: "sim_online" }
+            { type: "cap", label: "💰 每月額外回贈進度", capModule: "sim_online", unit: "元", unlockModule: "sim_online" },
+            { type: "cap", label: "🧮 推廣期額外回贈進度", capKey: "sim_promo_cap_total", cap: 600, unit: "元", unlockModule: "sim_online" }
         ],
-        capKeys: ["sim_online_cap"]
+        capKeys: ["sim_promo_cap_monthly"]
+    },
+    {
+        id: "sim_world_promo",
+        promo_type: "multi_cap",
+        name: "sim World 現金回贈推廣",
+        icon: "fas fa-globe-asia",
+        theme: "green",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2026-02-01",
+            endDate: "2026-04-30",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["sim_world"],
+        sections: [
+            { type: "mission", label: "🎯 簽賬任務進度", missionModule: "sim_world_online" },
+            { type: "cap", label: "💰 每月額外回贈進度", capModule: "sim_world_online", unit: "元", unlockModule: "sim_world_online" },
+            { type: "cap", label: "🧮 推廣期額外回贈進度", capKey: "sim_world_promo_cap_total", cap: 600, unit: "元", unlockModule: "sim_world_online" }
+        ],
+        capKeys: ["sim_world_promo_cap_monthly"]
+    },
+    {
+        id: "aeon_wakuwaku_2025_2026",
+        promo_type: "cap",
+        name: "AEON WAKUWAKU 額外回贈",
+        icon: "fas fa-star",
+        theme: "purple",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2025-05-01",
+            endDate: "2026-02-28",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["aeon_wakuwaku"],
+        sections: [
+            { type: "cap", label: "💰 每月額外回贈進度", capModule: "aeon_waku_online", unit: "元" }
+        ],
+        capKeys: ["aeon_waku_bonus_cap"]
     }
 ];
 
@@ -635,6 +845,9 @@ const SPECIAL_PROMO_MODELS = {
         id: "travel_guru",
         promo_type: "level_lifecycle",
         module: "travel_guru_v2",
+        registrationSettingKey: "travel_guru_registered",
+        unlockSpend: 8000,
+        unlockSpendKey: "spend_guru_unlock",
         usage: {
             spendKey: "guru_spend_accum",
             rewardKey: "guru_rc_used"

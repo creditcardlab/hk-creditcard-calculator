@@ -281,11 +281,15 @@ function getCampaignToggleDefinitions() {
         "travel_plus_promo_enabled",
         "fubon_travel_upgrade_enabled",
         "fubon_infinite_upgrade_enabled",
+        "wewa_overseas_5pct_enabled",
         "sim_promo_enabled",
+        "sim_world_promo_enabled",
         "ae_explorer_075x_enabled",
         "ae_explorer_7x_enabled",
         "ae_explorer_online_5x_enabled",
         "ae_platinum_9x_enabled",
+        "bea_world_flying_miles_enabled",
+        "bea_ititanium_bonus_enabled",
         "em_promo_enabled"
     ];
     const priorityMap = {};
@@ -727,6 +731,8 @@ function toggleCategoryHelp() {
         'ae_pcc_designated': showAePccOfferInfo,
         'club_shopping': showClubShoppingTips,
         'citi_club_telecom': showClubTelecomTips,
+        'sim_designated_merchant': showSimMerchantDetails,
+        'sim_billpay': showSimBillpayDetails,
         'enjoy_4x': showEnjoy4xInfo,
         'enjoy_3x': showEnjoy3xInfo,
         'enjoy_2x': showEnjoy2xInfo
@@ -761,6 +767,32 @@ function showChillMerchantList() {
     const url = "https://www.bochk.com/tc/creditcard/promotions/offers/chillmerchants.html";
     const msg = "【中銀 Chill 指定商戶】\n\n✅ Chill 指定商戶類別以中銀官方名單為準\n✅ 如唔肯定商戶是否合資格，請先查官方頁面";
     const shouldOpen = confirm(`${msg}\n\n按「確定」開啟官方指定商戶名單。`);
+    if (shouldOpen) window.open(url, "_blank", "noopener");
+}
+function getSimTermsUrlByOwnedCard() {
+    const creditUrl = "https://cdn.thesim.com/88_sim_Credit_Card_Terms_and_Conditions_of_Cash_Back_Promotion_TC_final_922dadcd98.pdf?updated_at=2026-01-30T09:07:02.934Z";
+    const worldUrl = "https://cdn.thesim.com/89_sim_World_Mastercard_Terms_and_Conditions_of_Cash_Back_Promotion_TC_final_da2d7dba35.pdf?updated_at=2026-01-30T09:07:02.858Z";
+    const hasWorld = !!(userProfile && Array.isArray(userProfile.ownedCards) && userProfile.ownedCards.includes("sim_world"));
+    const hasCredit = !!(userProfile && Array.isArray(userProfile.ownedCards) && userProfile.ownedCards.includes("sim_credit"));
+
+    if (hasWorld && !hasCredit) return worldUrl;
+    if (hasCredit && !hasWorld) return creditUrl;
+    if (hasWorld && hasCredit) {
+        const openWorld = confirm("你同時持有 sim Credit 同 sim World。\n\n按「確定」開 sim World 條款；按「取消」開 sim Credit 條款。");
+        return openWorld ? worldUrl : creditUrl;
+    }
+    return worldUrl;
+}
+function showSimMerchantDetails() {
+    const url = getSimTermsUrlByOwnedCard();
+    const msg = "【sim 指定商戶（3%）】\n\n✅ 指定商戶名單以 sim 官方條款 PDF 為準\n✅ 不確定商戶是否合資格，請先查閱條款";
+    const shouldOpen = confirm(`${msg}\n\n按「確定」開啟官方條款 PDF。`);
+    if (shouldOpen) window.open(url, "_blank", "noopener");
+}
+function showSimBillpayDetails() {
+    const url = getSimTermsUrlByOwnedCard();
+    const msg = "【sim App 指定繳費（2%）】\n\n✅ 合資格繳費項目以 sim 官方條款 PDF 為準\n✅ 請按條款列明渠道/商戶為準";
+    const shouldOpen = confirm(`${msg}\n\n按「確定」開啟官方條款 PDF。`);
     if (shouldOpen) window.open(url, "_blank", "noopener");
 }
 function showSogoMerchantList() {
@@ -1038,7 +1070,7 @@ function renderDashboard(userProfile) {
                     if (milesRate > 0 && cashRate === 0) rewardUnit = "里";
                 }
             }
-            const rewardIsCurrency = (rewardUnit === "" || rewardUnit === "$" || rewardUnit === "HKD" || rewardUnit === "元" || rewardUnit === "HK$");
+            const rewardIsCurrency = (rewardUnit === "" || rewardUnit === "$" || rewardUnit === "HKD" || rewardUnit === "元" || rewardUnit === "HK$" || rewardUnit === "現金");
 
             if (isRewardCap) {
                 displayPrefix = rewardIsCurrency ? '$' : '';
@@ -1143,7 +1175,7 @@ function renderCalculatorResults(results, currentMode) {
                 if (u === "RC") return `${v} RC`;
                 if (u === "分") return `${v}分`;
                 // Fallback: keep old behavior.
-                if (u === "HKD" || u === "元") return `$${v}`;
+                if (u === "HKD" || u === "元" || u === "現金") return `$${v}`;
                 return u ? `${v} ${u}` : v;
             };
 
@@ -1336,17 +1368,52 @@ function renderSettings(userProfile) {
         .sort((a, b) => a - b)
         .map((lv) => `<option value="${lv}">${escapeHtml((guruLevels[lv] && guruLevels[lv].name) || `${lv}級`)}</option>`)
         .join("");
-    html += `<div class="mb-4"><label class="text-xs font-bold text-gray-500">Travel Guru</label><select id="st-guru" class="w-full p-2 bg-gray-50 rounded" onchange="saveDrop('guru_level',this.value)"><option value="0">無</option>${guruOptions}</select></div>`;
+    const guruRegistered = !!userProfile.settings.travel_guru_registered;
+    html += `<div class="mb-4 border p-3 rounded-xl bg-gray-50 border-gray-200">
+        <div class="flex justify-between items-center mb-2">
+            <label class="text-xs font-bold text-gray-700">Travel Guru</label>
+            ${renderSettingsToggle({ id: "st-guru-enabled", checked: guruRegistered, onchange: "toggleSetting('travel_guru_registered')" })}
+        </div>
+        <select id="st-guru" class="w-full p-2 bg-white rounded border border-gray-300 text-sm" onchange="saveDrop('guru_level',this.value)">
+            <option value="0">無</option>${guruOptions}
+        </select>
+        <div class="mt-2 text-[11px] text-gray-600">登記後需先累積海外簽賬滿 $8,000，才開始計 GO 級回贈。</div>
+    </div>`;
 
     // Live Fresh Preference
-    html += `<div class="mb-4"><label class="text-xs font-bold text-teal-600">DBS Live Fresh 自選類別 (4選1)</label>
-        <select id="st-live-fresh" class="w-full p-2 bg-teal-50 rounded border border-teal-100" onchange="saveDrop('live_fresh_pref',this.value)">
+    html += `<div class="mb-4 border p-3 rounded-xl bg-teal-50 border-teal-100">
+        <label class="text-xs font-bold text-teal-700 block mb-2">DBS Live Fresh 自選類別 (4選1)</label>
+        <select id="st-live-fresh" class="w-full p-2 bg-white rounded border border-teal-200 text-sm" onchange="saveDrop('live_fresh_pref',this.value)">
             <option value="none">未設定</option>
             <option value="online_foreign">網上外幣簽賬 (Online Foreign Currency Spending)</option>
             <option value="travel">網上旅遊商戶、娛樂及指定服務訂閱</option>
             <option value="fashion">網上美容、時尚服飾及指定網上商戶</option>
             <option value="charity">指定商戶及網上慈善捐款</option>
         </select>
+    </div>`;
+    const wewaSelected = String(userProfile.settings.wewa_selected_category || "mobile_pay");
+    html += `<div class="mb-4 border p-3 rounded-xl bg-amber-50 border-amber-100">
+        <label class="text-xs font-bold text-amber-800 block mb-2">WeWa 自選回贈類別（4選1）</label>
+        <select id="st-wewa-selected" class="w-full p-2 bg-white rounded border border-amber-200 text-sm" onchange="saveDrop('wewa_selected_category',this.value)">
+            <option value="mobile_pay">📱 流動支付</option>
+            <option value="travel">✈️ 旅遊簽賬</option>
+            <option value="overseas">🌍 海外簽賬</option>
+            <option value="online_entertainment">🎬 網上娛樂簽賬</option>
+        </select>
+        <div class="mt-2 text-[11px] text-amber-800">預設為流動支付；額外 +3.6% 需每月合資格簽賬滿 $1,500。</div>
+    </div>`;
+    const moxMode = String(userProfile.settings.mox_reward_mode || "cashback");
+    html += `<div class="mb-4 border p-3 rounded-xl bg-gray-50 border-gray-200">
+        <label class="text-xs font-bold text-gray-700 block mb-2">Mox Credit 獎賞模式</label>
+        <select id="st-mox-mode" class="w-full p-2 bg-white rounded border border-gray-300 text-sm" onchange="saveDrop('mox_reward_mode',this.value)">
+            <option value="cashback">CashBack（回贈）</option>
+            <option value="miles">Asia Miles（里數）</option>
+        </select>
+        <div class="mt-2 flex justify-between items-center bg-white border border-gray-300 rounded p-2">
+            <span class="text-xs font-bold text-gray-700">已達解鎖條件（$250k結餘 或 合資格出糧$25k）</span>
+            ${renderSettingsToggle({ id: "st-mox", checked: !!userProfile.settings.mox_deposit_task_enabled, onchange: "toggleSetting('mox_deposit_task_enabled')" })}
+        </div>
+        <div class="mt-2 text-[11px] text-gray-600">Asia Miles 模式：已達條件 $4/里；未達條件 $8/里（至2026-03-31）其後 $10/里。</div>
     </div>`;
     const mmpowerSelected = Array.isArray(userProfile.settings.mmpower_selected_categories)
         ? userProfile.settings.mmpower_selected_categories
@@ -1442,15 +1509,13 @@ function renderSettings(userProfile) {
         </div>
     </div>`;
     html += renderCampaignToggleRows(userProfile, { excludeSettingKeys: ["winter_promo_enabled"] });
-    html += `<div class="flex justify-between items-center bg-gray-800 text-white p-2 rounded border border-gray-600">
-        <span>Mox 活期任務 (+$250k)</span>
-        ${renderSettingsToggle({ id: "st-mox", checked: !!userProfile.settings.mox_deposit_task_enabled, onchange: "toggleSetting('mox_deposit_task_enabled')" })}
-    </div>`;
     html += `</div><div class="text-center mt-4"><button onclick="if(confirm('清除資料?')){localStorage.clear();location.reload();}" class="text-red-400 text-xs">Reset All</button></div></div>`;
 
     list.innerHTML = html;
     document.getElementById('st-guru').value = userProfile.settings.guru_level;
     document.getElementById('st-live-fresh').value = userProfile.settings.live_fresh_pref || "none";
+    document.getElementById('st-wewa-selected').value = wewaSelected;
+    document.getElementById('st-mox-mode').value = moxMode;
     if (rhEnabled) updateAllocationTotal();
 }
 

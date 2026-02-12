@@ -142,7 +142,7 @@ const trackersDB = {
     "boc_fly_vi_other_tracker": {
         type: "mission_tracker",
         setting_key: "boc_amazing_enabled",
-        match: ["overseas_jkt", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
+        match: ["overseas_jkt", "overseas_jp", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
         desc: "✈️ 狂賞飛 VI 海外階段簽賬",
         hide_in_equation: true,
         mission_id: "boc_amazing_fly",
@@ -168,7 +168,7 @@ const trackersDB = {
     "boc_fly_vs_other_tracker": {
         type: "mission_tracker",
         setting_key: "boc_amazing_enabled",
-        match: ["overseas_jkt", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
+        match: ["overseas_jkt", "overseas_jp", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
         desc: "✈️ 狂賞飛 VS 海外階段簽賬",
         hide_in_equation: true,
         mission_id: "boc_amazing_fly",
@@ -296,21 +296,88 @@ const trackersDB = {
 
     // --- sim Credit ---
     "sim_non_online_tracker": {
-        type: "mission_tracker", req_mission_key: "sim_non_online_spend",
-        match: ["general", "dining", "nfc_payment", "overseas", "alipay", "wechat", "payme", "oepay", "grocery", "sportswear", "medical", "transport", "travel", "entertainment", "apparel", "health_beauty", "telecom", "other", "moneyback_merchant", "moneyback_pns_watsons", "moneyback_fortress", "tuition", "chill_merchant", "go_merchant"],
-        desc: "Sim Credit 非網購 ($500)", mission_id: "sim_non_online",
-        eligible_check: (cat) => cat !== 'online' && cat !== 'online_foreign'
+        type: "mission_tracker",
+        req_mission_key: "sim_non_online_spend",
+        match: ["general", "dining", "nfc_payment", "overseas", "alipay", "wechat", "payme", "oepay", "grocery", "sportswear", "medical", "transport", "travel", "entertainment", "apparel", "health_beauty", "telecom", "other", "moneyback_merchant", "moneyback_pns_watsons", "moneyback_fortress", "tuition", "chill_merchant", "go_merchant", "sim_designated_merchant", "sim_billpay"],
+        desc: "sim Credit 每月非網上零售簽賬門檻（$1,000）",
+        mission_id: "sim_non_online",
+        valid_from: "2026-02-01",
+        valid_to: "2026-04-30",
+        eligible_check: (cat, ctx) => {
+            if (ctx && ctx.isOnline) return false;
+            return cat !== "online" && cat !== "online_foreign" && cat !== "sim_billpay";
+        },
+        counter: { key: "sim_non_online_spend", period: "month" }
+    },
+    "sim_world_non_online_tracker": {
+        type: "mission_tracker",
+        req_mission_key: "sim_world_non_online_spend",
+        match: ["general", "dining", "nfc_payment", "overseas", "alipay", "wechat", "payme", "oepay", "grocery", "sportswear", "medical", "transport", "travel", "entertainment", "apparel", "health_beauty", "telecom", "other", "moneyback_merchant", "moneyback_pns_watsons", "moneyback_fortress", "tuition", "chill_merchant", "go_merchant", "sim_designated_merchant", "sim_billpay"],
+        desc: "sim World 每月非網上零售簽賬門檻（$1,000）",
+        mission_id: "sim_world_non_online",
+        valid_from: "2026-02-01",
+        valid_to: "2026-04-30",
+        eligible_check: (cat, ctx) => {
+            if (ctx && ctx.isOnline) return false;
+            return cat !== "online" && cat !== "online_foreign" && cat !== "sim_billpay";
+        },
+        counter: { key: "sim_world_non_online_spend", period: "month" }
     },
 
     // --- WeWa / EarnMORE ---
-    "wewa_mobile_mission": {
-        type: "mission_tracker", req_mission_key: "wewa_mobile_mission", counter: { key: "wewa_mobile_mission", period: "month" },
-        desc: "WeWa 每月簽賬門檻", mission_id: "wewa_mobile",
-        eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "omycard", "mobile"].includes(ctx.paymentMethod))
+    "wewa_monthly_mission_tracker": {
+        type: "mission_tracker",
+        desc: "WeWa 自選回贈每月簽賬任務",
+        mission_id: "wewa_cash_rebate_program",
+        hide_in_equation: true,
+        valid_from: "2025-07-01",
+        valid_to: "2026-06-30",
+        counter: { key: "wewa_monthly_eligible_spend", period: "month" },
+        effects_on_eligible: [{ key: "wewa_monthly_eligible_spend", amount: "tx_amount" }]
+    },
+    "wewa_overseas_stage_tracker": {
+        type: "mission_tracker",
+        desc: "WeWa 海外額外 +5% 階段任務",
+        mission_id: "wewa_overseas_5pct_2026q1",
+        hide_in_equation: true,
+        setting_key: "wewa_overseas_5pct_enabled",
+        valid_from: "2026-01-05",
+        valid_to: "2026-03-31",
+        match: ["overseas_jkt", "overseas_jp", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
+        eligible_check: (cat, ctx) => {
+            if (ctx && ctx.isOnline) return false;
+            const pm = String((ctx && ctx.paymentMethod) || "");
+            return ["physical", "apple_pay", "unionpay_cloud", "omycard", "mobile"].includes(pm);
+        },
+        effects_on_eligible: [{ key: "wewa_overseas_stage_spend", amount: "tx_amount" }]
     },
 
     // --- BEA 東亞 ---
-    "bea_goal_mission": { type: "mission_tracker", desc: "BEA GOAL 月簽門檻", mission_id: "bea_goal", req_mission_key: "bea_goal_mission", counter: { key: "bea_goal_mission", period: "month" } },
-    "bea_world_mission": { type: "mission_tracker", desc: "BEA World 月簽門檻", mission_id: "bea_world", req_mission_key: "bea_world_mission", counter: { key: "bea_world_mission", period: "month" } },
-    "bea_ititanium_mission": { type: "mission_tracker", desc: "BEA i-Titanium 月簽門檻", mission_id: "bea_ititanium", req_mission_key: "bea_ititanium_mission", counter: { key: "bea_ititanium_mission", period: "month" } }
+    "bea_goal_mission": {
+        type: "mission_tracker",
+        desc: "BEA GOAL 每月基本合資格簽賬門檻",
+        mission_id: "bea_goal",
+        req_mission_key: "bea_goal_mission",
+        valid_from: "2025-01-01",
+        valid_to: "2026-06-30",
+        counter: { key: "bea_goal_mission", period: "month" }
+    },
+    "bea_world_mission": {
+        type: "mission_tracker",
+        desc: "BEA World 每月基本合資格簽賬門檻",
+        mission_id: "bea_world",
+        req_mission_key: "bea_world_mission",
+        valid_from: "2025-01-01",
+        valid_to: "2026-06-30",
+        counter: { key: "bea_world_mission", period: "month" }
+    },
+    "bea_ititanium_mission": {
+        type: "mission_tracker",
+        desc: "BEA i-Titanium 每月基本合資格簽賬門檻",
+        mission_id: "bea_ititanium",
+        req_mission_key: "bea_ititanium_mission",
+        valid_from: "2025-01-01",
+        valid_to: "2026-12-31",
+        counter: { key: "bea_ititanium_mission", period: "month" }
+    }
 };

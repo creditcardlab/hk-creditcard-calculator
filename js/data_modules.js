@@ -45,7 +45,19 @@ const modulesDB = {
         // User said: "Math.floor(pot) / 225". Limit is $225 RC.
         // 1.5% of $15,000 = $225. So Cap is indeed $225 Reward.
     },
-    "travel_guru_v2": { type: "guru_capped", category: "overseas", config: { 1: { rate: 0.03, cap_rc: 500, desc: "GO級 (+3%)" }, 2: { rate: 0.04, cap_rc: 1200, desc: "GING級 (+4%)" }, 3: { rate: 0.06, cap_rc: 2200, desc: "GURU級 (+6%)" } }, usage_key: "guru_rc_used" },
+    "travel_guru_v2": {
+        type: "guru_capped",
+        category: "overseas",
+        setting_key: "travel_guru_registered",
+        req_mission_spend: 8000,
+        req_mission_key: "spend_guru_unlock",
+        config: {
+            1: { rate: 0.03, cap_rc: 500, desc: "GO級 (+3%)" },
+            2: { rate: 0.04, cap_rc: 1200, desc: "GING級 (+4%)" },
+            3: { rate: 0.06, cap_rc: 2200, desc: "GURU級 (+6%)" }
+        },
+        usage_key: "guru_rc_used"
+    },
 
     // --- SC ---
     "sc_cathay_base": { type: "always", rate: 1 / 6, desc: "基本 $6/里" },
@@ -747,7 +759,7 @@ const modulesDB = {
     },
     "boc_amazing_fly_other": {
         type: "category",
-        match: ["overseas_jkt", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
+        match: ["overseas_jkt", "overseas_jp", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
         rate: 7.5,
         desc: "✈️ 狂賞飛 其他海外額外 +3%",
         mode: "add",
@@ -787,7 +799,7 @@ const modulesDB = {
     },
     "boc_amazing_fly_other_vs": {
         type: "category",
-        match: ["overseas_jkt", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
+        match: ["overseas_jkt", "overseas_jp", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
         rate: 7.5,
         desc: "✈️ 狂賞飛 其他海外額外 +3%",
         mode: "add",
@@ -1182,7 +1194,7 @@ const modulesDB = {
         valid_to: "2026-06-30"
     },
     // Fubon Platinum / Titanium
-    // 2026 海外簽賬獎賞：台灣20X、日韓10X、其他外幣5X。
+    // 2026 海外簽賬獎賞：台灣20X、日本/韓國10X、其他外幣5X。
     // 海外額外積分上限：每月 80,000 分；全年 240,000 分（共享）。
     "fubon_travel_base": { type: "always", rate: 1, desc: "基本 1X (0.4%)" },
     "fubon_travel_tw": {
@@ -1204,9 +1216,9 @@ const modulesDB = {
     },
     "fubon_travel_jpkr": {
         type: "category",
-        match: ["overseas_jkt", "overseas_jpkr"],
+        match: ["overseas_jkt", "overseas_jp", "overseas_jpkr"],
         rate: 9,
-        desc: "日韓額外 +9X（合共10X）",
+        desc: "日本/韓國額外 +9X（合共10X）",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 80000,
@@ -1283,7 +1295,7 @@ const modulesDB = {
     },
     "fubon_infinite_jpkr_bonus": {
         type: "category",
-        match: ["overseas_jkt", "overseas_jpkr"],
+        match: ["overseas_jkt", "overseas_jp", "overseas_jpkr"],
         rate: 10,
         desc: "日本/韓國 10X",
         mode: "replace",
@@ -1350,103 +1362,525 @@ const modulesDB = {
     // --- sim Credit ---
     "sim_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
     "sim_online": {
-        type: "category", match: ["online"], rate: 0.076, desc: "網購 +7.6% (8%)",
-        mode: "add", setting_key: "sim_promo_enabled", req_mission_key: "sim_non_online_spend", req_mission_spend: 500,
-        cap_mode: "reward", cap_limit: 200, cap_key: "sim_online_cap"
+        type: "category",
+        match: ["online"],
+        rate: 0.076,
+        desc: "網上零售額外 +7.6%（合共 8%，單筆滿 $500）",
+        mode: "add",
+        setting_key: "sim_promo_enabled",
+        req_mission_key: "sim_non_online_spend",
+        req_mission_spend: 1000,
+        min_single_spend: 500,
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "sim_promo_cap_monthly",
+        secondary_cap_key: "sim_promo_cap_total",
+        secondary_cap_limit: 600,
+        cap: { key: "sim_promo_cap_monthly", period: "month" },
+        valid_from: "2026-02-01",
+        valid_to: "2026-04-30"
+    },
+    "sim_transport": {
+        type: "category",
+        match: ["transport"],
+        rate: 0.076,
+        desc: "指定本地交通額外 +7.6%（合共 8%）",
+        mode: "add",
+        setting_key: "sim_promo_enabled",
+        req_mission_key: "sim_non_online_spend",
+        req_mission_spend: 1000,
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "sim_promo_cap_monthly",
+        secondary_cap_key: "sim_promo_cap_total",
+        secondary_cap_limit: 600,
+        cap: { key: "sim_promo_cap_monthly", period: "month" },
+        valid_from: "2026-02-01",
+        valid_to: "2026-04-30",
+        eligible_check: (cat, ctx) => !(ctx && ctx.isOnline)
+    },
+    "sim_designated_merchant": {
+        type: "category",
+        match: ["sim_designated_merchant"],
+        rate: 0.026,
+        desc: "指定商戶額外 +2.6%（合共 3%）",
+        mode: "add",
+        setting_key: "sim_promo_enabled",
+        req_mission_key: "sim_non_online_spend",
+        req_mission_spend: 1000,
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "sim_promo_cap_monthly",
+        secondary_cap_key: "sim_promo_cap_total",
+        secondary_cap_limit: 600,
+        cap: { key: "sim_promo_cap_monthly", period: "month" },
+        valid_from: "2026-02-01",
+        valid_to: "2026-04-30",
+        eligible_check: (cat, ctx) => !(ctx && ctx.isOnline)
+    },
+    "sim_billpay": {
+        type: "category",
+        match: ["sim_billpay"],
+        rate: 0.016,
+        desc: "指定繳費額外 +1.6%（合共 2%）",
+        mode: "add",
+        setting_key: "sim_promo_enabled",
+        req_mission_key: "sim_non_online_spend",
+        req_mission_spend: 1000,
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "sim_promo_cap_monthly",
+        secondary_cap_key: "sim_promo_cap_total",
+        secondary_cap_limit: 600,
+        cap: { key: "sim_promo_cap_monthly", period: "month" },
+        valid_from: "2026-02-01",
+        valid_to: "2026-04-30"
+    },
+    "sim_world_online": {
+        type: "category",
+        match: ["online"],
+        rate: 0.076,
+        desc: "sim World 網上零售額外 +7.6%（合共 8%，單筆滿 $500）",
+        mode: "add",
+        setting_key: "sim_world_promo_enabled",
+        req_mission_key: "sim_world_non_online_spend",
+        req_mission_spend: 1000,
+        min_single_spend: 500,
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "sim_world_promo_cap_monthly",
+        secondary_cap_key: "sim_world_promo_cap_total",
+        secondary_cap_limit: 600,
+        cap: { key: "sim_world_promo_cap_monthly", period: "month" },
+        valid_from: "2026-02-01",
+        valid_to: "2026-04-30"
+    },
+    "sim_world_overseas": {
+        type: "category",
+        match: ["overseas"],
+        rate: 0.076,
+        desc: "sim World 海外簽賬額外 +7.6%（合共 8%）",
+        mode: "add",
+        setting_key: "sim_world_promo_enabled",
+        req_mission_key: "sim_world_non_online_spend",
+        req_mission_spend: 1000,
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "sim_world_promo_cap_monthly",
+        secondary_cap_key: "sim_world_promo_cap_total",
+        secondary_cap_limit: 600,
+        cap: { key: "sim_world_promo_cap_monthly", period: "month" },
+        valid_from: "2026-02-01",
+        valid_to: "2026-04-30",
+        eligible_check: (cat, ctx) => !(ctx && ctx.isOnline)
+    },
+    "sim_world_designated_merchant": {
+        type: "category",
+        match: ["sim_designated_merchant"],
+        rate: 0.026,
+        desc: "sim World 指定商戶額外 +2.6%（合共 3%）",
+        mode: "add",
+        setting_key: "sim_world_promo_enabled",
+        req_mission_key: "sim_world_non_online_spend",
+        req_mission_spend: 1000,
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "sim_world_promo_cap_monthly",
+        secondary_cap_key: "sim_world_promo_cap_total",
+        secondary_cap_limit: 600,
+        cap: { key: "sim_world_promo_cap_monthly", period: "month" },
+        valid_from: "2026-02-01",
+        valid_to: "2026-04-30",
+        eligible_check: (cat, ctx) => !(ctx && ctx.isOnline)
+    },
+    "sim_world_billpay": {
+        type: "category",
+        match: ["sim_billpay"],
+        rate: 0.016,
+        desc: "sim World 指定繳費額外 +1.6%（合共 2%）",
+        mode: "add",
+        setting_key: "sim_world_promo_enabled",
+        req_mission_key: "sim_world_non_online_spend",
+        req_mission_spend: 1000,
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "sim_world_promo_cap_monthly",
+        secondary_cap_key: "sim_world_promo_cap_total",
+        secondary_cap_limit: 600,
+        cap: { key: "sim_world_promo_cap_monthly", period: "month" },
+        valid_from: "2026-02-01",
+        valid_to: "2026-04-30"
     },
 
     // --- Mox Credit ---
-    "mox_base": { type: "always", rate: 0.01, desc: "基本 1%" },
+    "mox_base": {
+        type: "always",
+        rate: 0.01,
+        desc: "基本 1%",
+        eligible_check: (cat, ctx) => !ctx || !ctx.settings || String(ctx.settings.mox_reward_mode || "cashback") !== "miles"
+    },
     "mox_task_bonus": {
-        type: "always", rate: 0.01, desc: "+1% (活期任務)", mode: "add",
-        setting_key: "mox_deposit_task_enabled"
+        type: "always",
+        rate: 0.01,
+        desc: "條件達成額外 +1%（合共 2%）",
+        mode: "add",
+        setting_key: "mox_deposit_task_enabled",
+        valid_from: "2025-12-01",
+        eligible_check: (cat, ctx) => !ctx || !ctx.settings || String(ctx.settings.mox_reward_mode || "cashback") !== "miles"
     },
     "mox_supermarket": {
-        type: "category", match: ["grocery", "supermarket"], rate: 0.03, desc: "超市 3%",
-        mode: "replace"
+        type: "category",
+        match: ["grocery", "supermarket"],
+        rate: 0.03,
+        desc: "超市 3%",
+        mode: "replace",
+        valid_from: "2025-12-01",
+        eligible_check: (cat, ctx) => !ctx || !ctx.settings || String(ctx.settings.mox_reward_mode || "cashback") !== "miles"
+    },
+    "mox_miles_unlock": {
+        type: "category",
+        rate: 1 / 4,
+        desc: "Asia Miles $4/里（已達條件）",
+        mode: "replace",
+        setting_key: "mox_deposit_task_enabled",
+        valid_from: "2025-12-01",
+        eligible_check: (cat, ctx) => !!(ctx && ctx.settings && String(ctx.settings.mox_reward_mode || "cashback") === "miles")
+    },
+    "mox_miles_base_promo": {
+        type: "category",
+        rate: 1 / 8,
+        desc: "Asia Miles $8/里（未達條件）",
+        mode: "replace",
+        valid_from: "2025-12-01",
+        valid_to: "2026-03-31",
+        eligible_check: (cat, ctx) => {
+            const s = (ctx && ctx.settings) ? ctx.settings : {};
+            return String(s.mox_reward_mode || "cashback") === "miles" && !s.mox_deposit_task_enabled;
+        }
+    },
+    "mox_miles_base_regular": {
+        type: "category",
+        rate: 1 / 10,
+        desc: "Asia Miles $10/里（未達條件）",
+        mode: "replace",
+        valid_from: "2026-04-01",
+        eligible_check: (cat, ctx) => {
+            const s = (ctx && ctx.settings) ? ctx.settings : {};
+            return String(s.mox_reward_mode || "cashback") === "miles" && !s.mox_deposit_task_enabled;
+        }
     },
 
     // --- AEON WAKUWAKU ---
-    "aeon_waku_base": { type: "always", rate: 0.005, desc: "基本 0.5%" },
+    "aeon_waku_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
     "aeon_waku_online": {
-        type: "category", match: ["online"], rate: 0.055, desc: "網購 +5.5% (6%)",
-        mode: "add", cap_mode: "reward", cap_limit: 300, cap_key: "aeon_waku_cap"
+        type: "category",
+        match: ["online"],
+        rate: 0.056,
+        desc: "網上簽賬額外 +5.6%（合共 6%，單筆滿 $500）",
+        mode: "add",
+        min_single_spend: 500,
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "aeon_waku_bonus_cap",
+        cap: { key: "aeon_waku_bonus_cap", period: "month" },
+        valid_from: "2025-05-01",
+        valid_to: "2026-02-28"
     },
     "aeon_waku_japan": {
-        type: "category", match: ["overseas_jktt"], rate: 0.025, desc: "日本 +2.5% (3%)", // Includes JP
-        mode: "add", cap_mode: "reward", cap_limit: 300, cap_key: "aeon_waku_cap"
+        type: "category",
+        match: ["overseas_jp"],
+        rate: 0.026,
+        desc: "日本海外簽賬額外 +2.6%（合共 3%）",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "aeon_waku_bonus_cap",
+        cap: { key: "aeon_waku_bonus_cap", period: "month" },
+        valid_from: "2025-05-01",
+        valid_to: "2026-02-28",
+        eligible_check: (cat, ctx) => !(ctx && ctx.isOnline)
+    },
+    "aeon_waku_dining": {
+        type: "category",
+        match: ["dining"],
+        rate: 0.006,
+        desc: "本地餐飲額外 +0.6%（合共 1%）",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "aeon_waku_bonus_cap",
+        cap: { key: "aeon_waku_bonus_cap", period: "month" },
+        valid_from: "2025-05-01",
+        valid_to: "2026-02-28",
+        eligible_check: (cat, ctx) => !(ctx && ctx.isOnline)
     },
 
     // --- WeWa / EarnMORE ---
     "wewa_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
-    "wewa_bonus": {
-        type: "category", match: ["travel", "entertainment", "apparel" /*Theme park?*/], rate: 0.036, desc: "旅遊/玩樂 +3.6% (4%)",
-        mode: "add", cap_mode: "reward", cap_limit: 2000, cap_key: "wewa_annual_cap"
+    "wewa_selected_bonus": {
+        type: "category",
+        rate: 0.036,
+        desc: "自選類別額外 +3.6%（合共 4%，需月簽 $1,500）",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "wewa_selected_bonus_cap",
+        cap: { key: "wewa_selected_bonus_cap", period: "month" },
+        req_mission_spend: 1500,
+        req_mission_key: "wewa_monthly_eligible_spend",
+        valid_from: "2025-07-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => {
+            const settings = (ctx && ctx.settings) ? ctx.settings : {};
+            const selected = settings.wewa_selected_category ? String(settings.wewa_selected_category) : "mobile_pay";
+            const pm = String((ctx && ctx.paymentMethod) || "");
+            const mobileMethods = ["apple_pay", "google_pay", "samsung_pay", "unionpay_cloud", "omycard", "mobile"];
+            const overseasSet = new Set([
+                "overseas",
+                "overseas_jkt",
+                "overseas_jp",
+                "overseas_jpkr",
+                "overseas_th",
+                "overseas_tw",
+                "overseas_cn",
+                "overseas_mo",
+                "overseas_uk_eea",
+                "overseas_other",
+                "online_foreign",
+                "china_consumption",
+                "travel_plus_tier1"
+            ]);
+
+            if (selected === "mobile_pay") return mobileMethods.includes(pm);
+            if (selected === "travel") return ["travel", "airline", "hotel", "cathay_hkexpress"].includes(cat);
+            if (selected === "overseas") return overseasSet.has(String(cat || ""));
+            if (selected === "online_entertainment") {
+                return !!(ctx && ctx.isOnline) && ["entertainment", "streaming"].includes(String(cat || ""));
+            }
+            return false;
+        }
     },
-    "wewa_mobile_pay": {
-        type: "category", rate: 0.04, desc: "手機支付 4%",
-        mode: "replace", cap_mode: "spending", cap_limit: 5556, cap_key: "wewa_mobile_pay_cap", cap: { key: "wewa_mobile_pay_cap", period: "month" },
-        req_mission_spend: 1500, req_mission_key: "wewa_mobile_mission",
-        eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "omycard", "mobile"].includes(ctx.paymentMethod))
+    "wewa_overseas_extra_2026q1": {
+        type: "category",
+        match: ["overseas_jkt", "overseas_jp", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
+        rate: 0.05,
+        desc: "海外指定地區額外 +5%（每階段上限 $500，需累積滿 $500）",
+        mode: "add",
+        setting_key: "wewa_overseas_5pct_enabled",
+        cap_mode: "reward",
+        cap_limit: 500,
+        cap_key: "wewa_overseas_stage_bonus_cap",
+        req_mission_spend: 500,
+        req_mission_key: "wewa_overseas_stage_spend",
+        valid_from: "2026-01-05",
+        valid_to: "2026-03-31",
+        eligible_check: (cat, ctx) => {
+            if (ctx && ctx.isOnline) return false;
+            const pm = String((ctx && ctx.paymentMethod) || "");
+            return ["physical", "apple_pay", "unionpay_cloud", "omycard", "mobile"].includes(pm);
+        }
     },
     "earnmore_base": {
-        type: "always", rate: 0.02, desc: "全線 2%",
-        cap_mode: "spending", cap_limit: 150000, cap_key: "earnmore_annual_spend"
+        type: "always",
+        rate: 0.01,
+        desc: "基本 1%"
+    },
+    "earnmore_bonus_2026q1": {
+        type: "always",
+        rate: 0.01,
+        desc: "推廣額外 +1%",
+        display_name_zhhk: "EarnMORE 推廣額外 +1%",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 800,
+        cap_key: "earnmore_bonus_cap_2026q1",
+        cap: {
+            key: "earnmore_bonus_cap_2026q1",
+            period: { type: "promo", startDate: "2026-01-01", endDate: "2026-06-30" }
+        },
+        valid_from: "2026-01-01",
+        valid_to: "2026-06-30"
     },
 
     // --- BEA 東亞 ---
     "bea_goal_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
     "bea_goal_travel_transport": {
-        type: "category", match: ["travel", "transport"], rate: 0.06, desc: "旅遊/交通 6%",
-        mode: "replace", cap_mode: "reward", cap_limit: 200, cap_key: "bea_goal_cap", cap: { key: "bea_goal_cap", period: "month" },
-        req_mission_spend: 2000, req_mission_key: "bea_goal_mission"
+        type: "category",
+        match: ["travel", "transport"],
+        rate: 0.06,
+        desc: "旅遊/本地交通額外 +6%（合共 6.4%）",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "bea_goal_cap",
+        cap: { key: "bea_goal_cap", period: "month" },
+        req_mission_spend: 2000,
+        req_mission_key: "bea_goal_mission",
+        valid_from: "2025-01-01",
+        valid_to: "2026-06-30"
     },
     "bea_goal_entertainment": {
-        type: "category", match: ["entertainment"], rate: 0.05, desc: "娛樂 5%",
-        mode: "replace", cap_mode: "reward", cap_limit: 200, cap_key: "bea_goal_cap", cap: { key: "bea_goal_cap", period: "month" },
-        req_mission_spend: 2000, req_mission_key: "bea_goal_mission"
+        type: "category",
+        match: ["entertainment"],
+        rate: 0.05,
+        desc: "娛樂額外 +5%（合共 5.4%）",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "bea_goal_cap",
+        cap: { key: "bea_goal_cap", period: "month" },
+        req_mission_spend: 2000,
+        req_mission_key: "bea_goal_mission",
+        valid_from: "2025-01-01",
+        valid_to: "2026-06-30"
     },
     "bea_goal_online_mobile": {
-        type: "category", rate: 0.044, desc: "手機支付 4.4%",
-        mode: "replace", cap_mode: "spending", cap_limit: 5000, cap_key: "bea_goal_mobile_cap", cap: { key: "bea_goal_mobile_cap", period: "month" },
-        req_mission_spend: 2000, req_mission_key: "bea_goal_mission",
-        eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "google_pay", "mobile"].includes(ctx.paymentMethod))
+        type: "category",
+        rate: 0.04,
+        desc: "網上/手機支付額外 +4%（合共 4.4%）",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "bea_goal_cap",
+        cap: { key: "bea_goal_cap", period: "month" },
+        req_mission_spend: 2000,
+        req_mission_key: "bea_goal_mission",
+        valid_from: "2025-01-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => {
+            const c = String(cat || "");
+            const isHighTierCategory = c === "travel" || c === "transport" || c === "entertainment";
+            if (isHighTierCategory) return false;
+            const isMobilePm = !!(ctx && ["apple_pay", "google_pay", "mobile"].includes(ctx.paymentMethod));
+            return !!(ctx && (ctx.isOnline || isMobilePm));
+        }
     },
 
     "bea_world_base": { type: "always", rate: 1, desc: "基本 1X" },
     "bea_world_bonus": {
         type: "category",
-        match: ["dining", "overseas", "online", "electronics", "apparel", "gym", "medical"],
+        match: ["overseas", "dining", "electronics", "sportswear", "gym", "medical"],
         rate: 12.5,
-        desc: "指定類別 12.5X",
-        mode: "replace", cap_mode: "reward", cap_limit: 115000, cap_key: "bea_world_cap", cap: { key: "bea_world_cap", period: "month" },
-        req_mission_spend: 4000, req_mission_key: "bea_world_mission"
+        desc: "BEA Spending Points 指定類別 12.5X",
+        mode: "replace",
+        cap_mode: "reward",
+        cap_limit: 115000,
+        cap_key: "bea_world_cap",
+        cap: { key: "bea_world_cap", period: "month" },
+        req_mission_spend: 4000,
+        req_mission_key: "bea_world_mission",
+        valid_from: "2025-01-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => !(ctx && ctx.settings && ctx.settings.bea_world_flying_miles_enabled)
+    },
+    "bea_world_flying_overseas": {
+        type: "category",
+        match: ["overseas"],
+        rate: 2,
+        desc: "BEA Flying Miles 海外簽賬 2X",
+        mode: "replace",
+        setting_key: "bea_world_flying_miles_enabled",
+        cap_mode: "reward",
+        cap_limit: 100000,
+        cap_key: "bea_world_flying_cap",
+        cap: { key: "bea_world_flying_cap", period: "month" },
+        req_mission_spend: 4000,
+        req_mission_key: "bea_world_mission",
+        valid_from: "2025-01-01",
+        valid_to: "2026-06-30"
+    },
+    "bea_world_flying_designated_local": {
+        type: "category",
+        match: ["dining", "electronics", "sportswear", "gym", "medical"],
+        rate: 1.6,
+        desc: "BEA Flying Miles 本地指定商戶 1.6X",
+        mode: "replace",
+        setting_key: "bea_world_flying_miles_enabled",
+        cap_mode: "reward",
+        cap_limit: 100000,
+        cap_key: "bea_world_flying_cap",
+        cap: { key: "bea_world_flying_cap", period: "month" },
+        req_mission_spend: 4000,
+        req_mission_key: "bea_world_mission",
+        valid_from: "2025-01-01",
+        valid_to: "2026-06-30"
     },
 
     "bea_ititanium_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
     "bea_ititanium_online_mobile": {
-        type: "category", rate: 0.036, desc: "網購/手機支付 3.6%",
-        mode: "replace", cap_mode: "reward", cap_limit: 300, cap_key: "bea_ititanium_cap", cap: { key: "bea_ititanium_cap", period: "month" },
-        req_mission_spend: 2000, req_mission_key: "bea_ititanium_mission",
-        eligible_check: (cat, ctx) => !!(ctx && (ctx.isOnline || ctx.isMobilePay))
+        type: "category",
+        rate: 0.036,
+        desc: "網上零售/手機支付 3.6%",
+        mode: "replace",
+        setting_key: "bea_ititanium_bonus_enabled",
+        cap_mode: "reward",
+        cap_limit: 300,
+        cap_key: "bea_ititanium_cap",
+        cap: { key: "bea_ititanium_cap", period: "month" },
+        req_mission_spend: 2000,
+        req_mission_key: "bea_ititanium_mission",
+        valid_from: "2025-01-01",
+        valid_to: "2026-12-31",
+        eligible_check: (cat, ctx) => {
+            const pm = String((ctx && ctx.paymentMethod) || "");
+            const isWallet = pm === "apple_pay" || pm === "google_pay" || pm === "samsung_pay";
+            return !!(ctx && (ctx.isOnline || isWallet));
+        }
     },
 
     "bea_unionpay_base": { type: "always", rate: 1, desc: "基本 1X" },
     "bea_unionpay_rmb": {
-        type: "category", match: ["overseas_cn"], rate: 12, desc: "人民幣簽賬 12X",
-        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap", cap: { key: "bea_unionpay_cap", period: "month" }
+        type: "category",
+        match: ["overseas_cn"],
+        rate: 13,
+        desc: "人民幣簽賬 13X",
+        mode: "replace",
+        cap_mode: "reward",
+        cap_limit: 100000,
+        cap_key: "bea_unionpay_cap",
+        cap: { key: "bea_unionpay_cap", period: "month" },
+        valid_from: "2025-01-01",
+        valid_to: "2026-06-30"
     },
     "bea_unionpay_fx": {
-        type: "category", match: ["overseas"], rate: 10, desc: "外幣簽賬 10X",
-        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap", cap: { key: "bea_unionpay_cap", period: "month" }
+        type: "category",
+        match: ["overseas"],
+        rate: 11,
+        desc: "外幣簽賬 11X",
+        mode: "replace",
+        cap_mode: "reward",
+        cap_limit: 100000,
+        cap_key: "bea_unionpay_cap",
+        cap: { key: "bea_unionpay_cap", period: "month" },
+        valid_from: "2025-01-01",
+        valid_to: "2026-06-30",
+        eligible_check: (cat) => String(cat || "") !== "overseas_cn"
     },
     "bea_unionpay_dining": {
-        type: "category", match: ["dining"], rate: 3, desc: "本地食肆 3X",
-        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap", cap: { key: "bea_unionpay_cap", period: "month" }
+        type: "category",
+        match: ["dining"],
+        rate: 4,
+        desc: "本地食肆 4X",
+        mode: "replace",
+        cap_mode: "reward",
+        cap_limit: 100000,
+        cap_key: "bea_unionpay_cap",
+        cap: { key: "bea_unionpay_cap", period: "month" },
+        valid_from: "2025-01-01",
+        valid_to: "2026-06-30"
     },
     "bea_unionpay_local": {
-        type: "category", match: ["general"], rate: 2, desc: "本地零售 2X",
-        mode: "replace", cap_mode: "reward", cap_limit: 100000, cap_key: "bea_unionpay_cap", cap: { key: "bea_unionpay_cap", period: "month" }
+        type: "category",
+        match: ["general"],
+        rate: 3,
+        desc: "本地零售 3X",
+        mode: "replace",
+        cap_mode: "reward",
+        cap_limit: 100000,
+        cap_key: "bea_unionpay_cap",
+        cap: { key: "bea_unionpay_cap", period: "month" },
+        valid_from: "2025-01-01",
+        valid_to: "2026-06-30"
     }
 
 };

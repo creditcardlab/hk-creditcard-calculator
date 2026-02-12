@@ -72,6 +72,7 @@ let userProfile = {
     ownedCards: ["hsbc_red", "hsbc_everymile"],
     settings: {
         guru_level: 0,
+        travel_guru_registered: false,
         em_promo_enabled: false,
         winter_promo_enabled: false,
         winter_tier1_threshold: 20000,
@@ -81,6 +82,8 @@ let userProfile = {
         mmpower_promo_enabled: false,
         mmpower_selected_categories: ["dining", "electronics"],
         travel_plus_promo_enabled: false,
+        wewa_selected_category: "mobile_pay",
+        wewa_overseas_5pct_enabled: false,
         fubon_travel_upgrade_enabled: false,
         fubon_infinite_upgrade_enabled: false,
         hangseng_enjoy_points4x_enabled: true,
@@ -90,23 +93,29 @@ let userProfile = {
         boc_amazing_enabled: false,      // 狂賞派 + 狂賞飛
         dbs_black_promo_enabled: false,  // DBS Black $2/里推廣
         mox_deposit_task_enabled: false, // Mox 存款任務
+        mox_reward_mode: "cashback",
         sim_promo_enabled: false,        // sim 8%網購
+        sim_world_promo_enabled: false,  // sim World 推廣
         ae_explorer_075x_enabled: false,
         ae_explorer_7x_enabled: false,
         ae_explorer_online_5x_enabled: false,
-        ae_platinum_9x_enabled: false
+        ae_platinum_9x_enabled: false,
+        bea_world_flying_miles_enabled: false,
+        bea_ititanium_bonus_enabled: false
     },
-    usage: { "winter_total": 0, "winter_eligible": 0, "em_q1_total": 0, "em_q1_eligible": 0, "guru_rc_used": 0, "guru_spend_accum": 0 },
+    usage: { "winter_total": 0, "winter_eligible": 0, "em_q1_total": 0, "em_q1_eligible": 0, "guru_rc_used": 0, "guru_spend_accum": 0, "spend_guru_unlock": 0 },
     stats: { totalSpend: 0, totalVal: 0, txCount: 0 },
     transactions: []
 };
 
 const SETTING_BOOLEAN_DEFAULTS = {
+    travel_guru_registered: false,
     em_promo_enabled: false,
     winter_promo_enabled: false,
     red_hot_rewards_enabled: true,
     mmpower_promo_enabled: false,
     travel_plus_promo_enabled: false,
+    wewa_overseas_5pct_enabled: false,
     fubon_travel_upgrade_enabled: false,
     fubon_infinite_upgrade_enabled: false,
     hangseng_enjoy_points4x_enabled: true,
@@ -114,10 +123,13 @@ const SETTING_BOOLEAN_DEFAULTS = {
     dbs_black_promo_enabled: false,
     mox_deposit_task_enabled: false,
     sim_promo_enabled: false,
+    sim_world_promo_enabled: false,
     ae_explorer_075x_enabled: false,
     ae_explorer_7x_enabled: false,
     ae_explorer_online_5x_enabled: false,
-    ae_platinum_9x_enabled: false
+    ae_platinum_9x_enabled: false,
+    bea_world_flying_miles_enabled: false,
+    bea_ititanium_bonus_enabled: false
 };
 
 function ensureBooleanSettingDefaults(settings) {
@@ -148,6 +160,12 @@ function loadUserData() {
         userProfile.settings.mmpower_selected_categories = mmpowerNormalized.length > 0
             ? mmpowerNormalized
             : ["dining", "electronics"];
+        const wewaAllowed = ["mobile_pay", "travel", "overseas", "online_entertainment"];
+        const wewaSelected = String(userProfile.settings.wewa_selected_category || "mobile_pay");
+        userProfile.settings.wewa_selected_category = wewaAllowed.includes(wewaSelected) ? wewaSelected : "mobile_pay";
+        const moxModes = ["cashback", "miles"];
+        const moxMode = String(userProfile.settings.mox_reward_mode || "cashback");
+        userProfile.settings.mox_reward_mode = moxModes.includes(moxMode) ? moxMode : "cashback";
         if (userProfile.settings.citi_prestige_bonus_enabled === undefined) userProfile.settings.citi_prestige_bonus_enabled = false;
         if (userProfile.settings.citi_prestige_tenure_years === undefined) userProfile.settings.citi_prestige_tenure_years = 1;
         if (userProfile.settings.citi_prestige_wealth_client === undefined) userProfile.settings.citi_prestige_wealth_client = false;
@@ -193,10 +211,20 @@ function getCitiPrestigeBonusPercentForSettings(settings) {
     return hasWealth ? 10 : 5;
 }
 
-function getForeignFeeRate(card, category) {
+function getForeignFeeRate(card, category, options) {
     if (!card) return 0;
     const base = Number(card.fcf) || 0;
     if (base <= 0) return 0;
+
+    // Mox promotion: 0% foreign/overseas spending fees in Asia Miles mode during 2026-01-01..2026-03-31.
+    if (card.id === "mox_credit") {
+        const opts = options || {};
+        const settings = (opts && opts.settings) ? opts.settings : {};
+        const mode = String(settings.mox_reward_mode || "cashback");
+        const txDate = typeof opts.txDate === "string" ? opts.txDate : "";
+        if (mode === "miles" && txDate && txDate >= "2026-01-01" && txDate <= "2026-03-31") return 0;
+    }
+
     const exempt = Array.isArray(card.fcf_exempt_categories) ? card.fcf_exempt_categories : [];
     if (exempt.includes(category)) return 0;
     return base;
@@ -253,9 +281,12 @@ function getLevelLifecycleModelDefaults(modelId) {
             icon: "fas fa-trophy",
             theme: "yellow",
             settingKey: "guru_level",
+            registrationSettingKey: "travel_guru_registered",
             spendKey: "guru_spend_accum",
             rewardKey: "guru_rc_used",
             rewardUnit: "RC",
+            unlockSpend: 8000,
+            unlockSpendKey: "spend_guru_unlock",
             upgradeAction: "handleGuruUpgrade()",
             levels: getTravelGuruFallbackLevels()
         };
@@ -265,9 +296,12 @@ function getLevelLifecycleModelDefaults(modelId) {
         icon: "fas fa-chart-line",
         theme: "gray",
         settingKey: "",
+        registrationSettingKey: "",
         spendKey: "",
         rewardKey: "",
         rewardUnit: "",
+        unlockSpend: 0,
+        unlockSpendKey: "",
         upgradeAction: null,
         levels: {}
     };
@@ -326,7 +360,10 @@ function getLevelLifecycleModel(modelId) {
         icon: raw.icon || defaults.icon,
         theme: raw.theme || defaults.theme,
         settingKey: raw.settingKey || raw.setting_key || defaults.settingKey,
+        registrationSettingKey: raw.registrationSettingKey || raw.registration_setting_key || defaults.registrationSettingKey,
         rewardUnit: raw.rewardUnit || raw.reward_unit || defaults.rewardUnit,
+        unlockSpend: Math.max(0, Number(raw.unlockSpend || raw.unlock_spend || defaults.unlockSpend) || 0),
+        unlockSpendKey: raw.unlockSpendKey || raw.unlock_spend_key || defaults.unlockSpendKey,
         upgradeAction: raw.upgradeAction || raw.upgrade_action || defaults.upgradeAction,
         cards: Array.isArray(raw.cards) ? raw.cards.slice() : [],
         module: raw.module || "",
@@ -360,9 +397,51 @@ function getLevelLifecycleState(modelId, profile) {
         if (!eligible) return { eligible: false, active: false, model };
     }
 
+    const registrationSettingKey = model.registrationSettingKey || "";
+    const isRegistered = registrationSettingKey ? !!profile.settings[registrationSettingKey] : true;
     const settingKey = model.settingKey || "";
     const level = settingKey ? (Number(profile.settings[settingKey]) || 0) : 0;
-    if (level <= 0) return { eligible: true, active: false, model };
+    if (!isRegistered) return { eligible: true, active: false, model };
+
+    const unlockSpend = Math.max(0, Number(model.unlockSpend) || 0);
+    const unlockSpendKey = model.unlockSpendKey || model.usage.spendKey;
+    const unlockAccum = Number(profile.usage[unlockSpendKey]) || 0;
+    const rewardUnlocked = unlockSpend <= 0 ? true : (unlockAccum >= unlockSpend);
+
+    if (level <= 0) {
+        const unlockPct = unlockSpend > 0 ? Math.min(100, (unlockAccum / unlockSpend) * 100) : 100;
+        return {
+            eligible: true,
+            active: true,
+            model,
+            level: 0,
+            maxLevel: Math.max(0, ...Object.keys(model.levels || {}).map((k) => Number(k)).filter((n) => Number.isFinite(n))),
+            title: model.title,
+            icon: model.icon,
+            theme: model.theme,
+            badge: rewardUnlocked ? "可啟動GO級" : "待解鎖",
+            actionButton: rewardUnlocked
+                ? {
+                    label: "🚀 啟動 GO級",
+                    icon: "fas fa-play",
+                    onClick: "handleTravelGuruStartGo()"
+                }
+                : null,
+            sections: [
+                {
+                    kind: "mission",
+                    label: "🎯 GO級解鎖進度",
+                    valueText: `$${unlockAccum.toLocaleString()} / $${unlockSpend.toLocaleString()}`,
+                    progress: unlockPct,
+                    state: rewardUnlocked ? "active" : "locked",
+                    lockedReason: rewardUnlocked ? null : `尚差 $${Math.max(0, unlockSpend - unlockAccum).toLocaleString()}`,
+                    markers: null,
+                    overlayModel: null,
+                    meta: { spendAccum: unlockAccum, target: unlockSpend, unlocked: rewardUnlocked, unlockedText: "可啟動" }
+                }
+            ]
+        };
+    }
 
     const levels = model.levels || {};
     const levelCfg = levels[level] || null;
@@ -418,8 +497,8 @@ function getLevelLifecycleState(modelId, profile) {
                 label: "💰 本級回贈",
                 valueText: `${Math.floor(rewardUsed).toLocaleString()}${rewardSuffix} / ${Math.floor(rewardCap).toLocaleString()}${rewardSuffix}`,
                 progress: rebatePct,
-                state: isMaxed ? "capped" : "active",
-                lockedReason: null,
+                state: rewardUnlocked ? (isMaxed ? "capped" : "active") : "locked",
+                lockedReason: rewardUnlocked ? null : `需先累積海外簽賬 $${unlockSpend.toLocaleString()}`,
                 markers: null,
                 overlayModel: null,
                 meta: {
@@ -428,7 +507,7 @@ function getLevelLifecycleState(modelId, profile) {
                     remaining: Math.max(0, rewardCap - rewardUsed),
                     prefix: "",
                     unit: rewardSuffix,
-                    unlocked: true
+                    unlocked: rewardUnlocked
                 }
             }
         ]
@@ -642,7 +721,7 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 	            const pct = hasCap ? Math.min(100, (reward / capVal) * 100) : ((unlockTarget && unlockTarget > 0) ? Math.min(100, ((unlockValue || 0) / unlockTarget) * 100) : 100);
 	            const unlocked = (unlockTarget !== null && unlockValue !== null) ? unlockValue >= unlockTarget : true;
 	            const unit = sec.unit || "";
-	            const isCurrencyUnit = (unit === "" || unit === "$" || unit === "HKD" || unit === "元" || unit === "HK$");
+            const isCurrencyUnit = (unit === "" || unit === "$" || unit === "HKD" || unit === "元" || unit === "HK$" || unit === "現金");
 	            const prefix = isCurrencyUnit ? "$" : "";
 	            const suffix = isCurrencyUnit ? "" : (unit ? ` ${unit}` : "");
 	            const state = unlocked ? (hasCap && reward >= capVal ? "capped" : "active") : "locked";
@@ -771,7 +850,7 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
                 const hasCap = capVal !== null;
 	            const pct = hasCap ? Math.min(100, (used / capVal) * 100) : ((unlockTarget && unlockTarget > 0) ? Math.min(100, ((unlockValue || 0) / unlockTarget) * 100) : 100);
 	            const unitRaw = sec.unit || '';
-	            const isCurrencyUnit = (unitRaw === "" || unitRaw === "$" || unitRaw === "HKD" || unitRaw === "元" || unitRaw === "HK$");
+            const isCurrencyUnit = (unitRaw === "" || unitRaw === "$" || unitRaw === "HKD" || unitRaw === "元" || unitRaw === "HK$" || unitRaw === "現金");
 	            const prefix = isCurrencyUnit ? '$' : (unitRaw ? '' : '$');
 	            const unit = isCurrencyUnit ? '' : unitRaw;
 	            const state = hasCap ? (used >= capVal ? "capped" : (unlocked ? "active" : "locked")) : (unlocked ? "active" : "locked");
@@ -810,10 +889,23 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
     };
 }
 
-function calculateGuru(mod, amount, level, category) {
+function calculateGuru(mod, amount, level, category, options) {
     if (level <= 0 || !isCategoryMatch([mod.category], category)) return { rate: 0, entry: null, generatedRC: 0 };
     const conf = mod.config[level];
     if (!conf) return { rate: 0, entry: null, generatedRC: 0 };
+    const unlockTarget = Math.max(0, Number(mod.req_mission_spend) || 0);
+    const projectedSpend = Math.max(0, Number(options && options.projectedSpend) || 0);
+    if (unlockTarget > 0 && projectedSpend < unlockTarget) {
+        return {
+            rate: 0,
+            entry: {
+                text: `🔒 ${conf.desc}（需先累積海外簽賬 $${unlockTarget.toLocaleString()}）`,
+                tone: "muted",
+                flags: { locked: true }
+            },
+            generatedRC: 0
+        };
+    }
     const capStatus = checkCap(mod.usage_key, conf.cap_rc);
     if (capStatus.isMaxed) {
         return {
@@ -876,6 +968,7 @@ const CATEGORY_HIERARCHY = (DATA && DATA.rules && DATA.rules.categoryHierarchy) 
     "overseas_cn": ["overseas"],
     "overseas_mo": ["overseas"],
     "overseas_jkt": ["overseas"],
+    "overseas_jp": ["overseas"],
     "overseas_jpkr": ["overseas"],
     "overseas_th": ["overseas"],
     "overseas_tw": ["overseas"],
@@ -1025,7 +1118,10 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     const zeroCats = rules && rules.zeroRewardByCardPrefix && rules.zeroRewardByCardPrefix[prefix];
     const isZeroCategory = Array.isArray(zeroCats) && zeroCats.includes(category);
 
-    const conv = conversions.find(c => c.src === card.currency);
+    const rewardCurrency = (card.id === "mox_credit" && userProfile && userProfile.settings && userProfile.settings.mox_reward_mode === "miles")
+        ? "AM_Direct"
+        : card.currency;
+    const conv = conversions.find(c => c.src === rewardCurrency);
     if (!conv) return null;
 
     let totalRate = 0;
@@ -1185,6 +1281,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
 
         // [NEW] Single Transaction Minimum (for BOC Amazing Rewards)
         if (mod.min_single_spend && amount < mod.min_single_spend) return;
+        if (mod.type !== "category" && typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, ctx)) return;
 
         // [NEW] Mission Spend Check (Monthly Cumulative)
         const missionRequired = !!(mod.req_mission_spend && mod.req_mission_key);
@@ -1227,7 +1324,12 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                 }
             }
             else if (mod.type === "guru_capped") {
-                const res = calculateGuru(mod, amount, parseInt(userProfile.settings.guru_level), category);
+                const guruSpendKey = mod.req_mission_key || "guru_spend_accum";
+                const guruSpendCurrent = Number(userProfile.usage[guruSpendKey]) || 0;
+                const guruSpendProjected = guruSpendCurrent + (isCategoryMatch([mod.category], resolvedCategory) ? amount : 0);
+                const res = calculateGuru(mod, amount, parseInt(userProfile.settings.guru_level), category, {
+                    projectedSpend: guruSpendProjected
+                });
                 if (res.entry) {
                     breakdown.push(res.entry);
                     guruRC = res.generatedRC;
@@ -1364,7 +1466,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                                 reqKey: mod.req_mission_key,
                                 reqSpend: mod.req_mission_spend || 0,
                                 pendingNative,
-                                cashRate: (conversions.find(c => c.src === card.currency) || { cash_rate: 0 }).cash_rate,
+                                cashRate: (conv || { cash_rate: 0 }).cash_rate,
                                 capMode: mod.cap_mode || "reward",
                                 capKey: mod.cap_key || null,
                                 capLimit: mod.cap_limit || null,
@@ -1452,7 +1554,9 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     // Calculate both values for sorting
     const estMiles = native * conv.miles_rate;
     const estCash = native * conv.cash_rate;
-    const feeRate = (isForeignCategory(category) ? getForeignFeeRate(card, category) : 0);
+    const feeRate = (isForeignCategory(category)
+        ? getForeignFeeRate(card, category, { settings: userProfile.settings || {}, txDate })
+        : 0);
     const foreignFee = feeRate ? amount * feeRate : 0;
     const estCashNet = estCash - foreignFee;
     const estMilesPotential = nativePotential * conv.miles_rate;

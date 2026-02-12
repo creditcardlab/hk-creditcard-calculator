@@ -569,7 +569,7 @@ const cardsDB = [
           unit: "積分",
           min: 0,
           fee: "HK$50/5000里",
-          ratio: "15分 = 1里 | 台灣20X / 日韓10X / 外幣5X | 本地週末2X（2026）"
+          ratio: "15分 = 1里 | 台灣20X / 日本韓國10X / 外幣5X | 本地週末2X（2026）"
         }
     },
     {
@@ -600,13 +600,28 @@ const cardsDB = [
         currency: "CASH_Direct",
         type: "master",
         fcf: 0.0195,
-        rewardModules: ["sim_base", "sim_online"],
+        rewardModules: ["sim_base", "sim_online", "sim_transport", "sim_designated_merchant", "sim_billpay"],
         trackers: ["sim_non_online_tracker"],
         redemption: {
-          unit: "現金",
+          unit: "$",
           min: 0,
           fee: "免費",
-          ratio: "網購 8% (需非網購$500)"
+          ratio: "推廣期：網上/交通 8%、指定商戶 3%、指定繳費 2%"
+        }
+    },
+    {
+        id: "sim_world",
+        name: "sim World Mastercard",
+        currency: "CASH_Direct",
+        type: "master",
+        fcf: 0.0195,
+        rewardModules: ["sim_base", "sim_world_online", "sim_world_overseas", "sim_world_designated_merchant", "sim_world_billpay"],
+        trackers: ["sim_world_non_online_tracker"],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "推廣期：網上/海外 8%、指定商戶 3%、指定繳費 2%"
         }
     },
     {
@@ -615,13 +630,13 @@ const cardsDB = [
         currency: "CASH_Direct",
         type: "master",
         fcf: 0.0195,
-        rewardModules: ["aeon_waku_base", "aeon_waku_online", "aeon_waku_japan"],
+        rewardModules: ["aeon_waku_base", "aeon_waku_online", "aeon_waku_japan", "aeon_waku_dining"],
         trackers: [],
         redemption: {
-          unit: "現金",
+          unit: "$",
           min: 0,
           fee: "免費",
-          ratio: "網購 6% | 日本 3%"
+          ratio: "推廣期：網上 6% | 日本 3% | 本地餐飲 1%"
         }
     },
     {
@@ -630,13 +645,13 @@ const cardsDB = [
         currency: "CASH_Direct",
         type: "unionpay",
         fcf: 0,
-        rewardModules: ["wewa_base", "wewa_bonus", "wewa_mobile_pay"],
-        trackers: ["wewa_mobile_mission"],
+        rewardModules: ["wewa_base", "wewa_selected_bonus", "wewa_overseas_extra_2026q1"],
+        trackers: ["wewa_monthly_mission_tracker", "wewa_overseas_stage_tracker"],
         redemption: {
-          unit: "現金",
+          unit: "$",
           min: 0,
           fee: "免費",
-          ratio: "旅遊/主題公園 4%"
+          ratio: "基本 0.4%；自選類別 4%（需月簽$1,500，額外上限$200）"
         }
     },
     {
@@ -645,8 +660,14 @@ const cardsDB = [
         currency: "CASH_Direct",
         type: "unionpay",
         fcf: 0,
-        rewardModules: ["earnmore_base"],
-        trackers: []
+        rewardModules: ["earnmore_base", "earnmore_bonus_2026q1"],
+        trackers: [],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "基本 1% + 推廣額外 1%（優惠期額外上限 $800）"
+        }
     },
     {
         id: "mox_credit",
@@ -654,8 +675,14 @@ const cardsDB = [
         currency: "CASH_Direct",
         type: "master",
         fcf: 0.0195,
-        rewardModules: ["mox_base", "mox_task_bonus", "mox_supermarket"],
-        trackers: []
+        rewardModules: ["mox_base", "mox_task_bonus", "mox_supermarket", "mox_miles_unlock", "mox_miles_base_promo", "mox_miles_base_regular"],
+        trackers: [],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "CashBack：1% / 2%（達條件）+ 超市 3%；Asia Miles：$4/$8/$10 = 1里"
+        }
     },
     {
         id: "bea_goal",
@@ -672,7 +699,7 @@ const cardsDB = [
         currency: "BEA_Points",
         type: "master",
         fcf: 0.0195,
-        rewardModules: ["bea_world_base", "bea_world_bonus"],
+        rewardModules: ["bea_world_base", "bea_world_bonus", "bea_world_flying_overseas", "bea_world_flying_designated_local"],
         trackers: ["bea_world_mission"],
         redemption: {
           unit: "BEA分",
@@ -687,7 +714,7 @@ const cardsDB = [
         currency: "BEA_Points",
         type: "master",
         fcf: 0.0195,
-        rewardModules: ["bea_world_base", "bea_world_bonus"],
+        rewardModules: ["bea_world_base", "bea_world_bonus", "bea_world_flying_overseas", "bea_world_flying_designated_local"],
         trackers: ["bea_world_mission"],
         redemption: {
           unit: "BEA分",

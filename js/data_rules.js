@@ -21,7 +21,7 @@ const DATA_RULES = {
             preferenceKey: "live_fresh_pref",
             preferences: {
                 online_foreign: {
-                    matches: ["overseas", "overseas_jkt", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_cn", "overseas_mo", "overseas_uk_eea", "overseas_other", "online_foreign"],
+                    matches: ["overseas", "overseas_jkt", "overseas_jp", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_cn", "overseas_mo", "overseas_uk_eea", "overseas_other", "online_foreign"],
                     mapTo: "live_fresh_selected"
                 },
                 travel: {
@@ -45,6 +45,7 @@ const DATA_RULES = {
             map: {
                 overseas_cn: "travel_plus_tier1",
                 overseas_jkt: "travel_plus_tier1",
+                overseas_jp: "travel_plus_tier1",
                 overseas_jpkr: "travel_plus_tier1",
                 overseas_th: "travel_plus_tier1",
                 overseas_tw: "travel_plus_tier1",
