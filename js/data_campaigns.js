@@ -4,12 +4,19 @@ const CAMPAIGN_REGISTRY = {
     em_promo: {
         settingKey: "em_promo_enabled",
         warningTitle: "EveryMile 海外推廣",
-        warningDesc: "需登記以賺取回贈"
+        warningDesc: "需登記以賺取回贈",
+        tncUrl: "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/everymile-spending-offer/",
+        promoUrl: "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/everymile-spending-offer/",
+        registrationUrl: "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/everymile-spending-offer/",
+        implementationNote: "計算器做法：推廣分兩期獨立計算（2026-01-01 至 2026-03-31、2026-04-01 至 2026-06-30）。每期先累積合資格外幣簽賬滿 $12,000，達標後按額外 +1.5% 計算（連基本約 2.5%，約 $2/里），每期額外回贈上限 225 RC。"
     },
     winter_promo: {
         settingKey: "winter_promo_enabled",
         warningTitle: "最紅冬日賞",
-        warningDesc: "需登記以賺取回贈"
+        warningDesc: "需登記以賺取回贈",
+        promoUrl: "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/red-hot-winter/",
+        registrationUrl: "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/red-hot-winter/",
+        implementationNote: "計算器做法：先累積冬日賞合資格簽賬（餐飲/海外而且非網上）。達 $20,000 後，冬日賞回贈按合資格簽賬金額 × 3% 計，上限 $250；達 $40,000 後按合資格簽賬金額 × 6% 計，上限 $800。"
     },
     boc_amazing: {
         settingKey: "boc_amazing_enabled",
@@ -69,17 +76,21 @@ const CAMPAIGN_REGISTRY = {
     ae_explorer_2026h1: {
         settingKey: "ae_explorer_7x_enabled",
         warningTitle: "AE Explorer 海外/旅遊 +7X",
-        warningDesc: "需登記以賺取回贈"
+        warningDesc: "需登記以賺取回贈",
+        tncUrl: "https://www.americanexpress.com/content/dam/amex/hk/ch/staticassets/pdf/cards/explorer-credit-card/MRTnC_CHI.pdf"
     },
     ae_explorer_online_2026: {
         settingKey: "ae_explorer_online_5x_enabled",
         warningTitle: "AE Explorer 指定網上 5X",
-        warningDesc: "需登記以賺取回贈"
+        warningDesc: "需登記以賺取回贈",
+        promoUrl: "https://www.americanexpress.com/zh-hk/benefits/offers/shopping/5x-offer/index.html",
+        registrationUrl: "https://www.americanexpress.com/zh-hk/benefits/offers/shopping/5x-offer/index.html"
     },
     ae_platinum_9x_2026h1: {
         settingKey: "ae_platinum_9x_enabled",
         warningTitle: "AE Platinum 高達9X",
-        warningDesc: "需登記以賺取回贈"
+        warningDesc: "需登記以賺取回贈",
+        tncUrl: "https://www.americanexpress.com/content/dam/amex/hk/benefits/pdf/TnCs_platinum-membership-rewards-accelerator.pdf"
     },
     bea_world_flying_2025_2026h1: {
         settingKey: "bea_world_flying_miles_enabled",
@@ -101,8 +112,22 @@ const CAMPAIGNS = [
         icon: "fas fa-plane",
         theme: "purple",
         period_policy: {
-            mode: "fixed",
-            period: { type: "promo", startDate: "2026-01-01", endDate: "2026-03-31" }
+            mode: "composite",
+            windows: [
+                {
+                    id: "window_1",
+                    priority: 1,
+                    startDate: "2026-01-01",
+                    endDate: "2026-03-31",
+                    period: { type: "promo", startDate: "2026-01-01", endDate: "2026-03-31" }
+                },
+                {
+                    id: "window_2",
+                    startDate: "2026-04-01",
+                    endDate: "2026-06-30",
+                    period: { type: "promo", startDate: "2026-04-01", endDate: "2026-06-30", startDay: 1 }
+                }
+            ]
         },
         cards: ["hsbc_everymile"],
         sections: [
@@ -846,6 +871,7 @@ const SPECIAL_PROMO_MODELS = {
         promo_type: "level_lifecycle",
         module: "travel_guru_v2",
         registrationSettingKey: "travel_guru_registered",
+        implementationNote: "計算器做法：登記後可啟動 GO 級，之後海外合資格簽賬按等級計算（GO +3% 上限 500 RC、GING +4% 上限 1,200 RC、GURU +6% 上限 2,200 RC）；每級累積簽賬達升級門檻（GO 30,000；GING 70,000）可升下一級，升級後會重置該級進度。",
         unlockSpend: 8000,
         unlockSpendKey: "spend_guru_unlock",
         usage: {

@@ -1264,11 +1264,16 @@ const modulesDB = {
     },
     "fubon_travel_upgrade_online": {
         type: "category",
-        match: ["fubon_upgrade_online"],
+        match: ["online"],
         rate: 10,
         desc: "指定本地網購 10X（需登記）",
         mode: "replace",
         setting_key: "fubon_travel_upgrade_enabled",
+        eligible_check: (cat, ctx) => {
+            if (!ctx || !ctx.isOnline) return false;
+            if (typeof isCategoryMatch === "function") return !isCategoryMatch(["overseas"], cat);
+            return !String(cat || "").startsWith("overseas");
+        },
         cap_mode: "reward",
         cap_limit: 62500,
         cap_key: "fubon_travel_upgrade_online_cap",
@@ -1344,13 +1349,18 @@ const modulesDB = {
     },
     "fubon_infinite_upgrade_online": {
         type: "category",
-        match: ["fubon_upgrade_online"],
+        match: ["online"],
         rate: 8,
         desc: "指定本地網購額外 +8X（需登記，月簽$1,000）",
         mode: "add",
         setting_key: "fubon_infinite_upgrade_enabled",
         req_mission_key: "fubon_infinite_upgrade_monthly_spend",
         req_mission_spend: 1000,
+        eligible_check: (cat, ctx) => {
+            if (!ctx || !ctx.isOnline) return false;
+            if (typeof isCategoryMatch === "function") return !isCategoryMatch(["overseas"], cat);
+            return !String(cat || "").startsWith("overseas");
+        },
         cap_mode: "reward",
         cap_limit: 80000,
         cap_key: "fubon_infinite_upgrade_online_cap",

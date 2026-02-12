@@ -9,6 +9,401 @@ function escapeHtml(input) {
         .replace(/'/g, "&#39;");
 }
 
+function normalizeInfoText(input, maxLen = 120) {
+    const raw = String(input || "").replace(/\s+/g, " ").trim();
+    if (!raw) return "";
+    if (raw.length <= maxLen) return raw;
+    return `${raw.slice(0, Math.max(1, maxLen - 1)).trimEnd()}…`;
+}
+
+function isRedundantDescriptionForTitle(title, description) {
+    const clean = (input) => String(input || "")
+        .toLowerCase()
+        .replace(/[()\[\]{}%＋+:/.,，。'"`~!@#$^&*_\-\s]/g, "")
+        .trim();
+    const t = clean(title);
+    const d = clean(description);
+    if (!t || !d) return false;
+    return t === d || t.includes(d) || d.includes(t);
+}
+
+function getPrimarySourceUrl(raw) {
+    const text = String(raw || "").trim();
+    if (!text) return "";
+    const matches = text.match(/https?:\/\/[^\s,]+/gi);
+    if (!matches || matches.length === 0) return "";
+    return String(matches[0]).replace(/[)\].,;]+$/, "");
+}
+
+function renderSourceLink(sourceUrl, sourceTitle, className, label) {
+    const url = getPrimarySourceUrl(sourceUrl);
+    if (!url) return "";
+    const safeClass = className || "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2";
+    const safeLabel = normalizeInfoText(label || "官方條款", 40);
+    const safeTitle = normalizeInfoText(sourceTitle || "", 120);
+    const titleAttr = safeTitle ? ` title="${escapeHtml(safeTitle)}"` : "";
+    return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" class="${safeClass}"${titleAttr}>
+        <i class="fas fa-arrow-up-right-from-square mr-1"></i>${escapeHtml(safeLabel)}
+    </a>`;
+}
+
+function parseSourceUrls(raw) {
+    const text = String(raw || "").trim();
+    if (!text) return [];
+    const matches = text.match(/https?:\/\/[^\s,]+/gi) || [];
+    const cleaned = matches.map((u) => String(u).replace(/[)\].,;]+$/, "")).filter(Boolean);
+    return Array.from(new Set(cleaned));
+}
+
+function isLikelyTncUrl(url) {
+    const u = String(url || "").toLowerCase();
+    if (!u) return false;
+    return (
+        u.includes(".pdf") ||
+        u.includes("tnc") ||
+        u.includes("term") ||
+        u.includes("條款")
+    );
+}
+
+function buildReferenceMeta(meta) {
+    const raw = (meta && typeof meta === "object") ? meta : {};
+    const sourceUrls = parseSourceUrls(raw.sourceUrl || "");
+    let tncUrl = getPrimarySourceUrl(raw.tncUrl || "");
+    let promoUrl = getPrimarySourceUrl(raw.promoUrl || "");
+    let registrationUrl = getPrimarySourceUrl(raw.registrationUrl || "");
+
+    if (!tncUrl) tncUrl = sourceUrls.find((u) => isLikelyTncUrl(u)) || "";
+    if (!promoUrl) promoUrl = sourceUrls.find((u) => u !== tncUrl) || "";
+    if (!registrationUrl) registrationUrl = promoUrl || tncUrl || "";
+    if (!promoUrl) promoUrl = registrationUrl || "";
+    if (!tncUrl && !promoUrl) {
+        tncUrl = sourceUrls[0] || "";
+    }
+
+    return {
+        tncUrl,
+        promoUrl,
+        registrationUrl,
+        sourceTitle: raw.sourceTitle || "",
+        implementationNote: raw.implementationNote || ""
+    };
+}
+
+function buildCampaignImplementationNote(campaign) {
+    const c = (campaign && typeof campaign === "object") ? campaign : {};
+    if (c.implementation_note && String(c.implementation_note).trim()) {
+        return String(c.implementation_note).trim();
+    }
+    const modules = (typeof DATA !== "undefined" && DATA && DATA.modules) ? DATA.modules : {};
+    const toNum = (v) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+    };
+    const fmtMoney = (value, unit) => {
+        const n = toNum(value);
+        if (n === null) return "";
+        const cleanUnit = String(unit || "").trim();
+        const isCurrency = !cleanUnit || cleanUnit === "$" || cleanUnit === "HKD" || cleanUnit === "元" || cleanUnit === "HK$" || cleanUnit === "現金" || cleanUnit === "RC";
+        if (cleanUnit === "RC") return `${Math.floor(n).toLocaleString()} RC`;
+        if (isCurrency) return `$${Math.floor(n).toLocaleString()}`;
+        return `${Math.floor(n).toLocaleString()} ${cleanUnit}`;
+    };
+    const fmtPct = (rate) => {
+        const n = toNum(rate);
+        if (n === null) return "";
+        const pct = n * 100;
+        const rounded = pct >= 10 ? pct.toFixed(1) : pct.toFixed(2);
+        return `${rounded.replace(/\.?0+$/, "")}%`;
+    };
+    const getModule = (id) => {
+        if (!id) return null;
+        return modules[id] || null;
+    };
+    const getModuleRefs = (sec, singleKey, listKey) => {
+        const refs = [];
+        const single = sec && sec[singleKey];
+        if (typeof single === "string" && single) refs.push(single);
+        const list = sec && sec[listKey];
+        if (Array.isArray(list)) {
+            list.forEach((id) => {
+                if (typeof id === "string" && id) refs.push(id);
+            });
+        }
+        return Array.from(new Set(refs));
+    };
+    const getMissionTargetFromSection = (sec) => {
+        const explicit = toNum(sec && sec.target);
+        if (explicit !== null) return explicit;
+        const refs = getModuleRefs(sec, "missionModule", "missionModules");
+        for (let i = 0; i < refs.length; i += 1) {
+            const mod = getModule(refs[i]);
+            const target = toNum(mod && mod.req_mission_spend);
+            if (target !== null) return target;
+        }
+        return null;
+    };
+    const getUnlockTargetFromSection = (sec) => {
+        const explicit = toNum(sec && sec.unlockTarget);
+        if (explicit !== null) return explicit;
+        const refs = getModuleRefs(sec, "unlockModule", "unlockModules");
+        for (let i = 0; i < refs.length; i += 1) {
+            const mod = getModule(refs[i]);
+            const target = toNum(mod && mod.req_mission_spend);
+            if (target !== null) return target;
+        }
+        return null;
+    };
+    const getCapLimitFromSection = (sec) => {
+        const explicit = toNum(sec && sec.cap);
+        if (explicit !== null) return explicit;
+        const capModule = sec && sec.capModule ? getModule(sec.capModule) : null;
+        return toNum(capModule && capModule.cap_limit);
+    };
+    const getRateFromSection = (sec) => {
+        const explicit = toNum(sec && sec.rate);
+        if (explicit !== null) return explicit;
+        const rateModule = sec && sec.rateModule ? getModule(sec.rateModule) : null;
+        const fromRateModule = toNum(rateModule && rateModule.rate);
+        if (fromRateModule !== null) return fromRateModule;
+        const capModule = sec && sec.capModule ? getModule(sec.capModule) : null;
+        return toNum(capModule && capModule.rate);
+    };
+    const sections = Array.isArray(c.sections) ? c.sections : [];
+    const parts = [];
+    const missionTargets = [];
+
+    sections.forEach((sec) => {
+        if (!sec || !sec.type) return;
+        const label = normalizeProgressLabel(sec.type, String(sec.label_zhhk || sec.label || ""));
+        if (sec.type === "mission") {
+            const target = getMissionTargetFromSection(sec);
+            if (target !== null) {
+                missionTargets.push(target);
+                parts.push(`先完成${label ? `「${label}」` : "任務"}（累積滿 ${fmtMoney(target)}）`);
+            } else {
+                parts.push(`先完成${label ? `「${label}」` : "簽賬任務"}後再計回贈`);
+            }
+            return;
+        }
+
+        if (sec.type === "cap_rate") {
+            const unlockTarget = getUnlockTargetFromSection(sec);
+            const fallbackTarget = missionTargets.length > 0 ? missionTargets[0] : null;
+            const target = unlockTarget !== null ? unlockTarget : fallbackTarget;
+            const rate = getRateFromSection(sec);
+            const cap = getCapLimitFromSection(sec);
+            const unit = String(sec.unit || "");
+            const steps = [];
+            if (target !== null) steps.push(`達 ${fmtMoney(target)} 後`);
+            if (rate !== null) steps.push(`按 ${fmtPct(rate)} 計算`);
+            if (cap !== null) steps.push(`上限 ${fmtMoney(cap, unit)}`);
+            if (steps.length > 0) {
+                parts.push(`${label ? `「${label}」` : "回贈"}：${steps.join("，")}`);
+            }
+            return;
+        }
+
+        if (sec.type === "tier_cap" && Array.isArray(sec.tiers) && sec.tiers.length > 0) {
+            const tierText = sec.tiers
+                .map((tier) => {
+                    const threshold = fmtMoney(tier && tier.threshold);
+                    const rate = fmtPct(tier && tier.rate);
+                    const cap = fmtMoney(tier && tier.cap, sec.unit || "");
+                    const bits = [];
+                    if (threshold) bits.push(`達 ${threshold}`);
+                    if (rate) bits.push(`回贈 ${rate}`);
+                    if (cap) bits.push(`上限 ${cap}`);
+                    return bits.join("，");
+                })
+                .filter(Boolean)
+                .join("；");
+            if (tierText) parts.push(`${label ? `「${label}」` : "分層回贈"}：${tierText}`);
+            return;
+        }
+
+        if (sec.type === "cap") {
+            const target = getUnlockTargetFromSection(sec);
+            const cap = getCapLimitFromSection(sec);
+            const unit = String(sec.unit || "");
+            const bits = [];
+            if (target !== null) bits.push(`達 ${fmtMoney(target)} 後`);
+            if (cap !== null) bits.push(`可用上限 ${fmtMoney(cap, unit)}`);
+            if (bits.length > 0) parts.push(`${label ? `「${label}」` : "上限進度"}：${bits.join("，")}`);
+        }
+    });
+
+    const periodMeta = c.id ? getCampaignPeriodMeta(c.id) : null;
+    const windows = (periodMeta && Array.isArray(periodMeta.windows)) ? periodMeta.windows : [];
+    const windowRanges = windows
+        .map((w) => {
+            const start = String((w && w.startDate) || "").trim();
+            const end = String((w && w.endDate) || "").trim();
+            return (start && end) ? `${start} 至 ${end}` : "";
+        })
+        .filter(Boolean);
+    if (windowRanges.length > 1) {
+        parts.push(`各期獨立計算（${windowRanges.join("；")}）`);
+    }
+
+    if (!parts.length) parts.push("按此推廣的門檻、比率及上限計算");
+    return `計算器做法：${parts.join("；")}。`;
+}
+
+function buildModuleImplementationNote(mod, card, title) {
+    const m = (mod && typeof mod === "object") ? mod : {};
+    const cardRef = (card && typeof card === "object") ? card : {};
+    const pct = (value) => {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return "";
+        const p = n * 100;
+        const rounded = p >= 10 ? p.toFixed(1) : p.toFixed(2);
+        return `${rounded.replace(/\.?0+$/, "")}%`;
+    };
+    const money = (value) => {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return "";
+        return `$${Math.floor(n).toLocaleString()}`;
+    };
+    const rewardCap = (value) => {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return "";
+        const unit = (cardRef.redemption && cardRef.redemption.unit) ? String(cardRef.redemption.unit) : "$";
+        if (unit && unit !== "$") return `${Math.floor(n).toLocaleString()} ${unit}`;
+        return `$${Math.floor(n).toLocaleString()}`;
+    };
+    const categoryLabel = (key) => {
+        if (!key) return "";
+        const cat = (typeof DATA !== "undefined" && DATA && DATA.categories) ? DATA.categories[key] : null;
+        if (!cat || !cat.label) return String(key);
+        return String(cat.label)
+            .replace(/\s*\([^)]*\)\s*/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+    };
+
+    const parts = [];
+    const match = Array.isArray(m.match) ? m.match.filter(Boolean) : [];
+    if (match.length > 0) {
+        const labels = match.slice(0, 3).map((k) => categoryLabel(k));
+        const suffix = match.length > 3 ? ` 等 ${match.length} 類` : "";
+        parts.push(`適用類別：${labels.join("、")}${suffix}`);
+    }
+
+    if (m.type === "red_hot_allocation") {
+        const perX = pct(m.rate_per_x);
+        if (perX) parts.push(`先分配最紅 5X，當中每 1X = +${perX}`);
+        parts.push("實際回贈 = 基本回贈 + 最紅加成");
+    } else if (m.type === "red_hot_fixed_bonus") {
+        const perX = Number(m.rate_per_x);
+        const mul = Number(m.multiplier);
+        if (Number.isFinite(perX) && Number.isFinite(mul)) {
+            parts.push(`固定加成：${mul}X × ${pct(perX)} = ${pct(perX * mul)}`);
+        }
+    } else if (Number.isFinite(Number(m.rate))) {
+        const rateText = pct(m.rate);
+        if (rateText) {
+            if (m.mode === "add") parts.push(`額外回贈 = 合資格簽賬 × ${rateText}（加在基本回贈之上）`);
+            else if (m.mode === "replace") parts.push(`符合條件時改用 ${rateText} 計算（取代基本回贈）`);
+            else parts.push(`回贈 = 合資格簽賬 × ${rateText}`);
+        }
+    } else if (Number.isFinite(Number(m.rate_per_x)) && Number.isFinite(Number(m.multiplier))) {
+        const perX = Number(m.rate_per_x);
+        const mul = Number(m.multiplier);
+        parts.push(`比率：${mul}X × ${pct(perX)} = ${pct(perX * mul)}`);
+    }
+
+    if (Number.isFinite(Number(m.req_mission_spend)) && m.req_mission_key) {
+        parts.push(`需先累積門檻簽賬 ${money(m.req_mission_spend)} 才生效`);
+    }
+
+    if (Number.isFinite(Number(m.cap_limit)) && m.cap_key) {
+        if (m.cap_mode === "spending") parts.push(`每期最多計 ${money(m.cap_limit)} 合資格簽賬`);
+        else parts.push(`每期回贈上限 ${rewardCap(m.cap_limit)}`);
+    }
+
+    if (parts.length === 0) {
+        const label = normalizeInfoText(title || m.desc || "此推廣", 60);
+        return `計算器做法：按「${label}」的條款、門檻及上限計算。`;
+    }
+    return `計算器做法：${parts.join("；")}。`;
+}
+
+window.showImplementationHint = function (rawText) {
+    const text = normalizeInfoText(rawText || "計算器做法：按此優惠的門檻、比率及上限計算。", 500);
+    if (typeof window.showToast === "function") {
+        window.showToast(text, "info", 4200);
+        return;
+    }
+    alert(text);
+};
+
+function renderImplementationHintButton(note, className) {
+    const clean = normalizeInfoText(note || "", 500);
+    if (!clean) return "";
+    const safe = escapeJsSingleQuoted(clean);
+    const cls = className || "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2";
+    return `<button type="button" onclick="showImplementationHint('${safe}')" class="${cls}">? 點樣計</button>`;
+}
+
+function renderReferenceActions(meta, options) {
+    const opts = options || {};
+    const m = buildReferenceMeta(meta || {});
+    const links = [];
+    const linkClass = opts.linkClass || "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2";
+
+    if (opts.showRegistration !== false && m.registrationUrl) {
+        links.push(renderSourceLink(m.registrationUrl, m.sourceTitle, linkClass, "登記"));
+    }
+    if (opts.showPromo !== false && m.promoUrl && m.promoUrl !== m.registrationUrl) {
+        links.push(renderSourceLink(m.promoUrl, m.sourceTitle, linkClass, "推廣頁"));
+    }
+    if (opts.showTnc !== false && m.tncUrl && m.tncUrl !== m.promoUrl && m.tncUrl !== m.registrationUrl) {
+        links.push(renderSourceLink(m.tncUrl, m.sourceTitle, linkClass, "條款"));
+    }
+
+    const implBtn = opts.showImplementation === false
+        ? ""
+        : renderImplementationHintButton(m.implementationNote, opts.implClass || linkClass);
+
+    const content = [...links.filter(Boolean), implBtn].filter(Boolean);
+    if (content.length === 0) return "";
+    return `<div class="mt-1 flex flex-wrap items-center gap-2">${content.join("")}</div>`;
+}
+
+function getCardReferenceMeta(cardId) {
+    if (!cardId || typeof DATA === "undefined" || !DATA) return {};
+    const card = Array.isArray(DATA.cards) ? DATA.cards.find((c) => c && c.id === cardId) : null;
+    const urls = [];
+    const titles = [];
+    const pushUrl = (u) => {
+        parseSourceUrls(u).forEach((x) => urls.push(x));
+    };
+    const pushTitle = (t) => {
+        const clean = normalizeInfoText(t || "", 120);
+        if (clean) titles.push(clean);
+    };
+
+    if (card) {
+        pushUrl(card.source_url || "");
+        pushTitle(card.source_title || "");
+        (Array.isArray(card.rewardModules) ? card.rewardModules : []).forEach((moduleId) => {
+            const mod = DATA.modules && DATA.modules[moduleId] ? DATA.modules[moduleId] : null;
+            if (!mod) return;
+            pushUrl(mod.source_url || "");
+            pushTitle(mod.source_title || "");
+        });
+    }
+
+    const uniqueUrls = Array.from(new Set(urls));
+    const sourceUrl = uniqueUrls.join(", ");
+    const sourceTitle = Array.from(new Set(titles)).join(" | ");
+    return {
+        sourceUrl,
+        sourceTitle
+    };
+}
+
 // Helper: Calculate days remaining
 function getDaysLeft(dateStr) {
     if (!dateStr) return null;
@@ -111,13 +506,40 @@ function getCampaignOffers() {
     if (typeof DATA === "undefined" || !DATA) return [];
     const legacyCampaigns = Array.isArray(DATA.campaigns) ? DATA.campaigns : [];
     const orderMap = {};
+    const campaignById = {};
     legacyCampaigns.forEach((campaign, idx) => {
-        if (campaign && campaign.id) orderMap[campaign.id] = idx;
+        if (campaign && campaign.id) {
+            orderMap[campaign.id] = idx;
+            campaignById[campaign.id] = campaign;
+        }
     });
 
     const offers = (Array.isArray(DATA.offers) ? DATA.offers : [])
         .filter((offer) => offer && offer.renderType === "campaign_sections" && offer.id)
-        .map((offer) => ({ ...offer }));
+        .map((offer) => {
+            const raw = campaignById[offer.id] || {};
+            const reg = (DATA.campaignRegistry && DATA.campaignRegistry[offer.id]) ? DATA.campaignRegistry[offer.id] : {};
+            const refs = Array.isArray(offer.moduleRefs) ? offer.moduleRefs : [];
+            const firstRefModule = refs
+                .map((id) => (DATA.modules && DATA.modules[id]) ? DATA.modules[id] : null)
+                .find((mod) => !!mod);
+            const cardIds = Array.isArray(offer.cards) ? offer.cards : (Array.isArray(raw.cards) ? raw.cards : []);
+            const firstCard = cardIds
+                .map((id) => (Array.isArray(DATA.cards) ? DATA.cards.find((c) => c && c.id === id) : null))
+                .find((card) => !!card);
+            return {
+                ...offer,
+                display_name_zhhk: offer.display_name_zhhk || raw.display_name_zhhk || "",
+                name: offer.name || raw.name || "",
+                note_zhhk: offer.note_zhhk || raw.note_zhhk || (firstRefModule ? (firstRefModule.note_zhhk || "") : ""),
+                source_url: offer.source_url || raw.source_url || (firstRefModule ? (firstRefModule.source_url || "") : "") || (firstCard ? (firstCard.source_url || "") : ""),
+                source_title: offer.source_title || raw.source_title || (firstRefModule ? (firstRefModule.source_title || "") : "") || (firstCard ? (firstCard.source_title || "") : ""),
+                tnc_url: offer.tnc_url || raw.tnc_url || reg.tncUrl || "",
+                promo_url: offer.promo_url || raw.promo_url || reg.promoUrl || "",
+                registration_url: offer.registration_url || raw.registration_url || reg.registrationUrl || "",
+                implementation_note: offer.implementation_note || raw.implementation_note || reg.implementationNote || ""
+            };
+        });
     offers.sort((a, b) => {
         const ai = Object.prototype.hasOwnProperty.call(orderMap, a.id) ? orderMap[a.id] : Number.MAX_SAFE_INTEGER;
         const bi = Object.prototype.hasOwnProperty.call(orderMap, b.id) ? orderMap[b.id] : Number.MAX_SAFE_INTEGER;
@@ -191,48 +613,237 @@ function getPromoBadgeForModule(mod) {
     return endDate ? formatPromoDate(endDate) : "推廣期至 待設定";
 }
 
-function getMonthTotals(transactions) {
-    if (!Array.isArray(transactions)) return { spend: 0, reward: 0, count: 0 };
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = now.getMonth();
-    let spend = 0;
-    let reward = 0;
-    let count = 0;
-    transactions.forEach(tx => {
-        let d = null;
-        if (tx.txDate) {
-            const parts = String(tx.txDate).split('-').map(n => parseInt(n, 10));
-            if (parts.length === 3 && parts.every(n => Number.isFinite(n))) {
-                const [y, m, day] = parts;
-                d = new Date(y, m - 1, day);
-            }
+function getTxDateForUi(tx) {
+    if (tx && tx.txDate) {
+        const parts = String(tx.txDate).split('-').map(n => parseInt(n, 10));
+        if (parts.length === 3 && parts.every(n => Number.isFinite(n))) {
+            const [yy, mm, dd] = parts;
+            const d = new Date(yy, mm - 1, dd);
+            if (!Number.isNaN(d.getTime())) return d;
         }
-        if (!d && tx.date) d = new Date(tx.date);
-        if (!d || Number.isNaN(d.getTime())) return;
-        if (d.getFullYear() !== y || d.getMonth() !== m) return;
+    }
+    if (tx && tx.date) {
+        const d = new Date(tx.date);
+        if (!Number.isNaN(d.getTime())) return d;
+    }
+    return null;
+}
+
+function getDashboardPeriodRange(periodKey) {
+    const now = new Date();
+    const key = String(periodKey || "month");
+    if (key === "all") return { start: null, endExclusive: null };
+
+    if (key === "year") {
+        const start = new Date(now.getFullYear(), 0, 1);
+        const endExclusive = new Date(now.getFullYear() + 1, 0, 1);
+        return { start, endExclusive };
+    }
+
+    if (key === "quarter") {
+        const quarterStartMonth = Math.floor(now.getMonth() / 3) * 3;
+        const start = new Date(now.getFullYear(), quarterStartMonth, 1);
+        const endExclusive = new Date(now.getFullYear(), quarterStartMonth + 3, 1);
+        return { start, endExclusive };
+    }
+
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endExclusive = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return { start, endExclusive };
+}
+
+function isDateInDashboardPeriod(date, periodRange) {
+    if (!date || Number.isNaN(date.getTime())) return false;
+    if (!periodRange || !periodRange.start || !periodRange.endExclusive) return true;
+    return date >= periodRange.start && date < periodRange.endExclusive;
+}
+
+function parseNativeRewardFromText(rebateText) {
+    const raw = String(rebateText || "").trim();
+    if (!raw) return null;
+    const numberMatch = raw.match(/-?\d[\d,]*(?:\.\d+)?/);
+    if (!numberMatch) return null;
+    const value = Number(String(numberMatch[0]).replace(/,/g, ""));
+    if (!Number.isFinite(value)) return null;
+
+    if (raw.includes("$") || /^HK\$/i.test(raw)) {
+        return { value, unit: "$" };
+    }
+
+    const unitRaw = raw.replace(numberMatch[0], "").replace(/[()]/g, "").trim();
+    const unit = unitRaw || "點數";
+    return { value, unit };
+}
+
+function getTxForeignFeeForDashboard(tx, settings) {
+    const t = (tx && typeof tx === "object") ? tx : {};
+    const cardId = String(t.cardId || "").trim();
+    const category = String(t.category || "").trim();
+    const amount = Number(t.amount) || 0;
+    if (!cardId || !category || amount <= 0) return 0;
+    if (typeof DATA === "undefined" || !DATA || !Array.isArray(DATA.cards)) return 0;
+
+    const card = DATA.cards.find((c) => c && c.id === cardId) || null;
+    if (!card) return 0;
+
+    const isForeign = (typeof isForeignCategory === "function")
+        ? isForeignCategory(category)
+        : (category === "overseas" || category === "foreign");
+    if (!isForeign) return 0;
+
+    const txDate = (typeof t.txDate === "string" && t.txDate.trim())
+        ? t.txDate.trim()
+        : (t.date ? new Date(t.date).toISOString().slice(0, 10) : "");
+
+    let feeRate = 0;
+    if (typeof getForeignFeeRate === "function") {
+        feeRate = Number(getForeignFeeRate(card, category, { settings: settings || {}, txDate })) || 0;
+    } else {
+        const base = Number(card.fcf) || 0;
+        const exempt = Array.isArray(card.fcf_exempt_categories) ? card.fcf_exempt_categories : [];
+        feeRate = exempt.includes(category) ? 0 : base;
+    }
+    if (feeRate <= 0) return 0;
+    return amount * feeRate;
+}
+
+function getDashboardTotalsByPeriod(transactions, periodKey, profile) {
+    if (!Array.isArray(transactions)) {
+        return { spend: 0, rewardCash: 0, count: 0, nativeByUnit: {} };
+    }
+    const settings = (profile && profile.settings)
+        ? profile.settings
+        : ((typeof userProfile !== "undefined" && userProfile && userProfile.settings) ? userProfile.settings : {});
+    const periodRange = getDashboardPeriodRange(periodKey);
+    let spend = 0;
+    let rewardCash = 0;
+    let count = 0;
+    const nativeByUnit = {};
+
+    transactions.forEach((tx) => {
+        const txDate = getTxDateForUi(tx);
+        if (!isDateInDashboardPeriod(txDate, periodRange)) return;
         spend += Number(tx.amount) || 0;
-        reward += Number(tx.rebateVal) || 0;
         count += 1;
+
+        const foreignFee = getTxForeignFeeForDashboard(tx, settings);
+        if (foreignFee > 0) rewardCash -= foreignFee;
+
+        const parsed = parseNativeRewardFromText(tx.rebateText);
+        if (!parsed) return;
+        if (parsed.unit === "$") {
+            rewardCash += Number(parsed.value) || 0;
+            return;
+        }
+        nativeByUnit[parsed.unit] = (Number(nativeByUnit[parsed.unit]) || 0) + parsed.value;
     });
-    return { spend, reward, count };
+
+    return { spend, rewardCash, count, nativeByUnit };
+}
+
+function formatNativeRewardSummary(nativeByUnit) {
+    const entries = Object.entries(nativeByUnit || {}).filter((entry) => Number(entry[1]) > 0);
+    if (entries.length === 0) return "—";
+    entries.sort((a, b) => Number(b[1]) - Number(a[1]));
+    return entries.slice(0, 3).map(([unit, value]) => `${Math.floor(Number(value)).toLocaleString()} ${unit}`).join("＋");
+}
+
+function getDashboardPeriodLabel(periodKey) {
+    if (periodKey === "quarter") return "本季";
+    if (periodKey === "year") return "今年";
+    if (periodKey === "all") return "全部";
+    return "本月";
+}
+
+function getCardBankKey(cardId) {
+    const id = String(cardId || "");
+    if (id.startsWith("hsbc_")) return "hsbc";
+    if (id.startsWith("sc_")) return "sc";
+    if (id.startsWith("citi_")) return "citi";
+    if (id.startsWith("dbs_")) return "dbs";
+    if (id.startsWith("hangseng_")) return "hangseng";
+    if (id.startsWith("boc_")) return "boc";
+    if (id.startsWith("ae_")) return "ae";
+    if (id.startsWith("fubon_")) return "fubon";
+    if (id.startsWith("bea_")) return "bea";
+    if (id.startsWith("sim_")) return "sim";
+    if (id.startsWith("aeon_")) return "aeon";
+    if (id.startsWith("wewa")) return "wewa";
+    if (id.startsWith("mox_")) return "mox";
+    if (id.startsWith("earnmore")) return "earnmore";
+    return "other";
+}
+
+function getBankLabelByKey(bankKey) {
+    const key = String(bankKey || "");
+    if (key === "hsbc") return "HSBC";
+    if (key === "sc") return "SC";
+    if (key === "citi") return "Citi";
+    if (key === "dbs") return "DBS";
+    if (key === "hangseng") return "Hang Seng";
+    if (key === "boc") return "BOC";
+    if (key === "ae") return "AE";
+    if (key === "fubon") return "Fubon";
+    if (key === "bea") return "BEA";
+    if (key === "sim") return "sim";
+    if (key === "aeon") return "AEON";
+    if (key === "wewa") return "WeWa";
+    if (key === "mox") return "Mox";
+    if (key === "earnmore") return "EarnMORE";
+    return "銀行";
+}
+
+function resolveOwnedOfferScope(cardIds, ownedSet) {
+    const ownedCardIds = Array.isArray(cardIds)
+        ? cardIds.filter((id) => ownedSet && ownedSet.has(id))
+        : [];
+    if (ownedCardIds.length === 0) return { type: "none", ownedCardIds: [] };
+    if (ownedCardIds.length === 1) return { type: "card", ownedCardIds, cardId: ownedCardIds[0] };
+    const bankKeys = Array.from(new Set(ownedCardIds.map((id) => getCardBankKey(id)).filter(Boolean)));
+    if (bankKeys.length === 1) {
+        return { type: "bank_shared", ownedCardIds, bankKey: bankKeys[0] };
+    }
+    return { type: "cross_bank_shared", ownedCardIds };
 }
 
 // Helper: Render Warning Card (Yellow/Black for Not Registered)
-function renderWarningCard(title, icon, description, settingKey) {
-    return `<div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-xl shadow-sm mb-4">
+function renderWarningCard(title, icon, description, settingKey, cardId, infoMeta) {
+    const settingArg = escapeJsSingleQuoted(settingKey || "");
+    const cardArg = cardId ? `, '${escapeJsSingleQuoted(cardId)}'` : "";
+    const info = (infoMeta && typeof infoMeta === "object") ? infoMeta : {};
+    const detailText = normalizeInfoText(info.detail || "", 120);
+    const detailHtml = detailText ? `<div class="text-[10px] text-stone-600 mb-2">${escapeHtml(detailText)}</div>` : "";
+    const refsHtml = renderReferenceActions({
+        sourceUrl: info.sourceUrl || "",
+        sourceTitle: info.sourceTitle || "",
+        tncUrl: info.tncUrl || "",
+        promoUrl: info.promoUrl || "",
+        registrationUrl: info.registrationUrl || "",
+        implementationNote: info.implementationNote || ""
+    }, {
+        linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+        implClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+        showRegistration: true,
+        showPromo: true,
+        showTnc: true,
+        showImplementation: true
+    });
+    const sourceHtml = refsHtml ? `<div class="mb-2">${refsHtml}</div>` : "";
+    return `<div class="bg-stone-50 border-l-4 border-stone-300 p-4 rounded-r-xl shadow-sm mb-4">
         <div class="flex items-start">
             <div class="flex-shrink-0">
-                <i class="fas fa-exclamation-triangle text-yellow-600 text-xl mt-1"></i>
+                <i class="fas fa-exclamation-triangle text-stone-600 text-xl mt-1"></i>
             </div>
             <div class="ml-3 w-full">
-                <h3 class="text-sm font-bold text-yellow-800">${title}</h3>
-                <div class="mt-1 text-xs text-yellow-700 font-bold mb-2">
+                <h3 class="text-sm font-bold text-stone-800">${title}</h3>
+                <div class="mt-1 text-xs text-stone-700 font-bold mb-2">
                     ⚠️ 尚未登記 (NOT REGISTERED)
                 </div>
-                <div class="text-[10px] text-yellow-600 mb-2">${description || "請前往設定頁面開啟此推廣。"}</div>
-                <button onclick="toggleSetting('${settingKey}'); refreshUI();" class="text-xs bg-yellow-200 hover:bg-yellow-300 text-yellow-800 px-3 py-1.5 rounded-lg font-bold transition-colors">
-                    立即開啟
+                <div class="text-[10px] text-stone-600 mb-2">${description || "請先完成官方登記，再到設定頁標記已登記。"}</div>
+                ${detailHtml}
+                ${sourceHtml}
+                <button onclick="openSettingsForRegistration('${settingArg}'${cardArg})" class="text-xs bg-stone-200 hover:bg-stone-300 text-stone-800 px-3 py-1.5 rounded-lg font-bold transition-colors">
+                    前往設定
                 </button>
             </div>
         </div>
@@ -241,12 +852,12 @@ function renderWarningCard(title, icon, description, settingKey) {
 
 function getPromoToggleThemeClasses(theme) {
     const key = String(theme || "").toLowerCase();
-    if (key === "red") return { row: "bg-red-50", border: "border-red-100", checked: "peer-checked:bg-red-500" };
-    if (key === "blue") return { row: "bg-blue-50", border: "border-blue-100", checked: "peer-checked:bg-blue-600" };
-    if (key === "purple") return { row: "bg-purple-50", border: "border-purple-100", checked: "peer-checked:bg-purple-600" };
-    if (key === "green") return { row: "bg-green-50", border: "border-green-100", checked: "peer-checked:bg-green-600" };
-    if (key === "yellow") return { row: "bg-yellow-50", border: "border-yellow-100", checked: "peer-checked:bg-yellow-500" };
-    return { row: "bg-gray-100", border: "border-gray-300", checked: "peer-checked:bg-gray-800" };
+    if (key === "red") return { row: "bg-stone-100", border: "border-stone-200", checked: "peer-checked:bg-stone-700" };
+    if (key === "blue") return { row: "bg-slate-100", border: "border-slate-200", checked: "peer-checked:bg-slate-700" };
+    if (key === "purple") return { row: "bg-zinc-100", border: "border-zinc-200", checked: "peer-checked:bg-zinc-700" };
+    if (key === "green") return { row: "bg-emerald-50", border: "border-emerald-100", checked: "peer-checked:bg-emerald-700" };
+    if (key === "yellow") return { row: "bg-amber-50", border: "border-amber-100", checked: "peer-checked:bg-amber-600" };
+    return { row: "bg-stone-100", border: "border-stone-200", checked: "peer-checked:bg-stone-700" };
 }
 
 function escapeJsSingleQuoted(input) {
@@ -304,24 +915,66 @@ function getCampaignToggleDefinitions() {
             bySettingKey[settingKey] = {
                 settingKey,
                 labels: [],
+                descriptions: [],
+                sourceUrls: [],
+                sourceTitles: [],
+                tncUrls: [],
+                promoUrls: [],
+                registrationUrls: [],
+                implementationNotes: [],
                 themes: [],
+                cards: [],
                 order: idx
             };
         }
-        const fromRegistry = (typeof reg.warningTitle === "string" && reg.warningTitle.trim()) ? reg.warningTitle.trim() : "";
         const fromDisplay = (typeof campaign.display_name_zhhk === "string" && campaign.display_name_zhhk.trim()) ? campaign.display_name_zhhk.trim() : "";
         const fromName = (typeof campaign.name === "string" && campaign.name.trim()) ? campaign.name.trim() : "";
-        bySettingKey[settingKey].labels.push(fromRegistry || fromDisplay || fromName || campaign.id);
+        const fromRegistry = (typeof reg.warningTitle === "string" && reg.warningTitle.trim()) ? reg.warningTitle.trim() : "";
+        bySettingKey[settingKey].labels.push(fromDisplay || fromName || fromRegistry || campaign.id);
+        const description = (typeof campaign.note_zhhk === "string" && campaign.note_zhhk.trim())
+            ? campaign.note_zhhk.trim()
+            : ((typeof reg.warningDesc === "string" && reg.warningDesc.trim()) ? reg.warningDesc.trim() : "");
+        if (description) bySettingKey[settingKey].descriptions.push(description);
+        if (campaign.source_url) bySettingKey[settingKey].sourceUrls.push(campaign.source_url);
+        if (campaign.source_title) bySettingKey[settingKey].sourceTitles.push(campaign.source_title);
+        if (campaign.tnc_url) bySettingKey[settingKey].tncUrls.push(campaign.tnc_url);
+        if (campaign.promo_url) bySettingKey[settingKey].promoUrls.push(campaign.promo_url);
+        if (campaign.registration_url) bySettingKey[settingKey].registrationUrls.push(campaign.registration_url);
+        if (reg.tncUrl) bySettingKey[settingKey].tncUrls.push(reg.tncUrl);
+        if (reg.promoUrl) bySettingKey[settingKey].promoUrls.push(reg.promoUrl);
+        if (reg.registrationUrl) bySettingKey[settingKey].registrationUrls.push(reg.registrationUrl);
+        const implNote = campaign.implementation_note || reg.implementationNote || buildCampaignImplementationNote(campaign);
+        if (implNote) bySettingKey[settingKey].implementationNotes.push(implNote);
         bySettingKey[settingKey].themes.push(campaign.theme || "");
+        if (Array.isArray(campaign.cards)) {
+            campaign.cards.forEach((cardId) => {
+                if (cardId) bySettingKey[settingKey].cards.push(cardId);
+            });
+        }
         bySettingKey[settingKey].order = Math.min(bySettingKey[settingKey].order, idx);
     });
 
     return Object.values(bySettingKey).map((entry) => {
         const labels = Array.from(new Set((entry.labels || []).filter(Boolean)));
+        const descriptions = Array.from(new Set((entry.descriptions || []).filter(Boolean)));
+        const sourceUrls = Array.from(new Set((entry.sourceUrls || []).filter(Boolean)));
+        const sourceTitles = Array.from(new Set((entry.sourceTitles || []).filter(Boolean)));
+        const tncUrls = Array.from(new Set((entry.tncUrls || []).filter(Boolean)));
+        const promoUrls = Array.from(new Set((entry.promoUrls || []).filter(Boolean)));
+        const registrationUrls = Array.from(new Set((entry.registrationUrls || []).filter(Boolean)));
+        const implementationNotes = Array.from(new Set((entry.implementationNotes || []).filter(Boolean)));
         return {
             settingKey: entry.settingKey,
             label: labels.join(" / "),
+            description: descriptions.length > 0 ? descriptions[0] : "",
+            sourceUrl: sourceUrls.length > 0 ? sourceUrls[0] : "",
+            sourceTitle: sourceTitles.length > 0 ? sourceTitles[0] : "",
+            tncUrl: tncUrls.length > 0 ? tncUrls[0] : "",
+            promoUrl: promoUrls.length > 0 ? promoUrls[0] : "",
+            registrationUrl: registrationUrls.length > 0 ? registrationUrls[0] : "",
+            implementationNote: implementationNotes.length > 0 ? implementationNotes[0] : "",
             theme: (entry.themes || []).find(Boolean) || "gray",
+            cards: Array.from(new Set((entry.cards || []).filter(Boolean))),
             order: entry.order,
             priority: Object.prototype.hasOwnProperty.call(priorityMap, entry.settingKey)
                 ? priorityMap[entry.settingKey]
@@ -337,7 +990,8 @@ function getCampaignToggleDefinitions() {
 function renderCampaignToggleRows(userProfile, options) {
     const opts = options || {};
     const excludedKeys = new Set(Array.isArray(opts.excludeSettingKeys) ? opts.excludeSettingKeys : []);
-    const defs = getCampaignToggleDefinitions().filter((def) => !excludedKeys.has(def.settingKey));
+    const baseDefs = Array.isArray(opts.defs) ? opts.defs : getCampaignToggleDefinitions();
+    const defs = baseDefs.filter((def) => !excludedKeys.has(def.settingKey));
     if (defs.length === 0) return "";
 
     return defs.map((def) => {
@@ -345,9 +999,34 @@ function renderCampaignToggleRows(userProfile, options) {
         const checked = !!(userProfile && userProfile.settings && userProfile.settings[def.settingKey]);
         const toggleSettingKey = escapeJsSingleQuoted(def.settingKey);
         const inputId = `st-${def.settingKey.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
-        return `<div class="flex justify-between items-center ${classes.row} p-2 rounded border ${classes.border}">
-            <span>${escapeHtml(def.label)}</span>
-            ${renderSettingsToggle({ id: inputId, checked, onchange: `toggleSetting('${toggleSettingKey}')` })}
+        const descText = normalizeInfoText(def.description || "", 90);
+        const refsHtml = renderReferenceActions({
+            sourceUrl: def.sourceUrl,
+            sourceTitle: def.sourceTitle,
+            tncUrl: def.tncUrl,
+            promoUrl: def.promoUrl,
+            registrationUrl: def.registrationUrl,
+            implementationNote: def.implementationNote
+        }, {
+            linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+            implClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+            showRegistration: true,
+            showPromo: true,
+            showTnc: true,
+            showImplementation: true
+        });
+        const metaHtml = (descText || refsHtml) ? `<div class="mt-1 flex flex-wrap items-center gap-2">
+            ${descText ? `<span class="text-[10px] text-stone-600">${escapeHtml(descText)}</span>` : ""}
+            ${refsHtml}
+        </div>` : "";
+        return `<div data-setting-key="${escapeHtml(def.settingKey)}" class="${classes.row} p-2 rounded border ${classes.border}">
+            <div class="flex justify-between items-start gap-3">
+                <div class="min-w-0">
+                    <div class="text-xs font-bold text-stone-800">${escapeHtml(def.label)}</div>
+                    ${metaHtml}
+                </div>
+                ${renderSettingsToggle({ id: inputId, checked, onchange: `toggleSetting('${toggleSettingKey}')` })}
+            </div>
         </div>`;
     }).join("");
 }
@@ -876,26 +1555,47 @@ function showEnjoy2xInfo() { showEnjoyPoints4xGuide("2X（1%）"); }
 
 // Helper: Create Progress Card Component
 function createProgressCard(config) {
-    const { title, icon, theme, badge, subTitle, sections, warning, actionButton } = config;
+    const { title, icon, theme, badge, subTitle, sections, warning, actionButton, description, sourceUrl, sourceTitle, tncUrl, promoUrl, registrationUrl, implementationNote } = config;
 
     // Theme mapping
     const themeMap = {
-        'purple': { bg: 'bg-purple-50', border: 'border-purple-100', text: 'text-purple-800', bar: 'bg-purple-500', badge: 'bg-purple-600', subText: 'text-purple-600' },
-        'red': { bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-700', bar: 'bg-red-500', badge: 'bg-red-600', subText: 'text-red-600' },
-        'blue': { bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-700', bar: 'bg-blue-500', badge: 'bg-blue-600', subText: 'text-blue-600' },
-        'yellow': { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-800', bar: 'bg-yellow-400', badge: 'bg-yellow-500', subText: 'text-yellow-700' },
-        'green': { bg: 'bg-green-50', border: 'border-green-100', text: 'text-green-700', bar: 'bg-green-500', badge: 'bg-green-600', subText: 'text-green-600' },
-        'indigo': { bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'text-indigo-700', bar: 'bg-indigo-500', badge: 'bg-indigo-600', subText: 'text-indigo-800' },
-        'black': { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-800', bar: 'bg-gray-800', badge: 'bg-black', subText: 'text-gray-600' },
-        'gray': { bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-800', bar: 'bg-gray-500', badge: 'bg-gray-600', subText: 'text-gray-600' }
+        'purple': { bg: 'bg-zinc-50', border: 'border-zinc-200', text: 'text-zinc-800', bar: 'bg-zinc-500', badge: 'bg-zinc-700', subText: 'text-zinc-600' },
+        'red': { bg: 'bg-stone-50', border: 'border-stone-200', text: 'text-stone-800', bar: 'bg-stone-500', badge: 'bg-stone-700', subText: 'text-stone-600' },
+        'blue': { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-800', bar: 'bg-slate-500', badge: 'bg-slate-700', subText: 'text-slate-600' },
+        'yellow': { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-800', bar: 'bg-amber-500', badge: 'bg-amber-600', subText: 'text-amber-700' },
+        'green': { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-800', bar: 'bg-emerald-500', badge: 'bg-emerald-700', subText: 'text-emerald-700' },
+        'indigo': { bg: 'bg-slate-100', border: 'border-slate-200', text: 'text-slate-800', bar: 'bg-slate-600', badge: 'bg-slate-700', subText: 'text-slate-700' },
+        'black': { bg: 'bg-neutral-100', border: 'border-neutral-300', text: 'text-neutral-800', bar: 'bg-neutral-700', badge: 'bg-neutral-800', subText: 'text-neutral-600' },
+        'gray': { bg: 'bg-stone-100', border: 'border-stone-200', text: 'text-stone-800', bar: 'bg-stone-500', badge: 'bg-stone-600', subText: 'text-stone-600' }
     };
 
     const t = themeMap[theme] || themeMap['blue'];
     const badgeHtml = badge ? `<span class="${t.badge} text-white text-[10px] px-2 py-0.5 rounded-full">${badge}</span>` : '';
     const subTitleHtml = subTitle ? `<span class="text-[10px] ${t.subText}">${subTitle}</span>` : '';
     const warningHtml = warning ? `<div>${warning}</div>` : '';
+    const dedupedDescription = isRedundantDescriptionForTitle(title || "", description || "") ? "" : (description || "");
+    const descriptionText = normalizeInfoText(dedupedDescription, 140);
+    const refsHtml = renderReferenceActions({
+        sourceUrl: sourceUrl || "",
+        sourceTitle: sourceTitle || "",
+        tncUrl: tncUrl || "",
+        promoUrl: promoUrl || "",
+        registrationUrl: registrationUrl || "",
+        implementationNote: implementationNote || ""
+    }, {
+        linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+        implClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+        showRegistration: true,
+        showPromo: true,
+        showTnc: true,
+        showImplementation: true
+    });
+    const infoHtml = (descriptionText || refsHtml) ? `<div class="flex flex-wrap items-center gap-2">
+        ${descriptionText ? `<span class="text-[11px] text-stone-600">${escapeHtml(descriptionText)}</span>` : ""}
+        ${refsHtml}
+    </div>` : "";
     const actionButtonHtml = actionButton ? `<div class="mt-3 pt-3 border-t border-gray-200">
-        <button onclick="${actionButton.onClick}" class="${actionButton.className || 'w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2'}">
+        <button onclick="${actionButton.onClick}" class="${actionButton.className || 'w-full bg-stone-700 hover:bg-stone-800 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2'}">
             ${actionButton.icon ? `<i class="${actionButton.icon}"></i>` : ''}${actionButton.label}
         </button>
     </div>` : '';
@@ -911,6 +1611,7 @@ function createProgressCard(config) {
             ${badgeHtml}
         </div>
         <div class="p-4 space-y-4">
+            ${infoHtml}
             ${warningHtml}
             ${sectionsHtml}
             ${actionButtonHtml}
@@ -920,7 +1621,8 @@ function createProgressCard(config) {
 
 // Helper: Create Calculator Result Card
 function createResultCard(res, dataStr, mainValHtml, redemptionHtml) {
-    return `<div class="card-enter bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start cursor-pointer hover:bg-blue-50 mb-3" onclick="handleRecord('${res.cardName}','${dataStr}')">
+    const safeCardNameForAction = escapeJsSingleQuoted(res.cardName);
+    return `<div class="card-enter bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start mb-3">
         <div class="w-2/3 pr-2">
             <div class="font-bold text-gray-800 text-sm truncate">${res.cardName}</div>
             <div class="text-xs text-gray-500 mt-1">${renderBreakdown(res.breakdown)}</div>
@@ -928,7 +1630,7 @@ function createResultCard(res, dataStr, mainValHtml, redemptionHtml) {
         <div class="text-right w-1/3 flex flex-col items-end">
             ${mainValHtml}
             ${redemptionHtml}
-            <div class="text-[10px] text-blue-500 font-bold mt-2 bg-blue-50 inline-block px-2 py-1 rounded-full border border-blue-100">+ 記一筆</div>
+            <button type="button" onclick="handleRecord('${safeCardNameForAction}','${dataStr}')" class="text-[10px] text-blue-600 font-bold mt-2 bg-blue-50 inline-block px-2 py-1 rounded-full border border-blue-100 hover:bg-blue-100 transition-colors">記帳</button>
         </div>
     </div>`;
 }
@@ -936,14 +1638,79 @@ function createResultCard(res, dataStr, mainValHtml, redemptionHtml) {
 function renderDashboard(userProfile) {
     const container = document.getElementById('dashboard-container');
     const renderedCaps = new Set();
-    // If the same cap_key appears across multiple cards in the dataset, treat it as a shared cap.
-    // In that case, avoid showing a specific owned card prefix in the title (e.g. HSBC 最紅自主).
+    const ownedCards = Array.isArray(userProfile.ownedCards) ? userProfile.ownedCards.slice() : [];
+    const ownedSet = new Set(ownedCards);
+    const cardById = {};
+    (DATA.cards || []).forEach((card) => {
+        if (card && card.id) cardById[card.id] = card;
+    });
+    const cardGroups = {};
+    const globalBlocks = [];
+
+    const ensureCardGroup = (cardId) => {
+        if (!cardId || !ownedSet.has(cardId)) return null;
+        if (!cardGroups[cardId]) {
+            const card = cardById[cardId] || null;
+            cardGroups[cardId] = {
+                cardId,
+                cardName: card ? String(card.name || cardId) : String(cardId),
+                items: []
+            };
+        }
+        return cardGroups[cardId];
+    };
+    const pushBlock = (cardId, blockHtml) => {
+        if (!blockHtml) return;
+        const group = ensureCardGroup(cardId);
+        if (group) group.items.push(blockHtml);
+        else globalBlocks.push(blockHtml);
+    };
+
     const capKeyCounts = {};
-    const monthTotals = getMonthTotals(userProfile.transactions);
-    const totalSpend = monthTotals.spend;
-    const totalVal = monthTotals.reward;
-    const txCount = monthTotals.count;
-    let html = `<div class="bg-gradient-to-r from-blue-600 to-blue-500 text-white p-5 rounded-2xl shadow-lg mb-4"><div class="flex justify-between items-start"><div><h2 class="text-blue-100 text-xs font-bold uppercase tracking-wider">本月總簽賬</h2><div class="text-3xl font-bold mt-1">$${totalSpend.toLocaleString()}</div></div><div class="text-right"><h2 class="text-blue-100 text-xs font-bold uppercase tracking-wider">預估總回贈</h2><div class="text-xl font-bold mt-1 text-yellow-300">≈ $${Math.floor(totalVal).toLocaleString()}</div></div></div><div class="mt-4 pt-4 border-t border-blue-400/30 flex justify-between text-xs text-blue-100"><span>已記錄 ${txCount} 筆</span></div></div>`;
+    const periodKey = String((userProfile.settings && userProfile.settings.dashboard_period) || "month");
+    const totals = getDashboardTotalsByPeriod(userProfile.transactions, periodKey, userProfile);
+    const totalSpend = totals.spend;
+    const totalCash = totals.rewardCash;
+    const txCount = totals.count;
+    const nativeSummary = formatNativeRewardSummary(totals.nativeByUnit);
+    const cashRounded = Math.floor(totalCash);
+    const cashText = cashRounded < 0
+        ? `-$${Math.abs(cashRounded).toLocaleString()}`
+        : `$${cashRounded.toLocaleString()}`;
+    const nativeText = nativeSummary === "—" ? "—" : nativeSummary;
+    const periodLabel = getDashboardPeriodLabel(periodKey);
+
+    let html = `<div class="bg-[#f7f4ee] border border-stone-200 text-stone-800 p-5 rounded-2xl shadow-sm mb-4">
+        <div class="flex items-end justify-between gap-3">
+            <div>
+                <h2 class="text-stone-500 text-xs font-bold uppercase tracking-wider">${periodLabel}總簽賬</h2>
+                <div class="text-3xl font-bold mt-1">$${Math.floor(totalSpend).toLocaleString()}</div>
+            </div>
+            <div class="text-right">
+                <label class="text-[10px] text-stone-500 font-bold block mb-1">統計期間</label>
+                <select onchange="saveDrop('dashboard_period', this.value)" class="text-xs text-gray-800 bg-white rounded-lg px-2 py-1 border border-stone-300">
+                    <option value="month" ${periodKey === "month" ? "selected" : ""}>本月</option>
+                    <option value="quarter" ${periodKey === "quarter" ? "selected" : ""}>本季</option>
+                    <option value="year" ${periodKey === "year" ? "selected" : ""}>今年</option>
+                    <option value="all" ${periodKey === "all" ? "selected" : ""}>全部</option>
+                </select>
+            </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-stone-300">
+            <div class="text-stone-500 text-[11px] tracking-wider mb-2">回贈總覽</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div class="bg-white border border-stone-200 rounded-xl px-3 py-2">
+                    <div class="text-[10px] text-stone-500 uppercase tracking-wider">里數 / 積分</div>
+                    <div class="text-stone-800 font-bold text-base mt-1 break-words">${escapeHtml(nativeText)}</div>
+                </div>
+                <div class="bg-white border border-stone-200 rounded-xl px-3 py-2">
+                    <div class="text-[10px] text-stone-500 uppercase tracking-wider">現金回贈（已扣手續費）</div>
+                    <div class="text-stone-800 font-bold text-base mt-1">${escapeHtml(cashText)}</div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 text-xs text-stone-500">期間內已記錄 ${txCount} 筆</div>
+    </div>`;
 
     // 1. Special promo models with lifecycle (e.g. Travel Guru)
     if (typeof getLevelLifecycleModelIds === "function" && typeof getLevelLifecycleState === "function") {
@@ -951,14 +1718,29 @@ function renderDashboard(userProfile) {
         lifecycleIds.forEach((modelId) => {
             const state = getLevelLifecycleState(modelId, userProfile);
             if (!state || !state.eligible || !state.active) return;
-            html += createProgressCard({
-                title: state.title,
+            const scope = resolveOwnedOfferScope(state.model && state.model.cards, ownedSet);
+            if (scope.type === "none") return;
+            const scopeLabel = scope.type === "bank_shared"
+                ? `${getBankLabelByKey(scope.bankKey)} 多卡共用`
+                : (scope.type === "cross_bank_shared" ? "跨銀行共用" : "");
+            const scopedTitle = scopeLabel ? `${scopeLabel}｜${state.title}` : state.title;
+            const blockHtml = createProgressCard({
+                title: scopedTitle,
                 icon: state.icon,
                 theme: state.theme,
                 badge: state.badge,
+                description: state.description || "",
+                implementationNote: state.implementationNote || "",
                 sections: state.sections || [],
                 actionButton: state.actionButton || null
             });
+            if (scope.type === "card") {
+                pushBlock(scope.cardId, blockHtml);
+            } else if (scope.type === "bank_shared") {
+                scope.ownedCardIds.forEach((cardId) => pushBlock(cardId, blockHtml));
+            } else {
+                pushBlock(null, blockHtml);
+            }
         });
     }
 
@@ -970,16 +1752,42 @@ function renderDashboard(userProfile) {
             const campaignTitle = (campaign.display_name_zhhk && String(campaign.display_name_zhhk).trim())
                 ? String(campaign.display_name_zhhk).trim()
                 : (campaign.name || campaign.id);
+            const scope = resolveOwnedOfferScope(campaign.cards, ownedSet);
+            if (scope.type === "none") return;
+            const primaryCardForSettings = (scope.ownedCardIds && scope.ownedCardIds[0]) ? scope.ownedCardIds[0] : null;
+            const scopeLabel = scope.type === "bank_shared"
+                ? `${getBankLabelByKey(scope.bankKey)} 多卡共用`
+                : (scope.type === "cross_bank_shared" ? "跨銀行共用" : "");
+            const scopedCampaignTitle = scope.type === "card"
+                ? campaignTitle
+                : `${scopeLabel}｜${campaignTitle}`;
 
             const reg = (DATA.campaignRegistry && campaign && campaign.id) ? DATA.campaignRegistry[campaign.id] : null;
 	        if (reg && reg.settingKey && userProfile.settings[reg.settingKey] === false) {
                 if (!status || !status.eligible) return;
-	            html += renderWarningCard(
-	                reg.warningTitle || campaignTitle,
+                const warningHtml = renderWarningCard(
+	                reg.warningTitle || scopedCampaignTitle,
 	                campaign.icon,
 	                reg.warningDesc || cget("warning.needRegister", "需登記以賺取回贈"),
-	                reg.settingKey
+	                reg.settingKey,
+                    primaryCardForSettings,
+                    {
+                        detail: campaign.note_zhhk || "",
+                        sourceUrl: campaign.source_url || "",
+                        sourceTitle: campaign.source_title || "",
+                        tncUrl: campaign.tnc_url || "",
+                        promoUrl: campaign.promo_url || "",
+                        registrationUrl: campaign.registration_url || "",
+                        implementationNote: campaign.implementation_note || buildCampaignImplementationNote(campaign)
+                    }
 	            );
+                if (scope.type === "card") {
+                    pushBlock(scope.cardId, warningHtml);
+                } else if (scope.type === "bank_shared") {
+                    scope.ownedCardIds.forEach((cardId) => pushBlock(cardId, warningHtml));
+                } else {
+                    pushBlock(null, warningHtml);
+                }
 	            // Prevent duplicate rendering in the "Remaining Caps" section.
 	            if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
 	            else if (campaign.capKeys) campaign.capKeys.forEach(k => renderedCaps.add(k));
@@ -994,12 +1802,27 @@ function renderDashboard(userProfile) {
             if (status.capKeys) status.capKeys.forEach(k => renderedCaps.add(k));
 
             const badgeText = getCampaignBadgeText(campaign);
-            const subTitle = getCampaignResetSubTitle(campaign);
-
-            html += createProgressCard({
-                title: campaignTitle, icon: campaign.icon, theme: campaign.theme, badge: badgeText, subTitle,
-                sections: sections
+            const resetSubTitle = getCampaignResetSubTitle(campaign);
+            const subTitle = [scopeLabel, resetSubTitle].filter(Boolean).join(" · ");
+            const progressHtml = createProgressCard({
+                title: scopedCampaignTitle, icon: campaign.icon, theme: campaign.theme, badge: badgeText, subTitle,
+                sections: sections,
+                description: campaign.note_zhhk || "",
+                sourceUrl: campaign.source_url || "",
+                sourceTitle: campaign.source_title || "",
+                tncUrl: campaign.tnc_url || "",
+                promoUrl: campaign.promo_url || "",
+                registrationUrl: campaign.registration_url || "",
+                implementationNote: campaign.implementation_note || buildCampaignImplementationNote(campaign)
             });
+
+            if (scope.type === "card") {
+                pushBlock(scope.cardId, progressHtml);
+            } else if (scope.type === "bank_shared") {
+                scope.ownedCardIds.forEach((cardId) => pushBlock(cardId, progressHtml));
+            } else {
+                pushBlock(null, progressHtml);
+            }
         });
     }
 
@@ -1014,8 +1837,8 @@ function renderDashboard(userProfile) {
         });
     });
 
-    userProfile.ownedCards.forEach(cardId => {
-        const card = DATA.cards.find(c => c.id === cardId);
+    ownedCards.forEach(cardId => {
+        const card = cardById[cardId] || null;
         if (!card || !Array.isArray(card.rewardModules)) return;
         card.rewardModules.forEach(modId => {
             const mod = DATA.modules[modId];
@@ -1027,12 +1850,19 @@ function renderDashboard(userProfile) {
                     ? String(mod.display_name_zhhk).trim()
                     : String(mod.desc || mod.id || "").trim();
 
-	            html += renderWarningCard(
+	            pushBlock(cardId, renderWarningCard(
 	                title,
 	                "fas fa-exclamation-triangle",
 	                cget("warning.needRegister", "需登記以賺取回贈"),
-	                mod.setting_key
-	            );
+	                mod.setting_key,
+                    cardId,
+                    {
+                        detail: mod.note_zhhk || mod.desc || "",
+                        sourceUrl: mod.source_url || (card && card.source_url) || "",
+                        sourceTitle: mod.source_title || (card && card.source_title) || "",
+                        implementationNote: buildModuleImplementationNote(mod, card, title)
+                    }
+	            ));
 	            renderedCaps.add(mod.cap_key);
 	            return;
 	        }
@@ -1142,16 +1972,155 @@ function renderDashboard(userProfile) {
 	                }
 	            });
 
-            html += createProgressCard({
+            pushBlock(cardId, createProgressCard({
                 title,
                 icon: "fas fa-chart-line",
                 theme: "gray",
                 badge: getPromoBadgeForModule(mod),
                 subTitle: getResetBadgeForKey(mod.cap_key, userProfile),
+                description: mod.note_zhhk || mod.desc || "",
+                sourceUrl: mod.source_url || (card && card.source_url) || "",
+                sourceTitle: mod.source_title || (card && card.source_title) || "",
+                implementationNote: buildModuleImplementationNote(mod, card, title),
                 sections: sections
-            });
+            }));
         });
     });
+
+    const orderedCardGroups = ownedCards
+        .map((cardId) => cardGroups[cardId])
+        .filter((group) => group && group.items.length > 0);
+    const getCardBankTag = (cardId) => {
+        const id = String(cardId || "");
+        if (id.startsWith("hsbc_")) return "HSBC";
+        if (id.startsWith("sc_")) return "SC";
+        if (id.startsWith("citi_")) return "Citi";
+        if (id.startsWith("dbs_")) return "DBS";
+        if (id.startsWith("hangseng_")) return "Hang Seng";
+        if (id.startsWith("boc_")) return "BOC";
+        if (id.startsWith("ae_")) return "AE";
+        if (id.startsWith("fubon_")) return "Fubon";
+        if (id.startsWith("bea_")) return "BEA";
+        if (id.startsWith("sim_")) return "sim";
+        if (id.startsWith("aeon_")) return "AEON";
+        if (id.startsWith("wewa")) return "WeWa";
+        if (id.startsWith("mox_")) return "Mox";
+        if (id.startsWith("earnmore")) return "EarnMORE";
+        return "Card";
+    };
+    const getCardToneClass = (cardId) => {
+        const id = String(cardId || "");
+        if (id.startsWith("hsbc_")) return "wallet-tone-hsbc";
+        if (id.startsWith("sc_")) return "wallet-tone-sc";
+        if (id.startsWith("citi_")) return "wallet-tone-citi";
+        if (id.startsWith("dbs_")) return "wallet-tone-dbs";
+        if (id.startsWith("hangseng_")) return "wallet-tone-hangseng";
+        if (id.startsWith("boc_")) return "wallet-tone-boc";
+        if (id.startsWith("ae_")) return "wallet-tone-ae";
+        if (id.startsWith("fubon_")) return "wallet-tone-fubon";
+        if (id.startsWith("bea_")) return "wallet-tone-bea";
+        if (id.startsWith("sim_")) return "wallet-tone-sim";
+        if (id.startsWith("aeon_")) return "wallet-tone-aeon";
+        if (id.startsWith("wewa")) return "wallet-tone-wewa";
+        if (id.startsWith("mox_")) return "wallet-tone-mox";
+        return "wallet-tone-default";
+    };
+
+    const hasAnyProgress = orderedCardGroups.length > 0 || globalBlocks.length > 0;
+    const focusRaw = String((userProfile.settings && userProfile.settings.dashboard_focus_card) || "");
+    const isValidFocus = focusRaw === "__shared__"
+        ? globalBlocks.length > 0
+        : ownedSet.has(focusRaw);
+    const fallbackFocus = orderedCardGroups[0]
+        ? orderedCardGroups[0].cardId
+        : (globalBlocks.length > 0 ? "__shared__" : (ownedCards[0] || ""));
+    const focusedCardId = isValidFocus ? focusRaw : fallbackFocus;
+    const detailMode = !!(userProfile.settings && userProfile.settings.dashboard_detail_mode && focusedCardId);
+
+    if (!detailMode) {
+        html += `<div class="notion-panel rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-sm font-bold text-gray-800">簽帳/回贈進度總覽</h3>
+                <span class="text-[10px] text-gray-500">${hasAnyProgress ? "點擊卡面查看詳情" : "未有可追蹤項目"}</span>
+            </div>`;
+
+        if (!hasAnyProgress) {
+            html += `<div class="bg-white rounded-xl border border-gray-200 p-5 text-center text-gray-500 text-sm">
+                暫時未有可追蹤的優惠進度，先去「設定」揀選你持有的信用卡。
+            </div>`;
+        } else {
+            html += `<div class="grid grid-cols-1 gap-3">`;
+            ownedCards.forEach((cardId) => {
+                const count = (cardGroups[cardId] && Array.isArray(cardGroups[cardId].items)) ? cardGroups[cardId].items.length : 0;
+                const card = cardById[cardId] || null;
+                const cardName = card ? String(card.name || cardId) : String(cardId);
+                const bankTag = getCardBankTag(cardId);
+                const toneClass = getCardToneClass(cardId);
+                const activeClass = focusedCardId === cardId ? "wallet-cover-active" : "";
+                if (count > 0) {
+                    html += `<button type="button" onclick="openDashboardCardDetail('${escapeJsSingleQuoted(cardId)}')" class="wallet-cover ${toneClass} ${activeClass}">
+                    <div class="wallet-cover-chip"></div>
+                    <div class="wallet-cover-meta">${escapeHtml(bankTag)}</div>
+                    <div class="wallet-cover-title">${escapeHtml(cardName)}</div>
+                    <div class="wallet-cover-foot">${count > 0 ? `${count} 項可追蹤進度` : "暫無進度項目"}</div>
+                </button>`;
+                } else {
+                    html += `<div class="wallet-cover ${toneClass} opacity-80">
+                        <div class="wallet-cover-chip"></div>
+                        <div class="wallet-cover-meta">${escapeHtml(bankTag)}</div>
+                        <div class="wallet-cover-title">${escapeHtml(cardName)}</div>
+                        <div class="wallet-cover-foot">暫無進度項目</div>
+                    </div>`;
+                }
+            });
+            if (globalBlocks.length > 0) {
+                const activeClass = focusedCardId === "__shared__" ? "wallet-cover-active" : "";
+                html += `<button type="button" onclick="openDashboardCardDetail('__shared__')" class="wallet-cover wallet-tone-default ${activeClass}">
+                    <div class="wallet-cover-chip"></div>
+                    <div class="wallet-cover-meta">Shared</div>
+                    <div class="wallet-cover-title">跨卡共用優惠</div>
+                    <div class="wallet-cover-foot">${globalBlocks.length} 項可追蹤進度</div>
+                </button>`;
+            }
+            html += `</div>`;
+        }
+        html += `</div>`;
+        container.innerHTML = html;
+        return;
+    }
+
+    const focusGroup = focusedCardId === "__shared__" ? null : cardGroups[focusedCardId];
+    const focusItems = focusedCardId === "__shared__"
+        ? globalBlocks
+        : ((focusGroup && Array.isArray(focusGroup.items)) ? focusGroup.items : []);
+    const focusTitle = focusedCardId === "__shared__"
+        ? "跨卡共用優惠"
+        : ((focusGroup && focusGroup.cardName) || String(focusedCardId || ""));
+    const focusCount = Array.isArray(focusItems) ? focusItems.length : 0;
+
+    html += `<div class="bg-white rounded-2xl border border-gray-200 p-4 mb-4">
+        <div class="flex items-center justify-between gap-3">
+            <div>
+                <div class="text-[10px] uppercase tracking-wider text-gray-500">Progress Detail</div>
+                <div class="text-sm font-bold text-gray-800 mt-1">${escapeHtml(focusTitle)}</div>
+            </div>
+            <button type="button" onclick="closeDashboardCardDetail()" class="text-xs px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                返回總覽
+            </button>
+        </div>
+    </div>`;
+
+    if (focusCount === 0) {
+        html += `<div class="bg-white rounded-2xl border border-gray-200 p-6 text-center text-gray-500 text-sm">
+            呢張卡暫時未有可追蹤的優惠進度。
+        </div>`;
+    } else {
+        html += `<div class="mb-2 flex items-center justify-between">
+            <h3 class="text-sm font-bold text-gray-800">進度項目</h3>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">${focusCount} 項</span>
+        </div>`;
+        html += focusItems.join("");
+    }
 
     container.innerHTML = html;
 }
@@ -1177,6 +2146,17 @@ function renderCalculatorResults(results, currentMode) {
                 // Fallback: keep old behavior.
                 if (u === "HKD" || u === "元" || u === "現金") return `$${v}`;
                 return u ? `${v} ${u}` : v;
+            };
+            const renderPrimaryValue = (val, unit, className) => {
+                const v = String(val ?? "");
+                const u = String(unit ?? "");
+                const safeV = escapeHtml(v);
+                const safeU = escapeHtml(u);
+                if (u === "$" || u === "HKD" || u === "元" || u === "現金") {
+                    return `<div class="text-xl ${className}">$${safeV}</div>`;
+                }
+                if (!u) return `<div class="text-xl ${className}">${safeV}</div>`;
+                return `<div class="text-xl ${className}">${safeV} <span class="text-xs text-gray-400">${safeU}</span></div>`;
             };
 
 	        // Prepare Rebate Text (User specific request)
@@ -1210,7 +2190,7 @@ function renderCalculatorResults(results, currentMode) {
             hasFee = true;
             feeNetValue = Math.floor(net).toLocaleString();
             feeNetPotential = Math.floor(netPotential).toLocaleString();
-            feeLineHtml = `<div class="text-xs text-red-400 mt-0.5"><i class="fas fa-money-bill-wave mr-1"></i>外幣手續費: $${feeVal} (${(feeRate * 100).toFixed(2)}%)</div>`;
+            feeLineHtml = `<div class="text-xs text-amber-600 mt-0.5"><i class="fas fa-money-bill-wave mr-1"></i>外幣手續費: $${feeVal} (${(feeRate * 100).toFixed(2)}%)</div>`;
         }
 
         const txDateInput = document.getElementById('tx-date');
@@ -1232,7 +2212,7 @@ function renderCalculatorResults(results, currentMode) {
 	        }));
 	        let displayVal = res.displayVal;
 	        let displayUnit = res.displayUnit;
-	        let valClass = unsupportedMode ? 'text-gray-400 font-medium' : 'text-red-600 font-bold';
+	        let valClass = unsupportedMode ? 'text-gray-400 font-medium' : 'text-stone-800 font-bold';
 
 	        if (allowFeeNet && hasFee && feeNetValue !== null) {
 	            displayVal = feeNetValue;
@@ -1240,7 +2220,7 @@ function renderCalculatorResults(results, currentMode) {
 	            valClass = 'text-blue-600 font-bold';
 	        }
 
-		        let mainValHtml = `<div class="text-xl ${valClass}">${escapeHtml(formatValueText(displayVal, displayUnit))}</div>`;
+		        let mainValHtml = renderPrimaryValue(displayVal, displayUnit, valClass);
 		        if (unsupportedMode) {
 		            mainValHtml += `<div class="text-[10px] text-gray-400 mt-0.5">${escapeHtml(cget("calc.unsupportedMode", "不支援此模式"))}</div>`;
 		        }
@@ -1263,47 +2243,48 @@ function renderCalculatorResults(results, currentMode) {
 	            const rd = res.redemptionConfig;
 	            if (!unsupportedMode) {
 	                mainValHtml = `
-	                    <div class="text-xl ${valClass}">${displayVal} <span class="text-xs text-gray-400">${displayUnit}</span></div>
+	                    ${renderPrimaryValue(displayVal, displayUnit, valClass)}
 	                    <div class="text-xs text-gray-500 mt-0.5 font-mono">(${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit})</div>
 	                    ${potentialHtml}
 	                `;
 		            } else {
 		                mainValHtml = `
-		                    <div class="text-xl ${valClass}">0 <span class="text-xs text-gray-400">${displayUnit}</span></div>
+		                    ${renderPrimaryValue(0, displayUnit, valClass)}
 		                    <div class="text-[10px] text-gray-400 mt-0.5">${escapeHtml(cget("calc.unsupportedMode", "不支援此模式"))}</div>
 		                    <div class="text-xs text-gray-500 mt-0.5 font-mono">${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit}</div>
 		                    ${potentialHtml}
 		                `;
 		            }
 
-            redemptionHtml = `
-                <div class="mt-1 flex justify-end">
-                    <button onclick="alert('【兌換詳情】\\n💰 手續費: ${rd.fee}\\n📉 最低兌換: ${rd.min.toLocaleString()} ${rd.unit}\\n🔄 比率: ${rd.ratio}')" 
-                        class="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded flex items-center gap-1 hover:bg-yellow-200 transition-colors">
-                        <i class="fas fa-exclamation-circle"></i> 條款
-                    </button>
-                </div>`;
-        }
+	            redemptionHtml = `
+	                <div class="mt-1 flex justify-end">
+	                    <button onclick="event.stopPropagation(); alert('【兌換詳情】\\n💰 手續費: ${rd.fee}\\n📉 最低兌換: ${rd.min.toLocaleString()} ${rd.unit}\\n🔄 比率: ${rd.ratio}')" 
+	                        class="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded flex items-center gap-1 hover:bg-yellow-200 transition-colors">
+	                        <i class="fas fa-exclamation-circle"></i> 條款
+	                    </button>
+	                </div>`;
+	        }
 
 	        // Add top result styling for top 3
 	        const isTop = index < 3 && !unsupportedMode;
 	        const topClass = isTop ? ' top-result relative' : '';
 	        const topBadge = index === 0 && !unsupportedMode ? '<span class="top-result-badge">🏆 最佳</span>' : '';
 
-        html += `<div class="card-enter bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start cursor-pointer hover:bg-blue-50 mb-3${topClass}" onclick="handleRecord('${res.cardName}','${dataStr}')">
-            ${topBadge}
-            <div class="w-2/3 pr-2">
-                <div class="font-bold text-gray-800 text-sm truncate">${res.cardName}</div>
-                <div class="text-xs text-gray-500 mt-1">${renderBreakdown(res.breakdown)}</div>
-                ${hasFee && !showFeeEquation ? feeLineHtml : ''}
-            </div>
-            <div class="text-right w-1/3 flex flex-col items-end">
-                ${mainValHtml}
-                ${redemptionHtml}
-                <div class="text-[10px] text-blue-500 font-bold mt-2 bg-blue-50 inline-block px-2 py-1 rounded-full border border-blue-100">+ 記一筆</div>
-            </div>
-        </div>`;
-    });
+        const safeCardNameForAction = escapeJsSingleQuoted(res.cardName);
+	        html += `<div class="card-enter bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start mb-3${topClass}">
+	            ${topBadge}
+	            <div class="w-2/3 pr-2">
+	                <div class="font-bold text-gray-800 text-sm truncate">${res.cardName}</div>
+	                <div class="text-xs text-gray-500 mt-1">${renderBreakdown(res.breakdown)}</div>
+	                ${hasFee && !showFeeEquation ? feeLineHtml : ''}
+	            </div>
+	            <div class="text-right w-1/3 flex flex-col items-end">
+	                ${mainValHtml}
+	                ${redemptionHtml}
+	                <button type="button" onclick="handleRecord('${safeCardNameForAction}','${dataStr}')" class="text-[10px] text-blue-600 font-bold mt-2 bg-blue-50 inline-block px-2 py-1 rounded-full border border-blue-100 hover:bg-blue-100 transition-colors">記帳</button>
+	            </div>
+	        </div>`;
+	    });
 
     if (results.length === 0) html = `<div class="text-center text-gray-400 py-10 text-sm">請先在「設定」頁面新增卡片</div>`;
     document.getElementById('calc-results').innerHTML = html;
@@ -1312,53 +2293,366 @@ function renderCalculatorResults(results, currentMode) {
 function renderSettings(userProfile) {
     const list = document.getElementById('settings-container');
     const bankGroups = [
-        { name: "🦁 HSBC 滙豐", filter: id => id.startsWith('hsbc_') },
-        { name: "🔵 Standard Chartered 渣打", filter: id => id.startsWith('sc_') },
-        { name: "🏦 Citi 花旗", filter: id => id.startsWith('citi_') },
-        { name: "⚫ DBS 星展", filter: id => id.startsWith('dbs_') },
-        { name: "🌿 Hang Seng 恒生", filter: id => id.startsWith('hangseng_') },
-        { name: "🏛️ BOC 中銀", filter: id => id.startsWith('boc_') },
-        { name: "🏛️ American Express", filter: id => id.startsWith('ae_') },
-        { name: "🏦 Fubon 富邦", filter: id => id.startsWith('fubon_') },
-        { name: "🏦 BEA 東亞", filter: id => id.startsWith('bea_') },
-        { name: "💳 sim / AEON / WeWa", filter: id => id.startsWith('sim_') || id.startsWith('aeon_') || id.startsWith('wewa') || id.startsWith('earnmore') || id.startsWith('mox_') },
-        { name: "💎 Others 其他", filter: id => !id.startsWith('hsbc_') && !id.startsWith('sc_') && !id.startsWith('citi_') && !id.startsWith('dbs_') && !id.startsWith('hangseng_') && !id.startsWith('boc_') && !id.startsWith('ae_') && !id.startsWith('fubon_') && !id.startsWith('bea_') && !id.startsWith('sim_') && !id.startsWith('aeon_') && !id.startsWith('wewa') && !id.startsWith('earnmore') && !id.startsWith('mox_') }
+        { key: "hsbc", name: "🦁 HSBC 滙豐", filter: id => id.startsWith('hsbc_') },
+        { key: "sc", name: "🔵 Standard Chartered 渣打", filter: id => id.startsWith('sc_') },
+        { key: "citi", name: "🏦 Citi 花旗", filter: id => id.startsWith('citi_') },
+        { key: "dbs", name: "⚫ DBS 星展", filter: id => id.startsWith('dbs_') },
+        { key: "hangseng", name: "🌿 Hang Seng 恒生", filter: id => id.startsWith('hangseng_') },
+        { key: "boc", name: "🏛️ BOC 中銀", filter: id => id.startsWith('boc_') },
+        { key: "ae", name: "🏛️ American Express", filter: id => id.startsWith('ae_') },
+        { key: "fubon", name: "🏦 Fubon 富邦", filter: id => id.startsWith('fubon_') },
+        { key: "bea", name: "🏦 BEA 東亞", filter: id => id.startsWith('bea_') },
+        { key: "alt", name: "💳 sim / AEON / WeWa", filter: id => id.startsWith('sim_') || id.startsWith('aeon_') || id.startsWith('wewa') || id.startsWith('earnmore') || id.startsWith('mox_') },
+        { key: "others", name: "💎 Others 其他", filter: id => !id.startsWith('hsbc_') && !id.startsWith('sc_') && !id.startsWith('citi_') && !id.startsWith('dbs_') && !id.startsWith('hangseng_') && !id.startsWith('boc_') && !id.startsWith('ae_') && !id.startsWith('fubon_') && !id.startsWith('bea_') && !id.startsWith('sim_') && !id.startsWith('aeon_') && !id.startsWith('wewa') && !id.startsWith('earnmore') && !id.startsWith('mox_') }
     ];
+    const ownedCards = Array.isArray(userProfile.ownedCards) ? userProfile.ownedCards.slice() : [];
+    const ownedSet = new Set(ownedCards);
+    const cardsById = {};
+    (DATA.cards || []).forEach((card) => {
+        if (card && card.id) cardsById[card.id] = card;
+    });
+
+    const getCardName = (cardId) => {
+        const card = cardsById[cardId];
+        return card ? String(card.name || cardId) : String(cardId || "未知卡片");
+    };
+    const getCardBankTag = (cardId) => {
+        const id = String(cardId || "");
+        if (id.startsWith("hsbc_")) return "HSBC";
+        if (id.startsWith("sc_")) return "SC";
+        if (id.startsWith("citi_")) return "Citi";
+        if (id.startsWith("dbs_")) return "DBS";
+        if (id.startsWith("hangseng_")) return "Hang Seng";
+        if (id.startsWith("boc_")) return "BOC";
+        if (id.startsWith("ae_")) return "AE";
+        if (id.startsWith("fubon_")) return "Fubon";
+        if (id.startsWith("bea_")) return "BEA";
+        if (id.startsWith("sim_")) return "sim";
+        if (id.startsWith("aeon_")) return "AEON";
+        if (id.startsWith("wewa")) return "WeWa";
+        if (id.startsWith("mox_")) return "Mox";
+        if (id.startsWith("earnmore")) return "EarnMORE";
+        return "Card";
+    };
+    const getCardToneClass = (cardId) => {
+        const id = String(cardId || "");
+        if (id.startsWith("hsbc_")) return "wallet-tone-hsbc";
+        if (id.startsWith("sc_")) return "wallet-tone-sc";
+        if (id.startsWith("citi_")) return "wallet-tone-citi";
+        if (id.startsWith("dbs_")) return "wallet-tone-dbs";
+        if (id.startsWith("hangseng_")) return "wallet-tone-hangseng";
+        if (id.startsWith("boc_")) return "wallet-tone-boc";
+        if (id.startsWith("ae_")) return "wallet-tone-ae";
+        if (id.startsWith("fubon_")) return "wallet-tone-fubon";
+        if (id.startsWith("bea_")) return "wallet-tone-bea";
+        if (id.startsWith("sim_")) return "wallet-tone-sim";
+        if (id.startsWith("aeon_")) return "wallet-tone-aeon";
+        if (id.startsWith("wewa")) return "wallet-tone-wewa";
+        if (id.startsWith("mox_")) return "wallet-tone-mox";
+        return "wallet-tone-default";
+    };
+    const findFirstOwnedCard = (ids) => {
+        if (!Array.isArray(ids)) return null;
+        return ids.find((id) => ownedSet.has(id)) || null;
+    };
+    const ownedCardsByModule = (moduleId) => {
+        if (!moduleId) return [];
+        return ownedCards.filter((cardId) => {
+            const card = cardsById[cardId];
+            return !!(card && Array.isArray(card.rewardModules) && card.rewardModules.includes(moduleId));
+        });
+    };
+    const cardsWithSettingEntries = new Set();
+    const markCardsByScope = (cardIds) => {
+        const scope = resolveOwnedOfferScope(cardIds, ownedSet);
+        if (scope.type === "card" && scope.cardId) {
+            cardsWithSettingEntries.add(scope.cardId);
+            return;
+        }
+        if (scope.type === "bank_shared" && scope.bankKey) {
+            ownedCards.forEach((cardId) => {
+                if (getCardBankKey(cardId) === scope.bankKey) cardsWithSettingEntries.add(cardId);
+            });
+            return;
+        }
+        if (scope.type === "cross_bank_shared") {
+            ownedCards.forEach((cardId) => cardsWithSettingEntries.add(cardId));
+        }
+    };
+    // Campaign/module-driven settings (generic scope resolution).
+    getCampaignToggleDefinitions().forEach((def) => {
+        if (!def || !Array.isArray(def.cards)) return;
+        markCardsByScope(def.cards);
+    });
+    // Non-campaign feature settings.
+    markCardsByScope(ownedCardsByModule("travel_guru_v2"));
+    markCardsByScope(ownedCardsByModule("red_hot_variable"));
+    if (ownedSet.has("dbs_live_fresh")) cardsWithSettingEntries.add("dbs_live_fresh");
+    if (ownedSet.has("wewa")) cardsWithSettingEntries.add("wewa");
+    if (ownedSet.has("mox_credit")) cardsWithSettingEntries.add("mox_credit");
+    if (ownedSet.has("hangseng_mmpower")) cardsWithSettingEntries.add("hangseng_mmpower");
+    if (ownedSet.has("hangseng_enjoy")) cardsWithSettingEntries.add("hangseng_enjoy");
+    if (ownedSet.has("citi_prestige")) cardsWithSettingEntries.add("citi_prestige");
+    let focusedCardId = String((userProfile.settings && userProfile.settings.settings_focus_card) || "");
+    if (!ownedSet.has(focusedCardId)) focusedCardId = ownedCards[0] || "";
+    const focusedCardName = focusedCardId ? getCardName(focusedCardId) : "";
+    const detailMode = !!(userProfile.settings && userProfile.settings.settings_detail_mode && focusedCardId);
+    const editMode = !!(userProfile.settings && userProfile.settings.settings_wallet_edit_mode);
+    const addCardsOpen = !!(userProfile.settings && userProfile.settings.settings_wallet_add_open);
+    const remainingCardsCount = Math.max(0, (DATA.cards || []).length - ownedCards.length);
+    const addGroupOpenMap = (userProfile.settings && typeof userProfile.settings.settings_wallet_add_groups === "object" && userProfile.settings.settings_wallet_add_groups)
+        ? userProfile.settings.settings_wallet_add_groups
+        : {};
+    const focusedCardEsc = escapeJsSingleQuoted(focusedCardId);
+    const focusedBankKey = focusedCardId ? getCardBankKey(focusedCardId) : "";
+    const ensureBucket = (map, key) => {
+        const safeKey = key || "__shared__";
+        if (!map[safeKey]) map[safeKey] = [];
+        return map[safeKey];
+    };
+    const renderPerCardSettingsBlocks = (blocksByCard, sharedBlocks, emptyText, cardIcon, cardTheme, focusCardId) => {
+        let out = "";
+        const cardOrder = focusCardId ? [focusCardId] : ownedCards;
+        cardOrder.forEach((cardId) => {
+            const blocks = blocksByCard[cardId] || [];
+            if (blocks.length === 0) return;
+            out += `<section class="rounded-xl border ${cardTheme.border} bg-white p-3">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-xs font-bold ${cardTheme.title} flex items-center gap-2">
+                        <i class="${cardIcon}"></i>${escapeHtml(getCardName(cardId))}
+                    </h3>
+                    <span class="text-[10px] ${cardTheme.badge} px-2 py-0.5 rounded-full">${blocks.length} 項</span>
+                </div>
+                <div class="space-y-3">${blocks.join("")}</div>
+            </section>`;
+        });
+        if (Array.isArray(sharedBlocks) && sharedBlocks.length > 0) {
+            out += `<section class="rounded-xl border border-purple-100 bg-purple-50 p-3">
+                <div class="text-xs font-bold text-purple-700 mb-2 flex items-center gap-2">
+                    <i class="fas fa-layer-group"></i>跨卡共用設定
+                </div>
+                <div class="space-y-3">${sharedBlocks.join("")}</div>
+            </section>`;
+        }
+        if (!out) out = `<div class="text-xs text-gray-400 bg-gray-50 border border-gray-200 rounded-xl p-3">${escapeHtml(emptyText)}</div>`;
+        return out;
+    };
+    const renderRegistrationRow = (def) => {
+        const classes = getPromoToggleThemeClasses(def.theme);
+        const checked = !!(userProfile && userProfile.settings && userProfile.settings[def.settingKey]);
+        const toggleSettingKey = escapeJsSingleQuoted(def.settingKey);
+        const inputId = `st-${def.settingKey.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+        const descText = normalizeInfoText(def.description || "", 90);
+        const refsHtml = renderReferenceActions({
+            sourceUrl: def.sourceUrl,
+            sourceTitle: def.sourceTitle,
+            tncUrl: def.tncUrl,
+            promoUrl: def.promoUrl,
+            registrationUrl: def.registrationUrl,
+            implementationNote: def.implementationNote
+        }, {
+            linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+            implClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+            showRegistration: true,
+            showPromo: true,
+            showTnc: true,
+            showImplementation: true
+        });
+        const metaHtml = (descText || refsHtml) ? `<div class="mt-1 flex flex-wrap items-center gap-2">
+            ${descText ? `<span class="text-[10px] text-stone-600">${escapeHtml(descText)}</span>` : ""}
+            ${refsHtml}
+        </div>` : "";
+        return `<div data-setting-key="${escapeHtml(def.settingKey)}" class="${classes.row} p-2 rounded border ${classes.border}">
+            <div class="flex justify-between items-start gap-3">
+                <div class="min-w-0">
+                    <div class="text-xs font-bold text-stone-800">${escapeHtml(def.label)}</div>
+                    ${metaHtml}
+                </div>
+                ${renderSettingsToggle({ id: inputId, checked, onchange: `toggleSetting('${toggleSettingKey}')` })}
+            </div>
+        </div>`;
+    };
 
     // Data Management Section
-    let html = `<div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-2xl shadow-sm border-2 border-blue-200 mb-4">
-        <h2 class="text-sm font-bold text-blue-800 uppercase mb-3 flex items-center gap-2">
+    let html = "";
+    if (!detailMode) html += `<div class="bg-[#f7f4ee] p-5 rounded-2xl shadow-sm border border-stone-200 mb-4">
+        <h2 class="text-sm font-bold text-stone-800 uppercase mb-3 flex items-center gap-2">
             <i class="fas fa-database"></i> 數據管理
         </h2>
         <div class="grid grid-cols-2 gap-3">
             <button onclick="exportData()" 
-                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2">
+                class="bg-stone-700 hover:bg-stone-800 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2">
                 <i class="fas fa-download"></i> 匯出數據
             </button>
-            <label class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer">
+            <label class="bg-stone-600 hover:bg-stone-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 cursor-pointer">
                 <i class="fas fa-upload"></i> 匯入數據
                 <input type="file" accept=".json" onchange="importData(event)" class="hidden">
             </label>
         </div>
-        <p class="text-xs text-blue-700 mt-3 bg-blue-100 p-2 rounded-lg">
+        <p class="text-xs text-stone-700 mt-3 bg-stone-100 p-2 rounded-lg">
             💡 建議定期匯出數據作備份，以免瀏覽器清除數據時遺失記錄。
         </p>
     </div>`;
 
-    html += `<div class="bg-white p-5 rounded-2xl shadow-sm"><h2 class="text-sm font-bold text-gray-800 uppercase mb-4 border-b pb-2">我的錢包</h2><div class="space-y-6">`;
-    bankGroups.forEach(group => {
-        const groupCards = DATA.cards.filter(c => group.filter(c.id));
-        if (groupCards.length > 0) {
-            html += `<div><h3 class="text-xs font-bold text-gray-400 uppercase mb-2 pl-1 tracking-wider">${group.name}</h3><div class="bg-gray-50 rounded-xl px-3 py-1 border border-gray-100">`;
-            groupCards.forEach(c => {
-                const ch = userProfile.ownedCards.includes(c.id) ? 'checked' : '';
-                html += `<div class="flex justify-between items-center py-3 border-b border-gray-200 last:border-0"><span class="text-sm text-gray-700 font-medium">${escapeHtml(c.name)}</span>${renderSettingsToggle({ checked: ch === 'checked', onchange: `toggleCard('${escapeJsSingleQuoted(c.id)}')` })}</div>`;
-            });
-            html += `</div></div>`;
+    if (!detailMode) {
+    html += `<div class="notion-panel p-5 rounded-2xl shadow-sm">
+        <div class="flex items-center justify-between mb-3 border-b pb-2">
+            <h2 class="text-sm font-bold text-gray-800 uppercase">我的銀包</h2>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="toggleWalletAddCardsPanel()" class="text-xs px-3 py-1.5 rounded-lg border ${addCardsOpen ? "border-stone-600 bg-stone-700 text-white" : "border-stone-300 text-stone-700 hover:bg-stone-100"}">
+                    ＋ 加入新卡 <span class="${addCardsOpen ? "text-stone-100" : "text-stone-500"}">${remainingCardsCount}</span>
+                </button>
+                ${ownedCards.length > 0
+                    ? `<button type="button" onclick="toggleWalletEditMode()" class="text-xs px-3 py-1.5 rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-100">${editMode ? "完成" : "編輯"}</button>`
+                    : ""}
+            </div>
+        </div>
+        ${editMode ? `<div class="text-[11px] text-stone-600 mb-3">可拖曳排序，按右上角 X 刪除卡片。</div>` : ""}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 ${editMode ? 'wallet-edit-mode' : ''}">`;
+    ownedCards.forEach((cardId) => {
+        const cardName = getCardName(cardId);
+        const toneClass = getCardToneClass(cardId);
+        const bankTag = getCardBankTag(cardId);
+        const searchText = `${bankTag} ${cardName}`.toLowerCase();
+        const isFocused = focusedCardId === cardId;
+        const canOpenSettingsDetail = cardsWithSettingEntries.has(cardId);
+        if (editMode) {
+            html += `<div data-wallet-cover data-wallet-card="${escapeHtml(searchText)}" draggable="true"
+                ondragstart="walletDragStart(event, '${escapeJsSingleQuoted(cardId)}')"
+                ondragend="walletDragEnd()"
+                ondragover="walletDragOver(event)"
+                ondrop="walletDrop(event, '${escapeJsSingleQuoted(cardId)}')"
+                class="wallet-cover wallet-edit-item ${toneClass}">
+                <button type="button" onclick="event.stopPropagation(); removeWalletCard('${escapeJsSingleQuoted(cardId)}')" class="wallet-delete-btn" aria-label="移除卡片">×</button>
+                <div class="wallet-cover-chip"></div>
+                <div class="wallet-cover-meta">${escapeHtml(bankTag)}</div>
+                <div class="wallet-cover-title">${escapeHtml(cardName)}</div>
+                <div class="wallet-cover-foot">拖曳排序</div>
+                <div class="wallet-drag-hint"><i class="fas fa-grip-lines"></i></div>
+            </div>`;
+        } else if (canOpenSettingsDetail) {
+            html += `<button type="button" data-wallet-cover data-wallet-card="${escapeHtml(searchText)}" onclick="openWalletCardDetail('${escapeJsSingleQuoted(cardId)}')" class="wallet-cover ${toneClass} ${isFocused ? 'wallet-cover-active' : ''}">
+            <div class="wallet-cover-chip"></div>
+            <div class="wallet-cover-meta">${escapeHtml(bankTag)}</div>
+            <div class="wallet-cover-title">${escapeHtml(cardName)}</div>
+            <div class="wallet-cover-foot">${isFocused ? "正在查看" : "點擊查看設定"}</div>
+        </button>`;
+        } else {
+            html += `<div data-wallet-cover data-wallet-card="${escapeHtml(searchText)}" class="wallet-cover ${toneClass} opacity-80">
+                <div class="wallet-cover-chip"></div>
+                <div class="wallet-cover-meta">${escapeHtml(bankTag)}</div>
+                <div class="wallet-cover-title">${escapeHtml(cardName)}</div>
+                <div class="wallet-cover-foot">暫無可設定項目</div>
+            </div>`;
         }
     });
+    html += `<div id="wallet-cover-empty" class="${ownedCards.length > 0 ? 'hidden' : ''} col-span-full text-xs text-gray-500 border border-dashed border-gray-300 rounded-xl p-4 bg-gray-50">
+            銀包未有卡。請按右上「＋加入新卡」。
+        </div>
+        </div>`;
+    if (addCardsOpen) {
+        html += `<div class="border border-gray-200 rounded-xl bg-white px-3 py-2">
+            <div class="text-[11px] text-gray-500 py-1">可連續加入多張卡，完成後再收起。</div>
+            <div class="space-y-3 mt-1">`;
+        bankGroups.forEach(group => {
+            const groupCards = DATA.cards.filter(c => group.filter(c.id) && !ownedSet.has(c.id));
+            if (groupCards.length > 0) {
+                const groupKey = String(group.key || "");
+                const groupKeyEsc = escapeJsSingleQuoted(groupKey);
+                html += `<details data-wallet-group data-wallet-total="${groupCards.length}" class="bg-gray-50 rounded-xl px-3 py-1 border border-gray-100" ${(addGroupOpenMap[groupKey]) ? "open" : ""} ontoggle="setWalletAddGroupOpen('${groupKeyEsc}', this.open)">
+                    <summary class="list-none cursor-pointer py-2 flex items-center justify-between">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">${group.name}</span>
+                        <span class="text-[10px] text-gray-400"><span data-wallet-match-count>${groupCards.length}</span> 張</span>
+                    </summary>`;
+                groupCards.forEach(c => {
+                    const searchableText = `${group.name} ${c.name}`.toLowerCase();
+                    html += `<div data-wallet-card="${escapeHtml(searchableText)}" class="flex justify-between items-center py-3 border-b border-gray-200 last:border-0 gap-3">
+                        <div class="min-w-0">
+                            <div class="text-sm text-gray-700 font-medium truncate">${escapeHtml(c.name)}</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="toggleCard('${escapeJsSingleQuoted(c.id)}', { fromAddList: true, groupKey: '${groupKeyEsc}' })" class="text-xs px-3 py-1.5 rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-100">加入</button>
+                        </div>
+                    </div>`;
+                });
+                html += `</details>`;
+            }
+        });
+        if ((DATA.cards || []).length === ownedCards.length) {
+            html += `<div class="text-xs text-gray-500 border border-dashed border-gray-300 rounded-xl p-3 bg-gray-50">已加入全部卡。</div>`;
+        }
+        html += `</div></div>`;
+    }
+    html += `</div>`;
+    list.innerHTML = html;
+    return;
+    }
 
-    html += `</div></div><div class="bg-white p-5 rounded-2xl shadow-sm mt-4"><h2 class="text-sm font-bold text-gray-800 uppercase mb-4 border-b pb-2">設定</h2><div class="space-y-4">`;
+    const cardReferenceMeta = focusedCardId ? getCardReferenceMeta(focusedCardId) : {};
+    const cardReferenceLinks = renderReferenceActions({
+        sourceUrl: cardReferenceMeta.sourceUrl || "",
+        sourceTitle: cardReferenceMeta.sourceTitle || ""
+    }, {
+        linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+        showRegistration: false,
+        showPromo: true,
+        showTnc: true,
+        showImplementation: false
+    });
+    const cardReferenceHtml = cardReferenceLinks
+        ? `<div class="mt-1">${cardReferenceLinks}</div>`
+        : `<div class="mt-1 text-[10px] text-stone-400">來源連結待補</div>`;
+
+    html += `<div class="bg-white rounded-2xl border border-gray-200 p-4 mb-4">
+        <div class="flex items-center justify-between gap-3">
+            <div class="min-w-0">
+                <div class="text-sm font-bold text-gray-800 truncate">${escapeHtml(focusedCardName || "卡片設定")}</div>
+                <div class="text-[10px] text-gray-500 mt-0.5">${escapeHtml(getCardBankTag(focusedCardId))}</div>
+                ${cardReferenceHtml}
+            </div>
+            <button type="button" onclick="closeWalletCardDetail()" class="text-xs px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                返回銀包
+            </button>
+        </div>
+    </div>`;
+
+    html += `<div id="card-detail-panel" class="bg-white p-5 rounded-2xl shadow-sm mt-4"><div class="space-y-4">`;
+
+    const preferenceBlocksByCard = {};
+    const sharedPreferenceBlocks = [];
+    const bankSharedPreferenceRows = [];
+    const getOwnedCardsForSetting = (settingKey) => {
+        if (!settingKey || typeof DATA === "undefined" || !Array.isArray(DATA.offers)) return [];
+        const hit = [];
+        DATA.offers.forEach((offer) => {
+            if (!offer || offer.settingKey !== settingKey || !Array.isArray(offer.cards)) return;
+            offer.cards.forEach((cardId) => {
+                if (ownedSet.has(cardId)) hit.push(cardId);
+            });
+        });
+        return Array.from(new Set(hit));
+    };
+    const pushScopedSettingRow = (settingKey, rowHtml, fallbackCardId) => {
+        const scopedCards = getOwnedCardsForSetting(settingKey);
+        const scoped = resolveOwnedOfferScope(scopedCards, ownedSet);
+        if (scoped.type === "card") {
+            ensureBucket(preferenceBlocksByCard, scoped.cardId).push(rowHtml);
+            return;
+        }
+        if (scoped.type === "bank_shared") {
+            if (!focusedCardId || scoped.bankKey === focusedBankKey) bankSharedPreferenceRows.push(rowHtml);
+            return;
+        }
+        if (scoped.type === "cross_bank_shared") {
+            sharedPreferenceBlocks.push(rowHtml);
+            return;
+        }
+        if (fallbackCardId && ownedSet.has(fallbackCardId)) {
+            ensureBucket(preferenceBlocksByCard, fallbackCardId).push(rowHtml);
+            return;
+        }
+    };
+
     const guruLevels = (typeof getTravelGuruLevelMap === "function")
         ? getTravelGuruLevelMap()
         : { 1: { name: "GO級" }, 2: { name: "GING級" }, 3: { name: "GURU級" } };
@@ -1369,19 +2663,41 @@ function renderSettings(userProfile) {
         .map((lv) => `<option value="${lv}">${escapeHtml((guruLevels[lv] && guruLevels[lv].name) || `${lv}級`)}</option>`)
         .join("");
     const guruRegistered = !!userProfile.settings.travel_guru_registered;
-    html += `<div class="mb-4 border p-3 rounded-xl bg-gray-50 border-gray-200">
+    const guruModel = (typeof getLevelLifecycleModel === "function") ? getLevelLifecycleModel("travel_guru") : null;
+    const guruCandidates = (guruModel && Array.isArray(guruModel.cards) && guruModel.cards.length > 0)
+        ? guruModel.cards
+        : ownedCardsByModule("travel_guru_v2");
+    const guruFallbackCardId = findFirstOwnedCard(guruCandidates);
+    const guruSourceMeta = guruFallbackCardId ? getCardReferenceMeta(guruFallbackCardId) : {};
+    const guruImplementationNote = (guruModel && guruModel.implementationNote)
+        ? guruModel.implementationNote
+        : "計算器做法：登記後可啟動 GO 級；其後海外合資格簽賬按等級計算（GO +3% 上限 500 RC、GING +4% 上限 1,200 RC、GURU +6% 上限 2,200 RC），每級達升級門檻後可升級並重置該級進度。";
+    const guruRefsHtml = renderReferenceActions({
+        sourceUrl: guruSourceMeta.sourceUrl || "",
+        sourceTitle: guruSourceMeta.sourceTitle || "",
+        implementationNote: guruImplementationNote
+    }, {
+        linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+        implClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+        showRegistration: true,
+        showPromo: true,
+        showTnc: true,
+        showImplementation: true
+    });
+    const guruRowHtml = `<div data-setting-key="travel_guru_registered" class="border p-3 rounded-xl bg-stone-50 border-stone-200">
         <div class="flex justify-between items-center mb-2">
-            <label class="text-xs font-bold text-gray-700">Travel Guru</label>
+            <label class="text-xs font-bold text-stone-800">Travel Guru</label>
             ${renderSettingsToggle({ id: "st-guru-enabled", checked: guruRegistered, onchange: "toggleSetting('travel_guru_registered')" })}
         </div>
-        <select id="st-guru" class="w-full p-2 bg-white rounded border border-gray-300 text-sm" onchange="saveDrop('guru_level',this.value)">
+        ${guruRefsHtml}
+        <select id="st-guru" class="w-full p-2 bg-white rounded border border-stone-200 text-sm" onchange="saveDrop('guru_level',this.value)">
             <option value="0">無</option>${guruOptions}
         </select>
-        <div class="mt-2 text-[11px] text-gray-600">登記後需先累積海外簽賬滿 $8,000，才開始計 GO 級回贈。</div>
     </div>`;
+    pushScopedSettingRow("travel_guru_registered", guruRowHtml, guruFallbackCardId);
 
-    // Live Fresh Preference
-    html += `<div class="mb-4 border p-3 rounded-xl bg-teal-50 border-teal-100">
+    const hasLiveFresh = ownedSet.has("dbs_live_fresh");
+    if (hasLiveFresh) ensureBucket(preferenceBlocksByCard, "dbs_live_fresh").push(`<div class="border p-3 rounded-xl bg-teal-50 border-teal-100">
         <label class="text-xs font-bold text-teal-700 block mb-2">DBS Live Fresh 自選類別 (4選1)</label>
         <select id="st-live-fresh" class="w-full p-2 bg-white rounded border border-teal-200 text-sm" onchange="saveDrop('live_fresh_pref',this.value)">
             <option value="none">未設定</option>
@@ -1390,9 +2706,10 @@ function renderSettings(userProfile) {
             <option value="fashion">網上美容、時尚服飾及指定網上商戶</option>
             <option value="charity">指定商戶及網上慈善捐款</option>
         </select>
-    </div>`;
+    </div>`);
+
     const wewaSelected = String(userProfile.settings.wewa_selected_category || "mobile_pay");
-    html += `<div class="mb-4 border p-3 rounded-xl bg-amber-50 border-amber-100">
+    if (ownedSet.has("wewa")) ensureBucket(preferenceBlocksByCard, "wewa").push(`<div class="border p-3 rounded-xl bg-amber-50 border-amber-100">
         <label class="text-xs font-bold text-amber-800 block mb-2">WeWa 自選回贈類別（4選1）</label>
         <select id="st-wewa-selected" class="w-full p-2 bg-white rounded border border-amber-200 text-sm" onchange="saveDrop('wewa_selected_category',this.value)">
             <option value="mobile_pay">📱 流動支付</option>
@@ -1400,10 +2717,10 @@ function renderSettings(userProfile) {
             <option value="overseas">🌍 海外簽賬</option>
             <option value="online_entertainment">🎬 網上娛樂簽賬</option>
         </select>
-        <div class="mt-2 text-[11px] text-amber-800">預設為流動支付；額外 +3.6% 需每月合資格簽賬滿 $1,500。</div>
-    </div>`;
+    </div>`);
+
     const moxMode = String(userProfile.settings.mox_reward_mode || "cashback");
-    html += `<div class="mb-4 border p-3 rounded-xl bg-gray-50 border-gray-200">
+    if (ownedSet.has("mox_credit")) pushScopedSettingRow("mox_deposit_task_enabled", `<div class="border p-3 rounded-xl bg-gray-50 border-gray-200">
         <label class="text-xs font-bold text-gray-700 block mb-2">Mox Credit 獎賞模式</label>
         <select id="st-mox-mode" class="w-full p-2 bg-white rounded border border-gray-300 text-sm" onchange="saveDrop('mox_reward_mode',this.value)">
             <option value="cashback">CashBack（回贈）</option>
@@ -1413,13 +2730,13 @@ function renderSettings(userProfile) {
             <span class="text-xs font-bold text-gray-700">已達解鎖條件（$250k結餘 或 合資格出糧$25k）</span>
             ${renderSettingsToggle({ id: "st-mox", checked: !!userProfile.settings.mox_deposit_task_enabled, onchange: "toggleSetting('mox_deposit_task_enabled')" })}
         </div>
-        <div class="mt-2 text-[11px] text-gray-600">Asia Miles 模式：已達條件 $4/里；未達條件 $8/里（至2026-03-31）其後 $10/里。</div>
-    </div>`;
+    </div>`, "mox_credit");
+
     const mmpowerSelected = Array.isArray(userProfile.settings.mmpower_selected_categories)
         ? userProfile.settings.mmpower_selected_categories
         : ["dining", "electronics"];
     const mmpowerSet = new Set(mmpowerSelected);
-    html += `<div class="mb-4 border p-3 rounded-xl bg-orange-50 border-orange-100">
+    if (ownedSet.has("hangseng_mmpower")) ensureBucket(preferenceBlocksByCard, "hangseng_mmpower").push(`<div class="border p-3 rounded-xl bg-orange-50 border-orange-100">
         <div class="text-xs font-bold text-orange-800 mb-2">MMPower 自選簽賬類別（3選2）</div>
         <div class="space-y-2 text-xs">
             <label class="flex justify-between items-center bg-white border border-orange-100 rounded p-2">
@@ -1436,15 +2753,14 @@ function renderSettings(userProfile) {
             </label>
         </div>
         <div class="mt-2 text-[11px] text-orange-800">現已選：${mmpowerSelected.length}/2（最多 2 項）</div>
-    </div>`;
+    </div>`);
 
-    html += `<div class="mb-4 border p-3 rounded-xl bg-yellow-50 border-yellow-100">
+    if (ownedSet.has("hangseng_enjoy")) pushScopedSettingRow("hangseng_enjoy_points4x_enabled", `<div class="border p-3 rounded-xl bg-amber-50 border-amber-100">
         <div class="flex justify-between items-center">
-            <label class="text-xs font-bold text-yellow-800">Hang Seng enJoy：已綁定 yuu（Points4X 生效）</label>
+            <label class="text-xs font-bold text-amber-800">Hang Seng enJoy：已綁定 yuu（Points4X 生效）</label>
             ${renderSettingsToggle({ id: "st-enjoy-points4x", checked: !!userProfile.settings.hangseng_enjoy_points4x_enabled, onchange: "toggleSetting('hangseng_enjoy_points4x_enabled')" })}
         </div>
-        <div class="mt-2 text-[11px] text-yellow-800">未綁定時建議關閉，上面 enJoy 4X/3X/2X 類別會回落基本 1X（0.5%）。</div>
-    </div>`;
+    </div>`, "hangseng_enjoy");
 
     const prestigeEnabled = !!userProfile.settings.citi_prestige_bonus_enabled;
     const prestigeYears = Math.max(1, parseInt(userProfile.settings.citi_prestige_tenure_years, 10) || 1);
@@ -1456,7 +2772,7 @@ function renderSettings(userProfile) {
             citi_prestige_wealth_client: prestigeWealth
         })
         : 0;
-    html += `<div class="mb-4 border p-3 rounded-xl bg-blue-50 border-blue-100">
+    if (ownedSet.has("citi_prestige")) ensureBucket(preferenceBlocksByCard, "citi_prestige").push(`<div class="border p-3 rounded-xl bg-blue-50 border-blue-100">
         <div class="flex justify-between items-center mb-2">
             <label class="text-xs font-bold text-blue-700">Citi Prestige 年資額外積分</label>
             ${renderSettingsToggle({ id: "st-prestige-bonus", checked: prestigeEnabled, onchange: "toggleSetting('citi_prestige_bonus_enabled')" })}
@@ -1474,14 +2790,32 @@ function renderSettings(userProfile) {
             </div>
         </div>
         <div class="mt-2 text-[11px] text-blue-700">現時對應年資獎賞：<span class="font-bold">${prestigePct}%</span>（以有效簽賬計）</div>
-    </div>`;
+    </div>`);
 
     const rhEnabled = userProfile.settings.red_hot_rewards_enabled !== false;
-    html += `<div class="mb-4 border p-3 rounded-xl bg-gray-50">
+    const redHotCandidates = ownedCardsByModule("red_hot_variable");
+    const redHotCardId = findFirstOwnedCard(redHotCandidates);
+    const redHotSource = (typeof DATA !== "undefined" && DATA.modules && DATA.modules.red_hot_variable)
+        ? DATA.modules.red_hot_variable
+        : null;
+    const redHotRefsHtml = renderReferenceActions({
+        sourceUrl: redHotSource ? (redHotSource.source_url || "") : "",
+        sourceTitle: redHotSource ? (redHotSource.source_title || "") : "",
+        implementationNote: "計算器做法：先把 5X 權重分配到 5 個最紅類別（總和必須為 5）；每 1X = +0.4%，所以該類別總回贈 = 基本 0.4% + (X × 0.4%)。例如 5X 類別合共 2.4%。Visa Signature 會再有額外 +1.2%，並按各卡進度卡顯示的上限計算。"
+    }, {
+        linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+        implClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+        showRegistration: true,
+        showPromo: true,
+        showTnc: true,
+        showImplementation: true
+    });
+    if (redHotCardId) pushScopedSettingRow("red_hot_rewards_enabled", `<div class="border p-3 rounded-xl bg-gray-50">
         <div class="flex justify-between items-center mb-2">
-            <label class="text-xs font-bold text-red-600">已登記「最紅自主獎賞」</label>
+            <label class="text-xs font-bold text-amber-700">已登記「最紅自主獎賞」</label>
             ${renderSettingsToggle({ id: "st-rh-enabled", checked: rhEnabled, onchange: "toggleSetting('red_hot_rewards_enabled')" })}
         </div>
+        ${redHotRefsHtml}
         <div id="rh-allocator-container" class="${rhEnabled ? '' : 'hidden'} space-y-2 transition-all">
             <div class="text-[10px] text-gray-400 mb-2">分配 5X 獎賞錢 (總和: <span id="rh-total" class="text-blue-600">5</span>/5)</div>
             ${renderAllocatorRow("dining", "賞滋味 (Dining)", userProfile.settings.red_hot_allocation.dining)}
@@ -1490,33 +2824,133 @@ function renderSettings(userProfile) {
             ${renderAllocatorRow("home", "賞家居 (Home)", userProfile.settings.red_hot_allocation.home)}
             ${renderAllocatorRow("style", "賞購物 (Style)", userProfile.settings.red_hot_allocation.style)}
         </div>
-    </div>`;
+    </div>`, redHotCardId);
 
-    html += `<div class="mb-4 border p-3 rounded-xl bg-red-50 border-red-100">
+    const allCampaignDefs = getCampaignToggleDefinitions();
+    const winterDef = allCampaignDefs.find((def) => def.settingKey === "winter_promo_enabled") || null;
+    const winterScope = winterDef ? resolveOwnedOfferScope(winterDef.cards, ownedSet) : { type: "none" };
+    const winterCardId = winterDef ? findFirstOwnedCard(winterDef.cards) : null;
+    const ownedCampaignDefs = allCampaignDefs.filter((def) => {
+        if (!def || def.settingKey === "winter_promo_enabled") return false;
+        return Array.isArray(def.cards) && def.cards.some((cardId) => ownedSet.has(cardId));
+    });
+    const defsWithScope = ownedCampaignDefs.map((def) => ({
+        ...def,
+        _scope: resolveOwnedOfferScope(def.cards, ownedSet)
+    }));
+    const visibleCardScopedDefs = defsWithScope.filter((def) => {
+        if (!def._scope || def._scope.type !== "card") return false;
+        if (!focusedCardId) return true;
+        return def._scope.cardId === focusedCardId;
+    });
+    const visibleBankSharedDefs = defsWithScope.filter((def) => {
+        if (!def._scope || def._scope.type !== "bank_shared") return false;
+        if (!focusedCardId) return true;
+        return def._scope.bankKey === focusedBankKey;
+    });
+    const visibleCrossBankDefs = defsWithScope.filter((def) => def._scope && def._scope.type === "cross_bank_shared");
+    const registrationRowsByCard = {};
+    const sharedRegistrationRows = [];
+    const bankSharedRows = [...bankSharedPreferenceRows];
+
+    visibleCardScopedDefs.forEach((def) => {
+        const targetCardId = (def._scope && def._scope.cardId) ? def._scope.cardId : findFirstOwnedCard(def.cards);
+        const rowHtml = renderRegistrationRow(def);
+        if (targetCardId) ensureBucket(registrationRowsByCard, targetCardId).push(rowHtml);
+        else sharedRegistrationRows.push(rowHtml);
+    });
+    visibleCrossBankDefs.forEach((def) => {
+        sharedRegistrationRows.push(renderRegistrationRow(def));
+    });
+    visibleBankSharedDefs.forEach((def) => {
+        bankSharedRows.push(renderRegistrationRow(def));
+    });
+    const includeWinterForFocus = !!(winterDef && (
+        winterScope.type === "bank_shared"
+            ? winterScope.bankKey === focusedBankKey
+            : (winterCardId && (!focusedCardId || winterCardId === focusedCardId))
+    ));
+
+    if (includeWinterForFocus) {
+        const winterInfoText = normalizeInfoText((winterDef && winterDef.description) ? winterDef.description : "", 90);
+        const winterRefLinks = winterDef
+            ? renderReferenceActions({
+                sourceUrl: winterDef.sourceUrl,
+                sourceTitle: winterDef.sourceTitle,
+                tncUrl: winterDef.tncUrl,
+                promoUrl: winterDef.promoUrl,
+                registrationUrl: winterDef.registrationUrl,
+                implementationNote: winterDef.implementationNote
+            }, {
+                linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+                implClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+                showRegistration: true,
+                showPromo: true,
+                showTnc: true,
+                showImplementation: true
+            })
+            : "";
+        const winterMetaHtml = (winterInfoText || winterRefLinks)
+            ? `<div class="mt-1 mb-2 flex flex-wrap items-center gap-2">
+                ${winterInfoText ? `<span class="text-[10px] text-stone-600">${escapeHtml(winterInfoText)}</span>` : ""}
+                ${winterRefLinks}
+            </div>`
+            : "";
+        const winterHtml = `<div data-setting-key="winter_promo_enabled" class="border p-3 rounded-xl bg-stone-50 border-stone-200">
         <div class="flex justify-between items-center mb-2">
-            <label class="text-xs font-bold text-red-700">HSBC 最紅冬日賞</label>
+            <label class="text-xs font-bold text-stone-800">HSBC 最紅冬日賞</label>
             ${renderSettingsToggle({ id: "st-winter", checked: !!userProfile.settings.winter_promo_enabled, onchange: "toggleSetting('winter_promo_enabled')" })}
         </div>
+        ${winterMetaHtml}
         <div class="grid grid-cols-2 gap-2 text-xs">
             <div>
-                <label class="block text-red-700 font-bold mb-1">Tier 1 門檻</label>
-                <input id="st-winter-tier1" type="number" min="0" class="w-full p-2 rounded bg-white border border-red-100" value="${Number(userProfile.settings.winter_tier1_threshold) || 0}" onchange="saveWinterThresholds()">
+                <label class="block text-stone-700 font-bold mb-1">Tier 1 門檻</label>
+                <input id="st-winter-tier1" type="number" min="0" class="w-full p-2 rounded bg-white border border-stone-200" value="${Number(userProfile.settings.winter_tier1_threshold) || 0}" onchange="saveWinterThresholds()">
             </div>
             <div>
-                <label class="block text-red-700 font-bold mb-1">Tier 2 門檻</label>
-                <input id="st-winter-tier2" type="number" min="0" class="w-full p-2 rounded bg-white border border-red-100" value="${Number(userProfile.settings.winter_tier2_threshold) || 0}" onchange="saveWinterThresholds()">
+                <label class="block text-stone-700 font-bold mb-1">Tier 2 門檻</label>
+                <input id="st-winter-tier2" type="number" min="0" class="w-full p-2 rounded bg-white border border-stone-200" value="${Number(userProfile.settings.winter_tier2_threshold) || 0}" onchange="saveWinterThresholds()">
             </div>
         </div>
     </div>`;
-    html += renderCampaignToggleRows(userProfile, { excludeSettingKeys: ["winter_promo_enabled"] });
-    html += `</div><div class="text-center mt-4"><button onclick="if(confirm('清除資料?')){localStorage.clear();location.reload();}" class="text-red-400 text-xs">Reset All</button></div></div>`;
+        if (winterScope.type === "bank_shared") {
+            bankSharedRows.unshift(winterHtml);
+        } else if (winterCardId) {
+            ensureBucket(registrationRowsByCard, winterCardId).unshift(winterHtml);
+        } else {
+            sharedRegistrationRows.unshift(winterHtml);
+        }
+    }
+
+    const focusedCardRows = focusedCardId ? (registrationRowsByCard[focusedCardId] || []) : [];
+    const directRegistrationRows = [...focusedCardRows, ...sharedRegistrationRows];
+    const focusedPreferenceRows = focusedCardId ? (preferenceBlocksByCard[focusedCardId] || []) : [];
+    const directRows = [...focusedPreferenceRows, ...sharedPreferenceBlocks, ...directRegistrationRows];
+
+    if (directRows.length > 0) {
+        html += `<div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
+            <div class="space-y-2">${directRows.join("")}</div>
+        </div>`;
+    }
+    if (bankSharedRows.length > 0) {
+        html += `<div class="rounded-xl border border-stone-200 bg-stone-50 p-3 mt-3">
+            <div class="text-xs font-bold text-stone-700 mb-2">同銀行共用設定</div>
+            <div class="space-y-2">${bankSharedRows.join("")}</div>
+        </div>`;
+    }
+
+    html += `</div></div>`;
 
     list.innerHTML = html;
-    document.getElementById('st-guru').value = userProfile.settings.guru_level;
-    document.getElementById('st-live-fresh').value = userProfile.settings.live_fresh_pref || "none";
-    document.getElementById('st-wewa-selected').value = wewaSelected;
-    document.getElementById('st-mox-mode').value = moxMode;
-    if (rhEnabled) updateAllocationTotal();
+    const guruSelect = document.getElementById('st-guru');
+    if (guruSelect) guruSelect.value = userProfile.settings.guru_level;
+    const liveFreshSelect = document.getElementById('st-live-fresh');
+    if (liveFreshSelect) liveFreshSelect.value = userProfile.settings.live_fresh_pref || "none";
+    const wewaSelect = document.getElementById('st-wewa-selected');
+    if (wewaSelect) wewaSelect.value = wewaSelected;
+    const moxModeSelect = document.getElementById('st-mox-mode');
+    if (moxModeSelect) moxModeSelect.value = moxMode;
+    if (rhEnabled && document.getElementById('rh-total')) updateAllocationTotal();
 }
 
 function renderAllocatorRow(key, label, value) {
@@ -1613,5 +3047,6 @@ window.handleClearHistory = function () {
         saveUserData();
         refreshUI();
         renderLedger([]);
+        if (typeof showToast === "function") showToast("已清除所有記帳記錄。", "info");
     }
 }

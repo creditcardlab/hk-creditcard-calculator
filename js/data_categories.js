@@ -85,7 +85,8 @@ const categoriesDB = {
     enjoy_4x: { label: "🟡 enJoy 指定商戶 4X（2%）", order: 118, req: "hangseng_enjoy" },
     enjoy_3x: { label: "🟠 enJoy 指定商戶 3X（1.5%）", order: 119, req: "hangseng_enjoy" },
     enjoy_2x: { label: "🔵 enJoy 指定商戶 2X（1%）", order: 120, req: "hangseng_enjoy" },
-    fubon_upgrade_online: { label: "🛒 Fubon 指定本地網購（升級10X，需登記）", order: 121, req: (cards) => cards.includes("fubon_travel") || cards.includes("fubon_infinite"), parent: "online" },
+    // Legacy compatibility bucket. New transactions should use isOnline + non-overseas instead.
+    fubon_upgrade_online: { label: "🛒 Fubon 指定本地網購（舊）", order: 121, req: (cards) => cards.includes("fubon_travel") || cards.includes("fubon_infinite"), parent: "online", hidden: true },
     sim_designated_merchant: {
         label: "🛍️ sim 指定商戶（3%）",
         order: 122,

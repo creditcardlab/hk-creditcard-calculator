@@ -142,6 +142,40 @@
       }
     },
     {
+      "id": "case_005b_fastfood_aliases_to_dining_for_hsbc_red_hot",
+      "input": {
+        "amount": 1000,
+        "category": "fastfood",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_vs"
+        ],
+        "settings": {
+          "red_hot_rewards_enabled": true,
+          "red_hot_allocation": {
+            "dining": 5,
+            "world": 0,
+            "home": 0,
+            "enjoyment": 0,
+            "style": 0
+          }
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_vs",
+        "topValue": 36,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
       "id": "case_006_em_promo_locked",
       "input": {
         "amount": 3000,
@@ -4639,6 +4673,33 @@
       }
     },
     {
+      "id": "case_171b_fubon_upgrade_online_by_flag_general_online",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "fubon_travel"
+        ],
+        "settings": {
+          "fubon_travel_upgrade_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "fubon_travel",
+        "topValue": 50,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
       "id": "case_172_fubon_infinite_overseas_partial_monthly_cap",
       "input": {
         "amount": 1000,
@@ -6665,6 +6726,38 @@
           "hasPartial": false
         }
       }
+    },
+    {
+      "id": "case_245_travel_guru_go_level_not_locked_by_unlock_spend",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_everymile"
+        ],
+        "settings": {
+          "travel_guru_registered": true,
+          "guru_level": 1,
+          "em_promo_enabled": false
+        },
+        "usage": {
+          "spend_guru_unlock": 0,
+          "guru_rc_used": 0
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_everymile",
+        "topValue": 40,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
     }
   ],
   "period_cases": [
@@ -6775,6 +6868,25 @@
       "expectedUsageKey": "dbs_compass_superwed_cap",
       "unexpectedUsageKey": "dbs_compass_com_bonus_cap",
       "expectedUsageValue": 500
+    },
+    {
+      "id": "tx_002_em_threshold_only_tracks_overseas",
+      "ownedCards": [
+        "hsbc_everymile"
+      ],
+      "settings": {
+        "em_promo_enabled": true
+      },
+      "cardId": "hsbc_everymile",
+      "category": "general",
+      "amount": 1000,
+      "isOnline": false,
+      "paymentMethod": "physical",
+      "txDate": "2026-02-12",
+      "date": "2026-02-12T10:00:00.000Z",
+      "expectedUsageKey": "spend_hsbc_everymile",
+      "unexpectedUsageKey": "em_q1_total",
+      "expectedUsageValue": 1000
     }
   ]
 }

@@ -67,6 +67,7 @@ function evaluateTrackers(cardId, ctx, userProfile, data) {
         missionTags.push({
             id: tracker.mission_id,
             eligible,
+            matched: match,
             desc: tracker.desc,
             hideInEquation: tracker.hide_in_equation === true
         });

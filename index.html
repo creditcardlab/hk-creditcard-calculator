@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>信用卡管家 V1.1 Ledger</title>
+    <title>信用卡管家 v1.2 UI upgrade</title>
+    <link rel="icon" href="data:,">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
@@ -12,9 +13,9 @@
 
 <body class="max-w-md mx-auto min-h-screen relative">
 
-    <div class="bg-white p-4 shadow-sm sticky top-0 z-20 flex justify-between items-center">
-        <h1 class="text-xl font-bold text-gray-800"><i class="fas fa-wallet text-blue-600 mr-2"></i>信用卡管家</h1>
-        <span class="text-xs text-white bg-indigo-600 px-2 py-1 rounded-full">V1.1 Ledger</span>
+    <div class="bg-[#fffdf9] border-b border-stone-200 p-4 shadow-sm sticky top-0 z-20 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-gray-800"><i class="fas fa-wallet text-stone-700 mr-2"></i>信用卡管家</h1>
+        <span class="text-xs text-white bg-stone-700 px-2 py-1 rounded-full">v1.2 UI upgrade</span>
     </div>
 
     <div id="view-dashboard" class="p-4 space-y-4 tab-content">
@@ -82,7 +83,7 @@
                     <div class="w-2/3">
                         <label class="block text-gray-700 font-bold mb-2 text-xs">📅 簽賬日期</label>
                         <input type="date" id="tx-date" class="w-full p-2 border border-gray-300 rounded-lg text-sm"
-                            onchange="runCalc()">
+                            onchange="runCalc()" required>
                     </div>
                     <div class="w-1/3 flex items-center justify-center pt-6">
                         <span id="holiday-badge"
@@ -105,7 +106,7 @@
     </div>
 
     <!-- Disclaimer Footer -->
-    <div class="p-4 pb-20 bg-gray-50 border-t border-gray-200">
+    <div class="app-disclaimer p-4 bg-gray-50 border-t border-gray-200">
         <div class="max-w-md mx-auto space-y-3">
             <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-[10px] text-gray-600 leading-relaxed">
                 <p class="font-bold text-yellow-700 mb-2">⚠️ 免責聲明 Disclaimer</p>
@@ -127,16 +128,19 @@
     </div>
 
     <div
-        class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around p-3 pb-5 z-20 max-w-md mx-auto">
-        <button onclick="switchTab('dashboard')" class="flex flex-col items-center text-blue-600 tab-btn w-1/4"
+        class="bottom-tabbar fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around p-3 z-20 max-w-md mx-auto">
+        <button onclick="switchTab('dashboard')" class="flex flex-col items-center text-stone-700 tab-btn w-1/4"
             id="btn-dashboard"><i class="fas fa-chart-pie text-xl mb-1"></i><span class="text-[10px]">進度</span></button>
         <button onclick="switchTab('calculator')" class="flex flex-col items-center text-gray-400 tab-btn w-1/4"
             id="btn-calculator"><i class="fas fa-calculator text-xl mb-1"></i><span
                 class="text-[10px]">計算</span></button>
         <button onclick="switchTab('ledger')" class="flex flex-col items-center text-gray-400 tab-btn w-1/4"
-            id="btn-ledger"><i class="fas fa-book text-xl mb-1"></i><span class="text-[10px]">記帳</span></button>
+            id="btn-ledger"><i class="fas fa-book text-xl mb-1"></i><span class="text-[10px]">交易紀錄</span></button>
         <button onclick="switchTab('settings')" class="flex flex-col items-center text-gray-400 tab-btn w-1/4"
             id="btn-settings"><i class="fas fa-cog text-xl mb-1"></i><span class="text-[10px]">設定</span></button>
+    </div>
+    <div id="toast-root"
+        class="fixed left-1/2 -translate-x-1/2 bottom-24 z-30 w-[calc(100%-2rem)] max-w-md pointer-events-none space-y-2">
     </div>
 
     <!-- Scripts: Loaded in dependency order -->

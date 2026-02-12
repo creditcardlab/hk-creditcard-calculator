@@ -4,6 +4,48 @@
 let currentMode = 'miles';
 // userProfile is defined in core.js (V9.2)
 
+function getTodayIsoDate() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+function ensureTxDateInputDefault() {
+    const txDateInput = document.getElementById('tx-date');
+    if (txDateInput && !txDateInput.value) txDateInput.value = getTodayIsoDate();
+    return txDateInput;
+}
+
+window.showToast = function (message, type = 'info', duration = 2200) {
+    const root = document.getElementById('toast-root');
+    if (!root) {
+        if (type === 'error') console.error(message);
+        else console.log(message);
+        return;
+    }
+    const toast = document.createElement('div');
+    const safeType = ['info', 'success', 'warning', 'error'].includes(type) ? type : 'info';
+    toast.className = `toast toast-${safeType}`;
+    toast.textContent = String(message || '');
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(6px)';
+    root.appendChild(toast);
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    });
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(6px)';
+        setTimeout(() => {
+            if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 220);
+    }, Math.max(1200, Number(duration) || 2200));
+}
+
 // --- INIT ---
 function init() {
     if (typeof validateData === "function") {
@@ -17,6 +59,20 @@ function init() {
     if (!userProfile.usage.spend_guru_unlock) userProfile.usage.spend_guru_unlock = 0;
     if (typeof ensureBooleanSettingDefaults === "function") ensureBooleanSettingDefaults(userProfile.settings);
     if (userProfile.settings.deduct_fcf_ranking === undefined) userProfile.settings.deduct_fcf_ranking = false;
+    if (userProfile.settings.settings_focus_card === undefined) userProfile.settings.settings_focus_card = "";
+    if (userProfile.settings.settings_detail_mode === undefined) userProfile.settings.settings_detail_mode = false;
+    if (userProfile.settings.settings_wallet_edit_mode === undefined) userProfile.settings.settings_wallet_edit_mode = false;
+    if (userProfile.settings.settings_wallet_add_open === undefined) userProfile.settings.settings_wallet_add_open = false;
+    if (!userProfile.settings.settings_wallet_add_groups || typeof userProfile.settings.settings_wallet_add_groups !== "object") {
+        userProfile.settings.settings_wallet_add_groups = {};
+    }
+    if (userProfile.settings.dashboard_focus_card === undefined) userProfile.settings.dashboard_focus_card = "";
+    if (userProfile.settings.dashboard_detail_mode === undefined) userProfile.settings.dashboard_detail_mode = false;
+    {
+        const allowed = ["month", "quarter", "year", "all"];
+        const period = String(userProfile.settings.dashboard_period || "month");
+        userProfile.settings.dashboard_period = allowed.includes(period) ? period : "month";
+    }
     {
         const allowed = ["dining", "electronics", "entertainment"];
         const raw = Array.isArray(userProfile.settings.mmpower_selected_categories)
@@ -49,6 +105,7 @@ function init() {
 
     // Initial Render
     refreshUI();
+    ensureTxDateInputDefault();
     if (userProfile.ownedCards.length === 0) switchTab('settings');
 
     // Initialize holidays in background; rerun calc when ready
@@ -298,11 +355,12 @@ window.switchTab = function (t) {
     document.getElementById(`view-${t}`).classList.remove('hidden');
 
     // Update Buttons
-    document.querySelectorAll('.tab-btn').forEach(e => e.classList.replace('text-blue-600', 'text-gray-400'));
-    document.getElementById(`btn-${t}`).classList.replace('text-gray-400', 'text-blue-600');
+    document.querySelectorAll('.tab-btn').forEach(e => e.classList.replace('text-stone-700', 'text-gray-400'));
+    document.getElementById(`btn-${t}`).classList.replace('text-gray-400', 'text-stone-700');
 
     if (t === 'dashboard') renderDashboard(userProfile);
     if (t === 'ledger') renderLedger(userProfile.transactions);
+    if (t === 'calculator') ensureTxDateInputDefault();
 }
 
 window.toggleMode = function (m) {
@@ -325,16 +383,9 @@ window.runCalc = function () {
     const paymentSelect = document.getElementById('tx-payment');
     const paymentMethod = paymentSelect ? paymentSelect.value : "physical";
     const isMobilePay = paymentMethod !== "physical";
-    let txDate = document.getElementById('tx-date').value;
-
-    // Fallback: If date is empty, use Today
-    if (!txDate) {
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = String(now.getMonth() + 1).padStart(2, '0');
-        const d = String(now.getDate()).padStart(2, '0');
-        txDate = `${y}-${m}-${d}`;
-    }
+    const txDateInput = document.getElementById('tx-date');
+    const txDateRaw = txDateInput ? txDateInput.value : "";
+    const txDate = txDateRaw || getTodayIsoDate();
 
     // Auto-detect Holiday
     const isHoliday = HolidayManager.isHoliday(txDate);
@@ -342,7 +393,7 @@ window.runCalc = function () {
     // Update Badge UI
     const badge = document.getElementById('holiday-badge');
     if (badge) {
-        if (isHoliday) badge.classList.remove('hidden');
+        if (txDateRaw && isHoliday) badge.classList.remove('hidden');
         else badge.classList.add('hidden');
     }
 
@@ -359,12 +410,20 @@ window.runCalc = function () {
 }
 
 window.handleRecord = function (n, d) {
-    if (!confirm(`確認以 [${n}] 簽賬?`)) return;
     const payload = JSON.parse(decodeURIComponent(d));
+    const txDateInput = document.getElementById('tx-date');
+    const txDate = txDateInput ? txDateInput.value : "";
+    if (!txDate) {
+        showToast("請先選擇簽賬日期，再記帳。", "warning");
+        return;
+    }
+    payload.txDate = txDate;
     const msg = commitTransaction(payload);
-    alert("已記錄！" + (payload.guruRC > 0 ? `\n🏆 Guru額度 -$${payload.guruRC.toFixed(1)} RC` : "") + msg);
+    const extras = [];
+    if (payload.guruRC > 0) extras.push(`🏆 Guru額度 -$${payload.guruRC.toFixed(1)} RC`);
+    if (msg) extras.push(msg.trim());
+    showToast(`已記錄：${n}${extras.length ? `\n${extras.join('\n')}` : ''}`, "success", 3200);
     refreshUI();
-    window.switchTab('dashboard');
 }
 
 window.handleGuruUpgrade = function () {
@@ -472,6 +531,7 @@ window.handleDeleteTx = function (id) {
     saveUserData();
     refreshUI();
     renderLedger(userProfile.transactions);
+    showToast("已刪除記帳。", "info");
 }
 
 // --- DATA MODIFIERS ---
@@ -492,7 +552,8 @@ function commitTransaction(data) {
     const paymentMethod = data.paymentMethod || (data.isMobilePay ? "mobile" : "physical");
     const isMobilePay = paymentMethod !== "physical";
     const txDate = data.txDate || "";
-    const txDateSafe = txDate || new Date().toISOString().slice(0, 10);
+    if (!txDate) return "\n⚠️ 未記錄：請先選擇簽賬日期。";
+    const txDateSafe = txDate;
     const isHoliday = (typeof HolidayManager !== 'undefined' && HolidayManager.isHoliday) ? HolidayManager.isHoliday(txDateSafe) : false;
 
     userProfile.stats.totalSpend += amount;
@@ -648,10 +709,197 @@ function upgradeGuruLevel() {
 }
 
 // Settings Handlers
-window.toggleCard = function (id) {
+function removeOwnedCardById(id) {
     const i = userProfile.ownedCards.indexOf(id);
-    if (i > -1) userProfile.ownedCards.splice(i, 1);
-    else userProfile.ownedCards.push(id);
+    if (i === -1) return false;
+    userProfile.ownedCards.splice(i, 1);
+    if (userProfile.settings.settings_focus_card === id) {
+        userProfile.settings.settings_focus_card = userProfile.ownedCards[0] || "";
+    }
+    if (userProfile.settings.dashboard_focus_card === id) {
+        userProfile.settings.dashboard_focus_card = userProfile.ownedCards[0] || "";
+    }
+    if (userProfile.ownedCards.length === 0) {
+        userProfile.settings.settings_detail_mode = false;
+        userProfile.settings.dashboard_detail_mode = false;
+        userProfile.settings.settings_wallet_edit_mode = false;
+    }
+    return true;
+}
+
+window.toggleCard = function (id, options) {
+    const opts = (options && typeof options === "object") ? options : {};
+    const i = userProfile.ownedCards.indexOf(id);
+    if (i > -1) {
+        removeOwnedCardById(id);
+    } else {
+        userProfile.ownedCards.push(id);
+        if (opts.fromAddList) {
+            userProfile.settings.settings_wallet_add_open = true;
+            const groupKey = String(opts.groupKey || "");
+            if (groupKey) {
+                const groupState = (userProfile.settings.settings_wallet_add_groups && typeof userProfile.settings.settings_wallet_add_groups === "object")
+                    ? userProfile.settings.settings_wallet_add_groups
+                    : {};
+                groupState[groupKey] = true;
+                userProfile.settings.settings_wallet_add_groups = groupState;
+            }
+        }
+        if (!userProfile.settings.settings_focus_card) userProfile.settings.settings_focus_card = id;
+        if (!userProfile.settings.dashboard_focus_card) userProfile.settings.dashboard_focus_card = id;
+    }
+    saveUserData();
+    refreshUI();
+}
+
+window.setWalletAddCardsOpen = function (isOpen) {
+    const open = !!isOpen;
+    userProfile.settings.settings_wallet_add_open = open;
+    saveUserData();
+}
+
+window.toggleWalletAddCardsPanel = function (forceState) {
+    const next = (typeof forceState === "boolean")
+        ? forceState
+        : !Boolean(userProfile.settings.settings_wallet_add_open);
+    userProfile.settings.settings_wallet_add_open = next;
+    saveUserData();
+    refreshUI();
+}
+
+window.setWalletAddGroupOpen = function (groupKey, isOpen) {
+    const key = String(groupKey || "");
+    if (!key) return;
+    const groupState = (userProfile.settings.settings_wallet_add_groups && typeof userProfile.settings.settings_wallet_add_groups === "object")
+        ? userProfile.settings.settings_wallet_add_groups
+        : {};
+    if (isOpen) groupState[key] = true;
+    else delete groupState[key];
+    userProfile.settings.settings_wallet_add_groups = groupState;
+    saveUserData();
+}
+
+window.openWalletCardDetail = function (cardId) {
+    if (!cardId) return;
+    if (userProfile.settings && userProfile.settings.settings_wallet_edit_mode) return;
+    if (!Array.isArray(userProfile.ownedCards) || !userProfile.ownedCards.includes(cardId)) {
+        showToast("請先把呢張卡加入銀包。", "info");
+        return;
+    }
+    userProfile.settings.settings_focus_card = cardId;
+    userProfile.settings.settings_detail_mode = true;
+    saveUserData();
+    refreshUI();
+}
+
+window.toggleWalletEditMode = function (forceState) {
+    const next = (typeof forceState === "boolean")
+        ? forceState
+        : !Boolean(userProfile.settings.settings_wallet_edit_mode);
+    userProfile.settings.settings_wallet_edit_mode = next;
+    if (next) {
+        userProfile.settings.settings_detail_mode = false;
+    } else {
+        window.__walletDragCardId = "";
+        window.__walletDropTargetEl = null;
+    }
+    saveUserData();
+    refreshUI();
+}
+
+window.removeWalletCard = function (cardId) {
+    if (!cardId) return;
+    if (!Array.isArray(userProfile.ownedCards) || !userProfile.ownedCards.includes(cardId)) return;
+    if (!confirm("從銀包移除呢張卡？")) return;
+    if (!removeOwnedCardById(cardId)) return;
+    saveUserData();
+    refreshUI();
+}
+
+window.walletDragStart = function (event, cardId) {
+    if (!userProfile.settings || !userProfile.settings.settings_wallet_edit_mode) return;
+    if (!cardId) return;
+    window.__walletDragCardId = cardId;
+    const dragEl = event && event.currentTarget ? event.currentTarget : null;
+    if (dragEl && dragEl.classList) dragEl.classList.add("wallet-dragging");
+    if (event && event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", cardId);
+    }
+}
+
+window.walletDragEnd = function () {
+    window.__walletDragCardId = "";
+    const draggingEl = document.querySelector(".wallet-dragging");
+    if (draggingEl && draggingEl.classList) draggingEl.classList.remove("wallet-dragging");
+    if (window.__walletDropTargetEl && window.__walletDropTargetEl.classList) {
+        window.__walletDropTargetEl.classList.remove("wallet-drop-target");
+    }
+    window.__walletDropTargetEl = null;
+}
+
+window.walletDragOver = function (event) {
+    if (!userProfile.settings || !userProfile.settings.settings_wallet_edit_mode) return;
+    if (!event) return;
+    event.preventDefault();
+    const targetEl = event.currentTarget || null;
+    if (window.__walletDropTargetEl && window.__walletDropTargetEl !== targetEl && window.__walletDropTargetEl.classList) {
+        window.__walletDropTargetEl.classList.remove("wallet-drop-target");
+    }
+    if (targetEl && targetEl.classList) {
+        targetEl.classList.add("wallet-drop-target");
+        window.__walletDropTargetEl = targetEl;
+    }
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+}
+
+window.walletDrop = function (event, targetCardId) {
+    if (!userProfile.settings || !userProfile.settings.settings_wallet_edit_mode) return;
+    if (!targetCardId) return;
+    if (event) event.preventDefault();
+
+    let sourceCardId = window.__walletDragCardId || "";
+    if (!sourceCardId && event && event.dataTransfer) {
+        sourceCardId = String(event.dataTransfer.getData("text/plain") || "");
+    }
+    if (!sourceCardId || sourceCardId === targetCardId) return;
+
+    const list = Array.isArray(userProfile.ownedCards) ? userProfile.ownedCards : [];
+    const from = list.indexOf(sourceCardId);
+    const to = list.indexOf(targetCardId);
+    if (from < 0 || to < 0) return;
+
+    list.splice(from, 1);
+    list.splice(to, 0, sourceCardId);
+    userProfile.ownedCards = list;
+    window.__walletDragCardId = "";
+    if (window.__walletDropTargetEl && window.__walletDropTargetEl.classList) {
+        window.__walletDropTargetEl.classList.remove("wallet-drop-target");
+    }
+    window.__walletDropTargetEl = null;
+    saveUserData();
+    refreshUI();
+}
+
+window.closeWalletCardDetail = function () {
+    userProfile.settings.settings_detail_mode = false;
+    saveUserData();
+    refreshUI();
+}
+
+window.openDashboardCardDetail = function (cardId) {
+    const focus = String(cardId || "");
+    if (!focus) return;
+    if (focus !== "__shared__" && (!Array.isArray(userProfile.ownedCards) || !userProfile.ownedCards.includes(focus))) return;
+    userProfile.settings.dashboard_focus_card = focus;
+    userProfile.settings.dashboard_detail_mode = true;
+    saveUserData();
+    switchTab('dashboard');
+    refreshUI();
+}
+
+window.closeDashboardCardDetail = function () {
+    userProfile.settings.dashboard_detail_mode = false;
     saveUserData();
     refreshUI();
 }
@@ -679,7 +927,7 @@ window.toggleMmpowerSelected = function (key, checked) {
     if (checked) {
         if (idx === -1) {
             if (cur.length >= 2) {
-                alert("MMPower 自選類別最多只可選 2 項。");
+                showToast("MMPower 自選類別最多只可選 2 項。", "warning");
                 refreshUI();
                 return;
             }
@@ -744,7 +992,7 @@ window.exportData = function () {
             btn.disabled = false;
         }, 2000);
     } catch (error) {
-        alert('❌ 匯出失敗：' + error.message);
+        showToast('匯出失敗：' + error.message, 'error', 3000);
     }
 }
 
@@ -791,14 +1039,71 @@ window.importData = function (event) {
             saveUserData();
             refreshUI();
 
-            alert('✅ 數據匯入成功！');
+            showToast('數據匯入成功。', 'success');
             event.target.value = ''; // Reset file input
         } catch (error) {
-            alert('❌ 匯入失敗：' + error.message);
+            showToast('匯入失敗：' + error.message, 'error', 3000);
             event.target.value = '';
         }
     };
     reader.readAsText(file);
+}
+
+window.openSettingsForRegistration = function (settingKey, cardId) {
+    switchTab('settings');
+    if (cardId && Array.isArray(userProfile.ownedCards) && userProfile.ownedCards.includes(cardId)) {
+        userProfile.settings.settings_focus_card = cardId;
+        userProfile.settings.settings_detail_mode = true;
+        saveUserData();
+        refreshUI();
+    } else {
+        userProfile.settings.settings_detail_mode = false;
+        saveUserData();
+        refreshUI();
+    }
+    setTimeout(() => {
+        const row = document.querySelector(`[data-setting-key="${settingKey}"]`);
+        if (!row) return;
+        let parent = row.parentElement;
+        while (parent) {
+            if (parent.tagName && parent.tagName.toLowerCase() === 'details') parent.setAttribute('open', '');
+            parent = parent.parentElement;
+        }
+        row.classList.add('ring-2', 'ring-yellow-300');
+        setTimeout(() => row.classList.remove('ring-2', 'ring-yellow-300'), 1800);
+    }, 50);
+}
+
+window.filterWalletCards = function (rawQuery) {
+    const query = String(rawQuery || '').trim().toLowerCase();
+    const covers = Array.from(document.querySelectorAll('[data-wallet-cover]'));
+    covers.forEach((cover) => {
+        const text = (cover.getAttribute('data-wallet-card') || '').toLowerCase();
+        const match = !query || text.includes(query);
+        cover.classList.toggle('hidden', !match);
+    });
+    const coverEmpty = document.getElementById('wallet-cover-empty');
+    if (coverEmpty) {
+        const visibleCount = covers.filter((cover) => !cover.classList.contains('hidden')).length;
+        coverEmpty.classList.toggle('hidden', visibleCount > 0);
+    }
+
+    const groups = Array.from(document.querySelectorAll('[data-wallet-group]'));
+    groups.forEach((group) => {
+        const cards = Array.from(group.querySelectorAll('[data-wallet-card]'));
+        let visible = 0;
+        cards.forEach((row) => {
+            const text = (row.getAttribute('data-wallet-card') || '').toLowerCase();
+            const match = !query || text.includes(query);
+            row.classList.toggle('hidden', !match);
+            if (match) visible += 1;
+        });
+        const total = Number(group.getAttribute('data-wallet-total')) || cards.length;
+        const summary = group.querySelector('[data-wallet-match-count]');
+        if (summary) summary.textContent = `${visible}/${total}`;
+        group.classList.toggle('hidden', query && visible === 0);
+        if (query && visible > 0) group.setAttribute('open', '');
+    });
 }
 
 // Start

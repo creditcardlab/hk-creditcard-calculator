@@ -282,6 +282,7 @@ function getLevelLifecycleModelDefaults(modelId) {
             theme: "yellow",
             settingKey: "guru_level",
             registrationSettingKey: "travel_guru_registered",
+            implementationNote: "計算器做法：登記後可啟動 GO 級；其後海外合資格簽賬按等級計算（GO +3% 上限 500 RC、GING +4% 上限 1,200 RC、GURU +6% 上限 2,200 RC），每級達升級門檻後可升級並重置該級進度。",
             spendKey: "guru_spend_accum",
             rewardKey: "guru_rc_used",
             rewardUnit: "RC",
@@ -297,6 +298,7 @@ function getLevelLifecycleModelDefaults(modelId) {
         theme: "gray",
         settingKey: "",
         registrationSettingKey: "",
+        implementationNote: "",
         spendKey: "",
         rewardKey: "",
         rewardUnit: "",
@@ -361,6 +363,7 @@ function getLevelLifecycleModel(modelId) {
         theme: raw.theme || defaults.theme,
         settingKey: raw.settingKey || raw.setting_key || defaults.settingKey,
         registrationSettingKey: raw.registrationSettingKey || raw.registration_setting_key || defaults.registrationSettingKey,
+        implementationNote: raw.implementationNote || raw.implementation_note || defaults.implementationNote || "",
         rewardUnit: raw.rewardUnit || raw.reward_unit || defaults.rewardUnit,
         unlockSpend: Math.max(0, Number(raw.unlockSpend || raw.unlock_spend || defaults.unlockSpend) || 0),
         unlockSpendKey: raw.unlockSpendKey || raw.unlock_spend_key || defaults.unlockSpendKey,
@@ -406,7 +409,8 @@ function getLevelLifecycleState(modelId, profile) {
     const unlockSpend = Math.max(0, Number(model.unlockSpend) || 0);
     const unlockSpendKey = model.unlockSpendKey || model.usage.spendKey;
     const unlockAccum = Number(profile.usage[unlockSpendKey]) || 0;
-    const rewardUnlocked = unlockSpend <= 0 ? true : (unlockAccum >= unlockSpend);
+    // If user is already in a level (GO/GING/GURU), treat reward as unlocked.
+    const rewardUnlocked = level > 0 || unlockSpend <= 0 || unlockAccum >= unlockSpend;
 
     if (level <= 0) {
         const unlockPct = unlockSpend > 0 ? Math.min(100, (unlockAccum / unlockSpend) * 100) : 100;
@@ -419,6 +423,7 @@ function getLevelLifecycleState(modelId, profile) {
             title: model.title,
             icon: model.icon,
             theme: model.theme,
+            implementationNote: model.implementationNote || "",
             badge: rewardUnlocked ? "可啟動GO級" : "待解鎖",
             actionButton: rewardUnlocked
                 ? {
@@ -472,6 +477,7 @@ function getLevelLifecycleState(modelId, profile) {
         title: model.title,
         icon: model.icon,
         theme: model.theme,
+        implementationNote: model.implementationNote || "",
         badge: levelName,
         actionButton: canUpgrade
             ? {
@@ -893,19 +899,6 @@ function calculateGuru(mod, amount, level, category, options) {
     if (level <= 0 || !isCategoryMatch([mod.category], category)) return { rate: 0, entry: null, generatedRC: 0 };
     const conf = mod.config[level];
     if (!conf) return { rate: 0, entry: null, generatedRC: 0 };
-    const unlockTarget = Math.max(0, Number(mod.req_mission_spend) || 0);
-    const projectedSpend = Math.max(0, Number(options && options.projectedSpend) || 0);
-    if (unlockTarget > 0 && projectedSpend < unlockTarget) {
-        return {
-            rate: 0,
-            entry: {
-                text: `🔒 ${conf.desc}（需先累積海外簽賬 $${unlockTarget.toLocaleString()}）`,
-                tone: "muted",
-                flags: { locked: true }
-            },
-            generatedRC: 0
-        };
-    }
     const capStatus = checkCap(mod.usage_key, conf.cap_rc);
     if (capStatus.isMaxed) {
         return {
@@ -1308,13 +1301,13 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         }
 
         if (mod.type === "red_hot_allocation") {
-            const rhCat = getRedHotCategory(category);
+            const rhCat = getRedHotCategory(resolvedCategory);
             if (rhCat) {
                 const multiplier = userProfile.settings.red_hot_allocation[rhCat] || 0;
                 if (multiplier > 0) { rate = multiplier * mod.rate_per_x; const pct = (rate * 100).toFixed(1); tempDesc = `${mod.desc} (${multiplier}X = ${pct}%)`; hit = true; }
             }
         }
-        else if (mod.type === "red_hot_fixed_bonus") { const rhCat = getRedHotCategory(category); if (rhCat) { rate = mod.multiplier * mod.rate_per_x; hit = true; } }
+        else if (mod.type === "red_hot_fixed_bonus") { const rhCat = getRedHotCategory(resolvedCategory); if (rhCat) { rate = mod.multiplier * mod.rate_per_x; hit = true; } }
             else if (mod.type === "prestige_annual_bonus") {
                 const pct = getCitiPrestigeBonusPercentForSettings(userProfile.settings);
                 if (pct > 0) {
@@ -1544,7 +1537,11 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             }
             addBreakdown(label, tone, flags);
         } else {
-            if (missionLocked && campaign) addBreakdown(`🎯 計入${tag.desc}門檻`, "muted");
+            // Not eligible transactions should never be labeled as "counted".
+            // Show hint only when tracker matched but failed eligibility (e.g. online exclusion).
+            if (campaign && missionLocked && tag.matched) {
+                addBreakdown(`⚪ 不計入${tag.desc}門檻`, "muted");
+            }
         }
     });
 

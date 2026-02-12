@@ -9,11 +9,20 @@ const NOTION_OVERRIDES = {
       "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf"
     },
     "hsbc_everymile": {
-      "last_verified_at": "2026-02-05",
-      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/everymile/everymile-rewards-scheme-travel-benefits.pdf"
+      "last_verified_at": "2026-02-12",
+      "source_url": "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/everymile-spending-offer/, https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf"
     },
     "hsbc_gold_student": {
-      "last_verified_at": "2026-02-06"
+      "last_verified_at": "2026-02-06",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf"
+    },
+    "hsbc_gold": {
+      "last_verified_at": "2026-02-06",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf"
+    },
+    "hsbc_premier": {
+      "last_verified_at": "2026-02-06",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf"
     },
     "hsbc_pulse": {
       "note_zhhk": "中國內地及澳門外幣手續費為0",
@@ -26,7 +35,8 @@ const NOTION_OVERRIDES = {
     },
     "hsbc_unionpay_std": {
       "note_zhhk": "中國內地及澳門外幣手續費為0",
-      "last_verified_at": "2026-02-06"
+      "last_verified_at": "2026-02-06",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf"
     },
     "hsbc_vs": {
       "last_verified_at": "2026-02-05",
@@ -36,53 +46,71 @@ const NOTION_OVERRIDES = {
   "modules": {
     "easy_moneyback_bonus": {
       "note_zhhk": "基本「易賞錢」獎賞積分即於百佳及屈臣氏作每港幣 5 元簽賬相等於 1「易賞錢」積分或於豐澤作\n每港幣 10 元簽賬相等於 1「易賞錢」積分;6 倍「易賞錢」獎賞積分即於百佳及屈臣氏作每港幣 5 元\n簽賬相等於 6「易賞錢」 積分或於豐澤作每港幣 10 元簽賬相等於 6「易賞錢」積分;而 4 倍「易賞錢\n」獎賞積分即於百佳及屈臣氏作每港幣 5 元簽賬相等於 4「易賞錢」積分或於豐澤作每港幣 10 元簽\n賬相等於 4「易賞錢」積分。有關「易賞錢」積分的條款及細則請參閱「易賞錢」網頁",
-      "last_verified_at": "2026-02-06"
+      "last_verified_at": "2026-02-06",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf"
     },
     "em_base": {
-      "last_verified_at": "2026-02-05"
+      "last_verified_at": "2026-02-05",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf"
     },
     "em_designated": {
       "last_verified_at": "2026-02-05",
       "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf"
     },
     "em_grocery_low": {
-      "last_verified_at": "2026-02-05"
+      "last_verified_at": "2026-02-05",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf"
     },
     "em_overseas_bonus": {
-      "last_verified_at": "2026-02-05"
+      "last_verified_at": "2026-02-12",
+      "source_url": "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/everymile-spending-offer/, https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf"
     },
     "hsbc_std_base": {
-      "last_verified_at": "2026-02-06"
+      "last_verified_at": "2026-02-06",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf"
     },
     "pulse_china_bonus": {
       "note_zhhk": "要手機支付!!!",
-      "last_verified_at": "2026-02-06"
+      "last_verified_at": "2026-02-06",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf"
     },
     "red_base": {
-      "last_verified_at": "2026-02-05"
+      "last_verified_at": "2026-02-05",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf"
     },
     "red_designated_bonus": {
-      "last_verified_at": "2026-02-05"
+      "last_verified_at": "2026-02-05",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf"
     },
     "red_hot_variable": {
       "last_verified_at": "2026-02-05",
       "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/rewards/2026-red-hot-rewards-of-your-choice-terms-and-conditions.pdf, https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/#3"
     },
     "red_online": {
-      "last_verified_at": "2026-02-05"
+      "last_verified_at": "2026-02-05",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf"
     },
     "student_tuition_bonus": {
       "last_verified_at": "2026-02-06",
       "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/tc/tuition-fee-payment-tcs1.pdf"
     },
     "travel_guru_v2": {
-      "last_verified_at": "2026-02-05"
+      "last_verified_at": "2026-02-05",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/everymile/everymile-rewards-scheme-travel-benefits.pdf"
     },
     "vs_base": {
-      "last_verified_at": "2026-02-06"
+      "last_verified_at": "2026-02-06",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/visa-signature/special-reward-tnc.pdf"
     },
     "vs_red_hot_bonus": {
-      "last_verified_at": "2026-02-05"
+      "last_verified_at": "2026-02-05",
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/rewards/2026-red-hot-rewards-of-your-choice-terms-and-conditions.pdf, https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/#3"
+    },
+    "easy_moneyback_pns_watsons_6x": {
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf"
+    },
+    "easy_moneyback_fortress_6x": {
+      "source_url": "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf"
     }
   },
   "campaigns": {},

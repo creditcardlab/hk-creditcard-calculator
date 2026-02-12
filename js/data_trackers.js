@@ -8,11 +8,14 @@ const trackersDB = {
         match: ["overseas"],
         desc: "🌏 EM推廣",
         mission_id: "em_promo",
-        promo_end: "2026-03-31",
-        valid_to: "2026-03-31",
-        // Keep app.js free of special-cases: tracker defines which usage keys to increment.
-        effects_on_match: [{ key: "em_q1_total", amount: "tx_amount" }],
-        effects_on_eligible: [{ key: "em_q1_eligible", amount: "tx_amount" }]
+        valid_from: "2026-01-01",
+        promo_end: "2026-06-30",
+        valid_to: "2026-06-30",
+        // Keep app.js free of special-cases: only eligible overseas transactions should count.
+        effects_on_eligible: [
+            { key: "em_q1_total", amount: "tx_amount" },
+            { key: "em_q1_eligible", amount: "tx_amount" }
+        ]
     },
     "winter_tracker": {
         type: "mission_tracker",
@@ -284,12 +287,17 @@ const trackersDB = {
     },
     "fubon_infinite_upgrade_tracker": {
         type: "mission_tracker",
-        match: ["fubon_upgrade_online"],
+        match: ["online"],
         desc: "🎯 Fubon Infinite 指定本地網購月簽進度",
         hide_in_equation: true,
         mission_id: "fubon_infinite_upgrade_promo",
         valid_from: "2026-01-01",
         valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => {
+            if (!ctx || !ctx.isOnline) return false;
+            if (typeof isCategoryMatch === "function") return !isCategoryMatch(["overseas"], cat);
+            return !String(cat || "").startsWith("overseas");
+        },
         effects_on_eligible: [{ key: "fubon_infinite_upgrade_monthly_spend", amount: "tx_amount" }],
         counter: { key: "fubon_infinite_upgrade_monthly_spend", period: "month" }
     },

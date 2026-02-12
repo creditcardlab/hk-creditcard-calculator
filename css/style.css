@@ -1,11 +1,217 @@
 /* css/style.css */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700;800&display=swap');
+
+:root {
+    --bottom-nav-height: 86px;
+}
 
 body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Noto Sans HK', sans-serif;
     -webkit-tap-highlight-color: transparent;
-    padding-bottom: 100px;
-    background-color: #F3F4F6;
+    padding-bottom: 0;
+    background-color: #f6f5f2;
+}
+
+.notion-panel {
+    background:
+        radial-gradient(circle at 100% 0, rgba(120, 113, 108, 0.08), transparent 45%),
+        #fffdf9;
+    border: 1px solid #e7e3da;
+    box-shadow: 0 6px 20px -20px rgba(41, 37, 36, 0.45);
+}
+
+.wallet-cover {
+    position: relative;
+    overflow: hidden;
+    text-align: left;
+    border-radius: 14px;
+    border: 1px solid #d8d1c6;
+    min-height: 122px;
+    padding: 12px 14px;
+    color: #2d2a26;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    box-shadow: 0 10px 20px -20px rgba(41, 37, 36, 0.55);
+}
+
+.wallet-cover:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.01);
+    box-shadow: 0 12px 24px -20px rgba(41, 37, 36, 0.65);
+}
+
+.wallet-edit-mode .wallet-edit-item {
+    cursor: grab;
+    user-select: none;
+    padding-right: 42px;
+    animation: wallet-wiggle 0.24s ease-in-out infinite alternate;
+    transform-origin: center;
+}
+
+.wallet-edit-mode .wallet-edit-item:active {
+    cursor: grabbing;
+}
+
+.wallet-edit-item.wallet-drop-target {
+    outline: 2px dashed rgba(68, 64, 60, 0.5);
+    outline-offset: -4px;
+}
+
+.wallet-edit-item.wallet-dragging {
+    opacity: 0.55;
+    transform: scale(0.985);
+    animation: none;
+}
+
+@keyframes wallet-wiggle {
+    from { transform: rotate(-0.35deg); }
+    to { transform: rotate(0.35deg); }
+}
+
+.wallet-cover-active {
+    outline: 2px solid #6b665f;
+    outline-offset: 1px;
+}
+
+.wallet-cover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(120deg, rgba(255, 255, 255, 0.24), transparent 36%, rgba(255, 255, 255, 0.12) 72%, transparent 100%);
+    pointer-events: none;
+}
+
+.wallet-cover-chip {
+    width: 26px;
+    height: 19px;
+    border-radius: 5px;
+    background: linear-gradient(145deg, #d6cbb8, #b9ab95);
+    border: 1px solid rgba(112, 102, 86, 0.35);
+}
+
+.wallet-cover-meta {
+    margin-top: 12px;
+    font-size: 10px;
+    opacity: 0.72;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.wallet-cover-title {
+    margin-top: 3px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.wallet-cover-foot {
+    margin-top: 6px;
+    font-size: 11px;
+    opacity: 0.76;
+}
+
+.wallet-delete-btn {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    border: 1px solid rgba(120, 113, 108, 0.35);
+    background: rgba(255, 253, 249, 0.92);
+    color: #57534e;
+    font-size: 14px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: background 0.15s ease, transform 0.15s ease, color 0.15s ease;
+}
+
+.wallet-delete-btn:hover {
+    background: #f5f5f4;
+    color: #292524;
+    transform: scale(1.04);
+}
+
+.wallet-drag-hint {
+    position: absolute;
+    right: 10px;
+    bottom: 8px;
+    font-size: 11px;
+    opacity: 0.6;
+}
+
+.wallet-edit-mode .wallet-cover-foot {
+    opacity: 0.9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wallet-edit-mode .wallet-edit-item {
+        animation: none;
+    }
+}
+
+.wallet-detail-banner {
+    border-radius: 14px;
+    border: 1px solid #d8d1c6;
+    color: #2d2a26;
+    padding: 12px 14px;
+}
+
+.wallet-tone-hsbc { background: linear-gradient(136deg, #f2ece7 0%, #e9e1d9 46%, #e2d7cd 100%); }
+.wallet-tone-sc { background: linear-gradient(136deg, #eef1f3 0%, #e5eaef 48%, #dde4ea 100%); }
+.wallet-tone-citi { background: linear-gradient(136deg, #edf1f5 0%, #e4eaf0 42%, #dce4ec 100%); }
+.wallet-tone-dbs { background: linear-gradient(136deg, #f1ecea 0%, #e8e1de 45%, #dfd6d2 100%); }
+.wallet-tone-hangseng { background: linear-gradient(136deg, #edf1ed 0%, #e4e9e3 42%, #dbe2d8 100%); }
+.wallet-tone-boc { background: linear-gradient(136deg, #edf0f4 0%, #e4e8ed 42%, #dbe2e9 100%); }
+.wallet-tone-ae { background: linear-gradient(136deg, #efefef 0%, #e7e7e7 46%, #dfdfdf 100%); }
+.wallet-tone-fubon { background: linear-gradient(136deg, #eef1f4 0%, #e5e9ee 48%, #dde3e9 100%); }
+.wallet-tone-bea { background: linear-gradient(136deg, #f3eee8 0%, #ebe4db 48%, #e3dbd0 100%); }
+.wallet-tone-sim { background: linear-gradient(136deg, #f0efee 0%, #e7e5e3 48%, #dedbd8 100%); }
+.wallet-tone-aeon { background: linear-gradient(136deg, #efeff3 0%, #e7e7ed 46%, #dddde7 100%); }
+.wallet-tone-wewa { background: linear-gradient(136deg, #edf1f2 0%, #e5eaeb 46%, #dce4e6 100%); }
+.wallet-tone-mox { background: linear-gradient(136deg, #efefef 0%, #e6e6e6 46%, #dddddd 100%); }
+.wallet-tone-default { background: linear-gradient(136deg, #f2f1ef 0%, #e9e7e4 48%, #e0ddda 100%); }
+
+.tab-content {
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+}
+
+.app-disclaimer {
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 0.5rem);
+}
+
+.bottom-tabbar {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+}
+
+.toast {
+    border-radius: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.85rem;
+    line-height: 1.3;
+    color: #fff;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+    white-space: pre-line;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.toast-info {
+    background: rgba(31, 41, 55, 0.95);
+}
+
+.toast-success {
+    background: rgba(5, 150, 105, 0.95);
+}
+
+.toast-warning {
+    background: rgba(180, 83, 9, 0.95);
+}
+
+.toast-error {
+    background: rgba(185, 28, 28, 0.95);
 }
 
 /* Custom Scrollbar for Settings */
