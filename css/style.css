@@ -180,7 +180,8 @@ body {
 }
 
 .app-disclaimer {
-    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 0.5rem);
+    padding-bottom: 1rem;
+    margin-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 0.5rem);
 }
 
 .bottom-tabbar {
