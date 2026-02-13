@@ -4058,7 +4058,7 @@
       },
       "expected": {
         "topCardId": "fubon_travel",
-        "topValue": 5,
+        "topValue": 4,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -4083,7 +4083,7 @@
       },
       "expected": {
         "topCardId": "fubon_travel",
-        "topValue": 10,
+        "topValue": 8,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -4108,7 +4108,7 @@
       },
       "expected": {
         "topCardId": "fubon_travel",
-        "topValue": 100,
+        "topValue": 80,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -4133,7 +4133,7 @@
       },
       "expected": {
         "topCardId": "fubon_travel",
-        "topValue": 50,
+        "topValue": 40,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -4158,7 +4158,7 @@
       },
       "expected": {
         "topCardId": "fubon_travel",
-        "topValue": 25,
+        "topValue": 20,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -4186,7 +4186,7 @@
       },
       "expected": {
         "topCardId": "fubon_travel",
-        "topValue": 10,
+        "topValue": 8,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -4214,7 +4214,7 @@
       },
       "expected": {
         "topCardId": "fubon_travel",
-        "topValue": 5,
+        "topValue": 4,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": true,
@@ -4241,7 +4241,7 @@
       },
       "expected": {
         "topCardId": "fubon_travel",
-        "topValue": 5,
+        "topValue": 4,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -4268,7 +4268,7 @@
       },
       "expected": {
         "topCardId": "fubon_travel",
-        "topValue": 50,
+        "topValue": 40,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -4297,7 +4297,7 @@
       },
       "expected": {
         "topCardId": "fubon_travel",
-        "topValue": 2.5,
+        "topValue": 2,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -4322,7 +4322,7 @@
       },
       "expected": {
         "topCardId": "fubon_travel",
-        "topValue": 50,
+        "topValue": 40,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -4347,7 +4347,7 @@
       },
       "expected": {
         "topCardId": "fubon_travel",
-        "topValue": 25,
+        "topValue": 20,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -4691,7 +4691,7 @@
       },
       "expected": {
         "topCardId": "fubon_travel",
-        "topValue": 50,
+        "topValue": 40,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,

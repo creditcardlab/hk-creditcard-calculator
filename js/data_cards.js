@@ -560,7 +560,7 @@ const cardsDB = [
     {
         id: "fubon_travel",
         name: "富邦Visa白金卡",
-        currency: "Fubon_Points",
+        currency: "Fubon_Points_Std",
         type: "master",
         fcf: 0.0195,
         rewardModules: ["fubon_travel_base", "fubon_travel_tw", "fubon_travel_jpkr", "fubon_travel_fx_other", "fubon_travel_local_weekend", "fubon_travel_upgrade_online"],
@@ -569,7 +569,7 @@ const cardsDB = [
           unit: "積分",
           min: 0,
           fee: "HK$50/5000里",
-          ratio: "15分 = 1里 | 台灣20X / 日本韓國10X / 外幣5X | 本地週末2X（2026）"
+          ratio: "15分 = 1里 | 250分 = $1 | 台灣20X / 日本韓國10X / 外幣5X | 本地週末2X（2026）"
         }
     },
     {
