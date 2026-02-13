@@ -10,6 +10,7 @@ body {
     -webkit-tap-highlight-color: transparent;
     padding-bottom: 0;
     background-color: #f6f5f2;
+    overflow-x: hidden;
 }
 
 .notion-panel {
@@ -181,7 +182,7 @@ body {
 
 .app-disclaimer {
     padding-bottom: 1rem;
-    margin-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom) + 0.5rem);
+    margin-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
 }
 
 .bottom-tabbar {
