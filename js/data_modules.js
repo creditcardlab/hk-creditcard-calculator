@@ -9,6 +9,12 @@ const modulesDB = {
         rate_per_x: 0.004,
         desc: "最紅自主",
         setting_key: "red_hot_rewards_enabled",
+        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/rewards/2026-red-hot-rewards-of-your-choice-terms-and-conditions.pdf",
+        promo_url: "https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/",
+        registration_url: "https://forms.hsbc.com.hk/en-hk/red-hot-rewards-of-your-choice/",
+        registration_start: "2025-11-24",
+        registration_end: "2026-10-31",
+        registration_note: "可於 HSBC Reward+ 或網上表格登記；2026 年獎賞於 2026-01-01 生效",
         // 「最紅自主」通常以年度為週期（之後如要自訂週期，可用 periodOverrides.byKey/modules 擴展）。
         cap: { period: { type: "year", startMonth: 1, startDay: 1 } }
     },
@@ -19,7 +25,16 @@ const modulesDB = {
     "easy_moneyback_pns_watsons_6x": { type: "category", match: ["moneyback_pns_watsons"], rate: 0.024, desc: "易賞錢：百佳/屈臣氏 6倍 (約2.4%)", mode: "replace" },
     "easy_moneyback_fortress_6x": { type: "category", match: ["moneyback_fortress"], rate: 0.012, desc: "易賞錢：豐澤 6倍 (約1.2%)", mode: "replace" },
     // Reward cap is $200. Use reward-based cap to avoid 8333 * 2.4% => 199.992 rounding artifacts.
-    "student_tuition_bonus": { type: "category", match: ["tuition"], rate: 0.024, desc: "學費回贈 (2.4%)", cap_mode: "reward", cap_limit: 200, cap_key: "student_tuition_cap" },
+    "student_tuition_bonus": {
+        type: "category",
+        match: ["tuition"],
+        rate: 0.024,
+        desc: "學費回贈 (2.4%)",
+        cap_mode: "reward",
+        cap_limit: 200,
+        cap_key: "student_tuition_cap",
+        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/tc/tuition-fee-payment-tcs1.pdf"
+    },
     "pulse_china_bonus": {
         type: "category",
         match: ["china_consumption"],
@@ -41,7 +56,13 @@ const modulesDB = {
         mode: "add", setting_key: "em_promo_enabled",
         req_mission_spend: 12000, req_mission_key: "em_q1_total",
         progress_mission_key: "em_q1_eligible",
-        cap_mode: "reward", cap_limit: 225, cap_key: "em_promo_cap" // $225 RC cap (approx $15,000 usage capped at bonus?) No, wait.
+        cap_mode: "reward", cap_limit: 225, cap_key: "em_promo_cap", // $225 RC cap (approx $15,000 usage capped at bonus?) No, wait.
+        tnc_url: "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/everymile-spending-offer/terms-and-conditions/",
+        promo_url: "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/everymile-spending-offer/",
+        registration_url: "https://www.hsbc.com.hk/rewardplus/",
+        registration_start: "2026-01-01",
+        registration_end: "2026-06-30",
+        registration_note: "需於 HSBC Reward+ 應用程式登記"
         // User said: "Math.floor(pot) / 225". Limit is $225 RC.
         // 1.5% of $15,000 = $225. So Cap is indeed $225 Reward.
     },
@@ -51,6 +72,12 @@ const modulesDB = {
         setting_key: "travel_guru_registered",
         req_mission_spend: 8000,
         req_mission_key: "spend_guru_unlock",
+        tnc_url: "https://www.redhotoffers.hsbc.com.hk/media/100531673/TC_TC_Spending-Requirements-and-Offers-for-Travel-Guru-Membership-Programme_20260101.pdf",
+        promo_url: "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/travel-guru/",
+        registration_url: "https://forms.hsbc.com.hk/en-hk/travelgururegistration/",
+        registration_start: "2025-06-16",
+        registration_end: "2025-10-31",
+        registration_note: "分階段登記：2025-06-16至07-03、09-01至09-30、10-01至10-31",
         config: {
             1: { rate: 0.03, cap_rc: 500, desc: "GO級 (+3%)" },
             2: { rate: 0.04, cap_rc: 1200, desc: "GING級 (+4%)" },

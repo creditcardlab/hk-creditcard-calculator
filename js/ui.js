@@ -68,25 +68,55 @@ function isLikelyTncUrl(url) {
 
 function buildReferenceMeta(meta) {
     const raw = (meta && typeof meta === "object") ? meta : {};
-    const sourceUrls = parseSourceUrls(raw.sourceUrl || "");
-    let tncUrl = getPrimarySourceUrl(raw.tncUrl || "");
-    let promoUrl = getPrimarySourceUrl(raw.promoUrl || "");
-    let registrationUrl = getPrimarySourceUrl(raw.registrationUrl || "");
+    const hasOwn = (k) => Object.prototype.hasOwnProperty.call(raw, k);
+    const getOwnRaw = (camelKey, snakeKey) => {
+        if (hasOwn(camelKey)) return raw[camelKey];
+        if (hasOwn(snakeKey)) return raw[snakeKey];
+        return undefined;
+    };
+    const isNonEmpty = (v) => String(v || "").trim().length > 0;
+    const sourceUrls = parseSourceUrls(raw.sourceUrl || raw.source_url || "");
+    const tncRaw = getOwnRaw("tncUrl", "tnc_url");
+    const promoRaw = getOwnRaw("promoUrl", "promo_url");
+    const registrationRaw = getOwnRaw("registrationUrl", "registration_url");
+    let tncUrl = getPrimarySourceUrl(tncRaw || "");
+    let promoUrl = getPrimarySourceUrl(promoRaw || "");
+    let registrationUrl = getPrimarySourceUrl(registrationRaw || "");
+    const hasExplicitTnc = isNonEmpty(tncRaw);
+    const hasExplicitPromo = isNonEmpty(promoRaw);
+    const hasExplicitRegistration = isNonEmpty(registrationRaw);
+    const registrationStart = String(
+        raw.registrationStart || raw.registration_start || ""
+    ).trim();
+    const registrationEnd = String(
+        raw.registrationEnd || raw.registration_end || ""
+    ).trim();
+    const registrationNote = normalizeInfoText(
+        raw.registrationNote || raw.registration_note || raw.registrationChannel || raw.registration_channel || "",
+        180
+    );
 
-    if (!tncUrl) tncUrl = sourceUrls.find((u) => isLikelyTncUrl(u)) || "";
-    if (!promoUrl) promoUrl = sourceUrls.find((u) => u !== tncUrl) || "";
-    if (!registrationUrl) registrationUrl = promoUrl || tncUrl || "";
-    if (!promoUrl) promoUrl = registrationUrl || "";
-    if (!tncUrl && !promoUrl) {
-        tncUrl = sourceUrls[0] || "";
+    if (!tncUrl && !hasExplicitTnc) {
+        const inferredTnc = sourceUrls.find((u) => isLikelyTncUrl(u)) || "";
+        tncUrl = inferredTnc || (sourceUrls.length === 1 ? sourceUrls[0] : "");
     }
+    if (!promoUrl && !hasExplicitPromo) {
+        const nonTncSources = sourceUrls.filter((u) => !!u && u !== tncUrl && !isLikelyTncUrl(u));
+        if (nonTncSources.length > 0) promoUrl = nonTncSources[0];
+        else if (sourceUrls.length > 1) promoUrl = sourceUrls.find((u) => !!u && u !== tncUrl) || "";
+    }
+    if (!registrationUrl && !hasExplicitRegistration) registrationUrl = "";
 
     return {
+        sourceUrl: sourceUrls.length > 0 ? sourceUrls[0] : "",
         tncUrl,
         promoUrl,
         registrationUrl,
-        sourceTitle: raw.sourceTitle || "",
-        implementationNote: raw.implementationNote || ""
+        registrationStart,
+        registrationEnd,
+        registrationNote,
+        sourceTitle: raw.sourceTitle || raw.source_title || "",
+        implementationNote: raw.implementationNote || raw.implementation_note || ""
     };
 }
 
@@ -329,6 +359,37 @@ function buildModuleImplementationNote(mod, card, title) {
     return `計算器做法：${parts.join("；")}。`;
 }
 
+function buildCardImplementationNote(cardId) {
+    if (!cardId || typeof DATA === "undefined" || !DATA || !Array.isArray(DATA.cards)) return "";
+    const card = DATA.cards.find((c) => c && c.id === cardId) || null;
+    if (!card) return "";
+    const moduleIds = Array.isArray(card.rewardModules) ? card.rewardModules : [];
+    const modules = moduleIds
+        .map((id) => (DATA.modules && DATA.modules[id]) ? DATA.modules[id] : null)
+        .filter(Boolean);
+
+    if (modules.length === 0) {
+        return "計算器做法：按此卡已啟用回贈規則計算，詳情可於個別推廣卡查看。";
+    }
+
+    const baseCount = modules.filter((m) => m.type === "always").length;
+    const replaceCount = modules.filter((m) => m.mode === "replace").length;
+    const addCount = modules.filter((m) => m.mode === "add").length;
+    const capCount = modules.filter((m) => Number.isFinite(Number(m.cap_limit)) && m.cap_key).length;
+    const missionCount = modules.filter((m) => Number.isFinite(Number(m.req_mission_spend)) && m.req_mission_key).length;
+    const parts = [];
+
+    if (baseCount > 0) parts.push("先計基本回贈");
+    if (replaceCount > 0) parts.push(`有 ${replaceCount} 項指定類別會改用較高比率（replace）`);
+    if (addCount > 0) parts.push(`有 ${addCount} 項推廣屬額外加成（add）`);
+    if (missionCount > 0) parts.push(`有 ${missionCount} 項需先達簽賬門檻才生效`);
+    if (capCount > 0) parts.push(`有 ${capCount} 項設有每期上限`);
+
+    if (parts.length === 0) parts.push(`此卡由 ${modules.length} 項回贈規則組成`);
+    parts.push("詳細比率、門檻與上限可在該推廣卡按「? 點樣計」查看");
+    return `計算器做法：${parts.join("；")}。`;
+}
+
 window.showImplementationHint = function (rawText) {
     const text = normalizeInfoText(rawText || "計算器做法：按此優惠的門檻、比率及上限計算。", 500);
     if (typeof window.showToast === "function") {
@@ -352,14 +413,14 @@ function renderReferenceActions(meta, options) {
     const links = [];
     const linkClass = opts.linkClass || "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2";
 
-    if (opts.showRegistration !== false && m.registrationUrl) {
-        links.push(renderSourceLink(m.registrationUrl, m.sourceTitle, linkClass, "登記"));
-    }
-    if (opts.showPromo !== false && m.promoUrl && m.promoUrl !== m.registrationUrl) {
+    if (opts.showPromo !== false && m.promoUrl && m.promoUrl !== m.tncUrl) {
         links.push(renderSourceLink(m.promoUrl, m.sourceTitle, linkClass, "推廣頁"));
     }
-    if (opts.showTnc !== false && m.tncUrl && m.tncUrl !== m.promoUrl && m.tncUrl !== m.registrationUrl) {
+    if (opts.showTnc !== false && m.tncUrl && m.tncUrl !== m.promoUrl) {
         links.push(renderSourceLink(m.tncUrl, m.sourceTitle, linkClass, "條款"));
+    }
+    if (links.length === 0 && m.sourceUrl) {
+        links.push(renderSourceLink(m.sourceUrl, m.sourceTitle, linkClass, "來源"));
     }
 
     const implBtn = opts.showImplementation === false
@@ -375,9 +436,23 @@ function getCardReferenceMeta(cardId) {
     if (!cardId || typeof DATA === "undefined" || !DATA) return {};
     const card = Array.isArray(DATA.cards) ? DATA.cards.find((c) => c && c.id === cardId) : null;
     const urls = [];
+    const tncUrls = [];
+    const promoUrls = [];
+    const registrationUrls = [];
+    const registrationStarts = [];
+    const registrationEnds = [];
+    const registrationNotes = [];
     const titles = [];
     const pushUrl = (u) => {
         parseSourceUrls(u).forEach((x) => urls.push(x));
+    };
+    const pushPrimaryUrl = (u, target) => {
+        const primary = getPrimarySourceUrl(u);
+        if (primary) target.push(primary);
+    };
+    const pushRegDate = (v, target) => {
+        const text = String(v || "").trim();
+        if (text) target.push(text);
     };
     const pushTitle = (t) => {
         const clean = normalizeInfoText(t || "", 120);
@@ -386,21 +461,63 @@ function getCardReferenceMeta(cardId) {
 
     if (card) {
         pushUrl(card.source_url || "");
+        pushPrimaryUrl(card.tnc_url || "", tncUrls);
+        pushPrimaryUrl(card.promo_url || "", promoUrls);
+        pushPrimaryUrl(card.registration_url || "", registrationUrls);
+        pushRegDate(card.registration_start, registrationStarts);
+        pushRegDate(card.registration_end, registrationEnds);
+        if (card.registration_note) registrationNotes.push(card.registration_note);
         pushTitle(card.source_title || "");
         (Array.isArray(card.rewardModules) ? card.rewardModules : []).forEach((moduleId) => {
             const mod = DATA.modules && DATA.modules[moduleId] ? DATA.modules[moduleId] : null;
             if (!mod) return;
             pushUrl(mod.source_url || "");
+            pushPrimaryUrl(mod.tnc_url || "", tncUrls);
+            pushPrimaryUrl(mod.promo_url || "", promoUrls);
+            pushPrimaryUrl(mod.registration_url || "", registrationUrls);
+            pushRegDate(mod.registration_start, registrationStarts);
+            pushRegDate(mod.registration_end, registrationEnds);
+            if (mod.registration_note) registrationNotes.push(mod.registration_note);
             pushTitle(mod.source_title || "");
         });
     }
 
-    const uniqueUrls = Array.from(new Set(urls));
+    const fallback = getCardReferenceFallback(cardId);
+    parseSourceUrls(fallback.sourceUrl || "").forEach((u) => urls.push(u));
+    pushPrimaryUrl(fallback.tncUrl || "", tncUrls);
+    pushPrimaryUrl(fallback.promoUrl || "", promoUrls);
+    pushPrimaryUrl(fallback.registrationUrl || "", registrationUrls);
+    pushRegDate(fallback.registrationStart || "", registrationStarts);
+    pushRegDate(fallback.registrationEnd || "", registrationEnds);
+    if (fallback.registrationNote) registrationNotes.push(fallback.registrationNote);
+    if (fallback.sourceTitle) pushTitle(fallback.sourceTitle);
+
+    const uniqueUrls = Array.from(new Set(urls.filter(Boolean)));
     const sourceUrl = uniqueUrls.join(", ");
-    const sourceTitle = Array.from(new Set(titles)).join(" | ");
+    const sourceTitle = Array.from(new Set(titles.filter(Boolean))).join(" | ");
+    const firstUnique = (arr) => {
+        const unique = Array.from(new Set((arr || []).filter(Boolean)));
+        return unique.length > 0 ? unique[0] : "";
+    };
+    const minDate = (arr) => {
+        const vals = Array.from(new Set((arr || []).filter((v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || "")))));
+        vals.sort();
+        return vals.length > 0 ? vals[0] : "";
+    };
+    const maxDate = (arr) => {
+        const vals = Array.from(new Set((arr || []).filter((v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || "")))));
+        vals.sort();
+        return vals.length > 0 ? vals[vals.length - 1] : "";
+    };
     return {
         sourceUrl,
-        sourceTitle
+        sourceTitle,
+        tncUrl: firstUnique(tncUrls),
+        promoUrl: firstUnique(promoUrls),
+        registrationUrl: firstUnique(registrationUrls),
+        registrationStart: minDate(registrationStarts),
+        registrationEnd: maxDate(registrationEnds),
+        registrationNote: firstUnique(registrationNotes)
     };
 }
 
@@ -519,25 +636,100 @@ function getCampaignOffers() {
         .map((offer) => {
             const raw = campaignById[offer.id] || {};
             const reg = (DATA.campaignRegistry && DATA.campaignRegistry[offer.id]) ? DATA.campaignRegistry[offer.id] : {};
+            const hasOwn = (obj, key) => !!obj && Object.prototype.hasOwnProperty.call(obj, key);
+            const firstNonEmpty = (values) => {
+                const found = (values || []).find((v) => String(v || "").trim().length > 0);
+                return found ? String(found).trim() : "";
+            };
+            const hasExplicitEmpty = (pairs) => (pairs || []).some(([obj, key]) => hasOwn(obj, key) && String(obj[key] || "").trim() === "");
             const refs = Array.isArray(offer.moduleRefs) ? offer.moduleRefs : [];
             const firstRefModule = refs
                 .map((id) => (DATA.modules && DATA.modules[id]) ? DATA.modules[id] : null)
                 .find((mod) => !!mod);
             const cardIds = Array.isArray(offer.cards) ? offer.cards : (Array.isArray(raw.cards) ? raw.cards : []);
+            const firstCardId = cardIds.find((id) => !!id) || "";
             const firstCard = cardIds
                 .map((id) => (Array.isArray(DATA.cards) ? DATA.cards.find((c) => c && c.id === id) : null))
                 .find((card) => !!card);
+            const firstCardMeta = firstCardId ? getCardReferenceMeta(firstCardId) : {};
+            const explicitNoTnc = hasExplicitEmpty([
+                [offer, "tnc_url"],
+                [raw, "tnc_url"],
+                [reg, "tncUrl"],
+                [reg, "tnc_url"]
+            ]);
+            const explicitNoPromo = hasExplicitEmpty([
+                [offer, "promo_url"],
+                [raw, "promo_url"],
+                [reg, "promoUrl"],
+                [reg, "promo_url"]
+            ]);
+            const explicitNoRegUrl = hasExplicitEmpty([
+                [offer, "registration_url"],
+                [raw, "registration_url"],
+                [reg, "registrationUrl"],
+                [reg, "registration_url"]
+            ]);
+            const fallbackSourceUrl = firstNonEmpty([
+                firstRefModule ? firstRefModule.source_url : "",
+                firstCard ? firstCard.source_url : "",
+                firstCardMeta.sourceUrl
+            ]);
+            const fallbackSourceTitle = firstNonEmpty([
+                firstRefModule ? firstRefModule.source_title : "",
+                firstCard ? firstCard.source_title : "",
+                firstCardMeta.sourceTitle
+            ]);
+            const fallbackTncUrl = firstNonEmpty([
+                firstRefModule ? firstRefModule.tnc_url : "",
+                firstCard ? firstCard.tnc_url : "",
+                firstCardMeta.tncUrl
+            ]);
+            const fallbackPromoUrl = firstNonEmpty([
+                firstRefModule ? firstRefModule.promo_url : "",
+                firstCard ? firstCard.promo_url : "",
+                firstCardMeta.promoUrl
+            ]);
+            const fallbackRegistrationUrl = firstNonEmpty([
+                firstRefModule ? firstRefModule.registration_url : "",
+                firstCard ? firstCard.registration_url : "",
+                firstCardMeta.registrationUrl
+            ]);
+            const fallbackRegistrationStart = firstNonEmpty([
+                firstRefModule ? firstRefModule.registration_start : "",
+                firstCard ? firstCard.registration_start : "",
+                firstCardMeta.registrationStart
+            ]);
+            const fallbackRegistrationEnd = firstNonEmpty([
+                firstRefModule ? firstRefModule.registration_end : "",
+                firstCard ? firstCard.registration_end : "",
+                firstCardMeta.registrationEnd
+            ]);
+            const fallbackRegistrationNote = firstNonEmpty([
+                firstRefModule ? firstRefModule.registration_note : "",
+                firstCard ? firstCard.registration_note : "",
+                firstCardMeta.registrationNote
+            ]);
+            const resolvedCampaignModel = (raw && raw.id) ? raw : offer;
             return {
                 ...offer,
                 display_name_zhhk: offer.display_name_zhhk || raw.display_name_zhhk || "",
                 name: offer.name || raw.name || "",
                 note_zhhk: offer.note_zhhk || raw.note_zhhk || (firstRefModule ? (firstRefModule.note_zhhk || "") : ""),
-                source_url: offer.source_url || raw.source_url || (firstRefModule ? (firstRefModule.source_url || "") : "") || (firstCard ? (firstCard.source_url || "") : ""),
-                source_title: offer.source_title || raw.source_title || (firstRefModule ? (firstRefModule.source_title || "") : "") || (firstCard ? (firstCard.source_title || "") : ""),
-                tnc_url: offer.tnc_url || raw.tnc_url || reg.tncUrl || "",
-                promo_url: offer.promo_url || raw.promo_url || reg.promoUrl || "",
-                registration_url: offer.registration_url || raw.registration_url || reg.registrationUrl || "",
-                implementation_note: offer.implementation_note || raw.implementation_note || reg.implementationNote || ""
+                source_url: firstNonEmpty([offer.source_url, raw.source_url, fallbackSourceUrl]),
+                source_title: firstNonEmpty([offer.source_title, raw.source_title, fallbackSourceTitle]),
+                tnc_url: firstNonEmpty([offer.tnc_url, raw.tnc_url, reg.tncUrl, explicitNoTnc ? "" : fallbackTncUrl]),
+                promo_url: firstNonEmpty([offer.promo_url, raw.promo_url, reg.promoUrl, explicitNoPromo ? "" : fallbackPromoUrl]),
+                registration_url: firstNonEmpty([offer.registration_url, raw.registration_url, reg.registrationUrl, explicitNoRegUrl ? "" : fallbackRegistrationUrl]),
+                registration_start: firstNonEmpty([offer.registration_start, raw.registration_start, reg.registrationStart, fallbackRegistrationStart]),
+                registration_end: firstNonEmpty([offer.registration_end, raw.registration_end, reg.registrationEnd, fallbackRegistrationEnd]),
+                registration_note: firstNonEmpty([offer.registration_note, raw.registration_note, reg.registrationNote, fallbackRegistrationNote]),
+                implementation_note: firstNonEmpty([
+                    offer.implementation_note,
+                    raw.implementation_note,
+                    reg.implementationNote,
+                    buildCampaignImplementationNote(resolvedCampaignModel)
+                ])
             };
         });
     offers.sort((a, b) => {
@@ -774,6 +966,161 @@ function getCardBankKey(cardId) {
     return "other";
 }
 
+const BANK_REFERENCE_FALLBACKS = {
+    hsbc: {
+        sourceTitle: "HSBC 信用卡官方資料",
+        tncUrl: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
+        promoUrl: "https://www.hsbc.com.hk/zh-hk/credit-cards/"
+    },
+    sc: {
+        sourceTitle: "渣打信用卡官方資料",
+        tncUrl: "https://av.sc.com/hk/content/docs/hk-cxuo-bonus-miles-tnc.pdf",
+        promoUrl: "https://www.sc.com/hk/zh/credit-cards/"
+    },
+    citi: {
+        sourceTitle: "Citi 信用卡官方資料",
+        tncUrl: "https://www.citibank.com.hk/english/credit-cards/pdf/rewards-card/faq.pdf",
+        promoUrl: "https://www.citibank.com.hk/chinese/credit-cards/"
+    },
+    dbs: {
+        sourceTitle: "DBS 信用卡官方資料",
+        tncUrl: "https://www.dbs.com.hk/iwov-resources/pdf/creditcards/DBS-rewards-master-tnc-201709.pdf",
+        promoUrl: "https://www.dbs.com.hk/personal-zh/cards/"
+    },
+    hangseng: {
+        sourceTitle: "恒生信用卡官方資料",
+        tncUrl: "https://www.hangseng.com/content/dam/wpb/hase/rwd/personal/cards/pdfs/everyday_tnc_tc.pdf",
+        promoUrl: "https://www.hangseng.com/zh-hk/personal/cards/"
+    },
+    boc: {
+        sourceTitle: "中銀信用卡官方資料",
+        tncUrl: "https://www.bochk.com/dam/boccreditcard/latestpromotions/rewards2601/tnc_tc.pdf",
+        promoUrl: "https://www.bochk.com/tc/creditcard/promotions/offers/"
+    },
+    ae: {
+        sourceTitle: "American Express 官方資料",
+        tncUrl: "https://www.americanexpress.com/content/dam/amex/hk/ch/staticassets/pdf/cards/explorer-credit-card/MRTnC_CHI.pdf",
+        promoUrl: "https://www.americanexpress.com/zh-hk/benefits/offers/"
+    },
+    fubon: {
+        sourceTitle: "富邦信用卡官方資料",
+        tncUrl: "https://www.fubonbank.com.hk/tc/cards/bonus-points-program/extra-reward.html#box-tnc",
+        promoUrl: "https://www.fubonbank.com.hk/tc/cards/"
+    },
+    bea: {
+        sourceTitle: "東亞信用卡官方資料",
+        tncUrl: "https://www.hkbea.com/pdf/tc/credit-card/master-reward-tnc_tc.pdf",
+        promoUrl: "https://www.hkbea.com/html/tc/bea-credit-card/"
+    },
+    sim: {
+        sourceTitle: "sim 信用卡官方資料",
+        tncUrl: "https://cdn.thesim.com/88_sim_Credit_Card_Terms_and_Conditions_of_Cash_Back_Promotion_TC_final_922dadcd98.pdf?updated_at=2026-01-30T09:07:02.934Z",
+        promoUrl: "https://www.thesim.com/"
+    },
+    aeon: {
+        sourceTitle: "AEON 信用卡官方資料",
+        tncUrl: "https://www.aeon.com.hk/tc/pdf/credit-card/AEONCARDWAKUWAKU_RBBD_TC.pdf",
+        promoUrl: "https://www.aeon.com.hk/tc/"
+    },
+    wewa: {
+        sourceTitle: "WeWa 信用卡官方資料",
+        tncUrl: "https://www.wewacard.com/wp-content/uploads/2025/04/WeWa-Cash-Rebate-Program-Terms-Conditions_Eff-20250701.pdf",
+        promoUrl: "https://www.wewacard.com/overseas-cash-rebate/"
+    },
+    mox: {
+        sourceTitle: "Mox Credit 官方資料",
+        tncUrl: "https://mox.com/static/0_Foreign_Currencies_and_Overseas_Merchant_Spending_Fees_Promotion_TnC.pdf",
+        promoUrl: "https://mox.com/zh/features/mox-credit/"
+    },
+    earnmore: {
+        sourceTitle: "安信 EarnMORE 官方資料",
+        tncUrl: "https://www.primecredit.com/wp-content/uploads/2026/01/C20251153_EarnMORE2026Q1_MKTWEB_300_01022026.pdf",
+        promoUrl: "https://www.primecredit.com/"
+    }
+};
+
+const CARD_REFERENCE_FALLBACKS = {
+    sc_smart: {
+        tncUrl: "https://av.sc.com/hk/zh/content/docs/hk-promo-smart-tnc.pdf"
+    },
+    citi_club: {
+        tncUrl: "https://www.citibank.com.hk/chinese/credit-cards/cititheclub/merchants.pdf"
+    },
+    dbs_black: {
+        tncUrl: "https://www.dbs.com.hk/iwov-resources/pdf/creditcards/BlackMC_CVP_2026_TnC_CN.pdf"
+    },
+    dbs_eminent: {
+        tncUrl: "https://www.dbs.com.hk/iwov-resources/pdf/creditcards/eminent-tnc-5percent-rebate2026-zh.pdf"
+    },
+    dbs_eminent_platinum: {
+        tncUrl: "https://www.dbs.com.hk/iwov-resources/pdf/creditcards/eminent-tnc-5percent-rebate2026-zh.pdf"
+    },
+    dbs_compass: {
+        tncUrl: "https://www.dbs.com.hk/iwov-resources/pdf/creditcards/TnC_CV_COMtoSpend_2026_zh.pdf",
+        promoUrl: "https://www.dbs.com.hk/personal-zh/cards/tnc/20240101-cv-tnc-superwed_supmarketlist-zh.html"
+    },
+    dbs_live_fresh: {
+        tncUrl: "https://www.dbs.com.hk/iwov-resources/pdf/creditcards/Live_Fresh_5_SIR_TC_2026_chi.pdf",
+        promoUrl: "https://www.dbs.com.hk/iwov-resources/pdf/creditcards/TnC_1percent_OnlineFX_zh.pdf"
+    },
+    boc_chill: {
+        tncUrl: "https://www.bochk.com/dam/boccreditcard/chillcard/chill_offer_tnc_tc.pdf",
+        promoUrl: "https://www.bochk.com/tc/creditcard/promotions/offers/chillmerchants.html"
+    },
+    boc_go_diamond: {
+        tncUrl: "https://www.bochk.com/dam/boccreditcard/gocard/gocardoffer_TC.pdf",
+        promoUrl: "https://www.bochk.com/tc/creditcard/promotions/offers/gomerchants.html"
+    },
+    boc_go_platinum: {
+        tncUrl: "https://www.bochk.com/dam/boccreditcard/gocard/gocardoffer_TC.pdf",
+        promoUrl: "https://www.bochk.com/tc/creditcard/promotions/offers/gomerchants.html"
+    },
+    boc_sogo: {
+        tncUrl: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf"
+    },
+    ae_platinum: {
+        tncUrl: "https://www.americanexpress.com/content/dam/amex/hk/benefits/pdf/TnCs_platinum-membership-rewards-accelerator.pdf"
+    },
+    ae_platinum_credit: {
+        tncUrl: "https://www.americanexpress.com/content/dam/amex/hk/benefits/shopping/offers/pdf/Double_Point_Plat_G_2026_TnC.pdf"
+    },
+    fubon_in_platinum: {
+        promoUrl: "https://www.fubonbank.com.hk/tc/cards/credit-card-products/incard.html"
+    },
+    fubon_travel: {
+        promoUrl: "https://www.fubonbank.com.hk/tc/cards/credit-card-products/fubon-credit-card.html"
+    },
+    fubon_infinite: {
+        promoUrl: "https://www.fubonbank.com.hk/tc/cards/credit-card-products/visa-infinite-card.html"
+    },
+    sim_world: {
+        tncUrl: "https://cdn.thesim.com/89_sim_World_Mastercard_Terms_and_Conditions_of_Cash_Back_Promotion_TC_final_da2d7dba35.pdf?updated_at=2026-01-30T09:07:02.858Z"
+    },
+    hangseng_travel_plus: {
+        tncUrl: "https://www.hangseng.com/content/dam/wpb/hase/rwd/personal/cards/pdfs/travelplus_fundollars_tnc_tc.pdf"
+    },
+    hangseng_enjoy: {
+        promoUrl: "https://cms.hangseng.com/cms/emkt/pmo/grp06/p13/chi/index.html#Points4X"
+    }
+};
+
+function getCardReferenceFallback(cardId) {
+    const id = String(cardId || "").trim();
+    const bankKey = getCardBankKey(id);
+    const bankFallback = BANK_REFERENCE_FALLBACKS[bankKey] || {};
+    const cardFallback = CARD_REFERENCE_FALLBACKS[id] || {};
+    return {
+        sourceUrl: cardFallback.sourceUrl || bankFallback.sourceUrl || "",
+        sourceTitle: cardFallback.sourceTitle || bankFallback.sourceTitle || "",
+        tncUrl: cardFallback.tncUrl || bankFallback.tncUrl || "",
+        promoUrl: cardFallback.promoUrl || bankFallback.promoUrl || "",
+        registrationUrl: cardFallback.registrationUrl || bankFallback.registrationUrl || "",
+        registrationStart: cardFallback.registrationStart || bankFallback.registrationStart || "",
+        registrationEnd: cardFallback.registrationEnd || bankFallback.registrationEnd || "",
+        registrationNote: cardFallback.registrationNote || bankFallback.registrationNote || ""
+    };
+}
+
 function getBankLabelByKey(bankKey) {
     const key = String(bankKey || "");
     if (key === "hsbc") return "HSBC";
@@ -819,6 +1166,9 @@ function renderWarningCard(title, icon, description, settingKey, cardId, infoMet
         tncUrl: info.tncUrl || "",
         promoUrl: info.promoUrl || "",
         registrationUrl: info.registrationUrl || "",
+        registrationStart: info.registrationStart || "",
+        registrationEnd: info.registrationEnd || "",
+        registrationNote: info.registrationNote || "",
         implementationNote: info.implementationNote || ""
     }, {
         linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
@@ -871,12 +1221,20 @@ function renderSettingsToggle(options) {
     const onchange = opts.onchange ? String(opts.onchange) : "";
     const checkedClass = opts.checkedClass ? String(opts.checkedClass) : "peer-checked:bg-blue-500";
     const idAttr = id ? ` id="${escapeHtml(id)}"` : "";
-    const onchangeAttr = onchange ? ` onchange="${onchange}"` : "";
+    const onclickAttr = onchange ? ` onclick="${onchange}"` : "";
+    const checkedBgClass = checkedClass
+        .split(/\s+/)
+        .map((cls) => cls.replace(/^peer-checked:/, ""))
+        .filter(Boolean)
+        .join(" ");
+    const trackClass = checked
+        ? (checkedBgClass || "bg-blue-500")
+        : "bg-gray-200";
+    const knobClass = checked ? "translate-x-4" : "translate-x-0";
 
-    return `<label class="relative inline-flex items-center cursor-pointer">
-        <input type="checkbox"${idAttr} class="sr-only peer" ${checked ? "checked" : ""}${onchangeAttr}>
-        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer ${checkedClass} peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
-    </label>`;
+    return `<button type="button"${idAttr}${onclickAttr} role="switch" aria-checked="${checked ? "true" : "false"}" class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${trackClass}">
+        <span class="absolute top-[2px] left-[2px] h-4 w-4 rounded-full border border-gray-300 bg-white transition-transform ${knobClass}"></span>
+    </button>`;
 }
 
 function getCampaignToggleDefinitions() {
@@ -921,6 +1279,9 @@ function getCampaignToggleDefinitions() {
                 tncUrls: [],
                 promoUrls: [],
                 registrationUrls: [],
+                registrationStarts: [],
+                registrationEnds: [],
+                registrationNotes: [],
                 implementationNotes: [],
                 themes: [],
                 cards: [],
@@ -940,9 +1301,15 @@ function getCampaignToggleDefinitions() {
         if (campaign.tnc_url) bySettingKey[settingKey].tncUrls.push(campaign.tnc_url);
         if (campaign.promo_url) bySettingKey[settingKey].promoUrls.push(campaign.promo_url);
         if (campaign.registration_url) bySettingKey[settingKey].registrationUrls.push(campaign.registration_url);
+        if (campaign.registration_start) bySettingKey[settingKey].registrationStarts.push(campaign.registration_start);
+        if (campaign.registration_end) bySettingKey[settingKey].registrationEnds.push(campaign.registration_end);
+        if (campaign.registration_note) bySettingKey[settingKey].registrationNotes.push(campaign.registration_note);
         if (reg.tncUrl) bySettingKey[settingKey].tncUrls.push(reg.tncUrl);
         if (reg.promoUrl) bySettingKey[settingKey].promoUrls.push(reg.promoUrl);
         if (reg.registrationUrl) bySettingKey[settingKey].registrationUrls.push(reg.registrationUrl);
+        if (reg.registrationStart) bySettingKey[settingKey].registrationStarts.push(reg.registrationStart);
+        if (reg.registrationEnd) bySettingKey[settingKey].registrationEnds.push(reg.registrationEnd);
+        if (reg.registrationNote) bySettingKey[settingKey].registrationNotes.push(reg.registrationNote);
         const implNote = campaign.implementation_note || reg.implementationNote || buildCampaignImplementationNote(campaign);
         if (implNote) bySettingKey[settingKey].implementationNotes.push(implNote);
         bySettingKey[settingKey].themes.push(campaign.theme || "");
@@ -962,6 +1329,9 @@ function getCampaignToggleDefinitions() {
         const tncUrls = Array.from(new Set((entry.tncUrls || []).filter(Boolean)));
         const promoUrls = Array.from(new Set((entry.promoUrls || []).filter(Boolean)));
         const registrationUrls = Array.from(new Set((entry.registrationUrls || []).filter(Boolean)));
+        const registrationStarts = Array.from(new Set((entry.registrationStarts || []).filter((v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ""))))).sort();
+        const registrationEnds = Array.from(new Set((entry.registrationEnds || []).filter((v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ""))))).sort();
+        const registrationNotes = Array.from(new Set((entry.registrationNotes || []).filter(Boolean)));
         const implementationNotes = Array.from(new Set((entry.implementationNotes || []).filter(Boolean)));
         return {
             settingKey: entry.settingKey,
@@ -972,6 +1342,9 @@ function getCampaignToggleDefinitions() {
             tncUrl: tncUrls.length > 0 ? tncUrls[0] : "",
             promoUrl: promoUrls.length > 0 ? promoUrls[0] : "",
             registrationUrl: registrationUrls.length > 0 ? registrationUrls[0] : "",
+            registrationStart: registrationStarts.length > 0 ? registrationStarts[0] : "",
+            registrationEnd: registrationEnds.length > 0 ? registrationEnds[registrationEnds.length - 1] : "",
+            registrationNote: registrationNotes.length > 0 ? registrationNotes[0] : "",
             implementationNote: implementationNotes.length > 0 ? implementationNotes[0] : "",
             theme: (entry.themes || []).find(Boolean) || "gray",
             cards: Array.from(new Set((entry.cards || []).filter(Boolean))),
@@ -1006,6 +1379,9 @@ function renderCampaignToggleRows(userProfile, options) {
             tncUrl: def.tncUrl,
             promoUrl: def.promoUrl,
             registrationUrl: def.registrationUrl,
+            registrationStart: def.registrationStart || "",
+            registrationEnd: def.registrationEnd || "",
+            registrationNote: def.registrationNote || "",
             implementationNote: def.implementationNote
         }, {
             linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
@@ -1555,7 +1931,11 @@ function showEnjoy2xInfo() { showEnjoyPoints4xGuide("2X（1%）"); }
 
 // Helper: Create Progress Card Component
 function createProgressCard(config) {
-    const { title, icon, theme, badge, subTitle, sections, warning, actionButton, description, sourceUrl, sourceTitle, tncUrl, promoUrl, registrationUrl, implementationNote } = config;
+    const {
+        title, icon, theme, badge, subTitle, sections, warning, actionButton, description,
+        sourceUrl, sourceTitle, tncUrl, promoUrl, registrationUrl, registrationStart, registrationEnd, registrationNote,
+        implementationNote
+    } = config;
 
     // Theme mapping
     const themeMap = {
@@ -1581,6 +1961,9 @@ function createProgressCard(config) {
         tncUrl: tncUrl || "",
         promoUrl: promoUrl || "",
         registrationUrl: registrationUrl || "",
+        registrationStart: registrationStart || "",
+        registrationEnd: registrationEnd || "",
+        registrationNote: registrationNote || "",
         implementationNote: implementationNote || ""
     }, {
         linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
@@ -1724,12 +2107,21 @@ function renderDashboard(userProfile) {
                 ? `${getBankLabelByKey(scope.bankKey)} 多卡共用`
                 : (scope.type === "cross_bank_shared" ? "跨銀行共用" : "");
             const scopedTitle = scopeLabel ? `${scopeLabel}｜${state.title}` : state.title;
+            const stateModel = (state && state.model && typeof state.model === "object") ? state.model : {};
             const blockHtml = createProgressCard({
                 title: scopedTitle,
                 icon: state.icon,
                 theme: state.theme,
                 badge: state.badge,
                 description: state.description || "",
+                sourceUrl: state.sourceUrl || stateModel.sourceUrl || stateModel.source_url || "",
+                sourceTitle: state.sourceTitle || stateModel.sourceTitle || stateModel.source_title || "",
+                tncUrl: state.tncUrl || stateModel.tncUrl || stateModel.tnc_url || "",
+                promoUrl: state.promoUrl || stateModel.promoUrl || stateModel.promo_url || "",
+                registrationUrl: state.registrationUrl || stateModel.registrationUrl || stateModel.registration_url || "",
+                registrationStart: state.registrationStart || stateModel.registrationStart || stateModel.registration_start || "",
+                registrationEnd: state.registrationEnd || stateModel.registrationEnd || stateModel.registration_end || "",
+                registrationNote: state.registrationNote || stateModel.registrationNote || stateModel.registration_note || "",
                 implementationNote: state.implementationNote || "",
                 sections: state.sections || [],
                 actionButton: state.actionButton || null
@@ -1778,6 +2170,9 @@ function renderDashboard(userProfile) {
                         tncUrl: campaign.tnc_url || "",
                         promoUrl: campaign.promo_url || "",
                         registrationUrl: campaign.registration_url || "",
+                        registrationStart: campaign.registration_start || "",
+                        registrationEnd: campaign.registration_end || "",
+                        registrationNote: campaign.registration_note || "",
                         implementationNote: campaign.implementation_note || buildCampaignImplementationNote(campaign)
                     }
 	            );
@@ -1813,6 +2208,9 @@ function renderDashboard(userProfile) {
                 tncUrl: campaign.tnc_url || "",
                 promoUrl: campaign.promo_url || "",
                 registrationUrl: campaign.registration_url || "",
+                registrationStart: campaign.registration_start || "",
+                registrationEnd: campaign.registration_end || "",
+                registrationNote: campaign.registration_note || "",
                 implementationNote: campaign.implementation_note || buildCampaignImplementationNote(campaign)
             });
 
@@ -1840,6 +2238,7 @@ function renderDashboard(userProfile) {
     ownedCards.forEach(cardId => {
         const card = cardById[cardId] || null;
         if (!card || !Array.isArray(card.rewardModules)) return;
+        const cardReferenceMeta = getCardReferenceMeta(cardId);
         card.rewardModules.forEach(modId => {
             const mod = DATA.modules[modId];
             if (!mod || !mod.cap_limit || !mod.cap_key) return;
@@ -1858,8 +2257,14 @@ function renderDashboard(userProfile) {
                     cardId,
                     {
                         detail: mod.note_zhhk || mod.desc || "",
-                        sourceUrl: mod.source_url || (card && card.source_url) || "",
-                        sourceTitle: mod.source_title || (card && card.source_title) || "",
+                        sourceUrl: mod.source_url || (card && card.source_url) || (cardReferenceMeta.sourceUrl || ""),
+                        sourceTitle: mod.source_title || (card && card.source_title) || (cardReferenceMeta.sourceTitle || ""),
+                        tncUrl: mod.tnc_url || (card && card.tnc_url) || (cardReferenceMeta.tncUrl || ""),
+                        promoUrl: mod.promo_url || (card && card.promo_url) || (cardReferenceMeta.promoUrl || ""),
+                        registrationUrl: mod.registration_url || (card && card.registration_url) || (cardReferenceMeta.registrationUrl || ""),
+                        registrationStart: mod.registration_start || (card && card.registration_start) || (cardReferenceMeta.registrationStart || ""),
+                        registrationEnd: mod.registration_end || (card && card.registration_end) || (cardReferenceMeta.registrationEnd || ""),
+                        registrationNote: mod.registration_note || (card && card.registration_note) || (cardReferenceMeta.registrationNote || ""),
                         implementationNote: buildModuleImplementationNote(mod, card, title)
                     }
 	            ));
@@ -1979,8 +2384,14 @@ function renderDashboard(userProfile) {
                 badge: getPromoBadgeForModule(mod),
                 subTitle: getResetBadgeForKey(mod.cap_key, userProfile),
                 description: mod.note_zhhk || mod.desc || "",
-                sourceUrl: mod.source_url || (card && card.source_url) || "",
-                sourceTitle: mod.source_title || (card && card.source_title) || "",
+                sourceUrl: mod.source_url || (card && card.source_url) || (cardReferenceMeta.sourceUrl || ""),
+                sourceTitle: mod.source_title || (card && card.source_title) || (cardReferenceMeta.sourceTitle || ""),
+                tncUrl: mod.tnc_url || (card && card.tnc_url) || (cardReferenceMeta.tncUrl || ""),
+                promoUrl: mod.promo_url || (card && card.promo_url) || (cardReferenceMeta.promoUrl || ""),
+                registrationUrl: mod.registration_url || (card && card.registration_url) || (cardReferenceMeta.registrationUrl || ""),
+                registrationStart: mod.registration_start || (card && card.registration_start) || (cardReferenceMeta.registrationStart || ""),
+                registrationEnd: mod.registration_end || (card && card.registration_end) || (cardReferenceMeta.registrationEnd || ""),
+                registrationNote: mod.registration_note || (card && card.registration_note) || (cardReferenceMeta.registrationNote || ""),
                 implementationNote: buildModuleImplementationNote(mod, card, title),
                 sections: sections
             }));
@@ -2449,6 +2860,9 @@ function renderSettings(userProfile) {
             tncUrl: def.tncUrl,
             promoUrl: def.promoUrl,
             registrationUrl: def.registrationUrl,
+            registrationStart: def.registrationStart || "",
+            registrationEnd: def.registrationEnd || "",
+            registrationNote: def.registrationNote || "",
             implementationNote: def.implementationNote
         }, {
             linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
@@ -2589,15 +3003,19 @@ function renderSettings(userProfile) {
     }
 
     const cardReferenceMeta = focusedCardId ? getCardReferenceMeta(focusedCardId) : {};
+    const cardImplementationNote = focusedCardId ? buildCardImplementationNote(focusedCardId) : "";
     const cardReferenceLinks = renderReferenceActions({
         sourceUrl: cardReferenceMeta.sourceUrl || "",
-        sourceTitle: cardReferenceMeta.sourceTitle || ""
+        sourceTitle: cardReferenceMeta.sourceTitle || "",
+        tncUrl: cardReferenceMeta.tncUrl || "",
+        promoUrl: cardReferenceMeta.promoUrl || "",
+        implementationNote: cardImplementationNote
     }, {
         linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
         showRegistration: false,
         showPromo: true,
         showTnc: true,
-        showImplementation: false
+        showImplementation: true
     });
     const cardReferenceHtml = cardReferenceLinks
         ? `<div class="mt-1">${cardReferenceLinks}</div>`
@@ -2664,17 +3082,47 @@ function renderSettings(userProfile) {
         .join("");
     const guruRegistered = !!userProfile.settings.travel_guru_registered;
     const guruModel = (typeof getLevelLifecycleModel === "function") ? getLevelLifecycleModel("travel_guru") : null;
+    const guruRawModel = (typeof DATA !== "undefined" && DATA && DATA.specialPromoModels && DATA.specialPromoModels.travel_guru)
+        ? DATA.specialPromoModels.travel_guru
+        : null;
     const guruCandidates = (guruModel && Array.isArray(guruModel.cards) && guruModel.cards.length > 0)
         ? guruModel.cards
-        : ownedCardsByModule("travel_guru_v2");
+        : ((guruRawModel && Array.isArray(guruRawModel.cards) && guruRawModel.cards.length > 0)
+            ? guruRawModel.cards
+            : ownedCardsByModule("travel_guru_v2"));
     const guruFallbackCardId = findFirstOwnedCard(guruCandidates);
     const guruSourceMeta = guruFallbackCardId ? getCardReferenceMeta(guruFallbackCardId) : {};
-    const guruImplementationNote = (guruModel && guruModel.implementationNote)
-        ? guruModel.implementationNote
+    const guruRefMeta = guruRawModel || guruModel || {};
+    const guruTncUrl = (guruRefMeta && Object.prototype.hasOwnProperty.call(guruRefMeta, "tncUrl"))
+        ? String(guruRefMeta.tncUrl || "")
+        : (guruSourceMeta.tncUrl || "");
+    const guruPromoUrl = (guruRefMeta && Object.prototype.hasOwnProperty.call(guruRefMeta, "promoUrl"))
+        ? String(guruRefMeta.promoUrl || "")
+        : (guruSourceMeta.promoUrl || "");
+    const guruRegistrationUrl = (guruRefMeta && Object.prototype.hasOwnProperty.call(guruRefMeta, "registrationUrl"))
+        ? String(guruRefMeta.registrationUrl || "")
+        : (guruSourceMeta.registrationUrl || "");
+    const guruRegistrationStart = (guruRefMeta && Object.prototype.hasOwnProperty.call(guruRefMeta, "registrationStart"))
+        ? String(guruRefMeta.registrationStart || "")
+        : (guruSourceMeta.registrationStart || "");
+    const guruRegistrationEnd = (guruRefMeta && Object.prototype.hasOwnProperty.call(guruRefMeta, "registrationEnd"))
+        ? String(guruRefMeta.registrationEnd || "")
+        : (guruSourceMeta.registrationEnd || "");
+    const guruRegistrationNote = (guruRefMeta && Object.prototype.hasOwnProperty.call(guruRefMeta, "registrationNote"))
+        ? String(guruRefMeta.registrationNote || "")
+        : (guruSourceMeta.registrationNote || "");
+    const guruImplementationNote = (guruRefMeta && (guruRefMeta.implementationNote || guruRefMeta.implementation_note))
+        ? String(guruRefMeta.implementationNote || guruRefMeta.implementation_note)
         : "計算器做法：登記後可啟動 GO 級；其後海外合資格簽賬按等級計算（GO +3% 上限 500 RC、GING +4% 上限 1,200 RC、GURU +6% 上限 2,200 RC），每級達升級門檻後可升級並重置該級進度。";
     const guruRefsHtml = renderReferenceActions({
         sourceUrl: guruSourceMeta.sourceUrl || "",
         sourceTitle: guruSourceMeta.sourceTitle || "",
+        tncUrl: guruTncUrl,
+        promoUrl: guruPromoUrl,
+        registrationUrl: guruRegistrationUrl,
+        registrationStart: guruRegistrationStart,
+        registrationEnd: guruRegistrationEnd,
+        registrationNote: guruRegistrationNote,
         implementationNote: guruImplementationNote
     }, {
         linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
@@ -2801,6 +3249,12 @@ function renderSettings(userProfile) {
     const redHotRefsHtml = renderReferenceActions({
         sourceUrl: redHotSource ? (redHotSource.source_url || "") : "",
         sourceTitle: redHotSource ? (redHotSource.source_title || "") : "",
+        tncUrl: redHotSource ? (redHotSource.tnc_url || "") : "",
+        promoUrl: redHotSource ? (redHotSource.promo_url || "") : "",
+        registrationUrl: redHotSource ? (redHotSource.registration_url || "") : "",
+        registrationStart: redHotSource ? (redHotSource.registration_start || "") : "",
+        registrationEnd: redHotSource ? (redHotSource.registration_end || "") : "",
+        registrationNote: redHotSource ? (redHotSource.registration_note || "") : "",
         implementationNote: "計算器做法：先把 5X 權重分配到 5 個最紅類別（總和必須為 5）；每 1X = +0.4%，所以該類別總回贈 = 基本 0.4% + (X × 0.4%)。例如 5X 類別合共 2.4%。Visa Signature 會再有額外 +1.2%，並按各卡進度卡顯示的上限計算。"
     }, {
         linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
@@ -2846,7 +3300,8 @@ function renderSettings(userProfile) {
     const visibleBankSharedDefs = defsWithScope.filter((def) => {
         if (!def._scope || def._scope.type !== "bank_shared") return false;
         if (!focusedCardId) return true;
-        return def._scope.bankKey === focusedBankKey;
+        if (def._scope.bankKey !== focusedBankKey) return false;
+        return Array.isArray(def.cards) && def.cards.includes(focusedCardId);
     });
     const visibleCrossBankDefs = defsWithScope.filter((def) => def._scope && def._scope.type === "cross_bank_shared");
     const registrationRowsByCard = {};
@@ -2867,7 +3322,7 @@ function renderSettings(userProfile) {
     });
     const includeWinterForFocus = !!(winterDef && (
         winterScope.type === "bank_shared"
-            ? winterScope.bankKey === focusedBankKey
+            ? (winterScope.bankKey === focusedBankKey && (!focusedCardId || (Array.isArray(winterDef.cards) && winterDef.cards.includes(focusedCardId))))
             : (winterCardId && (!focusedCardId || winterCardId === focusedCardId))
     ));
 
@@ -2880,6 +3335,9 @@ function renderSettings(userProfile) {
                 tncUrl: winterDef.tncUrl,
                 promoUrl: winterDef.promoUrl,
                 registrationUrl: winterDef.registrationUrl,
+                registrationStart: winterDef.registrationStart || "",
+                registrationEnd: winterDef.registrationEnd || "",
+                registrationNote: winterDef.registrationNote || "",
                 implementationNote: winterDef.implementationNote
             }, {
                 linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
@@ -2898,7 +3356,7 @@ function renderSettings(userProfile) {
             : "";
         const winterHtml = `<div data-setting-key="winter_promo_enabled" class="border p-3 rounded-xl bg-stone-50 border-stone-200">
         <div class="flex justify-between items-center mb-2">
-            <label class="text-xs font-bold text-stone-800">HSBC 最紅冬日賞</label>
+            <label class="text-xs font-bold text-stone-800">HSBC 最紅冬日賞（專屬客戶）</label>
             ${renderSettingsToggle({ id: "st-winter", checked: !!userProfile.settings.winter_promo_enabled, onchange: "toggleSetting('winter_promo_enabled')" })}
         </div>
         ${winterMetaHtml}

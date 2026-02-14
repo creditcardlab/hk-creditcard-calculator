@@ -364,6 +364,14 @@ function getLevelLifecycleModel(modelId) {
         settingKey: raw.settingKey || raw.setting_key || defaults.settingKey,
         registrationSettingKey: raw.registrationSettingKey || raw.registration_setting_key || defaults.registrationSettingKey,
         implementationNote: raw.implementationNote || raw.implementation_note || defaults.implementationNote || "",
+        sourceUrl: raw.sourceUrl || raw.source_url || "",
+        sourceTitle: raw.sourceTitle || raw.source_title || "",
+        tncUrl: raw.tncUrl || raw.tnc_url || "",
+        promoUrl: raw.promoUrl || raw.promo_url || "",
+        registrationUrl: raw.registrationUrl || raw.registration_url || "",
+        registrationStart: raw.registrationStart || raw.registration_start || "",
+        registrationEnd: raw.registrationEnd || raw.registration_end || "",
+        registrationNote: raw.registrationNote || raw.registration_note || "",
         rewardUnit: raw.rewardUnit || raw.reward_unit || defaults.rewardUnit,
         unlockSpend: Math.max(0, Number(raw.unlockSpend || raw.unlock_spend || defaults.unlockSpend) || 0),
         unlockSpendKey: raw.unlockSpendKey || raw.unlock_spend_key || defaults.unlockSpendKey,
@@ -392,6 +400,16 @@ function getLevelLifecycleState(modelId, profile) {
     if (!profile || !profile.settings || !profile.usage) return null;
     const model = getLevelLifecycleModel(modelId);
     if (!model) return null;
+    const modelRefs = {
+        sourceUrl: model.sourceUrl || "",
+        sourceTitle: model.sourceTitle || "",
+        tncUrl: model.tncUrl || "",
+        promoUrl: model.promoUrl || "",
+        registrationUrl: model.registrationUrl || "",
+        registrationStart: model.registrationStart || "",
+        registrationEnd: model.registrationEnd || "",
+        registrationNote: model.registrationNote || ""
+    };
 
     const eligibleCards = Array.isArray(model.cards) ? model.cards : [];
     if (eligibleCards.length > 0) {
@@ -424,6 +442,7 @@ function getLevelLifecycleState(modelId, profile) {
             icon: model.icon,
             theme: model.theme,
             implementationNote: model.implementationNote || "",
+            ...modelRefs,
             badge: rewardUnlocked ? "可啟動GO級" : "待解鎖",
             actionButton: rewardUnlocked
                 ? {
@@ -478,6 +497,7 @@ function getLevelLifecycleState(modelId, profile) {
         icon: model.icon,
         theme: model.theme,
         implementationNote: model.implementationNote || "",
+        ...modelRefs,
         badge: levelName,
         actionButton: canUpgrade
             ? {
