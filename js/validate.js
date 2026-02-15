@@ -172,6 +172,24 @@ function validateData(data) {
         });
     });
 
+    // Category hierarchy cycle detection
+    if (data.rules && data.rules.categoryHierarchy) {
+        const hierarchy = data.rules.categoryHierarchy;
+        Object.keys(hierarchy).forEach((catId) => {
+            const visited = new Set();
+            let cur = catId;
+            while (cur && hierarchy[cur]) {
+                if (visited.has(cur)) {
+                    addError(`[data] category hierarchy cycle detected involving: ${catId}`);
+                    break;
+                }
+                visited.add(cur);
+                const parents = hierarchy[cur];
+                cur = Array.isArray(parents) ? parents[0] : null;
+            }
+        });
+    }
+
     const normalizePeriodSpec = (spec) => {
         if (!spec) return { periodType: "none", anchorRef: null };
         if (typeof spec === "string") return { periodType: spec, anchorRef: null };
@@ -269,12 +287,22 @@ function validateData(data) {
         if (mod.promo_end && !isValidDate(mod.promo_end)) {
             addWarning(`[data] module ${modId} promo_end is not YYYY-MM-DD: ${mod.promo_end}`);
         }
+        if (mod.valid_days) {
+            if (!Array.isArray(mod.valid_days)) {
+                addError(`[data] module ${modId} valid_days must be an array`);
+            } else {
+                mod.valid_days.forEach((day) => {
+                    if (!Number.isInteger(day) || day < 0 || day > 6) {
+                        addError(`[data] module ${modId} valid_days contains invalid value: ${day} (must be integer 0-6)`);
+                    }
+                });
+            }
+        }
         if (mod.cap && mod.cap.period) {
             const periodSpec = normalizePeriodSpec(mod.cap.period);
             const anchor = periodSpec.anchorRef || defaults[periodSpec.periodType];
             validateAnchor({ ...anchor, type: periodSpec.periodType }, `module:${modId}.cap`);
-        } else if (strictPeriods && mod.cap_key) {
-            // Only warn in strict mode: many caps are intentionally non-resettable.
+        } else if (mod.cap_key) {
             addWarning(`[data] module ${modId} cap_key has no cap.period (defaults to none): ${mod.cap_key}`);
         }
         if (mod.counter && mod.counter.period) {
@@ -289,6 +317,14 @@ function validateData(data) {
             const distinct = distinctEligibleByReqKey[mod.req_mission_key];
             if (distinct && distinct.size > 0) {
                 addWarning(`[data] module ${modId} mission has distinct eligible keys [${Array.from(distinct).join(", ")}] but progress_mission_key is missing`);
+            }
+        }
+        if (mod.secondary_cap_key) {
+            const found = Object.values(modules).some(
+                (m) => m.cap_key === mod.secondary_cap_key
+            );
+            if (!found) {
+                addWarning(`[data] module ${modId} secondary_cap_key "${mod.secondary_cap_key}" is not defined as cap_key in any module`);
             }
         }
     });

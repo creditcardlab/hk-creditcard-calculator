@@ -1123,6 +1123,7 @@ function makeBreakdownFromText(text, tone, flags) {
 }
 
 function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod) {
+    if (!amount || amount <= 0) return null;
     const modules = (DATA && DATA.modules) ? DATA.modules : {};
     const conversions = (DATA && DATA.conversions) ? DATA.conversions : [];
     const resolvedCategory = resolveCategory(card.id, category);

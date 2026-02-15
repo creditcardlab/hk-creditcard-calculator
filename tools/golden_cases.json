@@ -6758,6 +6758,172 @@
           "hasPartial": false
         }
       }
+    },
+    {
+      "id": "case_246_amount_zero_returns_null",
+      "input": {
+        "amount": 0,
+        "category": "general",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red",
+          "hsbc_everymile"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": null,
+        "topValue": 0,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_247_red_online_reward_cap_partial",
+      "input": {
+        "amount": 10000,
+        "category": "general",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {},
+        "usage": {
+          "red_online_cap": 390
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_248_red_online_fully_capped",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {},
+        "usage": {
+          "red_online_cap": 400
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_249_sc_smart_spending_cap_partial",
+      "input": {
+        "amount": 500,
+        "category": "smart_designated",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "sc_smart"
+        ],
+        "settings": {},
+        "usage": {
+          "sc_smart_cap": 4900,
+          "sc_smart_monthly_eligible": 5000
+        }
+      },
+      "expected": {
+        "topCardId": "sc_smart",
+        "topValue": 7.24,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_250_em_promo_locked_retroactive",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_everymile"
+        ],
+        "settings": {
+          "em_promo_enabled": true
+        },
+        "usage": {
+          "em_q1_total": 5000
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_everymile",
+        "topValue": 10,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_251_em_promo_unlocked",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_other",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_everymile"
+        ],
+        "settings": {
+          "em_promo_enabled": true
+        },
+        "usage": {
+          "em_q1_total": 12000
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_everymile",
+        "topValue": 25,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
     }
   ],
   "period_cases": [

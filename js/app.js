@@ -294,17 +294,6 @@ function validateUsageRegistry() {
     }
 }
 
-function resetRedMonthlyCaps() {
-    resetCountersForPeriod("month");
-}
-
-function resetBeaMonthlyCaps() {
-    resetCountersForPeriod("month");
-}
-
-function resetMonthlyCaps() {
-    resetCountersForPeriod("month");
-}
 
 // --- CORE ACTIONS ---
 

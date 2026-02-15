@@ -56,39 +56,7 @@ node tools/run_golden_cases.js
 node tools/run_golden_cases.js --update
 ```
 
-## Notion Sync（用嚟 visualise 同方便改 data）
-
-`tools/sync_notion.py` 會讀 repo 嘅 `DATA`（用 Node VM 跑 `js/data_index.js`），然後同步到你 Notion page 底下嘅 child databases（如果你有建立）。
-
-1. 只輸出本地 JSON dump（唔需要 Notion token）：
-
-```bash
-python3 tools/sync_notion.py --dump .tmp_data_dump.json
-```
-
-1. 同步到 Notion（需要 Notion integration token）：
-
-```bash
-export NOTION_TOKEN='...'
-python3 tools/sync_notion.py --page-url 'https://www.notion.so/...'
-```
-
-1. 支援嘅 database 名稱（建議用呢啲名；舊名亦會兼容）：
-
-```text
-Cards
-Categories
-Modules
-Trackers
-Campaigns (或 Promotions)
-Campaign Sections (或 Promotion Sections)
-Campaign Registry (或 Promo Registry)
-Counters Registry (可選)
-```
-
-## Local Workbench（Notion 替代：本地 audit + 編輯）
-
-如果 Notion 對複雜規則太難 audit，可以用本地 workbench：
+## Workbench（本地 audit + 編輯）
 
 1. 產生本地審核報告：
 
@@ -122,7 +90,7 @@ node tools/workbench.js apply --edits tools/workbench_edits.example.json --dry-r
 node tools/workbench.js apply --edits tools/workbench_edits.example.json
 ```
 
-預設會更新：`js/data_notion_core_overrides.js`
+預設會更新：`js/data_overrides.js`
 
 ## 私隱
 

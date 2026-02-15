@@ -2,13 +2,15 @@
 
 const modulesDB = {
     // --- HSBC ---
-    "hsbc_std_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
-    "vs_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
+    "hsbc_std_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)", last_verified_at: "2026-02-06", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf" },
+    "vs_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)", last_verified_at: "2026-02-06", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/visa-signature/special-reward-tnc.pdf" },
     "red_hot_variable": {
         type: "red_hot_allocation",
         rate_per_x: 0.004,
         desc: "最紅自主",
         setting_key: "red_hot_rewards_enabled",
+        last_verified_at: "2026-02-05",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/rewards/2026-red-hot-rewards-of-your-choice-terms-and-conditions.pdf, https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/#3",
         tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/rewards/2026-red-hot-rewards-of-your-choice-terms-and-conditions.pdf",
         promo_url: "https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/",
         registration_url: "https://forms.hsbc.com.hk/en-hk/red-hot-rewards-of-your-choice/",
@@ -18,18 +20,25 @@ const modulesDB = {
         // 「最紅自主」通常以年度為週期（之後如要自訂週期，可用 periodOverrides.byKey/modules 擴展）。
         cap: { period: { type: "year", startMonth: 1, startDay: 1 } }
     },
-    "vs_red_hot_bonus": { type: "red_hot_fixed_bonus", multiplier: 3, rate_per_x: 0.004, desc: "VS專屬賞 (1.2%)" },
+    "vs_red_hot_bonus": { type: "red_hot_fixed_bonus", multiplier: 3, rate_per_x: 0.004, desc: "VS專屬賞 (1.2%)", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/rewards/2026-red-hot-rewards-of-your-choice-terms-and-conditions.pdf, https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/#3" },
     // Easy Card「易賞錢」：百佳/屈臣氏 $5=1分；豐澤 $10=1分（同樣 6 倍會出現兩個不同回贈率）。
     // - 新交易請用細分 category；舊 category 仍保留以支援已記帳資料。
-    "easy_moneyback_bonus": { type: "category", match: ["moneyback_merchant"], rate: 0.024, desc: "易賞錢指定商戶 6倍 (約2.4%)", mode: "replace" },
-    "easy_moneyback_pns_watsons_6x": { type: "category", match: ["moneyback_pns_watsons"], rate: 0.024, desc: "易賞錢：百佳/屈臣氏 6倍 (約2.4%)", mode: "replace" },
-    "easy_moneyback_fortress_6x": { type: "category", match: ["moneyback_fortress"], rate: 0.012, desc: "易賞錢：豐澤 6倍 (約1.2%)", mode: "replace" },
+    "easy_moneyback_bonus": {
+        type: "category", match: ["moneyback_merchant"], rate: 0.024, desc: "易賞錢指定商戶 6倍 (約2.4%)", mode: "replace",
+        note_zhhk: "基本「易賞錢」獎賞積分即於百佳及屈臣氏作每港幣 5 元簽賬相等於 1「易賞錢」積分或於豐澤作\n每港幣 10 元簽賬相等於 1「易賞錢」積分;6 倍「易賞錢」獎賞積分即於百佳及屈臣氏作每港幣 5 元\n簽賬相等於 6「易賞錢」 積分或於豐澤作每港幣 10 元簽賬相等於 6「易賞錢」積分;而 4 倍「易賞錢\n」獎賞積分即於百佳及屈臣氏作每港幣 5 元簽賬相等於 4「易賞錢」積分或於豐澤作每港幣 10 元簽\n賬相等於 4「易賞錢」積分。有關「易賞錢」積分的條款及細則請參閱「易賞錢」網頁",
+        last_verified_at: "2026-02-06",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf"
+    },
+    "easy_moneyback_pns_watsons_6x": { type: "category", match: ["moneyback_pns_watsons"], rate: 0.024, desc: "易賞錢：百佳/屈臣氏 6倍 (約2.4%)", mode: "replace", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf" },
+    "easy_moneyback_fortress_6x": { type: "category", match: ["moneyback_fortress"], rate: 0.012, desc: "易賞錢：豐澤 6倍 (約1.2%)", mode: "replace", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf" },
     // Reward cap is $200. Use reward-based cap to avoid 8333 * 2.4% => 199.992 rounding artifacts.
     "student_tuition_bonus": {
         type: "category",
         match: ["tuition"],
         rate: 0.024,
         desc: "學費回贈 (2.4%)",
+        last_verified_at: "2026-02-06",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/tc/tuition-fee-payment-tcs1.pdf",
         cap_mode: "reward",
         cap_limit: 200,
         cap_key: "student_tuition_cap",
@@ -40,20 +49,25 @@ const modulesDB = {
         match: ["china_consumption"],
         rate: 0.02,
         desc: "內地/澳門手機支付 (+2%)",
+        note_zhhk: "要手機支付!!!",
+        last_verified_at: "2026-02-06",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
         mode: "add",
         eligible_check: (cat, ctx) => !!(ctx && ctx.paymentMethod && ctx.paymentMethod !== "physical")
     },
-    "em_base": { type: "always", rate: 0.01, desc: "基本 (1%)" },
-    "em_designated": { type: "category", match: ["streaming", "em_designated_spend"], rate: 0.025, desc: "指定 $2/里 (2.5%)", mode: "replace" },
-    "em_grocery_low": { type: "category", match: ["grocery"], rate: 0.004, desc: "超市 (0.4%)", mode: "replace" },
-    "red_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
-    "red_online": { type: "category", match: ["online"], rate: 0.04, desc: "網購 +3.6% (4%)", mode: "replace", cap_mode: "reward", cap_limit: 400, cap_key: "red_online_cap", cap: { key: "red_online_cap", period: "month" } },
-    "red_designated_bonus": { type: "category", match: ["red_designated"], rate: 0.076, desc: "指定商戶 +7.6% (8%)", cap_mode: "reward", cap_limit: 100, cap_key: "red_designated_cap", cap: { key: "red_designated_cap", period: "month" } },
+    "em_base": { type: "always", rate: 0.01, desc: "基本 (1%)", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
+    "em_designated": { type: "category", match: ["streaming", "em_designated_spend"], rate: 0.025, desc: "指定 $2/里 (2.5%)", mode: "replace", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
+    "em_grocery_low": { type: "category", match: ["grocery"], rate: 0.004, desc: "超市 (0.4%)", mode: "replace", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
+    "red_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf" },
+    "red_online": { type: "category", match: ["online"], rate: 0.04, desc: "網購 +3.6% (4%)", mode: "replace", cap_mode: "reward", cap_limit: 400, cap_key: "red_online_cap", cap: { key: "red_online_cap", period: "month" }, last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf" },
+    "red_designated_bonus": { type: "category", match: ["red_designated"], rate: 0.076, desc: "指定商戶 +7.6% (8%)", cap_mode: "reward", cap_limit: 100, cap_key: "red_designated_cap", cap: { key: "red_designated_cap", period: "month" }, last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf" },
     // [NEW] Actual Calculation Module for EveryMile Promo
     // Base 1% + Bonus 1.5% = 2.5% ($2/mile). Req $12,000 spend.
     "em_overseas_bonus": {
         type: "category", match: ["overseas"], rate: 0.015, desc: "EM推廣 (+1.5%)",
         mode: "add", setting_key: "em_promo_enabled",
+        last_verified_at: "2026-02-12",
+        source_url: "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/everymile-spending-offer/, https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf",
         req_mission_spend: 12000, req_mission_key: "em_q1_total",
         progress_mission_key: "em_q1_eligible",
         cap_mode: "reward", cap_limit: 225, cap_key: "em_promo_cap", // $225 RC cap (approx $15,000 usage capped at bonus?) No, wait.
@@ -70,6 +84,8 @@ const modulesDB = {
         type: "guru_capped",
         category: "overseas",
         setting_key: "travel_guru_registered",
+        last_verified_at: "2026-02-05",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/everymile/everymile-rewards-scheme-travel-benefits.pdf",
         req_mission_spend: 8000,
         req_mission_key: "spend_guru_unlock",
         tnc_url: "https://www.redhotoffers.hsbc.com.hk/media/100531673/TC_TC_Spending-Requirements-and-Offers-for-Travel-Guru-Membership-Programme_20260101.pdf",

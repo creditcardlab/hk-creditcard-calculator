@@ -7,6 +7,8 @@ const cardsDB = [
         currency: "HSBC_RC_EM",
         type: "master",
         fcf: 0.0195,
+        last_verified_at: "2026-02-12",
+        source_url: "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/everymile-spending-offer/, https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf",
         rewardModules: ["em_base", "em_designated", "em_grocery_low", "em_overseas_bonus", "travel_guru_v2"],
         trackers: ["em_overseas_mission"],
         redemption: {
@@ -22,6 +24,8 @@ const cardsDB = [
         currency: "HSBC_RC",
         type: "visa",
         fcf: 0.0195,
+        last_verified_at: "2026-02-05",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/visa-signature/special-reward-tnc.pdf",
         rewardModules: ["vs_base", "vs_red_hot_bonus", "red_hot_variable", "travel_guru_v2"],
         trackers: ["winter_tracker"],
         redemption: {
@@ -37,6 +41,8 @@ const cardsDB = [
         currency: "HSBC_RC",
         type: "master",
         fcf: 0.0195,
+        last_verified_at: "2026-02-06",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
         rewardModules: ["red_base", "red_online", "red_designated_bonus", "travel_guru_v2"],
         trackers: ["winter_tracker"]
     },
@@ -46,6 +52,9 @@ const cardsDB = [
       currency: "HSBC_RC",
       type: "unionpay",
       fcf: 0,
+      note_zhhk: "中國內地及澳門外幣手續費為0",
+      last_verified_at: "2026-02-06",
+      source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
       // Mainland China + Macau are fee-free; other foreign spend uses the card's fcf.
       fcf_exempt_categories: ["overseas_cn", "overseas_mo", "china_consumption"],
       rewardModules: ["hsbc_std_base", "red_hot_variable", "pulse_china_bonus", "travel_guru_v2"],
@@ -57,6 +66,9 @@ const cardsDB = [
       currency: "HSBC_RC",
       type: "unionpay",
       fcf: 0,
+      note_zhhk: "中國內地及澳門外幣手續費為0",
+      last_verified_at: "2026-02-06",
+      source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
       // Mainland China + Macau are fee-free; other foreign spend uses the card's fcf.
       fcf_exempt_categories: ["overseas_cn", "overseas_mo", "china_consumption"],
       rewardModules: ["hsbc_std_base", "red_hot_variable", "travel_guru_v2"],
@@ -68,6 +80,8 @@ const cardsDB = [
         currency: "HSBC_RC",
         type: "visa",
         fcf: 0.0195,
+        last_verified_at: "2026-02-06",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
         rewardModules: [
             "hsbc_std_base",
             "red_hot_variable",
@@ -84,6 +98,8 @@ const cardsDB = [
         currency: "HSBC_RC",
         type: "visa",
         fcf: 0.0195,
+        last_verified_at: "2026-02-06",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
         rewardModules: ["hsbc_std_base", "red_hot_variable", "student_tuition_bonus", "travel_guru_v2"],
         trackers: ["winter_tracker"]
     },
@@ -93,6 +109,8 @@ const cardsDB = [
         currency: "HSBC_RC",
         type: "visa",
         fcf: 0.0195,
+        last_verified_at: "2026-02-06",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
         rewardModules: ["hsbc_std_base", "red_hot_variable", "travel_guru_v2"],
         trackers: ["winter_tracker"]
     },
@@ -102,6 +120,8 @@ const cardsDB = [
         currency: "HSBC_RC",
         type: "master",
         fcf: 0.0195,
+        last_verified_at: "2026-02-06",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
         rewardModules: ["hsbc_std_base", "red_hot_variable", "travel_guru_v2"],
         trackers: ["winter_tracker"]
     },
