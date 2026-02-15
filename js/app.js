@@ -47,17 +47,46 @@ window.showToast = function (message, type = 'info', duration = 2200) {
 }
 
 // --- INIT ---
+function checkDependencies() {
+    const missing = [];
+    // Data
+    if (typeof DATA === "undefined" || !DATA) missing.push("DATA");
+    else {
+        if (!DATA.modules) missing.push("DATA.modules");
+        if (!DATA.cards) missing.push("DATA.cards");
+        if (!DATA.countersRegistry) missing.push("DATA.countersRegistry");
+        if (!DATA.periodPolicy) missing.push("DATA.periodPolicy");
+    }
+    // Functions from core.js
+    if (typeof validateData !== "function") missing.push("validateData");
+    if (typeof evaluateTrackers !== "function") missing.push("evaluateTrackers");
+    if (typeof getBucketKey !== "function") missing.push("getBucketKey");
+    if (typeof isCategoryMatch !== "function") missing.push("isCategoryMatch");
+    if (typeof ensureBooleanSettingDefaults !== "function") missing.push("ensureBooleanSettingDefaults");
+    if (typeof buildCardResult !== "function") missing.push("buildCardResult");
+    if (typeof calculateResults !== "function") missing.push("calculateResults");
+    // HolidayManager
+    if (typeof HolidayManager === "undefined") missing.push("HolidayManager");
+    if (missing.length > 0) {
+        const msg = "[init] Missing dependencies: " + missing.join(", ");
+        console.error(msg);
+        throw new Error(msg);
+    }
+}
+
 function init() {
-    if (typeof validateData === "function") {
-        const shouldValidate = !(DATA && DATA.debug && DATA.debug.validate === false);
-        if (shouldValidate) validateData(DATA);
+    checkDependencies();
+    const shouldValidate = !(DATA.debug && DATA.debug.validate === false);
+    if (shouldValidate) {
+        validateData(DATA);
+        if (typeof validateUsageKeys === "function") validateUsageKeys(DATA);
     }
     loadUserData();
     const guruUsageKeys = getGuruUsageKeys();
     if (!userProfile.usage[guruUsageKeys.spendKey]) userProfile.usage[guruUsageKeys.spendKey] = 0;
     if (!userProfile.usage[guruUsageKeys.rewardKey]) userProfile.usage[guruUsageKeys.rewardKey] = 0;
     if (!userProfile.usage.spend_guru_unlock) userProfile.usage.spend_guru_unlock = 0;
-    if (typeof ensureBooleanSettingDefaults === "function") ensureBooleanSettingDefaults(userProfile.settings);
+    ensureBooleanSettingDefaults(userProfile.settings);
     if (userProfile.settings.deduct_fcf_ranking === undefined) userProfile.settings.deduct_fcf_ranking = false;
     if (userProfile.settings.settings_focus_card === undefined) userProfile.settings.settings_focus_card = "";
     if (userProfile.settings.settings_detail_mode === undefined) userProfile.settings.settings_detail_mode = false;
@@ -117,13 +146,11 @@ function init() {
 }
 
 function getGuruUsageKeys() {
-    if (typeof getTravelGuruUsageKeys === "function") return getTravelGuruUsageKeys();
-    return { spendKey: "guru_spend_accum", rewardKey: "guru_rc_used" };
+    return getTravelGuruUsageKeys();
 }
 
 function isGuruOverseasCategory(category) {
-    if (typeof isCategoryMatch === "function") return isCategoryMatch(["overseas"], category);
-    return ['overseas', 'overseas_jkt', 'overseas_jp', 'overseas_jpkr', 'overseas_th', 'overseas_tw', 'overseas_cn', 'overseas_mo', 'overseas_other'].includes(category);
+    return isCategoryMatch(["overseas"], category);
 }
 
 function migrateWinterUsage() {
@@ -181,11 +208,11 @@ function getMonthKey() {
 }
 
 function getCountersRegistry() {
-    return (typeof DATA !== "undefined" && DATA.countersRegistry) ? DATA.countersRegistry : {};
+    return DATA.countersRegistry || {};
 }
 
 function resolveAnchorForKey(key, entry) {
-    const defaults = (typeof DATA !== "undefined" && DATA.periodDefaults) ? DATA.periodDefaults : {};
+    const defaults = DATA.periodDefaults || {};
     const overrides = (userProfile.settings && userProfile.settings.periodOverrides) ? userProfile.settings.periodOverrides : {};
 
     let override = null;
@@ -308,9 +335,7 @@ function refreshUI() {
     renderDashboard(userProfile)
 
     // Dynamically update categories based on owned cards
-    if (typeof updateCategoryDropdown === 'function') {
-        updateCategoryDropdown(userProfile.ownedCards);
-    }
+    if (typeof updateCategoryDropdown === 'function') updateCategoryDropdown(userProfile.ownedCards);
 
     const feeToggle = document.getElementById('toggle-fee-deduct');
     if (feeToggle) feeToggle.checked = !!userProfile.settings.deduct_fcf_ranking;
@@ -461,7 +486,7 @@ function rebuildUsageAndStatsFromTransactions() {
         const paymentMethod = tx.paymentMethod || (tx.isMobilePay ? "mobile" : "physical");
         const isMobilePay = paymentMethod !== "physical";
         const txDate = tx.txDate || (tx.date ? new Date(tx.date).toISOString().slice(0, 10) : "");
-        const isHoliday = (typeof HolidayManager !== 'undefined' && HolidayManager.isHoliday) ? HolidayManager.isHoliday(txDate) : false;
+        const isHoliday = HolidayManager.isHoliday(txDate);
 
         userProfile.stats.totalSpend += amount;
         userProfile.stats.totalVal += Number(tx.rebateVal) || 0;
@@ -526,8 +551,7 @@ window.handleDeleteTx = function (id) {
 // --- DATA MODIFIERS ---
 
 function trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday) {
-    if (!cardId || typeof DATA === 'undefined' || !DATA.cards) return;
-    if (typeof evaluateTrackers !== "function") return;
+    if (!cardId || !DATA.cards) return;
     const res = evaluateTrackers(cardId, { category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday }, userProfile, DATA);
     if (!res || !Array.isArray(res.effects)) return;
     res.effects.forEach((effect) => {
@@ -543,7 +567,7 @@ function commitTransaction(data) {
     const txDate = data.txDate || "";
     if (!txDate) return "\n⚠️ 未記錄：請先選擇簽賬日期。";
     const txDateSafe = txDate;
-    const isHoliday = (typeof HolidayManager !== 'undefined' && HolidayManager.isHoliday) ? HolidayManager.isHoliday(txDateSafe) : false;
+    const isHoliday = HolidayManager.isHoliday(txDateSafe);
 
     userProfile.stats.totalSpend += amount;
     userProfile.stats.totalVal += estValue;
@@ -680,7 +704,7 @@ function applyPendingUnlocks() {
 function upgradeGuruLevel() {
     let current = parseInt(userProfile.settings.guru_level);
     if (!Number.isFinite(current) || current < 0) current = 0;
-    const maxLevel = (typeof getTravelGuruMaxLevel === "function") ? getTravelGuruMaxLevel() : 3;
+    const maxLevel = getTravelGuruMaxLevel();
     if (current < maxLevel) {
         userProfile.settings.guru_level = current + 1;
     }
@@ -691,9 +715,7 @@ function upgradeGuruLevel() {
     saveUserData();
 
     const newLevel = Number(userProfile.settings.guru_level) || 0;
-    const levelName = (typeof getTravelGuruLevelName === "function")
-        ? (getTravelGuruLevelName(newLevel) || `${newLevel}級`)
-        : ({ 1: "GO級", 2: "GING級", 3: "GURU級" }[newLevel] || `${newLevel}級`);
+    const levelName = getTravelGuruLevelName(newLevel) || `${newLevel}級`;
     return `成功升級至 ${levelName}！\n數據已重置，開始新旅程 🚀`;
 }
 
@@ -1008,7 +1030,7 @@ window.importData = function (event) {
             // Restore data
             userProfile = { ...userProfile, ...importedData };
             if (!userProfile.settings) userProfile.settings = {};
-            if (typeof ensureBooleanSettingDefaults === "function") ensureBooleanSettingDefaults(userProfile.settings);
+            ensureBooleanSettingDefaults(userProfile.settings);
             if (userProfile.settings.winter_tier1_threshold === undefined) userProfile.settings.winter_tier1_threshold = 20000;
             if (userProfile.settings.winter_tier2_threshold === undefined) userProfile.settings.winter_tier2_threshold = 40000;
             if (userProfile.settings.winter_tier2_threshold < userProfile.settings.winter_tier1_threshold) {

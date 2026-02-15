@@ -261,7 +261,7 @@ function getPromoType(promo) {
 }
 
 function getSpecialPromoModel(modelId) {
-    if (!modelId || typeof DATA === "undefined" || !DATA || !DATA.specialPromoModels) return null;
+    if (!modelId || !DATA || !DATA.specialPromoModels) return null;
     const model = DATA.specialPromoModels[modelId];
     return (model && typeof model === "object") ? model : null;
 }
@@ -384,7 +384,7 @@ function getLevelLifecycleModel(modelId) {
 }
 
 function getLevelLifecycleModelIds() {
-    if (typeof DATA === "undefined" || !DATA) return [];
+    if (!DATA) return [];
     if (Array.isArray(DATA.offers)) {
         const ids = DATA.offers
             .filter((offer) => offer && offer.renderType === "level_lifecycle")
@@ -580,7 +580,7 @@ function getTravelGuruNextLevelName(level) {
 
 function buildPromoStatus(promo, userProfile, modulesDB) {
     if (!promo || !userProfile) return null;
-    const policyMeta = (typeof DATA !== "undefined" && DATA.periodPolicy && DATA.periodPolicy.byCampaignId && promo.id)
+    const policyMeta = (DATA && DATA.periodPolicy && DATA.periodPolicy.byCampaignId && promo.id)
         ? DATA.periodPolicy.byCampaignId[promo.id]
         : null;
     if (policyMeta && policyMeta.hasDateWindows && !policyMeta.isActive) {
@@ -943,7 +943,7 @@ function calculateGuru(mod, amount, level, category, options) {
 }
 
 function getRedHotCategory(inputCategory) {
-    if (typeof DATA === 'undefined' || !DATA.redHotCategories) return null;
+    if (!DATA || !DATA.redHotCategories) return null;
     for (const [rhCat, validInputs] of Object.entries(DATA.redHotCategories)) {
         if (validInputs.includes(inputCategory)) return rhCat;
     }
@@ -1122,27 +1122,56 @@ function makeBreakdownFromText(text, tone, flags) {
     return makeBreakdownEntry(text, tone || (nextFlags.locked ? "muted" : "normal"), nextFlags);
 }
 
-function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod) {
-    if (!amount || amount <= 0) return null;
-    const modules = (DATA && DATA.modules) ? DATA.modules : {};
-    const conversions = (DATA && DATA.conversions) ? DATA.conversions : [];
-    const resolvedCategory = resolveCategory(card.id, category);
-    const rules = DATA && DATA.rules;
-    const prefix = card.id.split('_')[0];
-    const zeroCats = rules && rules.zeroRewardByCardPrefix && rules.zeroRewardByCardPrefix[prefix];
-    const isZeroCategory = Array.isArray(zeroCats) && zeroCats.includes(category);
+function buildZeroCategoryResult(card, amount, category, displayMode, conv) {
+    let valStr = "", unitStr = "";
+    let valStrPotential = "", unitStrPotential = "";
+    const unsupportedMode = (displayMode === "miles") ? (conv.miles_rate === 0) : (conv.cash_rate === 0);
+    if (displayMode === 'miles') {
+        valStr = "0"; unitStr = "里";
+        valStrPotential = "0"; unitStrPotential = "里";
+    } else {
+        valStr = "0"; unitStr = "$";
+        valStrPotential = "0"; unitStrPotential = "$";
+    }
 
-    const rewardCurrency = (card.id === "mox_credit" && userProfile && userProfile.settings && userProfile.settings.mox_reward_mode === "miles")
-        ? "AM_Direct"
-        : card.currency;
-    const conv = conversions.find(c => c.src === rewardCurrency);
-    if (!conv) return null;
+    return {
+        cardId: card.id,
+        cardName: card.name,
+        amount,
+        displayVal: valStr,
+        displayUnit: unitStr,
+        displayValPotential: valStrPotential,
+        displayUnitPotential: unitStrPotential,
+        estValue: 0,
+        estMiles: 0,
+        estCash: 0,
+        estCashNet: 0,
+        estMilesPotential: 0,
+        estCashPotential: 0,
+        breakdown: [makeBreakdownEntry("Alipay/WeChat 0%", "muted", { zero: true })],
+        trackingKey: null,
+        guruRC: 0,
+        missionTags: [],
+        category,
+        rewardTrackingKey: null,
+        secondaryRewardTrackingKey: null,
+        generatedReward: 0,
+        redemptionConfig: card.redemption,
+        supportsMiles: conv.miles_rate !== 0,
+        supportsCash: conv.cash_rate !== 0,
+        unsupportedMode,
+        nativeVal: 0,
+        nativeValPotential: 0,
+        pendingUnlocks: []
+    };
+}
 
+function evaluateModules(activeModules, amount, category, ctx) {
+    const { modulesDB, resolvedCategory, userProfile, missionDeltaByKey, conv, isOnline } = ctx;
     let totalRate = 0;
     let totalRatePotential = 0;
     let breakdown = [];
     let guruRC = 0;
-    let missionTags = [];
     let trackingKey = null;
     let rewardInfo = null;
     let pendingUnlocks = [];
@@ -1151,96 +1180,27 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         breakdown.push(makeBreakdownFromText(text, tone, flags));
     };
 
-    if (isZeroCategory) {
-        let valStr = "", unitStr = "";
-        let valStrPotential = "", unitStrPotential = "";
-        const unsupportedMode = (displayMode === "miles") ? (conv.miles_rate === 0) : (conv.cash_rate === 0);
-        if (displayMode === 'miles') {
-            valStr = "0"; unitStr = "里";
-            valStrPotential = "0"; unitStrPotential = "里";
-        } else {
-            valStr = "0"; unitStr = "$";
-            valStrPotential = "0"; unitStrPotential = "$";
-        }
-
-        return {
-            cardId: card.id,
-            cardName: card.name,
-            amount,
-            displayVal: valStr,
-            displayUnit: unitStr,
-            displayValPotential: valStrPotential,
-            displayUnitPotential: unitStrPotential,
-            estValue: 0,
-            estMiles: 0,
-            estCash: 0,
-            estCashNet: 0,
-            estMilesPotential: 0,
-            estCashPotential: 0,
-            breakdown: [makeBreakdownEntry("Alipay/WeChat 0%", "muted", { zero: true })],
-            trackingKey: null,
-            guruRC: 0,
-            missionTags: [],
-            category,
-            rewardTrackingKey: null,
-            secondaryRewardTrackingKey: null,
-            generatedReward: 0,
-            redemptionConfig: card.redemption,
-            supportsMiles: conv.miles_rate !== 0,
-            supportsCash: conv.cash_rate !== 0,
-            unsupportedMode,
-            nativeVal: 0,
-            nativeValPotential: 0,
-            pendingUnlocks: []
-        };
-    }
-
-    // Trackers (mission tags)
-    let missionDeltaByKey = {};
-    if (typeof evaluateTrackers === "function") {
-        const trackerRes = evaluateTrackers(card.id, { category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday }, userProfile, DATA);
-        if (trackerRes && Array.isArray(trackerRes.missionTags)) missionTags = trackerRes.missionTags;
-        if (trackerRes && Array.isArray(trackerRes.effects)) {
-            missionDeltaByKey = {};
-            trackerRes.effects.forEach((effect) => {
-                if (!effect || !effect.key) return;
-                missionDeltaByKey[effect.key] = (Number(missionDeltaByKey[effect.key]) || 0) + (Number(effect.amount) || 0);
-            });
-        }
-    }
-
-    // [Module Logic]
-    if (!Array.isArray(card.rewardModules) || card.rewardModules.length === 0) return null;
-
-    // Filter Valid Modules First
-    const activeModules = card.rewardModules.filter(modID => {
-        const m = modules[modID];
-        if (!m) return false;
-        return checkValidity(m, txDate, isHoliday);
-    });
-
-    // Check for Replacer Module first (Optimization)
-    // This replacerModule is for category-specific 'replace' mode modules
-    const ctx = {
+    // Check for Replacer Module first
+    const eligCtx = {
         amount: Number(amount) || 0,
-        isOnline: !!isOnline,
-        isMobilePay: !!isMobilePay,
-        paymentMethod: paymentMethod,
-        txDate: txDate || "",
-        isHoliday: !!isHoliday,
+        isOnline: !!ctx.isOnline,
+        isMobilePay: !!ctx.isMobilePay,
+        paymentMethod: ctx.paymentMethod,
+        txDate: ctx.txDate || "",
+        isHoliday: !!ctx.isHoliday,
         settings: userProfile.settings || {},
         getMissionSpend: (key) => (Number(userProfile.usage[key]) || 0) + (Number(missionDeltaByKey[key]) || 0)
     };
     let replacerModuleCurrentId = activeModules.find(mid => {
-        const m = modules[mid];
-        return isReplacerEligible(m, amount, resolvedCategory, userProfile, false, ctx, missionDeltaByKey);
+        const m = modulesDB[mid];
+        return isReplacerEligible(m, amount, resolvedCategory, userProfile, false, eligCtx, missionDeltaByKey);
     });
     let replacerModulePotentialId = activeModules.find(mid => {
-        const m = modules[mid];
-        return isReplacerEligible(m, amount, resolvedCategory, userProfile, true, ctx, missionDeltaByKey);
+        const m = modulesDB[mid];
+        return isReplacerEligible(m, amount, resolvedCategory, userProfile, true, eligCtx, missionDeltaByKey);
     });
-    let replacerModuleCurrent = replacerModuleCurrentId ? modules[replacerModuleCurrentId] : null;
-    let replacerModulePotential = replacerModulePotentialId ? modules[replacerModulePotentialId] : null;
+    let replacerModuleCurrent = replacerModuleCurrentId ? modulesDB[replacerModuleCurrentId] : null;
+    let replacerModulePotential = replacerModulePotentialId ? modulesDB[replacerModulePotentialId] : null;
 
     function replaceModuleCapped(mod) {
         if (!mod || !mod.cap_limit || !mod.cap_key) return false;
@@ -1262,7 +1222,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
 
     const nextMissionThresholdByKey = {};
     activeModules.forEach((modID) => {
-        const mod = modules[modID];
+        const mod = modulesDB[modID];
         if (!mod || !mod.req_mission_key || !mod.req_mission_spend) return;
         const key = mod.req_mission_key;
         const threshold = Number(mod.req_mission_spend) || 0;
@@ -1278,11 +1238,8 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         }
     });
 
-    // ... (Module Logic 保持 V10.7 不變) ...
     activeModules.forEach(modID => {
-        const mod = modules[modID];
-        // [FIX] Clone mod to avoid mutating global DB if we change desc
-        // Actually mod is ref. Safer to use tempDesc.
+        const mod = modulesDB[modID];
         if (!mod) return;
         let tempDesc = null;
         let hit = false;
@@ -1290,14 +1247,10 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         let capDisplayHandled = false;
         if (mod.setting_key && userProfile.settings[mod.setting_key] === false) return;
 
-        // [NEW] Min Spend Check (Single Transaction)
         if (mod.min_spend && amount < mod.min_spend) return;
-
-        // [NEW] Single Transaction Minimum (for BOC Amazing Rewards)
         if (mod.min_single_spend && amount < mod.min_single_spend) return;
-        if (mod.type !== "category" && typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, ctx)) return;
+        if (mod.type !== "category" && typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, eligCtx)) return;
 
-        // [NEW] Mission Spend Check (Monthly Cumulative)
         const missionRequired = !!(mod.req_mission_spend && mod.req_mission_key);
         const missionMet = missionRequired ? isMissionMet(mod, userProfile, missionDeltaByKey) : true;
         const retroactive = missionRequired ? isRetroactive(mod) : false;
@@ -1354,18 +1307,15 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             else if (mod.type === "category") {
                 const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline) : true;
                 if (!matchOk) return;
-                if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, ctx)) return;
+                if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, eligCtx)) return;
                 if (mod.cap_limit) {
                     if (applyCurrent && mod.cap_mode !== 'reward') trackingKey = mod.cap_key;
 
-                // [UPDATED] Check Cap Mode (Spending vs Reward)
                 if (mod.cap_mode === 'reward') {
-                    // Reward-based Cap Logic (e.g. Hang Seng Base + Bonus)
                     const rewardCapCheck = checkCap(mod.cap_key, mod.cap_limit);
                     let remaining = rewardCapCheck.remaining;
                     let isMaxed = rewardCapCheck.isMaxed;
 
-                    // [NEW] Secondary Cap Check (e.g. Total Cap)
                     if (mod.secondary_cap_key && mod.secondary_cap_limit) {
                         const secCap = checkCap(mod.secondary_cap_key, mod.secondary_cap_limit);
                         if (secCap.isMaxed) isMaxed = true;
@@ -1387,14 +1337,12 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                             }
                         }
                 } else {
-                    // Standard Spending-based Cap
                     const capCheck = checkCap(mod.cap_key, mod.cap_limit);
                     if (capCheck.isMaxed) addModuleBreakdown(tempDesc || mod.desc, "muted", { capped: true, strike: true });
                     else if (amount > capCheck.remaining) { rate = (capCheck.remaining * mod.rate) / amount; addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true }); hit = true; }
                     else {
                         rate = mod.rate;
                         hit = true;
-                        // [FIXED] Push description when within spending cap
                         addModuleBreakdown(tempDesc || mod.desc);
                     }
                 }
@@ -1403,7 +1351,6 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             else if (mod.type === "always") { rate = mod.rate; hit = true; }
 
             // Enforce cap for non-category modules (e.g. red_hot_allocation / red_hot_fixed_bonus).
-            // Category cap logic is already handled in the category branch above.
             if (hit && mod.type !== "guru_capped" && mod.type !== "category" && mod.cap_limit && mod.cap_key) {
                 if (applyCurrent && mod.cap_mode !== 'reward') trackingKey = mod.cap_key;
 
@@ -1457,13 +1404,9 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                 if (allowPotential) totalRatePotential += rate;
 
                 const descText = tempDesc || mod.desc;
-                // Category modules with cap already render capped/partial state in their own branch.
-                // Other module types (e.g. red_hot_*) may still carry cap metadata via overrides
-                // and should remain visible in the equation breakdown.
                 const capDisplayHandledInBranch = (mod.type === "category" && !!mod.cap_limit) || capDisplayHandled;
                 if (!capDisplayHandledInBranch && (allowCurrent || allowPotential) && showLockedBreakdown) addBreakdown(descText);
 
-                // [UPDATED] Capture Reward Tracking Info (current only)
                 if (allowCurrent && mod.cap_mode === 'reward' && mod.cap_limit) {
                     if (!rewardInfo) rewardInfo = { key: mod.cap_key, val: 0 };
                     const actualReward = amount * rate;
@@ -1472,7 +1415,6 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                     if (mod.secondary_cap_key) rewardInfo.secondaryKey = mod.secondary_cap_key;
                 }
 
-                // Pending unlocks for retroactive modules
                 if (allowPotential && !allowCurrent && retroactive && mod.req_mission_key) {
                     const pendingNative = amount * rate;
                     if (pendingNative > 0) {
@@ -1496,7 +1438,6 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             }
         });
 
-    // Extract reward tracking info if exists
     let rewardTrackingKey = null;
     let secondaryRewardTrackingKey = null;
     let generatedReward = 0;
@@ -1506,9 +1447,115 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         generatedReward = rewardInfo.val;
     }
 
-    // ... (Mission Tags Logic 保持不變) ...
+    return { totalRate, totalRatePotential, breakdown, trackingKey, guruRC, rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, pendingUnlocks };
+}
+
+function buildFinalResult(card, amount, category, displayMode, totalRate, totalRatePotential, breakdown, conv, opts) {
+    const { trackingKey, guruRC, missionTags, rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, pendingUnlocks, userProfile, txDate } = opts;
+    const native = amount * totalRate;
+    const nativePotential = amount * totalRatePotential;
+
+    const estMiles = native * conv.miles_rate;
+    const estCash = native * conv.cash_rate;
+    const feeRate = (isForeignCategory(category)
+        ? getForeignFeeRate(card, category, { settings: userProfile.settings || {}, txDate })
+        : 0);
+    const foreignFee = feeRate ? amount * feeRate : 0;
+    const estCashNet = estCash - foreignFee;
+    const estMilesPotential = nativePotential * conv.miles_rate;
+    const estCashPotential = nativePotential * conv.cash_rate;
+
+    let valStr = "", unitStr = "";
+    let valStrPotential = "", unitStrPotential = "";
+
+    const supportsMiles = conv.miles_rate !== 0;
+    const supportsCash = conv.cash_rate !== 0;
+    const unsupportedMode = (displayMode === "miles") ? !supportsMiles : !supportsCash;
+
+    if (displayMode === 'miles') {
+        valStr = supportsMiles ? Math.floor(estMiles).toLocaleString() : "0";
+        unitStr = "里";
+        valStrPotential = supportsMiles ? Math.floor(estMilesPotential).toLocaleString() : "0";
+        unitStrPotential = "里";
+    } else {
+        valStr = supportsCash ? Math.floor(estCash).toLocaleString() : "0";
+        unitStr = "$";
+        valStrPotential = supportsCash ? Math.floor(estCashPotential).toLocaleString() : "0";
+        unitStrPotential = "$";
+    }
+
+    return {
+        cardId: card.id,
+        cardName: card.name, amount, displayVal: valStr, displayUnit: unitStr,
+        displayValPotential: valStrPotential, displayUnitPotential: unitStrPotential,
+        estValue: estCash,
+        estMiles, estCash, estCashNet,
+        estMilesPotential, estCashPotential,
+        breakdown, trackingKey, guruRC, missionTags, category,
+        rewardTrackingKey, secondaryRewardTrackingKey, generatedReward,
+        redemptionConfig: card.redemption,
+        supportsMiles, supportsCash, unsupportedMode,
+        nativeVal: native,
+        nativeValPotential: nativePotential,
+        pendingUnlocks
+    };
+}
+
+function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod) {
+    if (!amount || amount <= 0) return null;
+    const modules = (DATA && DATA.modules) ? DATA.modules : {};
+    const conversions = (DATA && DATA.conversions) ? DATA.conversions : [];
+    const resolvedCategory = resolveCategory(card.id, category);
+    const rules = DATA && DATA.rules;
+    const prefix = card.id.split('_')[0];
+    const zeroCats = rules && rules.zeroRewardByCardPrefix && rules.zeroRewardByCardPrefix[prefix];
+    const isZeroCategory = Array.isArray(zeroCats) && zeroCats.includes(category);
+
+    const rewardCurrency = (card.id === "mox_credit" && userProfile && userProfile.settings && userProfile.settings.mox_reward_mode === "miles")
+        ? "AM_Direct"
+        : card.currency;
+    const conv = conversions.find(c => c.src === rewardCurrency);
+    if (!conv) return null;
+
+    if (isZeroCategory) {
+        return buildZeroCategoryResult(card, amount, category, displayMode, conv);
+    }
+
+    // Trackers (mission tags)
+    let missionDeltaByKey = {};
+    let missionTags = [];
+    const trackerRes = evaluateTrackers(card.id, { category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday }, userProfile, DATA);
+    if (trackerRes && Array.isArray(trackerRes.missionTags)) missionTags = trackerRes.missionTags;
+    if (trackerRes && Array.isArray(trackerRes.effects)) {
+        missionDeltaByKey = {};
+        trackerRes.effects.forEach((effect) => {
+            if (!effect || !effect.key) return;
+            missionDeltaByKey[effect.key] = (Number(missionDeltaByKey[effect.key]) || 0) + (Number(effect.amount) || 0);
+        });
+    }
+
+    if (!Array.isArray(card.rewardModules) || card.rewardModules.length === 0) return null;
+
+    const activeModules = card.rewardModules.filter(modID => {
+        const m = modules[modID];
+        if (!m) return false;
+        return checkValidity(m, txDate, isHoliday);
+    });
+
+    const modResult = evaluateModules(activeModules, amount, category, {
+        modulesDB: modules, resolvedCategory, userProfile, missionDeltaByKey, conv, isOnline,
+        isMobilePay, paymentMethod, txDate, isHoliday
+    });
+
+    // Append mission tag breakdown entries
+    const { breakdown } = modResult;
+    const addBreakdown = (text, tone, flags) => {
+        if (!text) return;
+        breakdown.push(makeBreakdownFromText(text, tone, flags));
+    };
+
     const campaignById = {};
-    if (typeof DATA !== "undefined" && DATA && Array.isArray(DATA.offers)) {
+    if (DATA && Array.isArray(DATA.offers)) {
         DATA.offers
             .filter((offer) => offer && offer.renderType === "campaign_sections" && offer.id)
             .forEach((offer) => { campaignById[offer.id] = offer; });
@@ -1529,13 +1576,8 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         const hasLockedReward = rewardSections.some((sec) => sec.state === "locked");
         const missionLocked = missionSections.some((sec) => sec.meta && sec.meta.unlocked === false);
         if (tag.eligible) {
-            // [NEW] Redundancy Check: If breakdown already mentions this mission as "Not Met", skip the generic tracker line.
-            // This prevents: "Basic... + Bonus (Not Met) + Tracker (Accumulating)"
-            // [NEW] Redundancy Check: Fix emoji mismatch
-            // Strip emojis from tag.desc (e.g. "🌏 EM推廣" -> "EM推廣")
             const cleanTagDesc = tag.desc.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
 
-            // Check if breakdown contains this cleaned name AND a Lock icon (indicating it's the warned version)
             const alreadyWarned = breakdown.some(b => {
                 const text = typeof b === "string" ? b : (b && b.text) || "";
                 const hasText = text.includes(cleanTagDesc);
@@ -1558,68 +1600,23 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             }
             addBreakdown(label, tone, flags);
         } else {
-            // Not eligible transactions should never be labeled as "counted".
-            // Show hint only when tracker matched but failed eligibility (e.g. online exclusion).
             if (campaign && missionLocked && tag.matched) {
                 addBreakdown(`⚪ 不計入${tag.desc}門檻`, "muted");
             }
         }
     });
 
-    const native = amount * totalRate;
-    const nativePotential = amount * totalRatePotential;
-
-    // Calculate both values for sorting
-    const estMiles = native * conv.miles_rate;
-    const estCash = native * conv.cash_rate;
-    const feeRate = (isForeignCategory(category)
-        ? getForeignFeeRate(card, category, { settings: userProfile.settings || {}, txDate })
-        : 0);
-    const foreignFee = feeRate ? amount * feeRate : 0;
-    const estCashNet = estCash - foreignFee;
-    const estMilesPotential = nativePotential * conv.miles_rate;
-    const estCashPotential = nativePotential * conv.cash_rate;
-
-    let valStr = "", unitStr = "";
-
-    let valStrPotential = "", unitStrPotential = "";
-
-    const supportsMiles = conv.miles_rate !== 0;
-    const supportsCash = conv.cash_rate !== 0;
-    const unsupportedMode = (displayMode === "miles") ? !supportsMiles : !supportsCash;
-
-    if (displayMode === 'miles') {
-        valStr = supportsMiles ? Math.floor(estMiles).toLocaleString() : "0";
-        unitStr = "里";
-        valStrPotential = supportsMiles ? Math.floor(estMilesPotential).toLocaleString() : "0";
-        unitStrPotential = "里";
-    } else {
-        valStr = supportsCash ? Math.floor(estCash).toLocaleString() : "0";
-        unitStr = "$";
-        valStrPotential = supportsCash ? Math.floor(estCashPotential).toLocaleString() : "0";
-        unitStrPotential = "$";
-    }
-
-    return {
-        cardId: card.id, // [NEW] For tracking per-card spending
-        cardName: card.name, amount, displayVal: valStr, displayUnit: unitStr,
-        displayValPotential: valStrPotential, displayUnitPotential: unitStrPotential,
-        estValue: estCash, // Legacy support if needed
-        estMiles: estMiles, // For sorting
-        estCash: estCash,   // For sorting
-        estCashNet: estCashNet, // For sorting with fee deduction
-        estMilesPotential: estMilesPotential,
-        estCashPotential: estCashPotential,
-        breakdown, trackingKey, guruRC, missionTags, category,
-        rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, // [UPDATED] Passed for commitTransaction
-        redemptionConfig: card.redemption,
-        supportsMiles,
-        supportsCash,
-        unsupportedMode,
-        nativeVal: native,
-        nativeValPotential: nativePotential,
-        pendingUnlocks
-    };
+    return buildFinalResult(card, amount, category, displayMode, modResult.totalRate, modResult.totalRatePotential, breakdown, conv, {
+        trackingKey: modResult.trackingKey,
+        guruRC: modResult.guruRC,
+        missionTags,
+        rewardTrackingKey: modResult.rewardTrackingKey,
+        secondaryRewardTrackingKey: modResult.secondaryRewardTrackingKey,
+        generatedReward: modResult.generatedReward,
+        pendingUnlocks: modResult.pendingUnlocks,
+        userProfile,
+        txDate
+    });
 }
 
 function calculateResults(amount, category, displayMode, userProfile, txDate, isHoliday, options = {}) {
@@ -1628,7 +1625,7 @@ function calculateResults(amount, category, displayMode, userProfile, txDate, is
     const isOnline = !!options.isOnline;
     const isMobilePay = !!options.isMobilePay;
     const paymentMethod = options.paymentMethod || (isMobilePay ? "mobile" : "physical");
-    const cards = (DATA && DATA.cards) ? DATA.cards : [];
+    const cards = DATA.cards || [];
 
     userProfile.ownedCards.forEach(cardId => {
         const card = cards.find(c => c.id === cardId);

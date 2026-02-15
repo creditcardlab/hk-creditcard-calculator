@@ -645,3 +645,97 @@ function validateData(data) {
     console.error(`[data] validation failed with ${errors.length} error(s).`);
     return false;
 }
+
+function validateUsageKeys(data) {
+    if (!data) return;
+    const warnings = [];
+    const addWarning = (msg) => { warnings.push(msg); console.warn(msg); };
+
+    const modules = data.modules || {};
+    const trackers = data.trackers || {};
+    const campaigns = Array.isArray(data.campaigns) ? data.campaigns : [];
+    const countersRegistry = data.countersRegistry || {};
+
+    // 1. cap_key -> counter registry or cap.period
+    Object.keys(modules).forEach((modId) => {
+        const mod = modules[modId] || {};
+        if (mod.cap_key && !countersRegistry[mod.cap_key] && !(mod.cap && mod.cap.period)) {
+            addWarning(`[usageKeys] module ${modId} cap_key "${mod.cap_key}" has no countersRegistry entry and no cap.period`);
+        }
+        if (mod.secondary_cap_key && !countersRegistry[mod.secondary_cap_key]) {
+            const primary = Object.values(modules).find(m => m.cap_key === mod.secondary_cap_key);
+            if (!primary || !(primary.cap && primary.cap.period)) {
+                addWarning(`[usageKeys] module ${modId} secondary_cap_key "${mod.secondary_cap_key}" has no countersRegistry entry`);
+            }
+        }
+    });
+
+    // 2. req_mission_key -> tracker effects key or counter registry
+    const trackerEffectKeys = new Set();
+    Object.keys(trackers).forEach((id) => {
+        const tracker = trackers[id] || {};
+        if (Array.isArray(tracker.effects_on_match)) {
+            tracker.effects_on_match.forEach(e => { if (e && e.key) trackerEffectKeys.add(e.key); });
+        }
+        if (Array.isArray(tracker.effects_on_eligible)) {
+            tracker.effects_on_eligible.forEach(e => { if (e && e.key) trackerEffectKeys.add(e.key); });
+        }
+    });
+
+    Object.keys(modules).forEach((modId) => {
+        const mod = modules[modId] || {};
+        if (mod.req_mission_key && !trackerEffectKeys.has(mod.req_mission_key) && !countersRegistry[mod.req_mission_key]) {
+            addWarning(`[usageKeys] module ${modId} req_mission_key "${mod.req_mission_key}" not found in tracker effects or countersRegistry`);
+        }
+    });
+
+    // 3. progress_mission_key -> tracker counter key
+    Object.keys(modules).forEach((modId) => {
+        const mod = modules[modId] || {};
+        if (mod.progress_mission_key && !trackerEffectKeys.has(mod.progress_mission_key) && !countersRegistry[mod.progress_mission_key]) {
+            addWarning(`[usageKeys] module ${modId} progress_mission_key "${mod.progress_mission_key}" not found in tracker effects or countersRegistry`);
+        }
+    });
+
+    // 4. Campaign section usageKey/capModule references
+    campaigns.forEach((campaign) => {
+        if (!campaign || !campaign.id) return;
+        const sections = Array.isArray(campaign.sections) ? campaign.sections : [];
+        sections.forEach((sec, idx) => {
+            const label = `campaign ${campaign.id}.section${idx + 1}`;
+            if (sec.capModule && !modules[sec.capModule]) {
+                addWarning(`[usageKeys] ${label} capModule "${sec.capModule}" not found in modules`);
+            }
+            if (sec.usageKey && !countersRegistry[sec.usageKey] && !trackerEffectKeys.has(sec.usageKey)) {
+                // Only warn if it's also not a module cap_key or usage_key
+                const isModuleKey = Object.values(modules).some(m => m.cap_key === sec.usageKey || m.usage_key === sec.usageKey || m.req_mission_key === sec.usageKey);
+                if (!isModuleKey) {
+                    addWarning(`[usageKeys] ${label} usageKey "${sec.usageKey}" not found in countersRegistry, tracker effects, or module keys`);
+                }
+            }
+        });
+    });
+
+    // 5. Duplicate cap_key across unrelated modules (warning only)
+    const capKeyOwners = {};
+    Object.keys(modules).forEach((modId) => {
+        const mod = modules[modId] || {};
+        if (mod.cap_key) {
+            if (!capKeyOwners[mod.cap_key]) capKeyOwners[mod.cap_key] = [];
+            capKeyOwners[mod.cap_key].push(modId);
+        }
+    });
+    Object.keys(capKeyOwners).forEach((key) => {
+        const owners = capKeyOwners[key];
+        if (owners.length > 1) {
+            // Shared cap keys are intentional for some card designs — just note it
+            addWarning(`[usageKeys] cap_key "${key}" shared by ${owners.length} modules: ${owners.join(", ")}`);
+        }
+    });
+
+    if (warnings.length > 0) {
+        console.log(`[usageKeys] ${warnings.length} warning(s) found.`);
+    } else {
+        console.log("[usageKeys] all usage keys validated OK.");
+    }
+}
