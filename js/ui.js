@@ -1206,13 +1206,7 @@ function renderWarningCard(title, icon, description, settingKey, cardId, infoMet
 }
 
 function getPromoToggleThemeClasses(theme) {
-    const key = String(theme || "").toLowerCase();
-    if (key === "red") return { row: "bg-stone-100", border: "border-stone-200", checked: "peer-checked:bg-stone-700" };
-    if (key === "blue") return { row: "bg-slate-100", border: "border-slate-200", checked: "peer-checked:bg-slate-700" };
-    if (key === "purple") return { row: "bg-zinc-100", border: "border-zinc-200", checked: "peer-checked:bg-zinc-700" };
-    if (key === "green") return { row: "bg-emerald-50", border: "border-emerald-100", checked: "peer-checked:bg-emerald-700" };
-    if (key === "yellow") return { row: "bg-amber-50", border: "border-amber-100", checked: "peer-checked:bg-amber-600" };
-    return { row: "bg-stone-100", border: "border-stone-200", checked: "peer-checked:bg-stone-700" };
+    return { row: "bg-[#fcfcfc]", border: "border-[#e9e9e7]", checked: "peer-checked:bg-gray-700" };
 }
 
 function escapeJsSingleQuoted(input) {
@@ -1225,7 +1219,7 @@ function renderSettingsToggle(options) {
     const checked = !!opts.checked;
     const onchange = opts.onchange ? String(opts.onchange) : "";
     const ariaLabel = opts.ariaLabel ? ` aria-label="${escapeHtml(opts.ariaLabel)}"` : "";
-    const checkedClass = opts.checkedClass ? String(opts.checkedClass) : "peer-checked:bg-blue-500";
+    const checkedClass = opts.checkedClass ? String(opts.checkedClass) : "peer-checked:bg-gray-700";
     const idAttr = id ? ` id="${escapeHtml(id)}"` : "";
     const onclickAttr = onchange ? ` onclick="${onchange}"` : "";
     const checkedBgClass = checkedClass
@@ -1234,7 +1228,7 @@ function renderSettingsToggle(options) {
         .filter(Boolean)
         .join(" ");
     const trackClass = checked
-        ? (checkedBgClass || "bg-blue-500")
+        ? (checkedBgClass || "bg-gray-700")
         : "bg-gray-200";
     const knobClass = checked ? "translate-x-4" : "translate-x-0";
 
@@ -1963,32 +1957,15 @@ function showEnjoy2xInfo() { showEnjoyPoints4xGuide("2X（1%）"); }
 // Helper: Create Progress Card Component
 function createProgressCard(config) {
     const {
-        title, icon, theme, badge, subTitle, sections, warning, actionButton, description,
+        title, icon, badge, subTitle, sections, warning, actionButton, description,
         sourceUrl, sourceTitle, tncUrl, promoUrl, registrationUrl, registrationStart, registrationEnd, registrationNote,
         implementationNote, daysLeft
     } = config;
 
-    // Theme mapping
-    const themeMap = {
-        'purple': { bg: 'bg-zinc-50', border: 'border-zinc-200', text: 'text-zinc-800', bar: 'bg-zinc-500', badge: 'bg-zinc-700', subText: 'text-zinc-600' },
-        'red': { bg: 'bg-stone-50', border: 'border-stone-200', text: 'text-stone-800', bar: 'bg-stone-500', badge: 'bg-stone-700', subText: 'text-stone-600' },
-        'blue': { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-800', bar: 'bg-slate-500', badge: 'bg-slate-700', subText: 'text-slate-600' },
-        'yellow': { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-800', bar: 'bg-amber-500', badge: 'bg-amber-600', subText: 'text-amber-700' },
-        'green': { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-800', bar: 'bg-emerald-500', badge: 'bg-emerald-700', subText: 'text-emerald-700' },
-        'indigo': { bg: 'bg-slate-100', border: 'border-slate-200', text: 'text-slate-800', bar: 'bg-slate-600', badge: 'bg-slate-700', subText: 'text-slate-700' },
-        'black': { bg: 'bg-neutral-100', border: 'border-neutral-300', text: 'text-neutral-800', bar: 'bg-neutral-700', badge: 'bg-neutral-800', subText: 'text-neutral-600' },
-        'gray': { bg: 'bg-stone-100', border: 'border-stone-200', text: 'text-stone-800', bar: 'bg-stone-500', badge: 'bg-stone-600', subText: 'text-stone-600' }
-    };
-
-    const t = themeMap[theme] || themeMap['blue'];
-    let badgeClass = t.badge;
-    if (badge && typeof daysLeft === "number" && Number.isFinite(daysLeft)) {
-        if (daysLeft <= 7) badgeClass = "bg-red-500";
-        else if (daysLeft <= 30) badgeClass = "bg-amber-500";
-    }
-    const badgeHtml = badge ? `<span class="${badgeClass} text-white text-[10px] px-2 py-0.5 rounded-full">${badge}</span>` : '';
-    const subTitleHtml = subTitle ? `<span class="text-[10px] ${t.subText}">${subTitle}</span>` : '';
-    const warningHtml = warning ? `<div>${warning}</div>` : '';
+    // Use pure flat design instead of themes
+    const badgeHtml = badge ? `<span class="bg-[#f7f7f5] text-gray-600 border border-[#e9e9e7] text-[10px] px-1.5 py-0.5 rounded">${badge}</span>` : '';
+    const subTitleHtml = subTitle ? `<span class="text-[10px] text-gray-500">${subTitle}</span>` : '';
+    const warningHtml = warning ? `<div class="mt-2">${warning}</div>` : '';
     const dedupedDescription = isRedundantDescriptionForTitle(title || "", description || "") ? "" : (description || "");
     const descriptionText = normalizeInfoText(dedupedDescription, 140);
     const refsHtml = renderReferenceActions({
@@ -2002,34 +1979,38 @@ function createProgressCard(config) {
         registrationNote: registrationNote || "",
         implementationNote: implementationNote || ""
     }, {
-        linkClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
-        implClass: "text-[10px] text-stone-600 hover:text-stone-800 underline underline-offset-2",
+        linkClass: "text-[10px] text-gray-500 hover:text-gray-700 underline underline-offset-2",
+        implClass: "text-[10px] text-gray-500 hover:text-gray-700 underline underline-offset-2",
         showRegistration: true,
         showPromo: true,
         showTnc: true,
         showImplementation: true
     });
     const infoHtml = (descriptionText || refsHtml) ? `<div class="flex flex-wrap items-center gap-2">
-        ${descriptionText ? `<span class="text-[11px] text-stone-600">${escapeHtml(descriptionText)}</span>` : ""}
+        ${descriptionText ? `<span class="text-[11px] text-gray-500">${escapeHtml(descriptionText)}</span>` : ""}
         ${refsHtml}
     </div>` : "";
-    const actionButtonHtml = actionButton ? `<div class="mt-3 pt-3 border-t border-gray-200">
-        <button onclick="${actionButton.onClick}" class="${actionButton.className || 'w-full bg-stone-700 hover:bg-stone-800 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2'}">
+
+    // Simplistic action button
+    const actionButtonHtml = actionButton ? `<div class="mt-3 pt-3 border-t border-[#e9e9e7]">
+        <button onclick="${actionButton.onClick}" class="w-full bg-[#f7f7f5] hover:bg-[#efefed] text-[#37352f] border border-[#e9e9e7] font-medium py-1.5 px-4 rounded transition-colors text-sm flex items-center justify-center gap-2">
             ${actionButton.icon ? `<i class="${actionButton.icon}"></i>` : ''}${actionButton.label}
         </button>
     </div>` : '';
 
-    const sectionsHtml = sections ? renderPromoSections(sections, t) : '';
+    const sectionsHtml = sections ? renderPromoSections(sections, { text: 'text-[#37352f]', bar: 'bg-[#37352f]' }) : '';
 
-    return `<div class="bg-white border-2 ${t.border} rounded-2xl shadow-sm overflow-hidden mb-4">
-        <div class="${t.bg} p-3 border-b ${t.border} flex justify-between items-center">
+    return `<div class="bg-white border border-[#e9e9e7] rounded-md overflow-hidden mb-3">
+        <div class="p-3 border-b border-[#e9e9e7] flex justify-between items-start bg-[#fcfcfc]">
             <div class="flex flex-col">
-                <h3 class="${t.text} font-bold text-sm"><i class="${icon} mr-1"></i>${title}</h3>
+                <h3 class="text-[#37352f] font-semibold text-sm flex items-center gap-1.5">
+                    <i class="${icon} text-gray-400"></i>${title}
+                </h3>
                 ${subTitleHtml}
             </div>
             ${badgeHtml}
         </div>
-        <div class="p-4 space-y-4">
+        <div class="p-3 space-y-3">
             ${infoHtml}
             ${warningHtml}
             ${sectionsHtml}
@@ -2041,15 +2022,18 @@ function createProgressCard(config) {
 // Helper: Create Calculator Result Card
 function createResultCard(res, dataStr, mainValHtml, redemptionHtml) {
     const safeCardNameForAction = escapeJsSingleQuoted(res.cardName);
-    return `<div class="card-enter bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start mb-3">
+    return `<div class="card-enter bg-white p-3 rounded-md border border-[#e9e9e7] hover:bg-[#fcfcfc] transition-colors flex justify-between items-start mb-2 group">
         <div class="w-2/3 pr-2">
-            <div class="font-bold text-gray-800 text-sm truncate">${res.cardName}</div>
-            <div class="text-xs text-gray-500 mt-1">${renderBreakdown(res.breakdown)}</div>
+            <div class="font-medium text-[#37352f] text-sm truncate">${res.cardName}</div>
+            <div class="text-[11px] text-gray-500 mt-0.5">${renderBreakdown(res.breakdown)}</div>
         </div>
         <div class="text-right w-1/3 flex flex-col items-end">
             ${mainValHtml}
             ${redemptionHtml}
-            <button type="button" onclick="handleRecord('${safeCardNameForAction}','${dataStr}')" class="text-[10px] text-blue-600 font-bold mt-2 bg-blue-50 inline-block px-2 py-1 rounded-full border border-blue-100 hover:bg-blue-100 transition-colors">記帳</button>
+            <button type="button" onclick="handleRecord('${safeCardNameForAction}','${dataStr}')"
+                class="text-[10px] text-gray-600 mt-2 bg-white border border-[#e9e9e7] hover:bg-[#f7f7f5] px-2 py-0.5 rounded transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 sm:opacity-100">
+                記帳
+            </button>
         </div>
     </div>`;
 }
@@ -3308,9 +3292,9 @@ function renderSettings(userProfile) {
     pushScopedSettingRow("travel_guru_registered", guruRowHtml, guruFallbackCardId);
 
     const hasLiveFresh = ownedSet.has("dbs_live_fresh");
-    if (hasLiveFresh) ensureBucket(preferenceBlocksByCard, "dbs_live_fresh").push(`<div class="border p-3 rounded-xl bg-teal-50 border-teal-100">
-        <label class="text-xs font-bold text-teal-700 block mb-2">DBS Live Fresh 自選類別 (4選1)</label>
-        <select id="st-live-fresh" class="w-full p-2 bg-white rounded border border-teal-200 text-sm" onchange="saveDrop('live_fresh_pref',this.value)">
+    if (hasLiveFresh) ensureBucket(preferenceBlocksByCard, "dbs_live_fresh").push(`<div class="border p-3 rounded-md bg-[#fcfcfc] border-[#e9e9e7]">
+        <label class="text-xs font-semibold text-[#37352f] block mb-2">DBS Live Fresh 自選類別 (4選1)</label>
+        <select id="st-live-fresh" class="w-full p-2 bg-white rounded border border-[#e9e9e7] text-sm" onchange="saveDrop('live_fresh_pref',this.value)">
             <option value="none">未設定</option>
             <option value="online_foreign">網上外幣簽賬 (Online Foreign Currency Spending)</option>
             <option value="travel">網上旅遊商戶、娛樂及指定服務訂閱</option>
@@ -3320,9 +3304,9 @@ function renderSettings(userProfile) {
     </div>`);
 
     const wewaSelected = String(userProfile.settings.wewa_selected_category || "mobile_pay");
-    if (ownedSet.has("wewa")) ensureBucket(preferenceBlocksByCard, "wewa").push(`<div class="border p-3 rounded-xl bg-amber-50 border-amber-100">
-        <label class="text-xs font-bold text-amber-800 block mb-2">WeWa 自選回贈類別（4選1）</label>
-        <select id="st-wewa-selected" class="w-full p-2 bg-white rounded border border-amber-200 text-sm" onchange="saveDrop('wewa_selected_category',this.value)">
+    if (ownedSet.has("wewa")) ensureBucket(preferenceBlocksByCard, "wewa").push(`<div class="border p-3 rounded-md bg-[#fcfcfc] border-[#e9e9e7]">
+        <label class="text-xs font-semibold text-[#37352f] block mb-2">WeWa 自選回贈類別（4選1）</label>
+        <select id="st-wewa-selected" class="w-full p-2 bg-white rounded border border-[#e9e9e7] text-sm" onchange="saveDrop('wewa_selected_category',this.value)">
             <option value="mobile_pay">📱 流動支付</option>
             <option value="travel">✈️ 旅遊簽賬</option>
             <option value="overseas">🌍 海外簽賬</option>
@@ -3331,14 +3315,14 @@ function renderSettings(userProfile) {
     </div>`);
 
     const moxMode = String(userProfile.settings.mox_reward_mode || "cashback");
-    if (ownedSet.has("mox_credit")) pushScopedSettingRow("mox_deposit_task_enabled", `<div class="border p-3 rounded-xl bg-gray-50 border-gray-200">
-        <label class="text-xs font-bold text-gray-700 block mb-2">Mox Credit 獎賞模式</label>
-        <select id="st-mox-mode" class="w-full p-2 bg-white rounded border border-gray-300 text-sm" onchange="saveDrop('mox_reward_mode',this.value)">
+    if (ownedSet.has("mox_credit")) pushScopedSettingRow("mox_deposit_task_enabled", `<div class="border p-3 rounded-md bg-[#fcfcfc] border-[#e9e9e7]">
+        <label class="text-xs font-semibold text-[#37352f] block mb-2">Mox Credit 獎賞模式</label>
+        <select id="st-mox-mode" class="w-full p-2 bg-white rounded border border-[#e9e9e7] text-sm" onchange="saveDrop('mox_reward_mode',this.value)">
             <option value="cashback">CashBack（回贈）</option>
             <option value="miles">Asia Miles（里數）</option>
         </select>
-        <div class="mt-2 flex justify-between items-center bg-white border border-gray-300 rounded p-2">
-            <span class="text-xs font-bold text-gray-700">已達解鎖條件（$250k結餘 或 合資格出糧$25k）</span>
+        <div class="mt-2 flex justify-between items-center bg-white border border-[#e9e9e7] rounded p-2">
+            <span class="text-xs font-semibold text-[#37352f]">已達解鎖條件（$250k結餘 或 合資格出糧$25k）</span>
             ${renderSettingsToggle({ id: "st-mox", checked: !!userProfile.settings.mox_deposit_task_enabled, onchange: "toggleSetting('mox_deposit_task_enabled')" })}
         </div>
     </div>`, "mox_credit");
@@ -3347,23 +3331,23 @@ function renderSettings(userProfile) {
         ? userProfile.settings.mmpower_selected_categories
         : ["dining", "electronics"];
     const mmpowerSet = new Set(mmpowerSelected);
-    if (ownedSet.has("hangseng_mmpower")) ensureBucket(preferenceBlocksByCard, "hangseng_mmpower").push(`<div class="border p-3 rounded-xl bg-orange-50 border-orange-100">
-        <div class="text-xs font-bold text-orange-800 mb-2">MMPower 自選簽賬類別（3選2）</div>
+    if (ownedSet.has("hangseng_mmpower")) ensureBucket(preferenceBlocksByCard, "hangseng_mmpower").push(`<div class="border p-3 rounded-md bg-[#fcfcfc] border-[#e9e9e7]">
+        <div class="text-xs font-semibold text-[#37352f] mb-2">MMPower 自選簽賬類別（3選2）</div>
         <div class="space-y-2 text-xs">
-            <label class="flex justify-between items-center bg-white border border-orange-100 rounded p-2">
+            <label class="flex justify-between items-center bg-white border border-[#e9e9e7] rounded p-2">
                 <span>🍽️ 餐飲（不包括快餐店）</span>
                 <input type="checkbox" ${mmpowerSet.has("dining") ? 'checked' : ''} onchange="toggleMmpowerSelected('dining', this.checked)">
             </label>
-            <label class="flex justify-between items-center bg-white border border-orange-100 rounded p-2">
+            <label class="flex justify-between items-center bg-white border border-[#e9e9e7] rounded p-2">
                 <span>🔌 電子產品</span>
                 <input type="checkbox" ${mmpowerSet.has("electronics") ? 'checked' : ''} onchange="toggleMmpowerSelected('electronics', this.checked)">
             </label>
-            <label class="flex justify-between items-center bg-white border border-orange-100 rounded p-2">
+            <label class="flex justify-between items-center bg-white border border-[#e9e9e7] rounded p-2">
                 <span>🎟️ 娛樂（含串流）</span>
                 <input type="checkbox" ${mmpowerSet.has("entertainment") ? 'checked' : ''} onchange="toggleMmpowerSelected('entertainment', this.checked)">
             </label>
         </div>
-        <div class="mt-2 text-[11px] text-orange-800">現已選：${mmpowerSelected.length}/2（最多 2 項）</div>
+        <div class="mt-2 text-[11px] text-gray-500">現已選：${mmpowerSelected.length}/2（最多 2 項）</div>
     </div>`);
 
     if (ownedSet.has("hangseng_enjoy")) pushScopedSettingRow("hangseng_enjoy_points4x_enabled", `<div class="border p-3 rounded-xl bg-amber-50 border-amber-100">
