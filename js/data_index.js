@@ -224,6 +224,8 @@
         const allowedCategoryCoreFields = ["label", "parent", "hidden"];
         const allowedModuleCoreFields = [
             "desc",
+            "display_name_zhhk",
+            "note_zhhk",
             "rate",
             "rate_per_x",
             "multiplier",
@@ -233,6 +235,8 @@
             "promo_end",
             "valid_from",
             "valid_to",
+            "valid_days",
+            "valid_on_red_day",
             "cap_mode",
             "cap_limit",
             "cap_key",
@@ -241,7 +245,17 @@
             "min_spend",
             "min_single_spend",
             "req_mission_spend",
-            "req_mission_key"
+            "req_mission_key",
+            "setting_key",
+            "usage_key",
+            "tnc_url",
+            "promo_url",
+            "source_url",
+            "registration_url",
+            "registration_start",
+            "registration_end",
+            "registration_note",
+            "last_verified_at"
         ];
         const allowedTrackerCoreFields = [
             "type",
@@ -258,7 +272,13 @@
             "counter",
             "retroactive"
         ];
-        const allowedCampaignCoreFields = ["name", "period_policy", "promo_type"];
+        const allowedCampaignCoreFields = ["name", "period_policy", "promo_type", "icon", "theme", "cards", "sections", "capKeys", "warningOnly", "display_name_zhhk"];
+        const allowedRegistryFields = [
+            "settingKey", "warningTitle", "warningDesc",
+            "tncUrl", "promoUrl", "registrationUrl",
+            "registrationStart", "registrationEnd", "registrationNote",
+            "implementationNote"
+        ];
 
         if (core.modules && data.modules) {
             Object.keys(core.modules).forEach((id) => {
@@ -335,8 +355,28 @@
         if (core.campaigns && data.campaigns) {
             Object.keys(core.campaigns).forEach((id) => {
                 const campaign = data.campaigns.find(c => c && c.id === id);
-                if (!campaign) return;
+                if (!campaign) {
+                    // NEW campaign: insert full object (same pattern as modules/trackers)
+                    const patch = core.campaigns[id];
+                    if (patch && typeof patch === "object" && !Array.isArray(patch)) {
+                        data.campaigns.push({ ...patch, id: id });
+                    }
+                    return;
+                }
                 applyFields(campaign, core.campaigns[id], allowedCampaignCoreFields);
+            });
+        }
+
+        // Apply campaign registry overrides
+        if (core.campaignRegistry && data.campaignRegistry) {
+            Object.keys(core.campaignRegistry).forEach((id) => {
+                const patch = core.campaignRegistry[id];
+                if (!patch || typeof patch !== "object" || Array.isArray(patch)) return;
+                if (!data.campaignRegistry[id]) {
+                    data.campaignRegistry[id] = { ...patch };
+                    return;
+                }
+                applyFields(data.campaignRegistry[id], patch, allowedRegistryFields);
             });
         }
     };

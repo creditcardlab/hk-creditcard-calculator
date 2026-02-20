@@ -129,18 +129,6 @@ const CORE_OVERRIDES = {
   },
   "categories": {},
   "modules": {
-    "ae_explorer_fx_7x_bonus_2026h1": {
-      "desc": "海外額外 +7X"
-    },
-    "ae_explorer_fx_travel_bonus_075_2026h1": {
-      "desc": "海外/旅遊額外 +0.75X"
-    },
-    "ae_explorer_online_5x_bonus_2026": {
-      "desc": "指定網上商戶額外 +2X"
-    },
-    "ae_explorer_travel_7x_bonus_2026h1": {
-      "desc": "旅遊/機票額外 +7X"
-    },
     "citi_cb_base": {
       "desc": "基本簽賬回贈 (1%)"
     },

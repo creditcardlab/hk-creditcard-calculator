@@ -3,39 +3,6 @@
 // Core overrides are higher risk: validate with golden cases before merge.
 const CORE_OVERRIDES = {
   "campaigns": {
-    "ae_explorer_2026h1": {
-      "promo_type": "custom"
-    },
-    "ae_explorer_online_2026": {
-      "promo_type": "custom"
-    },
-    "ae_pcc_double_points_2026": {
-      "promo_type": "custom"
-    },
-    "ae_pcc_program_3x_2026": {
-      "promo_type": "custom"
-    },
-    "ae_platinum_9x_2026h1": {
-      "promo_type": "custom"
-    },
-    "aeon_wakuwaku_2025_2026": {
-      "promo_type": "custom"
-    },
-    "bea_unionpay_diamond_2025_2026h1": {
-      "promo_type": "custom"
-    },
-    "boc_go_offer": {
-      "promo_type": "custom"
-    },
-    "boc_go_offer_platinum": {
-      "promo_type": "mission_multi_cap"
-    },
-    "boc_sogo_mobile_offer": {
-      "promo_type": "custom"
-    },
-    "citi_rewards_bonus": {
-      "promo_type": "custom"
-    },
     "em_promo": {
       "name": "EveryMile 外幣簽帳優惠",
       "period_policy": {
@@ -65,21 +32,6 @@ const CORE_OVERRIDES = {
           }
         ]
       }
-    },
-    "fubon_infinite_overseas_2026": {
-      "promo_type": "custom"
-    },
-    "fubon_travel_overseas_2026": {
-      "promo_type": "custom"
-    },
-    "fubon_travel_upgrade_promo": {
-      "promo_type": "custom"
-    },
-    "sim_promo": {
-      "promo_type": "mission_multi_cap"
-    },
-    "sim_world_promo": {
-      "promo_type": "mission_multi_cap"
     },
     "winter_promo": {
       "name": "HSBC 最紅冬日賞",
@@ -129,18 +81,6 @@ const CORE_OVERRIDES = {
   },
   "categories": {},
   "modules": {
-    "ae_explorer_fx_7x_bonus_2026h1": {
-      "desc": "海外額外 +7X"
-    },
-    "ae_explorer_fx_travel_bonus_075_2026h1": {
-      "desc": "海外/旅遊額外 +0.75X"
-    },
-    "ae_explorer_online_5x_bonus_2026": {
-      "desc": "指定網上商戶額外 +2X"
-    },
-    "ae_explorer_travel_7x_bonus_2026h1": {
-      "desc": "旅遊/機票額外 +7X"
-    },
     "citi_cb_base": {
       "desc": "基本簽賬回贈 (1%)"
     },
@@ -251,5 +191,5 @@ const CORE_OVERRIDES = {
       "desc": "❄️ 最紅冬日賞"
     }
   },
-  "version": 2
+  "version": 1
 };

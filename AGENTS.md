@@ -186,3 +186,141 @@ node tools/workbench.js apply --edits <path>
   - 簽賬／任務一律用 `$`
   - 回贈單位優先跟 card redemption unit（例如 `RC/里/分`）；cash fallback 用 `$`
 
+---
+
+## Agent Team
+
+呢個 repo 有三個專責 agent 角色。每個 agent 有明確嘅 scope、guidelines 同 backlog。跨角色改動要遵守下面嘅 coordination rules。
+
+---
+
+### @ux — UX/UI Research
+
+**職責：** 確保用戶可以方便、快速、直覺地獲取所需資訊。負責美觀度、可用性、無障礙設計。
+
+**Scope 檔案：**
+- `index.html` — HTML 結構、語義化、accessibility attributes
+- `css/style.css` — 樣式系統、設計 tokens、responsive
+- `js/ui.js` — UI rendering（calculator cards、dashboard progress、settings）
+- `js/copy_zhhk.js` — 用戶介面文案集中管理
+
+**Guidelines：**
+- Accessibility：所有互動元素必須有 `aria-label`、`role`、`aria-selected`。觸控目標最少 44×44px（WCAG）。
+- Responsive：mobile-first 設計，用 media queries 處理唔同 viewport。保留 safe-area-inset padding。
+- 資訊密度：減少用戶操作步驟，smart grouping（例如合併交易類型 + 支付方式）。
+- 美觀：設計 tokens 集中管理（CSS custom properties），progress bar 狀態要一致。
+- 文案：所有 user-facing 文字歸入 `copy_zhhk.js`，唔好 hardcode 喺 `ui.js`。
+
+**Backlog（按優先順序）：**
+
+| # | 任務 | 位置 | 備註 |
+|---|------|------|------|
+| 1 | 加 `aria-label`、`role`、`aria-selected` 到所有互動元素 | `index.html` 全部 button/input/select | 目前幾乎全部冇 aria attributes |
+| 2 | Tab bar 按鈕觸控目標加大到 44×44px | `index.html` lines 132-140 | 現時文字 10px，觸控區太細 |
+| 3 | 簡化計算機表單步驟（合併交易類型 + 支付方式） | `js/ui.js` lines 2539-2702 | 目前要 6+ 步先有結果 |
+| 4 | 完善 `copy_zhhk.js` 文案集中化 | `js/copy_zhhk.js` + `js/ui.js` | 目前只有 3 個 status string，但 UI 散佈 20+ 文字 |
+| 5 | Settings 頁面分組摺疊（expandable sections） | `js/ui.js` lines 2704-3412 | 700+ 行 monolithic rendering |
+| 6 | Wallet tone 顏色改用 CSS custom properties | `css/style.css` lines 164-177 | 13 組重複 gradient 定義 |
+| 7 | 加 responsive media queries | `css/style.css` | 目前完全冇 breakpoint |
+| 8 | 簡化 progress bar overlay 視覺 | `js/ui.js` lines 1410-1476 | 三種 overlay 類型視覺區別唔夠明顯 |
+| 9 | 表單驗證回饋（amount > 0、視覺 error state） | `js/ui.js` + `index.html` | 目前無任何輸入驗證提示 |
+| 10 | Dark mode 支援 | `css/style.css` | 所有顏色 hardcode light theme |
+
+---
+
+### @data — Data Flow Manager
+
+**職責：** 確保數據流暢同安全。數據庫管理系統要易用、易維護。用戶要可以喺清晰、易視覺化嘅系統入面修改同更新數據。數據結構要支援到任何複雜規則。
+
+**Scope 檔案：**
+- `js/app.js` — localStorage 持久化、commitTransaction、resetCountersForPeriod、migrations、import/export
+- `js/core.js` — loadUserData/saveUserData、userProfile 結構
+- `js/data_index.js` — 數據組裝 pipeline、overrides 套用、allowlist
+- `js/data_overrides.js` — Runtime config overrides（由 workbench 產生）
+- `js/data_counters.js` — countersRegistry 自動建構
+- `js/validate.js` — 數據完整性驗證
+- `tools/` — workbench、export、quality report
+
+**Guidelines：**
+- 永遠唔好喺冇 backup/rollback 嘅情況下刪除 usage 數據。
+- `data_index.js` 同 `tools/workbench.js` 嘅 allowlist 必須保持同步。
+- Migration 要 idempotent、有序、可審計。
+- Import 驗證要檢查：card ID 係咪存在、usage key 係咪 match registry、settings 有冇必要欄位、transaction array 大小限制。
+- `_counter_periods` 係內部狀態——要文檔化同保護，防止外部污染。
+- `tx.txDate`（簽賬日）係 period/reset/holiday 唯一基準；永遠唔好用 `tx.date`（記帳時間）。
+- 任何 `userProfile` mutation 都應該 wrap 喺 try-catch 入面，失敗時 rollback。
+
+**Backlog（按優先順序）：**
+
+| # | 任務 | 位置 | 備註 |
+|---|------|------|------|
+| 1 | localStorage backup/recovery（保留最近 N 個版本 + checksum 驗證） | `js/core.js` lines 143-196 | 目前 save 直接覆蓋，冇恢復機制 |
+| 2 | `rebuildUsageAndStatsFromTransactions()` 加 pre/post validation | `js/app.js` lines 468-538 | 目前 wipe all usage 再 rebuild，新 field 會被永久刪除 |
+| 3 | 加強 import 驗證（card ID 存在性、usage key match、settings schema、tx array size） | `js/app.js` lines 1010-1061 | 目前只檢查頂層欄位存在 |
+| 4 | 同步 `data_index.js` 同 `workbench.js` 嘅 allowlist | `js/data_index.js` lines 211-261 + `tools/workbench.js` lines 30-81 | 兩套 allowlist 可能 diverge |
+| 5 | Destructive migration 加 try-catch + rollback | `js/app.js` lines 156-203 | 目前 migration 直接 delete，冇 undo |
+| 6 | `validate.js` 加 cap_mode collision 檢測 | `js/validate.js` lines 616-638 | 兩個 module 共用 cap_key 但 cap_mode 唔同（reward vs spending）未被偵測 |
+| 7 | Period reset 前保留歷史 counter 值 | `js/app.js` lines 240-304 | 目前跨 period 直接 delete counter，歷史數據永久消失 |
+| 8 | 數據變更 audit trail（timestamp + diff log） | `js/app.js` + `js/core.js` | 目前完全冇變更記錄，debug 困難 |
+| 9 | DRY `normalizePeriodSpec()` | `js/data_counters.js` + `js/data_index.js` + `js/app.js` | 同一邏輯三處重複 |
+| 10 | 「Health Check」debug 界面（顯示所有 counter、period boundary、reset bucket key） | 新 UI section | 用戶同開發者都冇方法直接睇到 counter 狀態 |
+
+---
+
+### @logic — Logic/Calculation Manager
+
+**職責：** 確保回贈計算準確跟足條款。準備好接入實驗性新功能（詳細商戶選擇、Effective Rebate Rate）。
+
+**Scope 檔案：**
+- `js/core.js` — 回贈計算引擎（`calculateResults`、`buildCardResult`、`evaluateModules`、cap enforcement）
+- `js/engine_trackers.js` — Tracker 評估（mission delta 累計）
+- `js/periods.js` + `js/period_policy.js` — Period/bucket 計算
+- `js/data_modules.js` — 129 個 module 定義（rate/cap/mission/eligible_check）
+- `js/data_rules.js` — 商業規則（zero reward categories、category aliases、card overrides）
+- `tools/golden_cases.json` — 253 個 golden test cases
+
+**Guidelines：**
+- 每次改計算邏輯必跑 `node tools/run_golden_cases.js`。
+- `--update` golden cases 只喺行為改動係 intended 同 reviewed 先用。
+- `cap_mode` 區分至關重要：`spending` = usage 存簽帳金額；`reward` = usage 存回贈本位單位。
+- `mode: "replace"` 取代 base rate；`mode: "add"` 疊加 bonus——永遠唔好搞混。
+- Retroactive modules（`retroactive: true`）會喺 mission unlock 後回溯計算——必須測試 locked 同 unlocked 兩條路徑。
+- Tracker evaluation 順序會影響結果——確保 deterministic ordering。
+- 新 module type 要求：`evaluateModules()` 加 handler、`validate.js` 加驗證、golden cases 加測試。
+
+**Backlog（按優先順序）：**
+
+| # | 任務 | 位置 | 備註 |
+|---|------|------|------|
+| 1 | Secondary cap（`secondary_cap_key`）加入 result breakdown 顯示 | `js/core.js` lines 1311-1394 | 目前內部追蹤但用戶睇唔到 |
+| 2 | 加 10+ golden test cases（multi-cap、retroactive+immediate、concurrent promos、period boundary） | `tools/golden_cases.json` | 253 cases 但部分場景覆蓋不足 |
+| 3 | 🧪 **[實驗] 詳細商戶選擇**：merchant-aware `eligible_check` | `js/core.js` + `js/data_modules.js` | UI 將商戶 → category，`ctx.merchant` 傳入 eligible_check。module 可用 MCC 做精細排除 |
+| 4 | 🧪 **[實驗] Effective Rebate Rate**：考慮全部任務所需簽賬嘅實際回贈率 | `js/core.js` `buildFinalResult()` | 用 `pendingUnlocks[]` + `usage[reqKey]` 計算混合回贈率：`(即時回贈 + 加權待解鎖回贈) / 任務總簽賬`。作為標準回贈率旁邊嘅第二指標顯示 |
+| 5 | Tracker evaluation 確保 deterministic 順序 | `js/engine_trackers.js` | 多個 tracker 可能互相影響（A 更新 key → B 讀到新值），需要排序保證一致性 |
+| 6 | Partial cap 浮點精度修正 | `js/core.js` lines 1334, 1387 | `remaining / amount` 可產生 fractional rate，中間計算未 round |
+| 7 | 新 module type schema registry 驗證 | `js/validate.js` + `js/core.js` | 目前加新 type 唔會被 validate.js catch 到 |
+| 8 | Module type dispatch 改為 registry pattern | `js/core.js` `evaluateModules()` | 目前 if/else chain，擴展性差 |
+| 9 | Category hierarchy 支援多層（>1 level） | `js/core.js` `isCategoryMatch()` lines 992-1004 | 目前只 check 一層 parent |
+| 10 | Composite rule composition 支援（declarative 組合 rate-capping + mission-locking） | `js/data_modules.js` + `js/core.js` | 長期目標：減少新 promo 嘅 hardcode |
+
+---
+
+## Agent 協調規則
+
+### 1. Golden tests 係合約
+任何 agent 改計算行為必須更新 golden cases。改 UI 嘅 agent 要驗證 dashboard progress rendering 同 golden output 一致。
+
+### 2. Data schema 改動要跨 agent review
+如果 `@data` 改咗 userProfile 結構，`@logic` 要驗證計算兼容性，`@ux` 要驗證 UI rendering。
+
+### 3. Module 改動流程
+`@logic` 定義規則（`data_modules.js`）→ `@data` 確保 counters/periods registered → `@ux` 確保 dashboard 正確顯示。
+
+### 4. 實驗功能 gating
+新實驗功能（商戶選擇、effective rate）必須用 `setting_key` toggle 控制，可以獨立開關。
+
+### 5. 跨 scope 檔案
+- `js/core.js`：`@logic`（計算引擎）同 `@data`（userProfile load/save）共管。改計算要 `@logic` lead；改數據持久化要 `@data` lead。
+- `js/ui.js`：`@ux` 主導，但如果涉及 dashboard 數據顯示邏輯（例如 cap 進度計算），需要 `@logic` review。
+- `index.html`：`@ux` 主導。
+
