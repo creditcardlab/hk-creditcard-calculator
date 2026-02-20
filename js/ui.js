@@ -1192,9 +1192,14 @@ function renderWarningCard(title, icon, description, settingKey, cardId, infoMet
                 <div class="text-[10px] text-stone-600 mb-2">${description || "請先完成官方登記，再到設定頁標記已登記。"}</div>
                 ${detailHtml}
                 ${sourceHtml}
-                <button onclick="openSettingsForRegistration('${settingArg}'${cardArg})" class="text-xs bg-stone-200 hover:bg-stone-300 text-stone-800 px-3 py-1.5 rounded-lg font-bold transition-colors">
-                    前往設定
-                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleRegistrationFromDashboard('${settingArg}')" class="text-xs bg-stone-700 hover:bg-stone-800 text-white px-3 py-1.5 rounded-lg font-bold transition-colors">
+                        立即登記 ✓
+                    </button>
+                    <button onclick="openSettingsForRegistration('${settingArg}'${cardArg})" class="text-xs bg-stone-200 hover:bg-stone-300 text-stone-800 px-3 py-1.5 rounded-lg font-bold transition-colors">
+                        前往設定
+                    </button>
+                </div>
             </div>
         </div>
     </div>`;
@@ -1219,6 +1224,7 @@ function renderSettingsToggle(options) {
     const id = opts.id ? String(opts.id) : "";
     const checked = !!opts.checked;
     const onchange = opts.onchange ? String(opts.onchange) : "";
+    const ariaLabel = opts.ariaLabel ? ` aria-label="${escapeHtml(opts.ariaLabel)}"` : "";
     const checkedClass = opts.checkedClass ? String(opts.checkedClass) : "peer-checked:bg-blue-500";
     const idAttr = id ? ` id="${escapeHtml(id)}"` : "";
     const onclickAttr = onchange ? ` onclick="${onchange}"` : "";
@@ -1232,7 +1238,7 @@ function renderSettingsToggle(options) {
         : "bg-gray-200";
     const knobClass = checked ? "translate-x-4" : "translate-x-0";
 
-    return `<button type="button"${idAttr}${onclickAttr} role="switch" aria-checked="${checked ? "true" : "false"}" class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${trackClass}">
+    return `<button type="button"${idAttr}${onclickAttr} role="switch" aria-checked="${checked ? "true" : "false"}"${ariaLabel} class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${trackClass}">
         <span class="absolute top-[2px] left-[2px] h-4 w-4 rounded-full border border-gray-300 bg-white transition-transform ${knobClass}"></span>
     </button>`;
 }
@@ -1657,7 +1663,7 @@ function renderProgressBar({ progress, state, ui, overlayModel }) {
         : "";
     const lockHtml = ui.showLock ? `<div class="${ui.lockClass}"><i class="fas fa-lock"></i></div>` : "";
 
-    return `<div class="${ui.trackClass}">
+    return `<div class="${ui.trackClass}" role="progressbar" aria-valuenow="${Math.round(width)}" aria-valuemin="0" aria-valuemax="100" aria-label="進度">
         <div class="${fillClass}" style="width:${width}%"></div>
         ${separators}
         ${overlay}
@@ -1756,7 +1762,32 @@ function updateCategoryDropdown(ownedCards) {
     const currentVal = select.value;
 
     const options = getCategoryList(ownedCards);
-    select.innerHTML = options.map(o => `<option value="${o.id}">${o.label}</option>`).join('');
+    const parentGroups = {};
+    const ungrouped = [];
+    options.forEach(o => {
+        if (o.parent) {
+            if (!parentGroups[o.parent]) parentGroups[o.parent] = [];
+            parentGroups[o.parent].push(o);
+        } else {
+            ungrouped.push(o);
+        }
+    });
+    let htmlParts = [];
+    const renderedParents = new Set();
+    options.forEach(o => {
+        if (o.parent) {
+            if (!renderedParents.has(o.parent)) {
+                renderedParents.add(o.parent);
+                const parentDef = DATA.categories[o.parent];
+                const parentLabel = parentDef ? parentDef.label.replace(/^[\p{Emoji}\uFE0F\u200D]+\s*/u, "").replace(/\s*\(母類\)\s*/, "") : o.parent;
+                const groupItems = parentGroups[o.parent];
+                htmlParts.push(`<optgroup label="${escapeHtml(parentLabel)}">${groupItems.map(g => `<option value="${g.id}">${g.label}</option>`).join("")}</optgroup>`);
+            }
+        } else {
+            htmlParts.push(`<option value="${o.id}">${o.label}</option>`);
+        }
+    });
+    select.innerHTML = htmlParts.join("");
     if (options.some(o => o.id === currentVal)) select.value = currentVal;
     else select.value = "general";
 
@@ -1934,7 +1965,7 @@ function createProgressCard(config) {
     const {
         title, icon, theme, badge, subTitle, sections, warning, actionButton, description,
         sourceUrl, sourceTitle, tncUrl, promoUrl, registrationUrl, registrationStart, registrationEnd, registrationNote,
-        implementationNote
+        implementationNote, daysLeft
     } = config;
 
     // Theme mapping
@@ -1950,7 +1981,12 @@ function createProgressCard(config) {
     };
 
     const t = themeMap[theme] || themeMap['blue'];
-    const badgeHtml = badge ? `<span class="${t.badge} text-white text-[10px] px-2 py-0.5 rounded-full">${badge}</span>` : '';
+    let badgeClass = t.badge;
+    if (badge && typeof daysLeft === "number" && Number.isFinite(daysLeft)) {
+        if (daysLeft <= 7) badgeClass = "bg-red-500";
+        else if (daysLeft <= 30) badgeClass = "bg-amber-500";
+    }
+    const badgeHtml = badge ? `<span class="${badgeClass} text-white text-[10px] px-2 py-0.5 rounded-full">${badge}</span>` : '';
     const subTitleHtml = subTitle ? `<span class="text-[10px] ${t.subText}">${subTitle}</span>` : '';
     const warningHtml = warning ? `<div>${warning}</div>` : '';
     const dedupedDescription = isRedundantDescriptionForTitle(title || "", description || "") ? "" : (description || "");
@@ -2042,11 +2078,12 @@ function renderDashboard(userProfile) {
         }
         return cardGroups[cardId];
     };
-    const pushBlock = (cardId, blockHtml) => {
+    const pushBlock = (cardId, blockHtml, sortMeta) => {
         if (!blockHtml) return;
+        const item = { html: blockHtml, sortMeta: sortMeta || { daysLeft: Infinity, state: "active" } };
         const group = ensureCardGroup(cardId);
-        if (group) group.items.push(blockHtml);
-        else globalBlocks.push(blockHtml);
+        if (group) group.items.push(item);
+        else globalBlocks.push(item);
     };
 
     const capKeyCounts = {};
@@ -2137,6 +2174,7 @@ function renderDashboard(userProfile) {
     }
 
     // Campaigns (data-driven)
+    const unregisteredPromos = [];
     if (typeof DATA !== 'undefined') {
         const campaignOffers = getCampaignOffers();
         campaignOffers.forEach(campaign => {
@@ -2157,6 +2195,12 @@ function renderDashboard(userProfile) {
             const reg = (DATA.campaignRegistry && campaign && campaign.id) ? DATA.campaignRegistry[campaign.id] : null;
 	        if (reg && reg.settingKey && userProfile.settings[reg.settingKey] === false) {
                 if (!status || !status.eligible) return;
+                unregisteredPromos.push({
+                    title: scopedCampaignTitle,
+                    settingKey: reg.settingKey,
+                    cardId: primaryCardForSettings,
+                    icon: campaign.icon || "fas fa-gift"
+                });
                 const warningHtml = renderWarningCard(
 	                reg.warningTitle || scopedCampaignTitle,
 	                campaign.icon,
@@ -2176,12 +2220,13 @@ function renderDashboard(userProfile) {
                         implementationNote: campaign.implementation_note || buildCampaignImplementationNote(campaign)
                     }
 	            );
+                const warnSortMeta = { daysLeft: 0, state: "warning" };
                 if (scope.type === "card") {
-                    pushBlock(scope.cardId, warningHtml);
+                    pushBlock(scope.cardId, warningHtml, warnSortMeta);
                 } else if (scope.type === "bank_shared") {
-                    scope.ownedCardIds.forEach((cardId) => pushBlock(cardId, warningHtml));
+                    scope.ownedCardIds.forEach((cardId) => pushBlock(cardId, warningHtml, warnSortMeta));
                 } else {
-                    pushBlock(null, warningHtml);
+                    pushBlock(null, warningHtml, warnSortMeta);
                 }
 	            // Prevent duplicate rendering in the "Remaining Caps" section.
 	            if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
@@ -2199,9 +2244,21 @@ function renderDashboard(userProfile) {
             const badgeText = getCampaignBadgeText(campaign);
             const resetSubTitle = getCampaignResetSubTitle(campaign);
             const subTitle = [scopeLabel, resetSubTitle].filter(Boolean).join(" · ");
+            const campaignEndDate = (() => {
+                const meta = getCampaignPeriodMeta(campaign.id);
+                if (meta && meta.badge) {
+                    if (meta.badge.endDate) return meta.badge.endDate;
+                    if (meta.badge.date) return meta.badge.date;
+                }
+                const pp = campaign.period_policy;
+                if (pp && pp.endDate) return pp.endDate;
+                if (pp && pp.period && pp.period.endDate) return pp.period.endDate;
+                return "";
+            })();
+            const campaignDaysLeft = campaignEndDate ? getDaysLeft(campaignEndDate) : null;
             const progressHtml = createProgressCard({
                 title: scopedCampaignTitle, icon: campaign.icon, theme: campaign.theme, badge: badgeText, subTitle,
-                sections: sections,
+                sections: sections, daysLeft: campaignDaysLeft,
                 description: campaign.note_zhhk || "",
                 sourceUrl: campaign.source_url || "",
                 sourceTitle: campaign.source_title || "",
@@ -2214,12 +2271,13 @@ function renderDashboard(userProfile) {
                 implementationNote: campaign.implementation_note || buildCampaignImplementationNote(campaign)
             });
 
+            const campaignSortMeta = { daysLeft: (typeof campaignDaysLeft === "number" && Number.isFinite(campaignDaysLeft)) ? campaignDaysLeft : Infinity, state: "active" };
             if (scope.type === "card") {
-                pushBlock(scope.cardId, progressHtml);
+                pushBlock(scope.cardId, progressHtml, campaignSortMeta);
             } else if (scope.type === "bank_shared") {
-                scope.ownedCardIds.forEach((cardId) => pushBlock(cardId, progressHtml));
+                scope.ownedCardIds.forEach((cardId) => pushBlock(cardId, progressHtml, campaignSortMeta));
             } else {
-                pushBlock(null, progressHtml);
+                pushBlock(null, progressHtml, campaignSortMeta);
             }
         });
     }
@@ -2398,6 +2456,44 @@ function renderDashboard(userProfile) {
         });
     });
 
+    // B3: Sort items within each card group by urgency
+    const sortItems = (items) => {
+        const stateOrder = { warning: 0, active: 1, capped: 2 };
+        return items.slice().sort((a, b) => {
+            const sa = (a.sortMeta && stateOrder[a.sortMeta.state] !== undefined) ? stateOrder[a.sortMeta.state] : 1;
+            const sb = (b.sortMeta && stateOrder[b.sortMeta.state] !== undefined) ? stateOrder[b.sortMeta.state] : 1;
+            if (sa !== sb) return sa - sb;
+            const da = (a.sortMeta && typeof a.sortMeta.daysLeft === "number") ? a.sortMeta.daysLeft : Infinity;
+            const db = (b.sortMeta && typeof b.sortMeta.daysLeft === "number") ? b.sortMeta.daysLeft : Infinity;
+            return da - db;
+        });
+    };
+    Object.values(cardGroups).forEach(g => { g.items = sortItems(g.items); });
+    globalBlocks.sort((a, b) => {
+        const stateOrder = { warning: 0, active: 1, capped: 2 };
+        const sa = (a.sortMeta && stateOrder[a.sortMeta.state] !== undefined) ? stateOrder[a.sortMeta.state] : 1;
+        const sb = (b.sortMeta && stateOrder[b.sortMeta.state] !== undefined) ? stateOrder[b.sortMeta.state] : 1;
+        if (sa !== sb) return sa - sb;
+        const da = (a.sortMeta && typeof a.sortMeta.daysLeft === "number") ? a.sortMeta.daysLeft : Infinity;
+        const db = (b.sortMeta && typeof b.sortMeta.daysLeft === "number") ? b.sortMeta.daysLeft : Infinity;
+        return da - db;
+    });
+
+    // B1: Missing registrations banner
+    if (unregisteredPromos.length > 0) {
+        const chips = unregisteredPromos.map(p => {
+            const safeKey = escapeJsSingleQuoted(p.settingKey);
+            return `<button type="button" onclick="toggleRegistrationFromDashboard('${safeKey}')" class="inline-flex items-center gap-1 text-[10px] bg-white border border-amber-300 text-amber-800 px-2 py-1 rounded-full hover:bg-amber-100 transition-colors">
+                <i class="${escapeHtml(p.icon)} text-[8px]"></i>${escapeHtml(p.title)}
+            </button>`;
+        }).join("");
+        html += `<div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
+            <div class="text-xs font-bold text-amber-800 mb-1">\u26A0\uFE0F ${unregisteredPromos.length} 個推廣尚未登記</div>
+            <div class="text-[10px] text-amber-700">登記後即可追蹤進度及計算回贈</div>
+            <div class="flex flex-wrap gap-2 mt-2">${chips}</div>
+        </div>`;
+    }
+
     const orderedCardGroups = ownedCards
         .map((cardId) => cardGroups[cardId])
         .filter((group) => group && group.items.length > 0);
@@ -2530,7 +2626,7 @@ function renderDashboard(userProfile) {
             <h3 class="text-sm font-bold text-gray-800">進度項目</h3>
             <span class="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border border-gray-200">${focusCount} 項</span>
         </div>`;
-        html += focusItems.join("");
+        html += focusItems.map(item => typeof item === "string" ? item : item.html).join("");
     }
 
     container.innerHTML = html;
@@ -2876,19 +2972,78 @@ function renderSettings(userProfile) {
             ${descText ? `<span class="text-[10px] text-stone-600">${escapeHtml(descText)}</span>` : ""}
             ${refsHtml}
         </div>` : "";
+        const detailsOpen = checked ? "" : " open";
         return `<div data-setting-key="${escapeHtml(def.settingKey)}" class="${classes.row} p-2 rounded border ${classes.border}">
-            <div class="flex justify-between items-start gap-3">
-                <div class="min-w-0">
-                    <div class="text-xs font-bold text-stone-800">${escapeHtml(def.label)}</div>
-                    ${metaHtml}
-                </div>
-                ${renderSettingsToggle({ id: inputId, checked, onchange: `toggleSetting('${toggleSettingKey}')` })}
-            </div>
+            <details${detailsOpen}>
+                <summary class="flex justify-between items-start gap-3 cursor-pointer list-none" style="list-style:none">
+                    <div class="min-w-0">
+                        <div class="text-xs font-bold text-stone-800">${escapeHtml(def.label)}</div>
+                    </div>
+                    <div onclick="event.stopPropagation()" class="flex-shrink-0">
+                        ${renderSettingsToggle({ id: inputId, checked, onchange: `toggleSetting('${toggleSettingKey}')` })}
+                    </div>
+                </summary>
+                ${metaHtml}
+            </details>
         </div>`;
     };
 
     // Data Management Section
     let html = "";
+    // B5: Batch review mode
+    if (!detailMode && settingsBatchReviewMode) {
+        const toggleDefs = (typeof getCampaignToggleDefinitions === "function") ? getCampaignToggleDefinitions() : [];
+        const registrationDefs = toggleDefs.filter(d => {
+            if (!d || !d.settingKey) return false;
+            const scopedCards = [];
+            if (typeof DATA !== "undefined" && Array.isArray(DATA.offers)) {
+                DATA.offers.forEach(offer => {
+                    if (offer && offer.settingKey === d.settingKey && Array.isArray(offer.cards)) {
+                        offer.cards.forEach(cid => { if (ownedSet.has(cid)) scopedCards.push(cid); });
+                    }
+                });
+            }
+            return scopedCards.length > 0;
+        });
+        html += `<div class="bg-white rounded-2xl border border-gray-200 p-4 mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-sm font-bold text-gray-800">批量檢視推廣登記</h2>
+                <button type="button" onclick="toggleBatchReviewMode()" class="text-xs px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">返回卡片檢視</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-xs">
+                    <thead><tr class="bg-gray-50">
+                        <th class="text-left p-2 font-bold text-gray-600">推廣名稱</th>
+                        <th class="text-center p-2 font-bold text-gray-600">狀態</th>
+                        <th class="text-center p-2 font-bold text-gray-600">登記</th>
+                    </tr></thead>
+                    <tbody>`;
+        registrationDefs.forEach(d => {
+            const checked = !!(userProfile.settings[d.settingKey]);
+            const statusIcon = checked ? `<span class="text-green-600">✅</span>` : `<span class="text-red-500">❌</span>`;
+            const toggleKey = escapeJsSingleQuoted(d.settingKey);
+            const inputId = `batch-${d.settingKey.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+            html += `<tr class="border-t border-gray-100">
+                <td class="p-2 text-gray-800">${escapeHtml(d.label || d.settingKey)}</td>
+                <td class="p-2 text-center">${statusIcon}</td>
+                <td class="p-2 text-center">${renderSettingsToggle({ id: inputId, checked, onchange: `toggleSetting('${toggleKey}')` })}</td>
+            </tr>`;
+        });
+        html += `</tbody></table></div></div>`;
+        html += `</div>`;
+        list.innerHTML = html;
+        return;
+    }
+
+    // B5: Batch review mode toggle button (shown in non-detail wallet view)
+    if (!detailMode && ownedCards.length > 0) {
+        html += `<div class="flex justify-end mb-2">
+            <button type="button" onclick="toggleBatchReviewMode()" class="text-xs px-3 py-1.5 rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-100">
+                <i class="fas fa-table-list mr-1"></i>批量檢視
+            </button>
+        </div>`;
+    }
+
     if (!detailMode) html += `<div class="bg-[#f7f4ee] p-5 rounded-2xl shadow-sm border border-stone-200 mb-4">
         <h2 class="text-sm font-bold text-stone-800 uppercase mb-3 flex items-center gap-2">
             <i class="fas fa-database"></i> 數據管理
@@ -3021,12 +3176,20 @@ function renderSettings(userProfile) {
         ? `<div class="mt-1">${cardReferenceLinks}</div>`
         : `<div class="mt-1 text-[10px] text-stone-400">來源連結待補</div>`;
 
-    html += `<div class="bg-white rounded-2xl border border-gray-200 p-4 mb-4">
+    const prevCardId = ownedCards.length > 1 ? ownedCards[(ownedCards.indexOf(focusedCardId) - 1 + ownedCards.length) % ownedCards.length] : "";
+    const nextCardId = ownedCards.length > 1 ? ownedCards[(ownedCards.indexOf(focusedCardId) + 1) % ownedCards.length] : "";
+    const prevBtn = prevCardId ? `<button type="button" onclick="navigateSettingsCard('${escapeJsSingleQuoted(prevCardId)}')" class="text-gray-400 hover:text-gray-700 px-1" aria-label="上一張卡">◀</button>` : "";
+    const nextBtn = nextCardId ? `<button type="button" onclick="navigateSettingsCard('${escapeJsSingleQuoted(nextCardId)}')" class="text-gray-400 hover:text-gray-700 px-1" aria-label="下一張卡">▶</button>` : "";
+    html += `<div class="bg-white rounded-2xl border border-gray-200 p-4 mb-4 sticky top-0 z-10 shadow-sm">
         <div class="flex items-center justify-between gap-3">
-            <div class="min-w-0">
-                <div class="text-sm font-bold text-gray-800 truncate">${escapeHtml(focusedCardName || "卡片設定")}</div>
-                <div class="text-[10px] text-gray-500 mt-0.5">${escapeHtml(getCardBankTag(focusedCardId))}</div>
-                ${cardReferenceHtml}
+            <div class="min-w-0 flex items-center gap-1">
+                ${prevBtn}
+                <div>
+                    <div class="text-sm font-bold text-gray-800 truncate">${escapeHtml(focusedCardName || "卡片設定")}</div>
+                    <div class="text-[10px] text-gray-500 mt-0.5">${escapeHtml(getCardBankTag(focusedCardId))}</div>
+                    ${cardReferenceHtml}
+                </div>
+                ${nextBtn}
             </div>
             <button type="button" onclick="closeWalletCardDetail()" class="text-xs px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
                 返回銀包
@@ -3383,11 +3546,18 @@ function renderSettings(userProfile) {
     const focusedCardRows = focusedCardId ? (registrationRowsByCard[focusedCardId] || []) : [];
     const directRegistrationRows = [...focusedCardRows, ...sharedRegistrationRows];
     const focusedPreferenceRows = focusedCardId ? (preferenceBlocksByCard[focusedCardId] || []) : [];
-    const directRows = [...focusedPreferenceRows, ...sharedPreferenceBlocks, ...directRegistrationRows];
+    const allPreferenceRows = [...focusedPreferenceRows, ...sharedPreferenceBlocks];
 
-    if (directRows.length > 0) {
+    if (allPreferenceRows.length > 0) {
         html += `<div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
-            <div class="space-y-2">${directRows.join("")}</div>
+            <div class="text-xs font-bold text-gray-600 mb-2">偏好設定</div>
+            <div class="space-y-2">${allPreferenceRows.join("")}</div>
+        </div>`;
+    }
+    if (directRegistrationRows.length > 0) {
+        html += `<div class="rounded-xl border border-amber-200 bg-amber-50/50 p-3 mt-3">
+            <div class="text-xs font-bold text-amber-700 mb-2">推廣登記</div>
+            <div class="space-y-2">${directRegistrationRows.join("")}</div>
         </div>`;
     }
     if (bankSharedRows.length > 0) {
@@ -3426,6 +3596,19 @@ function changeAllocation(key, delta) {
     updateAllocationTotal();
 }
 function updateAllocationTotal() { const total = Object.values(userProfile.settings.red_hot_allocation).reduce((a, b) => a + b, 0); const el = document.getElementById('rh-total'); if (el) { el.innerText = total; if (total === 5) el.className = "text-green-600 font-bold"; else el.className = "text-red-500 font-bold"; } }// --- LEDGER ---
+let ledgerFilters = { cardId: "", category: "", dateFrom: "", dateTo: "" };
+let settingsBatchReviewMode = false;
+
+window.setLedgerFilter = function (key, value) {
+    ledgerFilters[key] = value || "";
+    renderLedger(userProfile.transactions);
+};
+
+window.clearLedgerFilters = function () {
+    ledgerFilters = { cardId: "", category: "", dateFrom: "", dateTo: "" };
+    renderLedger(userProfile.transactions);
+};
+
 window.renderLedger = function (transactions) {
     const container = document.getElementById('ledger-container');
     if (!transactions || transactions.length === 0) {
@@ -3438,13 +3621,51 @@ window.renderLedger = function (transactions) {
         return;
     }
 
-    let html = `<div class="flex justify-between items-center mb-4">
-        <h3 class="font-bold text-gray-800">最近記錄 (${transactions.length})</h3>
+    const filtered = transactions.filter(tx => {
+        if (ledgerFilters.cardId && tx.cardId !== ledgerFilters.cardId) return false;
+        if (ledgerFilters.category && tx.category !== ledgerFilters.category) return false;
+        if (ledgerFilters.dateFrom && (tx.txDate || "") < ledgerFilters.dateFrom) return false;
+        if (ledgerFilters.dateTo && (tx.txDate || "") > ledgerFilters.dateTo) return false;
+        return true;
+    });
+
+    const ownedCards = Array.isArray(userProfile.ownedCards) ? userProfile.ownedCards : [];
+    const cardOptions = (typeof DATA !== "undefined" && Array.isArray(DATA.cards))
+        ? DATA.cards.filter(c => c && ownedCards.includes(c.id)).map(c => `<option value="${escapeHtml(c.id)}" ${ledgerFilters.cardId === c.id ? "selected" : ""}>${escapeHtml(c.name || c.id)}</option>`).join("")
+        : "";
+    const catOptions = (typeof getCategoryList === "function")
+        ? getCategoryList(ownedCards).map(c => `<option value="${escapeHtml(c.id)}" ${ledgerFilters.category === c.id ? "selected" : ""}>${escapeHtml(c.label)}</option>`).join("")
+        : "";
+    const hasFilters = ledgerFilters.cardId || ledgerFilters.category || ledgerFilters.dateFrom || ledgerFilters.dateTo;
+    const clearBtn = hasFilters ? `<button onclick="clearLedgerFilters()" class="text-[10px] text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100">清除篩選</button>` : "";
+
+    let html = `<div class="bg-white rounded-xl border border-gray-200 p-3 mb-3 space-y-2">
+        <div class="grid grid-cols-2 gap-2">
+            <select onchange="setLedgerFilter('cardId', this.value)" class="text-xs p-1.5 border border-gray-200 rounded-lg bg-white">
+                <option value="">全部卡片</option>${cardOptions}
+            </select>
+            <select onchange="setLedgerFilter('category', this.value)" class="text-xs p-1.5 border border-gray-200 rounded-lg bg-white">
+                <option value="">全部類別</option>${catOptions}
+            </select>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+            <input type="date" value="${escapeHtml(ledgerFilters.dateFrom)}" onchange="setLedgerFilter('dateFrom', this.value)" class="text-xs p-1.5 border border-gray-200 rounded-lg" placeholder="開始日期">
+            <input type="date" value="${escapeHtml(ledgerFilters.dateTo)}" onchange="setLedgerFilter('dateTo', this.value)" class="text-xs p-1.5 border border-gray-200 rounded-lg" placeholder="結束日期">
+        </div>
+        ${clearBtn}
+    </div>`;
+
+    const showCount = filtered.length;
+    const totalCount = transactions.length;
+    const countLabel = hasFilters ? `顯示 ${showCount} / 共 ${totalCount}` : `${totalCount}`;
+
+    html += `<div class="flex justify-between items-center mb-4">
+        <h3 class="font-bold text-gray-800">最近記錄 (${countLabel})</h3>
         <button onclick="handleClearHistory()" class="text-xs text-red-500 bg-red-50 px-2 py-1 rounded">清除所有</button>
     </div>
     <div class="space-y-3">`;
 
-    transactions.forEach(tx => {
+    filtered.forEach(tx => {
         // Prefer transaction date (txDate) over record timestamp (date).
         let dateStr = "";
         if (tx.txDate) {
@@ -3487,7 +3708,7 @@ window.renderLedger = function (transactions) {
                         <div class="text-base font-bold">$${escapeHtml(amountNum.toLocaleString())}</div>
                         <div class="text-xs text-green-600 font-medium">+${rebateText}</div>
                     </div>
-                    <button onclick="handleDeleteTx(${tx.id})" class="text-xs text-gray-400 hover:text-red-500 px-2 py-1 rounded border border-gray-200">刪除</button>
+                    <button onclick="handleDeleteTx(${tx.id})" class="text-xs text-gray-400 hover:text-red-500 px-2 py-1 rounded border border-gray-200" aria-label="刪除此筆交易">刪除</button>
                 </div>
             </div>`;
     });

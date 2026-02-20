@@ -366,3 +366,27 @@ body {
     font-weight: bold;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
+
+/* QW-2: Collapsible breakdown styling */
+.calc-details-summary {
+    list-style: none;
+}
+.calc-details-summary::-webkit-details-marker {
+    display: none;
+}
+details[open] > .calc-details-summary {
+    color: #6b7280;
+}
+
+/* B6: Touch target minimum sizing */
+button, [role="switch"], a[onclick] {
+    min-height: 44px;
+    min-width: 44px;
+}
+/* Exception for inline text buttons */
+.text-\[10px\] button, button.text-\[10px\], button.text-xs {
+    min-height: auto;
+    min-width: auto;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}

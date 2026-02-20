@@ -18,12 +18,12 @@
         <span class="text-xs text-white bg-stone-700 px-2 py-1 rounded-full">v1.2 UI upgrade</span>
     </div>
 
-    <div id="view-dashboard" class="p-4 space-y-4 tab-content">
+    <div id="view-dashboard" role="tabpanel" aria-labelledby="btn-dashboard" class="p-4 space-y-4 tab-content">
         <div id="dashboard-container"></div>
         <div id="cap-monitors" class="space-y-3"></div>
     </div>
 
-    <div id="view-calculator" class="p-4 space-y-4 tab-content hidden">
+    <div id="view-calculator" role="tabpanel" aria-labelledby="btn-calculator" class="p-4 space-y-4 tab-content hidden">
         <div class="flex justify-center mb-4">
             <div class="bg-gray-200 p-1 rounded-lg flex text-xs font-bold">
                 <button id="btn-mode-miles" onclick="toggleMode('miles')"
@@ -97,11 +97,11 @@
         <div id="calc-results" class="space-y-3 pb-10"></div>
     </div>
 
-    <div id="view-settings" class="p-4 space-y-4 tab-content hidden">
+    <div id="view-settings" role="tabpanel" aria-labelledby="btn-settings" class="p-4 space-y-4 tab-content hidden">
         <div id="settings-container"></div>
     </div>
 
-    <div id="view-ledger" class="p-4 space-y-4 tab-content hidden">
+    <div id="view-ledger" role="tabpanel" aria-labelledby="btn-ledger" class="p-4 space-y-4 tab-content hidden">
         <div id="ledger-container"></div>
     </div>
 
@@ -127,19 +127,19 @@
         </div>
     </div>
 
-    <div
+    <div role="tablist"
         class="bottom-tabbar fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around p-3 z-20 max-w-md mx-auto">
-        <button onclick="switchTab('dashboard')" class="flex flex-col items-center text-stone-700 tab-btn w-1/4"
+        <button onclick="switchTab('dashboard')" role="tab" aria-selected="true" aria-controls="view-dashboard" class="flex flex-col items-center text-stone-700 tab-btn w-1/4"
             id="btn-dashboard"><i class="fas fa-chart-pie text-xl mb-1"></i><span class="text-[10px]">進度</span></button>
-        <button onclick="switchTab('calculator')" class="flex flex-col items-center text-gray-400 tab-btn w-1/4"
+        <button onclick="switchTab('calculator')" role="tab" aria-selected="false" aria-controls="view-calculator" class="flex flex-col items-center text-gray-400 tab-btn w-1/4"
             id="btn-calculator"><i class="fas fa-calculator text-xl mb-1"></i><span
                 class="text-[10px]">計算</span></button>
-        <button onclick="switchTab('ledger')" class="flex flex-col items-center text-gray-400 tab-btn w-1/4"
+        <button onclick="switchTab('ledger')" role="tab" aria-selected="false" aria-controls="view-ledger" class="flex flex-col items-center text-gray-400 tab-btn w-1/4"
             id="btn-ledger"><i class="fas fa-book text-xl mb-1"></i><span class="text-[10px]">交易紀錄</span></button>
-        <button onclick="switchTab('settings')" class="flex flex-col items-center text-gray-400 tab-btn w-1/4"
+        <button onclick="switchTab('settings')" role="tab" aria-selected="false" aria-controls="view-settings" class="flex flex-col items-center text-gray-400 tab-btn w-1/4"
             id="btn-settings"><i class="fas fa-cog text-xl mb-1"></i><span class="text-[10px]">設定</span></button>
     </div>
-    <div id="toast-root"
+    <div id="toast-root" aria-live="polite"
         class="fixed left-1/2 -translate-x-1/2 bottom-24 z-30 w-[calc(100%-2rem)] max-w-md pointer-events-none space-y-2">
     </div>
 

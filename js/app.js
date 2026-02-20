@@ -369,8 +369,13 @@ window.switchTab = function (t) {
     document.getElementById(`view-${t}`).classList.remove('hidden');
 
     // Update Buttons
-    document.querySelectorAll('.tab-btn').forEach(e => e.classList.replace('text-stone-700', 'text-gray-400'));
-    document.getElementById(`btn-${t}`).classList.replace('text-gray-400', 'text-stone-700');
+    document.querySelectorAll('.tab-btn').forEach(e => {
+        e.classList.replace('text-stone-700', 'text-gray-400');
+        e.setAttribute('aria-selected', 'false');
+    });
+    const activeBtn = document.getElementById(`btn-${t}`);
+    activeBtn.classList.replace('text-gray-400', 'text-stone-700');
+    activeBtn.setAttribute('aria-selected', 'true');
 
     if (t === 'dashboard') renderDashboard(userProfile);
     if (t === 'ledger') renderLedger(userProfile.transactions);
@@ -898,6 +903,13 @@ window.closeWalletCardDetail = function () {
     refreshUI();
 }
 
+window.navigateSettingsCard = function (cardId) {
+    if (!cardId) return;
+    userProfile.settings.settings_focus_card = cardId;
+    saveUserData();
+    refreshUI();
+}
+
 window.openDashboardCardDetail = function (cardId) {
     const focus = String(cardId || "");
     if (!focus) return;
@@ -918,6 +930,22 @@ window.closeDashboardCardDetail = function () {
 window.toggleSetting = function (k) {
     userProfile.settings[k] = !userProfile.settings[k];
     saveUserData();
+    refreshUI();
+}
+
+window.toggleBatchReviewMode = function () {
+    if (typeof settingsBatchReviewMode !== "undefined") {
+        settingsBatchReviewMode = !settingsBatchReviewMode;
+    }
+    refreshUI();
+}
+
+window.toggleRegistrationFromDashboard = function (settingKey) {
+    if (!settingKey) return;
+    userProfile.settings[settingKey] = !userProfile.settings[settingKey];
+    saveUserData();
+    const newState = userProfile.settings[settingKey];
+    showToast(newState ? "已標記為已登記" : "已取消登記", "success");
     refreshUI();
 }
 
