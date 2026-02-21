@@ -44,6 +44,7 @@ function bootAppContext() {
     "data_trackers.js",
     "data_conversions.js",
     "data_rules.js",
+    "data_merchants.js",
     "data_campaigns.js",
     "data_counters.js",
     "period_policy.js",
@@ -139,7 +140,8 @@ function computeExpected(input) {
       deductFcfForRanking: !!profile.settings.deduct_fcf_ranking && displayMode === "cash",
       isOnline,
       isMobilePay,
-      paymentMethod
+      paymentMethod,
+      merchantId: input.merchantId || null
     }
   );
 

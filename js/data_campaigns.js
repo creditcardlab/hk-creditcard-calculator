@@ -25,6 +25,37 @@ const CAMPAIGN_REGISTRY = {
         registrationNote: "只限專屬客戶，並需於 HSBC Reward+ 應用程式登記",
         implementationNote: "計算器做法：此優惠只限專屬客戶。先累積冬日賞合資格簽賬（餐飲/海外而且非網上）。達 $20,000 後，冬日賞回贈按合資格簽賬金額 × 3% 計，上限 $250；達 $40,000 後按合資格簽賬金額 × 6% 計，上限 $800。"
     },
+    easy_additional_offer: {
+        warningTitle: "HSBC Visa Platinum 指定商戶 3X",
+        warningDesc: "只限專屬客戶及指定交易條件",
+        tncUrl: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-exclusive-additional-offers.pdf",
+        promoUrl: "https://www.hsbc.com.hk/zh-hk/credit-cards/offers-and-promotions/",
+        implementationNote: "計算器做法：只映射條款列明商戶。由於 3HK/SUPREME、hutchgo、Harbour Plaza 涉及指定服務/年票/套餐等條件，系統無法自動辨識，需手動判斷是否屬合資格交易。"
+    },
+    red_mcd_stamp: {
+        settingKey: "red_mcd_stamp_enabled",
+        warningTitle: "HSBC Red x 麥當勞電子印花卡",
+        warningDesc: "需於 HSBC Reward+ 登記",
+        tncUrl: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/red/terms-and-conditions-mcdonald.pdf",
+        promoUrl: "https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/",
+        registrationUrl: "https://www.hsbc.com.hk/rewardplus/",
+        registrationStart: "2026-02-16",
+        registrationEnd: "2026-12-31",
+        registrationNote: "需於 HSBC Reward+ 應用程式登記「麥當勞電子印花卡獎賞」",
+        implementationNote: "計算器做法：選擇商戶「McDonald's 麥當勞」後，按條款計算印花。每滿4個印花可獲$15；每日最多1個、每月最多8個、推廣期最多96個。"
+    },
+    sc_cathay_overseas_spending_offer_2026q2: {
+        settingKey: "sc_cathay_overseas_spending_offer_enabled",
+        warningTitle: "渣打國泰海外簽賬獎賞",
+        warningDesc: "需先登記（首30,000位）",
+        tncUrl: "https://av.sc.com/hk/content/docs/hk-cc-cx-overseas-spending-offer-tnc.pdf",
+        promoUrl: "https://www.sc.com/hk/campaign/cathay-mastercard-spending-rewards-promotion/",
+        registrationUrl: "https://www.sc.com/hk/campaign/cathay-mastercard-spending-rewards-promotion/apply/",
+        registrationStart: "2025-12-16",
+        registrationEnd: "2026-03-03",
+        registrationNote: "需以渣打網上理財或SC Mobile完成登記",
+        implementationNote: "計算器做法：推廣期（2025-12-16 至 2026-03-03）內，海外簽賬累積達$10,000後，派一次額外2,500里數（等效首$10,000額外 +0.25 里/港元；連基本海外$4/里約為$2/里）。首30,000位限制、只限同一張已登記卡及不合資格交易名單未能自動核實。"
+    },
     boc_amazing: {
         settingKey: "boc_amazing_enabled",
         warningTitle: "中銀 狂賞派",
@@ -144,6 +175,23 @@ const CAMPAIGNS = [
         capKeys: ["em_promo_cap"]
     },
     {
+        id: "sc_cathay_overseas_spending_offer_2026q2",
+        promo_type: "mission_cap_rate",
+        name: "渣打國泰海外簽賬獎賞",
+        icon: "fas fa-plane-departure",
+        theme: "blue",
+        period_policy: {
+            mode: "fixed",
+            period: { type: "promo", startDate: "2025-12-16", endDate: "2026-03-03" }
+        },
+        cards: ["sc_cathay_std", "sc_cathay_priority", "sc_cathay_private"],
+        sections: [
+            { type: "mission", label: "🎯 海外簽賬任務進度", missionModule: "sc_cathay_overseas_spending_offer_2026q2" },
+            { type: "cap_rate", label: "✈️ 額外里數進度", usageKey: "sc_cathay_overseas_spend_offer_spend", capModule: "sc_cathay_overseas_spending_offer_2026q2", rateModule: "sc_cathay_overseas_spending_offer_2026q2", unit: "里", unlockModule: "sc_cathay_overseas_spending_offer_2026q2" }
+        ],
+        capKeys: ["sc_cathay_overseas_spend_offer_bonus_cap"]
+    },
+    {
         id: "winter_promo",
         promo_type: "tiered_cap",
         name: "HSBC 最紅冬日賞（專屬客戶）",
@@ -168,6 +216,35 @@ const CAMPAIGNS = [
                 unit: ""
             }
         ]
+    },
+    {
+        id: "easy_additional_offer",
+        promo_type: "custom",
+        name: "HSBC Visa Platinum 指定商戶 3X",
+        icon: "fas fa-tags",
+        theme: "red",
+        warningOnly: true,
+        period_policy: {
+            mode: "fixed",
+            period: { type: "promo", startDate: "2025-05-19", endDate: "2026-02-28" }
+        },
+        cards: ["hsbc_easy"],
+        sections: []
+    },
+    {
+        id: "red_mcd_stamp",
+        promo_type: "custom",
+        name: "HSBC Red x 麥當勞電子印花卡",
+        icon: "fas fa-hamburger",
+        theme: "red",
+        warningOnly: true,
+        period_policy: {
+            mode: "fixed",
+            period: { type: "promo", startDate: "2026-02-16", endDate: "2026-12-31" }
+        },
+        cards: ["hsbc_red"],
+        capKeys: ["red_mcd_reward_cap"],
+        sections: []
     },
     {
         id: "sc_smart_monthly",

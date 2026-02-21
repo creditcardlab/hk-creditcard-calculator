@@ -47,6 +47,7 @@
     const data = {
         cards: normalizeCards(rawCards),
         categories: categoriesDB,
+        merchants: (typeof merchantsDB !== "undefined") ? merchantsDB : {},
         modules: rawModules,
         conversions: (typeof conversionDB !== "undefined") ? conversionDB : [],
         trackers: rawTrackers,

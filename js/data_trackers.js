@@ -31,19 +31,60 @@ const trackersDB = {
             { key: "winter_eligible", amount: "tx_amount" }
         ]
     },
+    "red_mcd_stamp_tracker": {
+        type: "mission_tracker",
+        setting_key: "red_mcd_stamp_enabled",
+        desc: "🍔 Red x 麥當勞印花",
+        hide_in_equation: true,
+        mission_id: "red_mcd_stamp",
+        valid_from: "2026-02-16",
+        valid_to: "2026-12-31",
+        eligible_check: (cat, ctx) => (typeof isHsbcRedMcdStampEligible === "function")
+            ? !!isHsbcRedMcdStampEligible(cat, ctx)
+            : false,
+        effects_on_eligible: [
+            { key: "red_mcd_stamp_month", amount: 1 },
+            { key: "red_mcd_stamp_total", amount: 1 },
+            {
+                key: (cat, ctx) => (typeof getHsbcRedMcdDailyStampKey === "function")
+                    ? getHsbcRedMcdDailyStampKey(ctx && ctx.txDate)
+                    : "",
+                amount: 1
+            }
+        ],
+        counter: { key: "red_mcd_stamp_month", period: "month" }
+    },
     "sc_cathay_cxuo_tracker": {
         type: "mission_tracker",
-        match: ["cathay_hkexpress"],
         desc: "✈️ CX/UO 累積簽賬",
         hide_in_equation: true,
         mission_id: "sc_cathay_cxuo_bonus",
         promo_end: "2026-06-30",
         valid_from: "2026-01-01",
         valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => {
+            const merchantId = String((ctx && ctx.merchantId) || "").trim();
+            return merchantId === "cathay_pacific" || merchantId === "hk_express";
+        },
         effects_on_eligible: [{ key: "sc_cathay_cxuo_spend", amount: "tx_amount" }],
         counter: {
             key: "sc_cathay_cxuo_spend",
             period: { type: "quarter", startMonth: 1, startDay: 1 }
+        }
+    },
+    "sc_cathay_overseas_spend_offer_tracker_2026q2": {
+        type: "mission_tracker",
+        setting_key: "sc_cathay_overseas_spending_offer_enabled",
+        match: ["overseas"],
+        desc: "🌍 SC 國泰海外簽賬",
+        hide_in_equation: true,
+        mission_id: "sc_cathay_overseas_spending_offer_2026q2",
+        valid_from: "2025-12-16",
+        valid_to: "2026-03-03",
+        effects_on_eligible: [{ key: "sc_cathay_overseas_spend_offer_spend", amount: "tx_amount" }],
+        counter: {
+            key: "sc_cathay_overseas_spend_offer_spend",
+            period: { type: "promo", startDate: "2025-12-16", endDate: "2026-03-03" }
         }
     },
     "sc_smart_monthly_tracker": {

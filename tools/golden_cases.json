@@ -67,12 +67,12 @@
         ],
         "settings": {},
         "usage": {
-          "red_online_cap": 380
+          "red_online_bonus_cap": 350
         }
       },
       "expected": {
         "topCardId": "hsbc_red",
-        "topValue": 20,
+        "topValue": 50,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -94,7 +94,7 @@
         ],
         "settings": {},
         "usage": {
-          "red_online_cap": 400
+          "red_online_bonus_cap": 360
         }
       },
       "expected": {
@@ -588,6 +588,173 @@
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_020a_sc_cathay_cxuo_requires_merchant",
+      "input": {
+        "amount": 1000,
+        "category": "cathay_hkexpress",
+        "date": "2026-02-12",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "sc_cathay_std"
+        ],
+        "settings": {},
+        "usage": {
+          "sc_cathay_cxuo_spend": 8000
+        }
+      },
+      "expected": {
+        "topCardId": "sc_cathay_std",
+        "topValue": 166.666667,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_020b_sc_cathay_cxuo_cathay_merchant_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-02-12",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "cathay_pacific",
+        "ownedCards": [
+          "sc_cathay_std"
+        ],
+        "settings": {},
+        "usage": {
+          "sc_cathay_cxuo_spend": 8000
+        }
+      },
+      "expected": {
+        "topCardId": "sc_cathay_std",
+        "topValue": 500.041667,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_020c_sc_cathay_cxuo_hkexpress_merchant_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-02-12",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "hk_express",
+        "ownedCards": [
+          "sc_cathay_std"
+        ],
+        "settings": {},
+        "usage": {
+          "sc_cathay_cxuo_spend": 8000
+        }
+      },
+      "expected": {
+        "topCardId": "sc_cathay_std",
+        "topValue": 500.041667,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_020d_sc_cathay_overseas_offer_unregistered",
+      "input": {
+        "amount": 10000,
+        "category": "overseas_jp",
+        "date": "2026-02-21",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "sc_cathay_std"
+        ],
+        "settings": {
+          "sc_cathay_overseas_spending_offer_enabled": false
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "sc_cathay_std",
+        "topValue": 2500,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_020e_sc_cathay_overseas_offer_registered_unlock_same_tx",
+      "input": {
+        "amount": 10000,
+        "category": "overseas_jp",
+        "date": "2026-02-21",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "sc_cathay_std"
+        ],
+        "settings": {
+          "sc_cathay_overseas_spending_offer_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "sc_cathay_std",
+        "topValue": 5000,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_020f_sc_cathay_overseas_offer_bonus_capped",
+      "input": {
+        "amount": 2000,
+        "category": "overseas_jp",
+        "date": "2026-02-21",
+        "displayMode": "miles",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "sc_cathay_std"
+        ],
+        "settings": {
+          "sc_cathay_overseas_spending_offer_enabled": true
+        },
+        "usage": {
+          "sc_cathay_overseas_spend_offer_spend": 10000,
+          "sc_cathay_overseas_spend_offer_bonus_cap": 2500
+        }
+      },
+      "expected": {
+        "topCardId": "sc_cathay_std",
+        "topValue": 500,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
           "hasPartial": false
         }
       }
@@ -6799,12 +6966,12 @@
         ],
         "settings": {},
         "usage": {
-          "red_online_cap": 390
+          "red_online_bonus_cap": 350
         }
       },
       "expected": {
         "topCardId": "hsbc_red",
-        "topValue": 10,
+        "topValue": 50,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -6826,7 +6993,7 @@
         ],
         "settings": {},
         "usage": {
-          "red_online_cap": 400
+          "red_online_bonus_cap": 360
         }
       },
       "expected": {
@@ -6836,6 +7003,114 @@
           "hasLocked": false,
           "hasCapped": true,
           "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_248a_red_designated_offline_under_cap",
+      "input": {
+        "amount": 1000,
+        "category": "red_designated",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 80,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_248b_red_designated_offline_partial_cap",
+      "input": {
+        "amount": 1000,
+        "category": "red_designated",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {},
+        "usage": {
+          "red_designated_spend_cap": 1000
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 23,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_248c_red_designated_online_partial_cap_overflow",
+      "input": {
+        "amount": 2000,
+        "category": "red_designated",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {},
+        "usage": {
+          "red_designated_spend_cap": 1000,
+          "red_online_bonus_cap": 0
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 90,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_248d_red_designated_online_overflow_bonus_capped",
+      "input": {
+        "amount": 2000,
+        "category": "red_designated",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {},
+        "usage": {
+          "red_designated_spend_cap": 1250,
+          "red_online_bonus_cap": 350
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 18,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
+          "hasPartial": true
         }
       }
     },
@@ -6923,6 +7198,497 @@
           "hasCapped": false,
           "hasPartial": false
         }
+      }
+    },
+    {
+      "id": "case_252_red_mcd_stamp_progress_only",
+      "input": {
+        "amount": 50,
+        "category": "fastfood",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "mcdonalds",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {
+          "red_mcd_stamp_enabled": true
+        },
+        "usage": {
+          "red_mcd_stamp_total": 2,
+          "red_mcd_stamp_month": 2
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 0.2,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_253_red_mcd_stamp_unlock_reward",
+      "input": {
+        "amount": 50,
+        "category": "fastfood",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "mcdonalds",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {
+          "red_mcd_stamp_enabled": true
+        },
+        "usage": {
+          "red_mcd_stamp_total": 3,
+          "red_mcd_stamp_month": 3
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 15.2,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_254_red_mcd_stamp_daily_limit",
+      "input": {
+        "amount": 50,
+        "category": "fastfood",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "mcdonalds",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {
+          "red_mcd_stamp_enabled": true
+        },
+        "usage": {
+          "red_mcd_stamp_total": 3,
+          "red_mcd_stamp_month": 3,
+          "red_mcd_stamp_day_2026-03-10": 1
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 0.2,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_255_red_mcd_stamp_monthly_limit",
+      "input": {
+        "amount": 50,
+        "category": "fastfood",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "mcdonalds",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {
+          "red_mcd_stamp_enabled": true
+        },
+        "usage": {
+          "red_mcd_stamp_total": 40,
+          "red_mcd_stamp_month": 8
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 0.2,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_256_red_mcd_stamp_reward_cap_partial",
+      "input": {
+        "amount": 50,
+        "category": "fastfood",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "mcdonalds",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {
+          "red_mcd_stamp_enabled": true
+        },
+        "usage": {
+          "red_mcd_stamp_total": 3,
+          "red_mcd_stamp_month": 3,
+          "red_mcd_reward_cap": 355
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 5.2,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_257_red_mcd_stamp_non_target_merchant",
+      "input": {
+        "amount": 50,
+        "category": "fastfood",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "kfc",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {
+          "red_mcd_stamp_enabled": true
+        },
+        "usage": {
+          "red_mcd_stamp_total": 3,
+          "red_mcd_stamp_month": 3
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 0.2,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_258_red_mcd_stamp_unregistered",
+      "input": {
+        "amount": 50,
+        "category": "fastfood",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "mcdonalds",
+        "ownedCards": [
+          "hsbc_red"
+        ],
+        "settings": {
+          "red_mcd_stamp_enabled": false
+        },
+        "usage": {
+          "red_mcd_stamp_total": 3,
+          "red_mcd_stamp_month": 3
+        }
+      },
+      "expected": {
+        "topCardId": "hsbc_red",
+        "topValue": 0.2,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_259_red_hot_entertainment_no_merchant",
+      "input": {
+        "amount": 1000,
+        "category": "entertainment",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": ["hsbc_vs"],
+        "settings": {
+          "red_hot_rewards_enabled": true,
+          "red_hot_allocation": { "dining": 0, "world": 0, "home": 0, "enjoyment": 5, "style": 0 }
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_vs",
+        "topValue": 4,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_260_red_hot_entertainment_non_designated_merchant",
+      "input": {
+        "amount": 1000,
+        "category": "entertainment",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "netflix",
+        "ownedCards": ["hsbc_vs"],
+        "settings": {
+          "red_hot_rewards_enabled": true,
+          "red_hot_allocation": { "dining": 0, "world": 0, "home": 0, "enjoyment": 5, "style": 0 }
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_vs",
+        "topValue": 4,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_261_red_hot_gym_merchant_maps_to_entertainment",
+      "input": {
+        "amount": 1000,
+        "category": "gym",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "be_earth",
+        "ownedCards": ["hsbc_vs"],
+        "settings": {
+          "red_hot_rewards_enabled": true,
+          "red_hot_allocation": { "dining": 0, "world": 0, "home": 0, "enjoyment": 5, "style": 0 }
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_vs",
+        "topValue": 36,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_262_red_hot_transport_no_merchant_no_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "transport",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": ["hsbc_vs"],
+        "settings": {
+          "red_hot_rewards_enabled": true,
+          "red_hot_allocation": { "dining": 0, "world": 0, "home": 0, "enjoyment": 5, "style": 0 }
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_vs",
+        "topValue": 4,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_263_red_hot_dining_no_merchant_unrestricted",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": ["hsbc_vs"],
+        "settings": {
+          "red_hot_rewards_enabled": true,
+          "red_hot_allocation": { "dining": 5, "world": 0, "home": 0, "enjoyment": 0, "style": 0 }
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_vs",
+        "topValue": 36,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_264_red_hot_overseas_no_merchant_unrestricted",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_jp",
+        "date": "2026-02-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": ["hsbc_vs"],
+        "settings": {
+          "red_hot_rewards_enabled": true,
+          "red_hot_allocation": { "dining": 0, "world": 5, "home": 0, "enjoyment": 0, "style": 0 }
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_vs",
+        "topValue": 36,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_265_hsbc_pulse_overseas_other_fee_ranking",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_jp",
+        "date": "2026-02-21",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": ["hsbc_red", "hsbc_pulse"],
+        "settings": {
+          "red_hot_rewards_enabled": false,
+          "travel_guru_registered": false,
+          "deduct_fcf_ranking": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_pulse",
+        "topValue": 4,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_266_hsbc_unionpay_std_mo_not_exempt",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_mo",
+        "date": "2026-02-21",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": ["hsbc_unionpay_std", "hsbc_pulse"],
+        "settings": {
+          "red_hot_rewards_enabled": false,
+          "travel_guru_registered": false,
+          "deduct_fcf_ranking": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_pulse",
+        "topValue": 4,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_267_hsbc_unionpay_std_cn_fee_exempt_vs_hsbc_vs",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_cn",
+        "date": "2026-02-21",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": ["hsbc_vs", "hsbc_unionpay_std"],
+        "settings": {
+          "red_hot_rewards_enabled": false,
+          "travel_guru_registered": false,
+          "deduct_fcf_ranking": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_unionpay_std",
+        "topValue": 4,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_268_hsbc_pulse_cn_fee_exempt_by_category_mapping",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_cn",
+        "date": "2026-02-21",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": ["hsbc_vs", "hsbc_pulse"],
+        "settings": {
+          "red_hot_rewards_enabled": false,
+          "travel_guru_registered": false,
+          "deduct_fcf_ranking": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hsbc_pulse",
+        "topValue": 4,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_269_sc_smart_hkticketing_within_window_designated",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-02-14",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "hkticketing",
+        "ownedCards": ["sc_smart"],
+        "settings": {},
+        "usage": {
+          "sc_smart_monthly_eligible": 5000,
+          "sc_smart_cap": 0
+        }
+      },
+      "expected": {
+        "topCardId": "sc_smart",
+        "topValue": 50,
+        "breakdownFlags": { "hasLocked": true, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_270_sc_smart_hkticketing_after_window_base_only",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-02-15",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "hkticketing",
+        "ownedCards": ["sc_smart"],
+        "settings": {},
+        "usage": {
+          "sc_smart_monthly_eligible": 5000,
+          "sc_smart_cap": 0
+        }
+      },
+      "expected": {
+        "topCardId": "sc_smart",
+        "topValue": 5.6,
+        "breakdownFlags": { "hasLocked": true, "hasCapped": false, "hasPartial": false }
       }
     }
   ],

@@ -179,16 +179,6 @@ const CORE_OVERRIDES = {
       "valid_from": "2026-01-01",
       "valid_to": "2026-06-30"
     },
-    "red_designated_bonus": {
-      "cap_key": "red_designated_cap",
-      "cap_limit": 100,
-      "cap_mode": "reward",
-      "desc": "Red Card 指定商戶 (7.6%)",
-      "promo_end": "2026-03-31",
-      "rate": 0.076,
-      "valid_from": "2025-09-01",
-      "valid_to": "2026-03-31"
-    },
     "red_hot_variable": {
       "cap_key": "red_hot_variable_cap",
       "cap_limit": 2000,
@@ -198,16 +188,6 @@ const CORE_OVERRIDES = {
       "rate_per_x": 0.004,
       "valid_from": "2026-01-01",
       "valid_to": "2026-12-31"
-    },
-    "red_online": {
-      "cap_key": "red_online_cap",
-      "cap_limit": 400,
-      "cap_mode": "reward",
-      "desc": "Red Card 網上購物 (3.6%)",
-      "promo_end": "2026-03-31",
-      "rate": 0.04,
-      "valid_from": "2025-09-01",
-      "valid_to": "2026-03-31"
     },
     "sc_cathay_airlines": {
       "desc": "渣打國泰Mastercard 國泰/香港快運額外里數"

@@ -29,8 +29,64 @@ const modulesDB = {
         last_verified_at: "2026-02-06",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf"
     },
-    "easy_moneyback_pns_watsons_6x": { type: "category", match: ["moneyback_pns_watsons"], rate: 0.024, desc: "易賞錢：百佳/屈臣氏 6倍 (約2.4%)", mode: "replace", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf" },
-    "easy_moneyback_fortress_6x": { type: "category", match: ["moneyback_fortress"], rate: 0.012, desc: "易賞錢：豐澤 6倍 (約1.2%)", mode: "replace", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf" },
+    "easy_moneyback_pns_watsons_4x": {
+        type: "category",
+        match: ["moneyback_pns_watsons"],
+        rate: 0.016,
+        desc: "易賞錢：百佳/屈臣氏 4倍 (1.6%)",
+        mode: "replace",
+        valid_from: "2025-05-19",
+        valid_to: "2026-12-31",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
+        eligible_check: (cat, ctx) => !((ctx && ctx.settings && ctx.settings.hsbc_easy_is_vip))
+    },
+    "easy_moneyback_pns_watsons_6x": {
+        type: "category",
+        match: ["moneyback_pns_watsons"],
+        rate: 0.024,
+        desc: "易賞錢：百佳/屈臣氏 6倍 (2.4%，VIP)",
+        mode: "replace",
+        valid_from: "2025-05-19",
+        valid_to: "2026-12-31",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
+        eligible_check: (cat, ctx) => !!(ctx && ctx.settings && ctx.settings.hsbc_easy_is_vip)
+    },
+    "easy_moneyback_fortress_4x": {
+        type: "category",
+        match: ["moneyback_fortress"],
+        rate: 0.008,
+        desc: "易賞錢：豐澤 4倍 (0.8%)",
+        mode: "replace",
+        valid_from: "2025-05-19",
+        valid_to: "2026-12-31",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
+        eligible_check: (cat, ctx) => !((ctx && ctx.settings && ctx.settings.hsbc_easy_is_vip))
+    },
+    "easy_moneyback_fortress_6x": {
+        type: "category",
+        match: ["moneyback_fortress"],
+        rate: 0.012,
+        desc: "易賞錢：豐澤 6倍 (1.2%，VIP)",
+        mode: "replace",
+        valid_from: "2025-05-19",
+        valid_to: "2026-12-31",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
+        eligible_check: (cat, ctx) => !!(ctx && ctx.settings && ctx.settings.hsbc_easy_is_vip)
+    },
+    "easy_additional_offer_3x": {
+        type: "category",
+        match: ["easy_additional_3x"],
+        rate: 0.012,
+        desc: "指定商戶 3X「易賞錢」積分 (1.2%)",
+        mode: "replace",
+        valid_from: "2025-05-19",
+        valid_to: "2026-02-28",
+        last_verified_at: "2026-02-21",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-exclusive-additional-offers.pdf",
+        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-exclusive-additional-offers.pdf",
+        promo_url: "https://www.hsbc.com.hk/zh-hk/credit-cards/offers-and-promotions/",
+        note_zhhk: "以「3X 即總共 3 倍易賞錢積分」計為 1.2%。hutchgo mall、3HK/SUPREME 指定服務、海逸指定年票/套餐等條件未能由系統自動識別，需手動判斷。"
+    },
     // Reward cap is $200. Use reward-based cap to avoid 8333 * 2.4% => 199.992 rounding artifacts.
     "student_tuition_bonus": {
         type: "category",
@@ -58,9 +114,80 @@ const modulesDB = {
     "em_base": { type: "always", rate: 0.01, desc: "基本 (1%)", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
     "em_designated": { type: "category", match: ["streaming", "em_designated_spend"], rate: 0.025, desc: "指定 $2/里 (2.5%)", mode: "replace", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
     "em_grocery_low": { type: "category", match: ["grocery"], rate: 0.004, desc: "超市 (0.4%)", mode: "replace", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
-    "red_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf" },
-    "red_online": { type: "category", match: ["online"], rate: 0.04, desc: "網購 +3.6% (4%)", mode: "replace", cap_mode: "reward", cap_limit: 400, cap_key: "red_online_cap", cap: { key: "red_online_cap", period: "month" }, last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf" },
-    "red_designated_bonus": { type: "category", match: ["red_designated"], rate: 0.076, desc: "指定商戶 +7.6% (8%)", cap_mode: "reward", cap_limit: 100, cap_key: "red_designated_cap", cap: { key: "red_designated_cap", period: "month" }, last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf" },
+    "red_base": {
+        type: "always",
+        rate: 0.004,
+        desc: "基本 (0.4%)",
+        last_verified_at: "2026-02-21",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf"
+    },
+    "red_online": {
+        type: "category",
+        match: ["online"],
+        rate: 0.036,
+        desc: "網購額外 +3.6%（合共4%）",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 360,
+        cap_key: "red_online_bonus_cap",
+        cap: { key: "red_online_bonus_cap", period: "month" },
+        last_verified_at: "2026-02-21",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
+        eligible_check: (cat, ctx) => !(ctx && ctx.isOnline && cat === "red_designated")
+    },
+    "red_designated_bonus": {
+        type: "category",
+        match: ["red_designated"],
+        rate: 0.076,
+        desc: "指定商戶額外 +7.6%（合共8%）",
+        mode: "add",
+        cap_mode: "spending",
+        cap_limit: 1250,
+        cap_key: "red_designated_spend_cap",
+        cap: { key: "red_designated_spend_cap", period: "month" },
+        last_verified_at: "2026-02-21",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf"
+    },
+    "red_designated_online_overflow_bonus": {
+        type: "category_overflow_bonus",
+        match: ["online"],
+        rate: 0.036,
+        desc: "指定商戶封頂後網購額外 +3.6%（合共4%）",
+        mode: "add",
+        overflow_after_cap_key: "red_designated_spend_cap",
+        overflow_after_cap_limit: 1250,
+        cap_mode: "reward",
+        cap_limit: 360,
+        cap_key: "red_online_bonus_cap",
+        cap: { key: "red_online_bonus_cap", period: "month" },
+        last_verified_at: "2026-02-21",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
+        eligible_check: (cat, ctx) => !!(ctx && ctx.isOnline && cat === "red_designated")
+    },
+    "red_mcd_stamp_cashback": {
+        type: "stamp_cashback",
+        desc: "麥當勞印花卡獎賞（每4個印花=$15）",
+        setting_key: "red_mcd_stamp_enabled",
+        stamp_progress_key: "red_mcd_stamp_total",
+        stamps_per_reward: 4,
+        reward_per_reward: 15,
+        cap_mode: "reward",
+        cap_limit: 360,
+        cap_key: "red_mcd_reward_cap",
+        cap: { key: "red_mcd_reward_cap", period: { type: "promo", startDate: "2026-02-16", endDate: "2026-12-31" } },
+        counter: { key: "red_mcd_stamp_total", period: { type: "promo", startDate: "2026-02-16", endDate: "2026-12-31" } },
+        valid_from: "2026-02-16",
+        valid_to: "2026-12-31",
+        last_verified_at: "2026-02-21",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/red/terms-and-conditions-mcdonald.pdf",
+        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/red/terms-and-conditions-mcdonald.pdf",
+        promo_url: "https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/",
+        registration_url: "https://www.hsbc.com.hk/rewardplus/",
+        registration_start: "2026-02-16",
+        registration_end: "2026-12-31",
+        registration_note: "需於 HSBC Reward+ 應用程式登記「麥當勞電子印花卡獎賞」",
+        note_zhhk: "每宗合資格簽賬滿$30可賺1印花；每日最多1個、每月最多8個、推廣期最多96個；每累積4個印花可獲$15。"
+    },
     // [NEW] Actual Calculation Module for EveryMile Promo
     // Base 1% + Bonus 1.5% = 2.5% ($2/mile). Req $12,000 spend.
     "em_overseas_bonus": {
@@ -108,11 +235,33 @@ const modulesDB = {
     "sc_cathay_overseas_std": { type: "category", match: ["overseas"], rate: 0.25, desc: "海外 $4/里", mode: "replace" },
     "sc_cathay_overseas_priority": { type: "category", match: ["overseas"], rate: 1 / 3, desc: "優先理財: 海外 $3/里", mode: "replace" },
     "sc_cathay_private": { type: "category", match: ["overseas"], rate: 0.5, desc: "優先私人: 海外 $2/里", mode: "replace" },
+    "sc_cathay_overseas_spending_offer_2026q2": {
+        type: "category",
+        match: ["overseas"],
+        rate: 0.25,
+        desc: "海外簽賬額外 +2,500 里（首$10,000）",
+        mode: "add",
+        setting_key: "sc_cathay_overseas_spending_offer_enabled",
+        req_mission_spend: 10000,
+        req_mission_key: "sc_cathay_overseas_spend_offer_spend",
+        cap_mode: "reward",
+        cap_limit: 2500,
+        cap_key: "sc_cathay_overseas_spend_offer_bonus_cap",
+        cap: { key: "sc_cathay_overseas_spend_offer_bonus_cap", period: { type: "promo", startDate: "2025-12-16", endDate: "2026-03-03" } },
+        valid_from: "2025-12-16",
+        valid_to: "2026-03-03",
+        last_verified_at: "2026-02-21",
+        source_url: "https://av.sc.com/hk/content/docs/hk-cc-cx-overseas-spending-offer-tnc.pdf",
+        tnc_url: "https://av.sc.com/hk/content/docs/hk-cc-cx-overseas-spending-offer-tnc.pdf",
+        registration_url: "https://www.sc.com/hk/campaign/cathay-mastercard-spending-rewards-promotion/apply/",
+        registration_start: "2025-12-16",
+        registration_end: "2026-03-03",
+        registration_note: "需先登記；條款註明先到先得（首30,000位）"
+    },
     "sc_cathay_airlines": {
         type: "category",
-        match: ["cathay_hkexpress"],
         rate: 2667 / 8000,
-        desc: "CX/UO 每季累積滿$8,000 +2,667里",
+        desc: "國泰航空 / HK Express 每季累積滿$8,000 +2,667里",
         mode: "add",
         req_mission_spend: 8000,
         req_mission_key: "sc_cathay_cxuo_spend",
@@ -122,7 +271,11 @@ const modulesDB = {
         cap: { key: "sc_cathay_cxuo_bonus_cap", period: { type: "quarter", startMonth: 1, startDay: 1 } },
         valid_from: "2026-01-01",
         valid_to: "2026-06-30",
-        promo_end: "2026-06-30"
+        promo_end: "2026-06-30",
+        eligible_check: (cat, ctx) => {
+            const merchantId = String((ctx && ctx.merchantId) || "").trim();
+            return merchantId === "cathay_pacific" || merchantId === "hk_express";
+        }
     },
     "sc_simply_cash_base": { type: "always", rate: 0.015, desc: "本地 1.5%" },
     "sc_simply_cash_foreign": { type: "category", match: ["overseas"], rate: 0.02, desc: "外幣 2%", mode: "replace" },
@@ -148,6 +301,13 @@ const modulesDB = {
         mode: "add",
         req_mission_spend: 4000,
         req_mission_key: "sc_smart_monthly_eligible",
+        eligible_check: (cat, ctx) => {
+            const merchantId = String((ctx && ctx.merchantId) || "").trim();
+            if (merchantId !== "hkticketing") return true;
+            const txDate = String((ctx && ctx.txDate) || "");
+            if (!txDate) return true;
+            return txDate <= "2026-02-14";
+        },
         cap_mode: "spending",
         cap_limit: 5000,
         cap_key: "sc_smart_cap",
@@ -161,6 +321,13 @@ const modulesDB = {
         mode: "add",
         req_mission_spend: 15000,
         req_mission_key: "sc_smart_monthly_eligible",
+        eligible_check: (cat, ctx) => {
+            const merchantId = String((ctx && ctx.merchantId) || "").trim();
+            if (merchantId !== "hkticketing") return true;
+            const txDate = String((ctx && ctx.txDate) || "");
+            if (!txDate) return true;
+            return txDate <= "2026-02-14";
+        },
         cap_mode: "spending",
         cap_limit: 5000,
         cap_key: "sc_smart_cap",

@@ -308,6 +308,27 @@ input[type="number"] {
     }
 }
 
+.stamp-dot-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stamp-dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 9999px;
+    background: #d1d5db;
+    border: 1px solid #d1d5db;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.stamp-dot-filled {
+    background: #dc2626;
+    border-color: #dc2626;
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.14);
+}
+
 /* Modal Animation Classes */
 .modal-open {
     overflow: hidden;

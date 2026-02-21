@@ -43,16 +43,16 @@ const cardsDB = [
         fcf: 0.0195,
         last_verified_at: "2026-02-06",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-        rewardModules: ["red_base", "red_online", "red_designated_bonus", "travel_guru_v2"],
-        trackers: ["winter_tracker"]
+        rewardModules: ["red_base", "red_online", "red_designated_bonus", "red_designated_online_overflow_bonus", "red_mcd_stamp_cashback", "travel_guru_v2"],
+        trackers: ["winter_tracker", "red_mcd_stamp_tracker"]
     },
     {
       id: "hsbc_pulse",
       name: "HSBC Pulse 銀聯鑽石",
       currency: "HSBC_RC",
       type: "unionpay",
-      fcf: 0,
-      note_zhhk: "中國內地及澳門外幣手續費為0",
+      fcf: 0.01,
+      note_zhhk: "人民幣、港幣及澳門幣以外簽賬收取 1% 外幣手續費；中國內地及澳門簽賬視作豁免類別",
       last_verified_at: "2026-02-06",
       source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
       // Mainland China + Macau are fee-free; other foreign spend uses the card's fcf.
@@ -65,12 +65,12 @@ const cardsDB = [
       name: "HSBC 銀聯雙幣 (標準)",
       currency: "HSBC_RC",
       type: "unionpay",
-      fcf: 0,
-      note_zhhk: "中國內地及澳門外幣手續費為0",
+      fcf: 0.01,
+      note_zhhk: "港幣及人民幣以外簽賬收取 1% 外幣手續費；中國內地簽賬視作豁免類別",
       last_verified_at: "2026-02-06",
       source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
-      // Mainland China + Macau are fee-free; other foreign spend uses the card's fcf.
-      fcf_exempt_categories: ["overseas_cn", "overseas_mo", "china_consumption"],
+      // Mainland China is fee-free; other foreign spend (including Macau bucket) uses the card's fcf.
+      fcf_exempt_categories: ["overseas_cn", "china_consumption"],
       rewardModules: ["hsbc_std_base", "red_hot_variable", "travel_guru_v2"],
       trackers: ["winter_tracker"]
     },
@@ -81,12 +81,15 @@ const cardsDB = [
         type: "visa",
         fcf: 0.0195,
         last_verified_at: "2026-02-06",
-        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf, https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-exclusive-additional-offers.pdf",
         rewardModules: [
             "hsbc_std_base",
             "red_hot_variable",
+            "easy_moneyback_pns_watsons_4x",
             "easy_moneyback_pns_watsons_6x",
+            "easy_moneyback_fortress_4x",
             "easy_moneyback_fortress_6x",
+            "easy_additional_offer_3x",
             "easy_moneyback_bonus", // legacy: support already-recorded transactions
             "travel_guru_v2"
         ],
@@ -131,8 +134,8 @@ const cardsDB = [
         currency: "AM_Direct",
         type: "master",
         fcf: 0.0195,
-        rewardModules: ["sc_cathay_base", "sc_cathay_dining_hotel", "sc_cathay_overseas_std", "sc_cathay_airlines"],
-        trackers: ["sc_cathay_cxuo_tracker"]
+        rewardModules: ["sc_cathay_base", "sc_cathay_dining_hotel", "sc_cathay_overseas_std", "sc_cathay_overseas_spending_offer_2026q2", "sc_cathay_airlines"],
+        trackers: ["sc_cathay_cxuo_tracker", "sc_cathay_overseas_spend_offer_tracker_2026q2"]
     },
     {
         id: "sc_cathay_priority",
@@ -140,8 +143,8 @@ const cardsDB = [
         currency: "AM_Direct",
         type: "master",
         fcf: 0.0195,
-        rewardModules: ["sc_cathay_base", "sc_cathay_dining_hotel", "sc_cathay_overseas_priority", "sc_cathay_airlines"],
-        trackers: ["sc_cathay_cxuo_tracker"]
+        rewardModules: ["sc_cathay_base", "sc_cathay_dining_hotel", "sc_cathay_overseas_priority", "sc_cathay_overseas_spending_offer_2026q2", "sc_cathay_airlines"],
+        trackers: ["sc_cathay_cxuo_tracker", "sc_cathay_overseas_spend_offer_tracker_2026q2"]
     },
     {
         id: "sc_cathay_private",
@@ -149,8 +152,8 @@ const cardsDB = [
         currency: "AM_Direct",
         type: "master",
         fcf: 0.0195,
-        rewardModules: ["sc_cathay_base", "sc_cathay_dining_hotel", "sc_cathay_overseas_private", "sc_cathay_airlines"],
-        trackers: ["sc_cathay_cxuo_tracker"]
+        rewardModules: ["sc_cathay_base", "sc_cathay_dining_hotel", "sc_cathay_overseas_private", "sc_cathay_overseas_spending_offer_2026q2", "sc_cathay_airlines"],
+        trackers: ["sc_cathay_cxuo_tracker", "sc_cathay_overseas_spend_offer_tracker_2026q2"]
     },
     {
         id: "sc_simply_cash",

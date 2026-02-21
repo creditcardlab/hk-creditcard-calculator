@@ -16,7 +16,11 @@ function evaluateTrackers(cardId, ctx, userProfile, data) {
     const pushEffectList = (list, trackerCtx) => {
         if (!Array.isArray(list)) return;
         list.forEach((e) => {
-            if (!e || !e.key) return;
+            if (!e) return;
+            const key = (typeof e.key === "function")
+                ? String(e.key(resolvedCategory, trackerCtx || {}) || "").trim()
+                : String(e.key || "").trim();
+            if (!key) return;
             let amt = 0;
             if (typeof e.amount === "function") {
                 amt = Number(e.amount(resolvedCategory, trackerCtx || {})) || 0;
@@ -26,7 +30,7 @@ function evaluateTrackers(cardId, ctx, userProfile, data) {
                 amt = Number(e.amount) || 0;
             }
             if (!amt) return;
-            effects.push({ key: e.key, amount: amt });
+            effects.push({ key, amount: amt });
         });
     };
 
@@ -48,7 +52,9 @@ function evaluateTrackers(cardId, ctx, userProfile, data) {
             isOnline,
             isMobilePay,
             paymentMethod,
+            merchantId: String(ctx.merchantId || "").trim(),
             txDate: ctx.txDate || "",
+            settings: (userProfile && userProfile.settings) ? userProfile.settings : {},
             // Usage accessor includes effects already accumulated in this evaluation pass.
             getUsage: (key) => {
                 const base = Number((userProfile && userProfile.usage && userProfile.usage[key]) || 0);

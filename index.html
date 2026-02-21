@@ -44,7 +44,7 @@
                 <div class="p-3 border-b border-r border-[#e9e9e7]">
                     <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">簽賬類別</label>
                     <div class="flex gap-1.5">
-                        <select id="category" class="w-full p-1.5 border border-[#e9e9e7] rounded bg-[#f7f7f5] focus:bg-white focus:outline-none text-sm" onchange="toggleCategoryHelp(); runCalc()">
+                        <select id="category" class="w-full p-1.5 border border-[#e9e9e7] rounded bg-[#f7f7f5] focus:bg-white focus:outline-none text-sm" onchange="onCategoryChange()">
                             <!-- Javascript will populate this -->
                         </select>
                         <button id="cat-help-btn" class="hidden px-2 text-gray-400 border border-[#e9e9e7] rounded hover:bg-[#f7f7f5] text-xs"><i class="fas fa-question-circle"></i></button>
@@ -75,10 +75,30 @@
                     </label>
                     <label id="fee-deduct-wrap" class="flex items-center gap-1.5 cursor-pointer hover:bg-[#f7f7f5] px-1 py-0.5 rounded">
                         <input id="toggle-fee-deduct" type="checkbox" class="accent-gray-700 w-3.5 h-3.5" onchange="toggleFeeDeduct(this.checked)">
-                        <span class="text-[11px] text-gray-500">扣除手續費排序</span>
+                        <span class="text-[11px] text-gray-500">扣除手續費/包括折扣排序</span>
                     </label>
                 </div>
             </div>
+        </div>
+
+        <div class="relative">
+            <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">商戶搜尋 (可選)</label>
+            <div class="relative">
+                <input type="text" id="merchant-search"
+                    class="w-full p-2 border border-[#e9e9e7] rounded-md bg-[#f7f7f5] focus:bg-white focus:outline-none text-sm"
+                    placeholder="輸入商戶名稱..."
+                    oninput="onMerchantSearch(this.value)"
+                    autocomplete="off">
+                <button id="merchant-clear"
+                    class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+                    onclick="clearMerchant()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="merchant-dropdown"
+                class="hidden absolute z-30 w-full bg-white border border-[#e9e9e7] rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto">
+            </div>
+            <div id="merchant-info" class="hidden mt-1 text-[10px] text-gray-500"></div>
         </div>
 
         <div id="calc-results" class="space-y-2 pb-10"></div>
@@ -123,11 +143,13 @@
     <script src="js/data_trackers.js?v=20260214c"></script>
     <script src="js/data_conversions.js?v=20260214c"></script>
     <script src="js/data_rules.js?v=20260214c"></script>
+    <script src="js/data_merchants.js?v=20260221a"></script>
     <script src="js/data_campaigns.js?v=20260214c"></script>
     <script src="js/data_counters.js?v=20260214c"></script>
     <script src="js/period_policy.js?v=20260214c"></script>
     <script src="js/data_overrides.js?v=20260215a"></script>
     <script src="js/data_index.js?v=20260214c"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.1.0/dist/fuse.basic.min.js"></script>
     <script src="js/copy_zhhk.js?v=20260214c"></script>
     <script src="js/validate.js?v=20260214c"></script>
     <script src="js/engine_trackers.js?v=20260214c"></script>

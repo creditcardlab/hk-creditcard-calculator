@@ -75,6 +75,8 @@ let userProfile = {
         travel_guru_registered: false,
         em_promo_enabled: false,
         winter_promo_enabled: false,
+        red_mcd_stamp_enabled: false,
+        hsbc_easy_is_vip: false,
         winter_tier1_threshold: 20000,
         winter_tier2_threshold: 40000,
         red_hot_rewards_enabled: true,
@@ -112,6 +114,8 @@ const SETTING_BOOLEAN_DEFAULTS = {
     travel_guru_registered: false,
     em_promo_enabled: false,
     winter_promo_enabled: false,
+    red_mcd_stamp_enabled: false,
+    hsbc_easy_is_vip: false,
     red_hot_rewards_enabled: true,
     mmpower_promo_enabled: false,
     travel_plus_promo_enabled: false,
@@ -128,6 +132,7 @@ const SETTING_BOOLEAN_DEFAULTS = {
     ae_explorer_7x_enabled: false,
     ae_explorer_online_5x_enabled: false,
     ae_platinum_9x_enabled: false,
+    sc_cathay_overseas_spending_offer_enabled: false,
     bea_world_flying_miles_enabled: false,
     bea_ititanium_bonus_enabled: false
 };
@@ -228,6 +233,118 @@ function getForeignFeeRate(card, category, options) {
     const exempt = Array.isArray(card.fcf_exempt_categories) ? card.fcf_exempt_categories : [];
     if (exempt.includes(category)) return 0;
     return base;
+}
+
+function parseTxDateParts(txDate) {
+    const s = String(txDate || "");
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return null;
+    const year = Number(m[1]);
+    const month = Number(m[2]);
+    const day = Number(m[3]);
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+    return { year, month, day };
+}
+
+function getHsbcRedMcdDailyStampKey(txDate) {
+    const s = String(txDate || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return "";
+    return `red_mcd_stamp_day_${s}`;
+}
+
+function getHsbcRedMcdStampIneligibleReason(category, ctx) {
+    const trackerCtx = ctx || {};
+    const merchantId = String(trackerCtx.merchantId || "").trim();
+    if (merchantId !== "mcdonalds") return "只限 McDonald's 麥當勞";
+
+    const txAmount = Number(trackerCtx.amount) || 0;
+    if (txAmount < 30) return "單一簽賬須滿$30";
+
+    const txDate = String(trackerCtx.txDate || "");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(txDate)) return "未有有效簽賬日期";
+    if (txDate < "2026-02-16" || txDate > "2026-12-31") return "不在推廣期內";
+
+    const excludedCategories = new Set(["alipay", "wechat", "payme", "oepay"]);
+    if (excludedCategories.has(String(category || ""))) return "電子錢包交易不適用";
+
+    const paymentMethod = String(trackerCtx.paymentMethod || "physical");
+    if (paymentMethod === "omycard") return "OmyCard 不適用";
+
+    const getUsage = (key) => {
+        if (!key || typeof trackerCtx.getUsage !== "function") return 0;
+        return Number(trackerCtx.getUsage(key)) || 0;
+    };
+
+    const dayKey = getHsbcRedMcdDailyStampKey(txDate);
+    if (dayKey && getUsage(dayKey) >= 1) return "今日已達1個印花上限";
+    if (getUsage("red_mcd_stamp_month") >= 8) return "本月已達8個印花上限";
+    if (getUsage("red_mcd_stamp_total") >= 96) return "已達推廣96個印花上限";
+
+    return "";
+}
+
+function isHsbcRedMcdStampEligible(category, ctx) {
+    return !getHsbcRedMcdStampIneligibleReason(category, ctx);
+}
+
+function getHsbcEasyMemberDayDiscount(card, amount, category, options) {
+    if (!card || card.id !== "hsbc_easy") return 0;
+    const txAmt = Number(amount) || 0;
+    if (txAmt <= 0) return 0;
+    const opts = options || {};
+
+    const merchantId = String(opts.merchantId || "").trim();
+    if (!merchantId) return 0;
+
+    const dateParts = parseTxDateParts(opts.txDate || "");
+    if (!dateParts) return 0;
+    const isOnline = !!opts.isOnline;
+
+    const ruleByMerchant = {
+        parknshop: {
+            days: [2, 12, 22],
+            rate: 0.08,
+            cap: 64,
+            minSpendOffline: 100,
+            minSpendOnline: 800
+        },
+        watsons: {
+            days: [8, 18, 28],
+            rate: 0.08,
+            cap: 40,
+            minSpend: 400
+        },
+        watsons_wine: {
+            months: [1, 4, 7, 10],
+            days: [5],
+            rate: 0.08,
+            minSpend: 2000
+        },
+        fortress: {
+            months: [1, 5, 8, 12],
+            days: [10],
+            rate: 0.05,
+            cap: 100,
+            minSpend: 2000
+        }
+    };
+    const rule = ruleByMerchant[merchantId];
+    if (!rule) return 0;
+
+    if (Array.isArray(rule.months) && !rule.months.includes(dateParts.month)) return 0;
+    if (Array.isArray(rule.days) && !rule.days.includes(dateParts.day)) return 0;
+
+    const minSpend = isOnline
+        ? (Number(rule.minSpendOnline) || Number(rule.minSpend) || 0)
+        : (Number(rule.minSpendOffline) || Number(rule.minSpend) || 0);
+    if (txAmt < minSpend) return 0;
+
+    const discountRaw = txAmt * (Number(rule.rate) || 0);
+    const capNum = Number(rule.cap);
+    if (Number.isFinite(capNum) && capNum > 0) {
+        return Math.max(0, Math.min(discountRaw, capNum));
+    }
+    return Math.max(0, discountRaw);
 }
 
 function inferPromoTypeFromSections(promo) {
@@ -950,6 +1067,85 @@ function getRedHotCategory(inputCategory) {
     return null;
 }
 
+// 最紅自主 groups that require a designated merchant selection to earn the bonus.
+// Dining and world remain category-based (no merchant required).
+const MERCHANT_RESTRICTED_RED_HOT_GROUPS = new Set(["enjoyment", "home", "style"]);
+
+// HSBC 最紅自主指定商戶白名單（只計入官方分組名單商戶）
+const HSBC_RESTRICTED_RED_HOT_MERCHANTS = {
+    enjoyment: new Set([
+        "be_earth", "go24_fitness", "pure_group", "snap_fitness", "square_fitness",
+        "cgv_cinemas", "emperor_cinemas", "festival_grand_cinema", "kornhill_cinema", "palace_cinema",
+        "k11_art_house", "mcl_cinemas", "movie_town", "star_cinema",
+        "be_your_own_baker", "cityline_hk", "cityplaza_ice_palace", "ef_english_centers", "greenery_music",
+        "hkticketing", "kkbox", "kktix", "moov", "neway_ceo", "lcsd_leisure_link", "tom_lee_music",
+        "hutchgo", "kkday", "klook", "miramar_travel", "sunflower_travel", "trip_com", "wing_on_travel", "ymt_travel",
+        "mu_guan", "jing_massage", "sun_moon_massage", "toni_and_guy_hk", "zi_massage_wellness",
+        "caltex", "citybus", "esso", "etoll", "hong_kong_tramways", "kmb", "mtr", "pit", "shell", "shell_recharge", "sinopec", "tesla"
+    ]),
+    home: new Set([
+        "store_759", "big_c", "diary_store", "donki", "ds_groceries", "fresh_life", "greenprice", "hont_bay_aquatic",
+        "parknshop", "fusion", "taste", "taste_x_fresh", "international", "food_le_parc", "gourmet_store", "great_food_hall", "dolaimai",
+        "at_home_hk", "living_proposal", "living_workshop", "jhc", "keychain_pay", "house_life_store", "living_plaza", "simmons", "eurotherm", "european_furniture",
+        "living_audio_video", "broadway_hk", "bruno_hk", "chung_yuen", "fortress", "j_select", "ninki_denki", "panasonic_showroom", "price_hk", "suning_hk", "wai_ming_electric", "w_mall_whirlpool", "wilson_comm", "yoho",
+        "one_o_one_zero", "three_hk", "csl", "club_sim", "hkt", "netvigator", "now_tv", "smartone", "supreme",
+        "pet_line_hk", "petmium", "q_pets", "red_carrot_pet", "the_dogs_garden", "three_little_meow"
+    ]),
+    style: new Set([
+        "aeon_store", "aeon_style", "aeon_supermarket", "apita", "bento_express_aeon", "chinese_arts_hk", "c_life_hk", "citistore",
+        "citysuper", "citysuper_neighbourhood", "citysuper_log_on", "guk_san", "hktvmall", "harvey_nichols",
+        "living_plaza_aeon", "log_on", "marks_and_spencer", "mono_mono", "sincere_department_store", "sogo", "uny_life", "wing_on_department_store", "yata",
+        "chung_hwa_bookstore", "eslite_bookstore", "joint_publishing", "commercial_press",
+        "seven_for_all_mankind", "agnes_b", "birkenstock", "brooks_brothers", "club_monaco", "columbia", "crocs", "decathlon_hk", "ecco", "egg_optical", "go_wild", "gu", "misch_masch", "nical",
+        "optical_88", "oriental_traffic", "wa_oriental_traffic", "rockport", "skechers", "sport_b", "teva", "theory", "twist_hk", "ugg", "uniqlo", "zalora", "zoff",
+        "atcosme_store", "beauty_avenue", "guerlain", "ipsa", "joyce_beauty", "mtm_labo", "time_by_mtm_labo", "spa_by_mtm_labo", "nars", "sasa", "serge_lutens", "shiseido", "sulwhasoo",
+        "nam_pei_hong", "osim", "oto", "slowood", "vita_green", "wai_yuen_tong", "watsons",
+        "agnes_b_fleuriste", "cantevole", "casetify", "la_boheme", "royce", "watsons_wine"
+    ])
+};
+
+function getHsbcRestrictedRedHotGroupByMerchant(merchantId, cardId) {
+    const id = String(merchantId || "").trim();
+    const cid = String(cardId || "").trim();
+    if (!id || !cid || !cid.startsWith("hsbc_")) return null;
+    if (HSBC_RESTRICTED_RED_HOT_MERCHANTS.enjoyment.has(id)) return "enjoyment";
+    if (HSBC_RESTRICTED_RED_HOT_MERCHANTS.home.has(id)) return "home";
+    if (HSBC_RESTRICTED_RED_HOT_MERCHANTS.style.has(id)) return "style";
+    return null;
+}
+
+// Check if a merchant has a card-specific or bank-prefix override (not just defaultCategory).
+// Used by 最紅自主 to ensure only designated HSBC merchants qualify.
+function isMerchantDesignatedForCard(merchantId, cardId, expectedGroup) {
+    if (!merchantId || !cardId) return false;
+    const targetGroup = String(expectedGroup || "").trim();
+    const hsbcGroup = getHsbcRestrictedRedHotGroupByMerchant(merchantId, cardId);
+    if (targetGroup && MERCHANT_RESTRICTED_RED_HOT_GROUPS.has(targetGroup) && String(cardId).startsWith("hsbc_")) {
+        return hsbcGroup === targetGroup;
+    }
+    if (hsbcGroup) return true;
+    const merchants = (DATA && DATA.merchants) ? DATA.merchants : {};
+    const merchant = merchants[merchantId];
+    if (!merchant) return false;
+    if (merchant.byCardId && merchant.byCardId[cardId]) return true;
+    const prefix = cardId.split('_')[0];
+    if (prefix && merchant.byPrefix && merchant.byPrefix[prefix]) return true;
+    return false;
+}
+
+function resolveMerchant(merchantId, cardId) {
+    if (!merchantId) return null;
+    const merchants = (DATA && DATA.merchants) ? DATA.merchants : {};
+    const merchant = merchants[merchantId];
+    if (!merchant) return null;
+
+    const prefix = cardId ? cardId.split('_')[0] : '';
+
+    if (cardId && merchant.byCardId && merchant.byCardId[cardId]) return merchant.byCardId[cardId];
+    if (prefix && merchant.byPrefix && merchant.byPrefix[prefix]) return merchant.byPrefix[prefix];
+    return merchant.defaultCategory || null;
+}
+
 function resolveCategory(cardId, inputCategory) {
     const rules = DATA && DATA.rules;
     if (!rules) return inputCategory;
@@ -1146,8 +1342,11 @@ function buildZeroCategoryResult(card, amount, category, displayMode, conv) {
         estMiles: 0,
         estCash: 0,
         estCashNet: 0,
+        estCashNetPotential: 0,
         estMilesPotential: 0,
         estCashPotential: 0,
+        foreignFee: 0,
+        memberDayDiscount: 0,
         breakdown: [makeBreakdownEntry("Alipay/WeChat 0%", "muted", { zero: true })],
         trackingKey: null,
         guruRC: 0,
@@ -1186,10 +1385,13 @@ function evaluateModules(activeModules, amount, category, ctx) {
         isOnline: !!ctx.isOnline,
         isMobilePay: !!ctx.isMobilePay,
         paymentMethod: ctx.paymentMethod,
+        merchantId: String(ctx.merchantId || "").trim(),
+        cardId: ctx.cardId || "",
         txDate: ctx.txDate || "",
         isHoliday: !!ctx.isHoliday,
         settings: userProfile.settings || {},
-        getMissionSpend: (key) => (Number(userProfile.usage[key]) || 0) + (Number(missionDeltaByKey[key]) || 0)
+        getMissionSpend: (key) => (Number(userProfile.usage[key]) || 0) + (Number(missionDeltaByKey[key]) || 0),
+        getUsage: (key) => (Number(userProfile.usage[key]) || 0) + (Number(missionDeltaByKey[key]) || 0)
     };
     let replacerModuleCurrentId = activeModules.find(mid => {
         const m = modulesDB[mid];
@@ -1275,13 +1477,38 @@ function evaluateModules(activeModules, amount, category, ctx) {
         }
 
         if (mod.type === "red_hot_allocation") {
-            const rhCat = getRedHotCategory(resolvedCategory);
+            const merchantRhCat = getHsbcRestrictedRedHotGroupByMerchant(eligCtx.merchantId, eligCtx.cardId);
+            const rhCat = merchantRhCat || getRedHotCategory(resolvedCategory);
             if (rhCat) {
-                const multiplier = userProfile.settings.red_hot_allocation[rhCat] || 0;
-                if (multiplier > 0) { rate = multiplier * mod.rate_per_x; const pct = (rate * 100).toFixed(1); tempDesc = `${mod.desc} (${multiplier}X = ${pct}%)`; hit = true; }
+                // Merchant-restricted groups require a merchant with a card/bank-specific
+                // override (byCardId or byPrefix), not just any merchant with a matching defaultCategory.
+                // Card-gated categories (e.g. moneyback_pns_watsons with req) bypass this check.
+                const catDef = (DATA && DATA.categories) ? DATA.categories[resolvedCategory] : null;
+                const isCardGated = catDef && catDef.req;
+                const isDesignated = isMerchantDesignatedForCard(eligCtx.merchantId, eligCtx.cardId, rhCat);
+                if (MERCHANT_RESTRICTED_RED_HOT_GROUPS.has(rhCat) && !isDesignated && !isCardGated) {
+                    // Skip: no designated merchant override for this card
+                } else {
+                    const multiplier = userProfile.settings.red_hot_allocation[rhCat] || 0;
+                    if (multiplier > 0) { rate = multiplier * mod.rate_per_x; const pct = (rate * 100).toFixed(1); tempDesc = `${mod.desc} (${multiplier}X = ${pct}%)`; hit = true; }
+                }
             }
         }
-        else if (mod.type === "red_hot_fixed_bonus") { const rhCat = getRedHotCategory(resolvedCategory); if (rhCat) { rate = mod.multiplier * mod.rate_per_x; hit = true; } }
+        else if (mod.type === "red_hot_fixed_bonus") {
+            const merchantRhCat = getHsbcRestrictedRedHotGroupByMerchant(eligCtx.merchantId, eligCtx.cardId);
+            const rhCat = merchantRhCat || getRedHotCategory(resolvedCategory);
+            if (rhCat) {
+                const catDef = (DATA && DATA.categories) ? DATA.categories[resolvedCategory] : null;
+                const isCardGated = catDef && catDef.req;
+                const isDesignated = isMerchantDesignatedForCard(eligCtx.merchantId, eligCtx.cardId, rhCat);
+                if (MERCHANT_RESTRICTED_RED_HOT_GROUPS.has(rhCat) && !isDesignated && !isCardGated) {
+                    // Skip
+                } else {
+                    rate = mod.multiplier * mod.rate_per_x;
+                    hit = true;
+                }
+            }
+        }
             else if (mod.type === "prestige_annual_bonus") {
                 const pct = getCitiPrestigeBonusPercentForSettings(userProfile.settings);
                 if (pct > 0) {
@@ -1348,6 +1575,111 @@ function evaluateModules(activeModules, amount, category, ctx) {
                 }
             } else { rate = mod.rate; hit = true; }
         }
+            else if (mod.type === "category_overflow_bonus") {
+                const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline) : true;
+                if (!matchOk) return;
+                if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, eligCtx)) return;
+
+                let overflowAmount = amount;
+                if (mod.overflow_after_cap_key && mod.overflow_after_cap_limit) {
+                    const overflowCap = checkCap(mod.overflow_after_cap_key, mod.overflow_after_cap_limit);
+                    const remainingBeforeOverflow = Math.max(0, Number(overflowCap.remaining) || 0);
+                    overflowAmount = Math.max(0, amount - remainingBeforeOverflow);
+                }
+
+                if (overflowAmount <= 0) return;
+                const overflowRewardRaw = overflowAmount * (Number(mod.rate) || 0);
+                if (overflowRewardRaw <= 0) return;
+
+                const isOverflowPartial = overflowAmount < amount;
+                const partialText = (tempDesc || mod.desc) + "(部分)";
+
+                if (mod.cap_limit) {
+                    if (applyCurrent && mod.cap_mode !== "reward") trackingKey = mod.cap_key;
+
+                    if (mod.cap_mode === "reward") {
+                        const rewardCapCheck = checkCap(mod.cap_key, mod.cap_limit);
+                        let remaining = rewardCapCheck.remaining;
+                        let isMaxed = rewardCapCheck.isMaxed;
+
+                        if (mod.secondary_cap_key && mod.secondary_cap_limit) {
+                            const secCap = checkCap(mod.secondary_cap_key, mod.secondary_cap_limit);
+                            if (secCap.isMaxed) isMaxed = true;
+                            remaining = Math.min(remaining, secCap.remaining);
+                        }
+
+                        if (isMaxed) {
+                            addModuleBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
+                        } else if (overflowRewardRaw <= remaining) {
+                            rate = overflowRewardRaw / amount;
+                            hit = true;
+                            if (isOverflowPartial) addModuleBreakdown(partialText, null, { partial: true });
+                            else addModuleBreakdown(tempDesc || mod.desc);
+                        } else {
+                            rate = remaining / amount;
+                            hit = true;
+                            addModuleBreakdown(partialText, null, { partial: true });
+                        }
+                    } else {
+                        const capCheck = checkCap(mod.cap_key, mod.cap_limit);
+                        if (capCheck.isMaxed) {
+                            addModuleBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
+                        } else if (overflowAmount > capCheck.remaining) {
+                            rate = (capCheck.remaining * (Number(mod.rate) || 0)) / amount;
+                            hit = true;
+                            addModuleBreakdown(partialText, null, { partial: true });
+                        } else {
+                            rate = overflowRewardRaw / amount;
+                            hit = true;
+                            if (isOverflowPartial) addModuleBreakdown(partialText, null, { partial: true });
+                            else addModuleBreakdown(tempDesc || mod.desc);
+                        }
+                    }
+                } else {
+                    rate = overflowRewardRaw / amount;
+                    hit = true;
+                    if (isOverflowPartial) addModuleBreakdown(partialText, null, { partial: true });
+                    else addModuleBreakdown(tempDesc || mod.desc);
+                }
+            }
+            else if (mod.type === "stamp_cashback") {
+                const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline) : true;
+                if (!matchOk) return;
+                if (typeof mod.eligible_check === "function" && !mod.eligible_check(resolvedCategory, eligCtx)) return;
+
+                const progressKey = String(mod.stamp_progress_key || mod.req_mission_key || "").trim();
+                const stampDelta = Math.max(0, Math.floor(Number(missionDeltaByKey[progressKey] || 0)));
+                if (!progressKey) return;
+                if (stampDelta <= 0) {
+                    const merchantId = String(eligCtx.merchantId || "").trim();
+                    if (progressKey === "red_mcd_stamp_total" && merchantId === "mcdonalds") {
+                        const reason = getHsbcRedMcdStampIneligibleReason(resolvedCategory, eligCtx);
+                        if (reason) addModuleBreakdown(`${tempDesc || mod.desc}（${reason}）`, "muted");
+                    }
+                    return;
+                }
+
+                const stampsPerReward = Math.floor(Number(mod.stamps_per_reward) || 0);
+                const rewardPerReward = Number(mod.reward_per_reward) || 0;
+                if (stampsPerReward <= 0 || rewardPerReward <= 0) return;
+
+                const stampBefore = Math.max(0, Math.floor(Number(userProfile.usage[progressKey]) || 0));
+                const stampAfter = stampBefore + stampDelta;
+                const rewardStepsBefore = Math.floor(stampBefore / stampsPerReward);
+                const rewardStepsAfter = Math.floor(stampAfter / stampsPerReward);
+                const unlockedSteps = Math.max(0, rewardStepsAfter - rewardStepsBefore);
+
+                if (unlockedSteps <= 0) {
+                    addModuleBreakdown(`${tempDesc || mod.desc}（+${stampDelta}印花）`, "muted");
+                    return;
+                }
+
+                const fixedReward = unlockedSteps * rewardPerReward;
+                if (fixedReward <= 0) return;
+                rate = fixedReward / amount;
+                hit = true;
+                tempDesc = `${tempDesc || mod.desc}（+${stampDelta}印花；滿${rewardStepsAfter * stampsPerReward}印花）`;
+            }
             else if (mod.type === "always") { rate = mod.rate; hit = true; }
 
             // Enforce cap for non-category modules (e.g. red_hot_allocation / red_hot_fixed_bonus).
@@ -1451,7 +1783,20 @@ function evaluateModules(activeModules, amount, category, ctx) {
 }
 
 function buildFinalResult(card, amount, category, displayMode, totalRate, totalRatePotential, breakdown, conv, opts) {
-    const { trackingKey, guruRC, missionTags, rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, pendingUnlocks, userProfile, txDate } = opts;
+    const {
+        trackingKey,
+        guruRC,
+        missionTags,
+        rewardTrackingKey,
+        secondaryRewardTrackingKey,
+        generatedReward,
+        pendingUnlocks,
+        userProfile,
+        txDate,
+        memberDayDiscount,
+        grossAmount
+    } = opts;
+    const safeMemberDayDiscount = Math.max(0, Number(memberDayDiscount) || 0);
     const native = amount * totalRate;
     const nativePotential = amount * totalRatePotential;
 
@@ -1461,9 +1806,14 @@ function buildFinalResult(card, amount, category, displayMode, totalRate, totalR
         ? getForeignFeeRate(card, category, { settings: userProfile.settings || {}, txDate })
         : 0);
     const foreignFee = feeRate ? amount * feeRate : 0;
-    const estCashNet = estCash - foreignFee;
     const estMilesPotential = nativePotential * conv.miles_rate;
     const estCashPotential = nativePotential * conv.cash_rate;
+    const estCashNet = estCash - foreignFee + safeMemberDayDiscount;
+    const estCashNetPotential = estCashPotential - foreignFee + safeMemberDayDiscount;
+    const breakdownEntries = Array.isArray(breakdown) ? [...breakdown] : [];
+    if (safeMemberDayDiscount > 0 && displayMode === "cash") {
+        breakdownEntries.push(makeBreakdownEntry(`會員日折扣 +$${safeMemberDayDiscount.toFixed(1)}`, "warning"));
+    }
 
     let valStr = "", unitStr = "";
     let valStrPotential = "", unitStrPotential = "";
@@ -1486,12 +1836,13 @@ function buildFinalResult(card, amount, category, displayMode, totalRate, totalR
 
     return {
         cardId: card.id,
-        cardName: card.name, amount, displayVal: valStr, displayUnit: unitStr,
+        cardName: card.name, amount, grossAmount: Number(grossAmount) || amount, displayVal: valStr, displayUnit: unitStr,
         displayValPotential: valStrPotential, displayUnitPotential: unitStrPotential,
         estValue: estCash,
-        estMiles, estCash, estCashNet,
+        estMiles, estCash, estCashNet, estCashNetPotential,
         estMilesPotential, estCashPotential,
-        breakdown, trackingKey, guruRC, missionTags, category,
+        foreignFee, memberDayDiscount: safeMemberDayDiscount,
+        breakdown: breakdownEntries, trackingKey, guruRC, missionTags, category,
         rewardTrackingKey, secondaryRewardTrackingKey, generatedReward,
         redemptionConfig: card.redemption,
         supportsMiles, supportsCash, unsupportedMode,
@@ -1501,15 +1852,23 @@ function buildFinalResult(card, amount, category, displayMode, totalRate, totalR
     };
 }
 
-function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod) {
+function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod, merchantId) {
     if (!amount || amount <= 0) return null;
     const modules = (DATA && DATA.modules) ? DATA.modules : {};
     const conversions = (DATA && DATA.conversions) ? DATA.conversions : [];
-    const resolvedCategory = resolveCategory(card.id, category);
+    const merchantCategory = merchantId ? resolveMerchant(merchantId, card.id) : null;
+    const resolvedCategory = resolveCategory(card.id, merchantCategory || category);
+    const memberDayDiscount = getHsbcEasyMemberDayDiscount(card, amount, resolvedCategory, {
+        settings: userProfile.settings || {},
+        txDate,
+        merchantId,
+        isOnline
+    });
+    const rewardAmount = Math.max(0, (Number(amount) || 0) - memberDayDiscount);
     const rules = DATA && DATA.rules;
     const prefix = card.id.split('_')[0];
     const zeroCats = rules && rules.zeroRewardByCardPrefix && rules.zeroRewardByCardPrefix[prefix];
-    const isZeroCategory = Array.isArray(zeroCats) && zeroCats.includes(category);
+    const isZeroCategory = Array.isArray(zeroCats) && zeroCats.includes(resolvedCategory);
 
     const rewardCurrency = (card.id === "mox_credit" && userProfile && userProfile.settings && userProfile.settings.mox_reward_mode === "miles")
         ? "AM_Direct"
@@ -1518,13 +1877,18 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     if (!conv) return null;
 
     if (isZeroCategory) {
-        return buildZeroCategoryResult(card, amount, category, displayMode, conv);
+        return buildZeroCategoryResult(card, rewardAmount, category, displayMode, conv);
     }
 
     // Trackers (mission tags)
     let missionDeltaByKey = {};
     let missionTags = [];
-    const trackerRes = evaluateTrackers(card.id, { category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday }, userProfile, DATA);
+    const trackerRes = evaluateTrackers(
+        card.id,
+        { category: resolvedCategory, amount: rewardAmount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday, merchantId },
+        userProfile,
+        DATA
+    );
     if (trackerRes && Array.isArray(trackerRes.missionTags)) missionTags = trackerRes.missionTags;
     if (trackerRes && Array.isArray(trackerRes.effects)) {
         missionDeltaByKey = {};
@@ -1542,9 +1906,9 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         return checkValidity(m, txDate, isHoliday);
     });
 
-    const modResult = evaluateModules(activeModules, amount, category, {
+    const modResult = evaluateModules(activeModules, rewardAmount, resolvedCategory, {
         modulesDB: modules, resolvedCategory, userProfile, missionDeltaByKey, conv, isOnline,
-        isMobilePay, paymentMethod, txDate, isHoliday
+        isMobilePay, paymentMethod, txDate, isHoliday, merchantId, cardId: card.id
     });
 
     // Append mission tag breakdown entries
@@ -1581,8 +1945,10 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             const alreadyWarned = breakdown.some(b => {
                 const text = typeof b === "string" ? b : (b && b.text) || "";
                 const hasText = text.includes(cleanTagDesc);
-                const locked = typeof b === "object" && b.flags && b.flags.locked;
-                return hasText && (locked || text.includes("🔒"));
+                const entryFlags = (typeof b === "object" && b && b.flags) ? b.flags : {};
+                const hasStatusFlag = !!(entryFlags.locked || entryFlags.capped || entryFlags.strike);
+                const hasStatusText = text.includes("🔒") || text.includes("🚫") || text.includes("累積中") || text.includes("爆Cap");
+                return hasText && (hasStatusFlag || hasStatusText);
             });
 
             if (alreadyWarned) {
@@ -1606,7 +1972,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         }
     });
 
-    return buildFinalResult(card, amount, category, displayMode, modResult.totalRate, modResult.totalRatePotential, breakdown, conv, {
+    return buildFinalResult(card, rewardAmount, resolvedCategory, displayMode, modResult.totalRate, modResult.totalRatePotential, breakdown, conv, {
         trackingKey: modResult.trackingKey,
         guruRC: modResult.guruRC,
         missionTags,
@@ -1615,7 +1981,9 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         generatedReward: modResult.generatedReward,
         pendingUnlocks: modResult.pendingUnlocks,
         userProfile,
-        txDate
+        txDate,
+        memberDayDiscount,
+        grossAmount: amount
     });
 }
 
@@ -1625,12 +1993,13 @@ function calculateResults(amount, category, displayMode, userProfile, txDate, is
     const isOnline = !!options.isOnline;
     const isMobilePay = !!options.isMobilePay;
     const paymentMethod = options.paymentMethod || (isMobilePay ? "mobile" : "physical");
+    const merchantId = options.merchantId || null;
     const cards = DATA.cards || [];
 
     userProfile.ownedCards.forEach(cardId => {
         const card = cards.find(c => c.id === cardId);
         if (!card) return;
-        const res = buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod);
+        const res = buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod, merchantId);
         if (res) results.push(res);
     });
 

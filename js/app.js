@@ -92,6 +92,7 @@ function init() {
     if (userProfile.settings.settings_detail_mode === undefined) userProfile.settings.settings_detail_mode = false;
     if (userProfile.settings.settings_wallet_edit_mode === undefined) userProfile.settings.settings_wallet_edit_mode = false;
     if (userProfile.settings.settings_wallet_add_open === undefined) userProfile.settings.settings_wallet_add_open = false;
+    if (userProfile.settings.wallet_remove_confirm_disabled === undefined) userProfile.settings.wallet_remove_confirm_disabled = false;
     if (!userProfile.settings.settings_wallet_add_groups || typeof userProfile.settings.settings_wallet_add_groups !== "object") {
         userProfile.settings.settings_wallet_add_groups = {};
     }
@@ -417,11 +418,13 @@ window.runCalc = function () {
     }
 
     // Calls core.js function
+    const merchantId = window.__selectedMerchantId || null;
     const results = calculateResults(amt, cat, currentMode, userProfile, txDate, isHoliday, {
         deductFcfForRanking: !!userProfile.settings.deduct_fcf_ranking && currentMode === 'cash',
         isOnline,
         isMobilePay,
-        paymentMethod
+        paymentMethod,
+        merchantId
     });
 
     // Calls ui.js function
@@ -512,7 +515,7 @@ function rebuildUsageAndStatsFromTransactions() {
 
         const card = DATA.cards.find(c => c.id === cardId);
         if (!card) return;
-        const res = buildCardResult(card, amount, category, 'cash', userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod);
+        const res = buildCardResult(card, amount, category, 'cash', userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod, tx.merchantId || null);
         if (!res) return;
 
         if (res.rewardTrackingKey && res.generatedReward > 0) {
@@ -530,7 +533,7 @@ function rebuildUsageAndStatsFromTransactions() {
             userProfile.usage[guruUsageKeys.rewardKey] = (userProfile.usage[guruUsageKeys.rewardKey] || 0) + res.guruRC;
         }
 
-        trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday);
+        trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday, tx.merchantId || null);
     });
 
     if (!userProfile.usage.red_cap_month) {
@@ -555,9 +558,9 @@ window.handleDeleteTx = function (id) {
 
 // --- DATA MODIFIERS ---
 
-function trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday) {
+function trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday, merchantId) {
     if (!cardId || !DATA.cards) return;
-    const res = evaluateTrackers(cardId, { category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday }, userProfile, DATA);
+    const res = evaluateTrackers(cardId, { category, amount, isOnline, isMobilePay, paymentMethod, txDate, isHoliday, merchantId }, userProfile, DATA);
     if (!res || !Array.isArray(res.effects)) return;
     res.effects.forEach((effect) => {
         if (!effect || !effect.key) return;
@@ -567,6 +570,7 @@ function trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paym
 
 function commitTransaction(data) {
     const { amount, trackingKey, estValue, guruRC, missionTags, category, cardId, rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, pendingUnlocks, isOnline } = data;
+    const merchantId = data.merchantId || (window.__selectedMerchantId) || null;
     const paymentMethod = data.paymentMethod || (data.isMobilePay ? "mobile" : "physical");
     const isMobilePay = paymentMethod !== "physical";
     const txDate = data.txDate || "";
@@ -593,7 +597,7 @@ function commitTransaction(data) {
         userProfile.usage[`spend_${cardId}`] = (userProfile.usage[`spend_${cardId}`] || 0) + amount;
     }
     // Track mission spends (e.g. sim non-online tracker) attached to the current card
-    trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod, txDateSafe, isHoliday);
+    trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paymentMethod, txDateSafe, isHoliday, merchantId);
     if (guruRC > 0) {
         const guruUsageKeys = getGuruUsageKeys();
         userProfile.usage[guruUsageKeys.rewardKey] = (userProfile.usage[guruUsageKeys.rewardKey] || 0) + guruRC;
@@ -631,10 +635,13 @@ function commitTransaction(data) {
         txDate: txDateSafe,
         cardId: cardId || 'unknown',
         category: category,
+        merchantId: merchantId,
         isOnline: !!isOnline,
         isMobilePay: !!isMobilePay,
         paymentMethod: paymentMethod,
         amount: amount,
+        grossAmount: Number(data.grossAmount) || amount,
+        memberDayDiscount: Math.max(0, Number(data.memberDayDiscount) || 0),
         rebateVal: estValue,
         rebateText: safeResultText,
         desc: data.program || 'Spending',
@@ -743,6 +750,90 @@ function removeOwnedCardById(id) {
     return true;
 }
 
+function getCardNameById(cardId) {
+    const cards = (DATA && Array.isArray(DATA.cards)) ? DATA.cards : [];
+    const card = cards.find((c) => c && c.id === cardId);
+    return (card && card.name) ? String(card.name) : String(cardId || "");
+}
+
+function finalizeWalletCardRemoval(cardId) {
+    if (!removeOwnedCardById(cardId)) return false;
+    saveUserData();
+    refreshUI();
+    return true;
+}
+
+function showWalletRemoveConfirm(cardId, onConfirm) {
+    const overlay = document.createElement("div");
+    overlay.className = "fixed inset-0 z-40 bg-black/40 flex items-center justify-center px-4";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+
+    const panel = document.createElement("div");
+    panel.className = "w-full max-w-sm rounded-xl border border-[#e9e9e7] bg-white p-4 shadow-xl";
+
+    const title = document.createElement("div");
+    title.className = "text-sm font-semibold text-[#37352f] mb-1";
+    title.textContent = "從銀包移除卡片？";
+
+    const desc = document.createElement("div");
+    desc.className = "text-xs text-gray-600 mb-3 leading-relaxed";
+    desc.textContent = `將會移除：${getCardNameById(cardId)}`;
+
+    const checkWrap = document.createElement("label");
+    checkWrap.className = "flex items-center gap-2 text-xs text-gray-600 mb-4 cursor-pointer select-none";
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    check.className = "accent-gray-700 w-3.5 h-3.5";
+    const checkText = document.createElement("span");
+    checkText.textContent = "不再提示";
+    checkWrap.appendChild(check);
+    checkWrap.appendChild(checkText);
+
+    const actions = document.createElement("div");
+    actions.className = "flex justify-end gap-2";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "px-3 py-1.5 text-xs border border-[#e9e9e7] rounded-md text-gray-600 hover:bg-gray-50";
+    cancelBtn.textContent = "取消";
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.type = "button";
+    confirmBtn.className = "px-3 py-1.5 text-xs rounded-md bg-[#37352f] text-white hover:opacity-90";
+    confirmBtn.textContent = "移除";
+
+    actions.appendChild(cancelBtn);
+    actions.appendChild(confirmBtn);
+    panel.appendChild(title);
+    panel.appendChild(desc);
+    panel.appendChild(checkWrap);
+    panel.appendChild(actions);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+
+    const cleanup = () => {
+        document.removeEventListener("keydown", onKeyDown);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    };
+
+    const onKeyDown = (event) => {
+        if (!event) return;
+        if (event.key === "Escape") cleanup();
+    };
+
+    cancelBtn.onclick = cleanup;
+    confirmBtn.onclick = () => {
+        const disableConfirm = !!check.checked;
+        cleanup();
+        if (typeof onConfirm === "function") onConfirm(disableConfirm);
+    };
+    overlay.onclick = (event) => {
+        if (event && event.target === overlay) cleanup();
+    };
+    document.addEventListener("keydown", onKeyDown);
+}
+
 window.toggleCard = function (id, options) {
     const opts = (options && typeof options === "object") ? options : {};
     const i = userProfile.ownedCards.indexOf(id);
@@ -826,10 +917,16 @@ window.toggleWalletEditMode = function (forceState) {
 window.removeWalletCard = function (cardId) {
     if (!cardId) return;
     if (!Array.isArray(userProfile.ownedCards) || !userProfile.ownedCards.includes(cardId)) return;
-    if (!confirm("從銀包移除呢張卡？")) return;
-    if (!removeOwnedCardById(cardId)) return;
-    saveUserData();
-    refreshUI();
+    if (userProfile.settings && userProfile.settings.wallet_remove_confirm_disabled) {
+        finalizeWalletCardRemoval(cardId);
+        return;
+    }
+    showWalletRemoveConfirm(cardId, (disableConfirm) => {
+        if (disableConfirm) {
+            userProfile.settings.wallet_remove_confirm_disabled = true;
+        }
+        finalizeWalletCardRemoval(cardId);
+    });
 }
 
 window.walletDragStart = function (event, cardId) {

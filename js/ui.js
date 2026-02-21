@@ -885,7 +885,8 @@ function getTxForeignFeeForDashboard(tx, settings) {
 
     const txDate = (typeof t.txDate === "string" && t.txDate.trim())
         ? t.txDate.trim()
-        : (t.date ? new Date(t.date).toISOString().slice(0, 10) : "");
+        : "";
+    if (!txDate) return 0;
 
     let feeRate = 0;
     if (typeof getForeignFeeRate === "function") {
@@ -897,6 +898,34 @@ function getTxForeignFeeForDashboard(tx, settings) {
     }
     if (feeRate <= 0) return 0;
     return amount * feeRate;
+}
+
+function getTxMemberDayDiscountForDashboard(tx, settings) {
+    const t = (tx && typeof tx === "object") ? tx : {};
+    const stored = Number(t.memberDayDiscount);
+    if (Number.isFinite(stored) && stored > 0) return stored;
+    const cardId = String(t.cardId || "").trim();
+    const category = String(t.category || "").trim();
+    const amount = Number(t.amount) || 0;
+    const merchantId = String(t.merchantId || "").trim();
+    if (!cardId || !category || amount <= 0 || !merchantId) return 0;
+    if (typeof DATA === "undefined" || !DATA || !Array.isArray(DATA.cards)) return 0;
+
+    const card = DATA.cards.find((c) => c && c.id === cardId) || null;
+    if (!card) return 0;
+
+    const txDate = (typeof t.txDate === "string" && t.txDate.trim())
+        ? t.txDate.trim()
+        : "";
+    if (!txDate) return 0;
+    const isOnline = !!t.isOnline;
+    if (typeof getHsbcEasyMemberDayDiscount !== "function") return 0;
+    return Number(getHsbcEasyMemberDayDiscount(card, amount, category, {
+        settings: settings || {},
+        txDate,
+        merchantId,
+        isOnline
+    })) || 0;
 }
 
 function getDashboardTotalsByPeriod(transactions, periodKey, profile) {
@@ -920,6 +949,8 @@ function getDashboardTotalsByPeriod(transactions, periodKey, profile) {
 
         const foreignFee = getTxForeignFeeForDashboard(tx, settings);
         if (foreignFee > 0) rewardCash -= foreignFee;
+        const memberDayDiscount = getTxMemberDayDiscountForDashboard(tx, settings);
+        if (memberDayDiscount > 0) rewardCash += memberDayDiscount;
 
         const parsed = parseNativeRewardFromText(tx.rebateText);
         if (!parsed) return;
@@ -1704,6 +1735,65 @@ function renderPromoSections(sections, theme) {
     }).join('');
 }
 
+function renderRedMcdStampProgressBody(userProfile) {
+    const usage = (userProfile && userProfile.usage && typeof userProfile.usage === "object") ? userProfile.usage : {};
+    const totalCap = 96;
+    const monthlyCap = 8;
+    const stampsPerReward = 4;
+    const rewardPerSet = 15;
+
+    const totalRaw = Math.max(0, Math.floor(Number(usage.red_mcd_stamp_total) || 0));
+    const monthlyRaw = Math.max(0, Math.floor(Number(usage.red_mcd_stamp_month) || 0));
+    const totalStamps = Math.min(totalCap, totalRaw);
+    const monthlyStamps = Math.min(monthlyCap, monthlyRaw);
+    const completedSets = Math.floor(totalStamps / stampsPerReward);
+    const cycleStamps = totalStamps % stampsPerReward;
+    const filledDots = cycleStamps === 0 && totalStamps > 0 ? stampsPerReward : cycleStamps;
+    const remainingStamps = Math.max(0, stampsPerReward - filledDots);
+    const promoCapped = totalStamps >= totalCap;
+    const monthCapped = monthlyStamps >= monthlyCap;
+    const rewardGranted = Math.max(0, Number(usage.red_mcd_reward_cap) || 0);
+    const rewardText = Number.isInteger(rewardGranted)
+        ? rewardGranted.toLocaleString()
+        : rewardGranted.toFixed(1);
+
+    const dotsHtml = Array.from({ length: stampsPerReward }, (_, idx) => {
+        const cls = idx < filledDots ? "stamp-dot stamp-dot-filled" : "stamp-dot";
+        return `<span class="${cls}" aria-hidden="true"></span>`;
+    }).join("");
+
+    let hint = "";
+    if (promoCapped) hint = `已達推廣上限 ${totalCap} 個印花。`;
+    else if (remainingStamps === 0) hint = `本輪已集齊 ${stampsPerReward} 個印花，下一宗合資格簽賬會開始新一輪。`;
+    else hint = `再儲 ${remainingStamps} 個印花可獲下一個 $${rewardPerSet}。`;
+    if (monthCapped && !promoCapped) hint += ` 本月已達 ${monthlyCap} 個印花上限。`;
+
+    return `<div class="space-y-2">
+        <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-[#37352f]">印花卡進度</span>
+            <span class="text-[11px] text-gray-500">${filledDots}/${stampsPerReward}</span>
+        </div>
+        <div class="stamp-dot-row" role="img" aria-label="本輪印花 ${filledDots} / ${stampsPerReward}">
+            ${dotsHtml}
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-[11px]">
+            <div class="rounded border border-stone-200 bg-stone-50 px-2 py-1">
+                <div class="text-[10px] text-stone-500">印花總數</div>
+                <div class="font-semibold text-stone-800">${totalStamps}/${totalCap}</div>
+            </div>
+            <div class="rounded border border-stone-200 bg-stone-50 px-2 py-1">
+                <div class="text-[10px] text-stone-500">本月印花</div>
+                <div class="font-semibold text-stone-800">${monthlyStamps}/${monthlyCap}</div>
+            </div>
+            <div class="rounded border border-stone-200 bg-stone-50 px-2 py-1">
+                <div class="text-[10px] text-stone-500">已獲獎賞</div>
+                <div class="font-semibold text-stone-800">$${rewardText}</div>
+            </div>
+        </div>
+        <div class="text-[10px] text-gray-500">已完成 ${completedSets} 張印花卡。${hint}</div>
+    </div>`;
+}
+
 function breakdownToneClass(tone, flags) {
     const classes = [];
     const safeTone = tone || "normal";
@@ -1959,7 +2049,7 @@ function createProgressCard(config) {
     const {
         title, icon, badge, subTitle, sections, warning, actionButton, description,
         sourceUrl, sourceTitle, tncUrl, promoUrl, registrationUrl, registrationStart, registrationEnd, registrationNote,
-        implementationNote, daysLeft
+        implementationNote, daysLeft, customBodyHtml
     } = config;
 
     // Use pure flat design instead of themes
@@ -1998,6 +2088,7 @@ function createProgressCard(config) {
         </button>
     </div>` : '';
 
+    const customBodySection = customBodyHtml ? `<div>${customBodyHtml}</div>` : '';
     const sectionsHtml = sections ? renderPromoSections(sections, { text: 'text-[#37352f]', bar: 'bg-[#37352f]' }) : '';
 
     return `<div class="bg-white border border-[#e9e9e7] rounded-md overflow-hidden mb-3">
@@ -2013,6 +2104,7 @@ function createProgressCard(config) {
         <div class="p-3 space-y-3">
             ${infoHtml}
             ${warningHtml}
+            ${customBodySection}
             ${sectionsHtml}
             ${actionButtonHtml}
         </div>
@@ -2219,12 +2311,6 @@ function renderDashboard(userProfile) {
 	        }
 
             if (!status || !status.eligible) return;
-            if (campaign.warningOnly) return;
-
-            const sections = status.sections || [];
-            if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
-            if (status.capKeys) status.capKeys.forEach(k => renderedCaps.add(k));
-
             const badgeText = getCampaignBadgeText(campaign);
             const resetSubTitle = getCampaignResetSubTitle(campaign);
             const subTitle = [scopeLabel, resetSubTitle].filter(Boolean).join(" · ");
@@ -2240,6 +2326,39 @@ function renderDashboard(userProfile) {
                 return "";
             })();
             const campaignDaysLeft = campaignEndDate ? getDaysLeft(campaignEndDate) : null;
+
+            if (campaign.id === "red_mcd_stamp") {
+                const stampCardHtml = createProgressCard({
+                    title: scopedCampaignTitle, icon: campaign.icon, theme: campaign.theme, badge: badgeText, subTitle,
+                    customBodyHtml: renderRedMcdStampProgressBody(userProfile), daysLeft: campaignDaysLeft,
+                    description: campaign.note_zhhk || "",
+                    sourceUrl: campaign.source_url || "",
+                    sourceTitle: campaign.source_title || "",
+                    tncUrl: campaign.tnc_url || "",
+                    promoUrl: campaign.promo_url || "",
+                    registrationUrl: campaign.registration_url || "",
+                    registrationStart: campaign.registration_start || "",
+                    registrationEnd: campaign.registration_end || "",
+                    registrationNote: campaign.registration_note || "",
+                    implementationNote: campaign.implementation_note || buildCampaignImplementationNote(campaign)
+                });
+                renderedCaps.add("red_mcd_reward_cap");
+                const campaignSortMeta = { daysLeft: (typeof campaignDaysLeft === "number" && Number.isFinite(campaignDaysLeft)) ? campaignDaysLeft : Infinity, state: "active" };
+                if (scope.type === "card") {
+                    pushBlock(scope.cardId, stampCardHtml, campaignSortMeta);
+                } else if (scope.type === "bank_shared") {
+                    scope.ownedCardIds.forEach((cardId) => pushBlock(cardId, stampCardHtml, campaignSortMeta));
+                } else {
+                    pushBlock(null, stampCardHtml, campaignSortMeta);
+                }
+                return;
+            }
+
+            if (campaign.warningOnly) return;
+
+            const sections = status.sections || [];
+            if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
+            if (status.capKeys) status.capKeys.forEach(k => renderedCaps.add(k));
             const progressHtml = createProgressCard({
                 title: scopedCampaignTitle, icon: campaign.icon, theme: campaign.theme, badge: badgeText, subTitle,
                 sections: sections, daysLeft: campaignDaysLeft,
@@ -2658,41 +2777,47 @@ function renderCalculatorResults(results, currentMode) {
 
 	        resultText = formatValueText(v, u);
 
-        // Foreign Currency Fee Logic
+        // Net value adjustment (foreign fee / member-day discount)
         let feeNetValue = null;
         let feeNetPotential = null;
         let feeLineHtml = '';
-        let hasFee = false;
         const showFeeEquation = currentMode === 'cash' && userProfile && userProfile.settings && userProfile.settings.deduct_fcf_ranking;
         const allowFeeNet = showFeeEquation && res.supportsCash;
-        const cardConfig = DATA.cards.find(c => c.id === res.cardId);
-        // Check if category implies foreign currency
-        const isForeign = (typeof isForeignCategory === "function")
-            ? isForeignCategory(res.category)
-            : (res.category.startsWith('overseas') || res.category === 'foreign' || res.category === 'travel_plus_tier1');
-
-        const exempt = cardConfig && Array.isArray(cardConfig.fcf_exempt_categories) ? cardConfig.fcf_exempt_categories : [];
-        const feeRate = (cardConfig && cardConfig.fcf > 0 && isForeign && !exempt.includes(res.category)) ? cardConfig.fcf : 0;
-        if (cardConfig && feeRate > 0) {
-            const fee = res.amount * feeRate;
-            const feeVal = fee.toFixed(1);
-            const net = res.estCash - fee;
-            const netPotential = res.estCashPotential - fee;
-            hasFee = true;
-            feeNetValue = Math.floor(net).toLocaleString();
-            feeNetPotential = Math.floor(netPotential).toLocaleString();
-            feeLineHtml = `<div class="text-xs text-amber-600 mt-0.5"><i class="fas fa-money-bill-wave mr-1"></i>外幣手續費: $${feeVal} (${(feeRate * 100).toFixed(2)}%)</div>`;
+        const foreignFee = Math.max(0, Number(res.foreignFee) || 0);
+        const memberDayDiscount = Math.max(0, Number(res.memberDayDiscount) || 0);
+        const hasNetImpact = foreignFee > 0 || memberDayDiscount > 0;
+        const selectedMerchantId = (typeof window !== "undefined" && window.__selectedMerchantId)
+            ? String(window.__selectedMerchantId)
+            : "";
+        const showMemberDayLine = !showFeeEquation && res.cardId === "hsbc_easy" && !!selectedMerchantId;
+        const adjustmentBits = [];
+        if (!showFeeEquation && foreignFee > 0) {
+            adjustmentBits.push(`<div class="text-xs text-amber-600 mt-0.5"><i class="fas fa-money-bill-wave mr-1"></i>外幣手續費: -$${foreignFee.toFixed(1)}</div>`);
+        }
+        if (showMemberDayLine) {
+            const toneClass = memberDayDiscount > 0 ? "text-green-700" : "text-gray-500";
+            adjustmentBits.push(`<div class="text-xs ${toneClass} mt-0.5"><i class="fas fa-percent mr-1"></i>會員日折扣: +$${memberDayDiscount.toFixed(1)}</div>`);
+        }
+        feeLineHtml = adjustmentBits.join('');
+        if (hasNetImpact) {
+            const net = Number(res.estCashNet);
+            const netPotential = Number(res.estCashNetPotential);
+            if (Number.isFinite(net)) feeNetValue = Math.floor(net).toLocaleString();
+            if (Number.isFinite(netPotential)) feeNetPotential = Math.floor(netPotential).toLocaleString();
         }
 
-        const txDateInput = document.getElementById('tx-date');
-        const txDate = txDateInput ? txDateInput.value : "";
-	        const dataStr = encodeURIComponent(JSON.stringify({
-	            amount: res.amount, trackingKey: res.trackingKey, estValue: res.estValue,
-	            guruRC: res.guruRC, missionTags: res.missionTags, category: res.category,
-	            cardId: res.cardId,
-	            rewardTrackingKey: res.rewardTrackingKey,
-	            secondaryRewardTrackingKey: res.secondaryRewardTrackingKey,
-	            generatedReward: res.generatedReward,
+		        const txDateInput = document.getElementById('tx-date');
+		        const txDate = txDateInput ? txDateInput.value : "";
+			        const dataStr = encodeURIComponent(JSON.stringify({
+		            amount: res.amount, trackingKey: res.trackingKey, estValue: res.estValue,
+	                grossAmount: Number(res.grossAmount) || Number(res.amount) || 0,
+	                memberDayDiscount: Number(res.memberDayDiscount) || 0,
+		            guruRC: res.guruRC, missionTags: res.missionTags, category: res.category,
+		            cardId: res.cardId,
+		            merchantId: selectedMerchantId || null,
+		            rewardTrackingKey: res.rewardTrackingKey,
+		            secondaryRewardTrackingKey: res.secondaryRewardTrackingKey,
+		            generatedReward: res.generatedReward,
 	            resultText: resultText,
 	            unsupportedMode,
 	            pendingUnlocks: res.pendingUnlocks || [],
@@ -2705,7 +2830,7 @@ function renderCalculatorResults(results, currentMode) {
 	        let displayUnit = res.displayUnit;
 	        let valClass = unsupportedMode ? 'text-gray-400 font-medium' : 'text-stone-800 font-bold';
 
-	        if (allowFeeNet && hasFee && feeNetValue !== null) {
+	        if (allowFeeNet && hasNetImpact && feeNetValue !== null) {
 	            displayVal = feeNetValue;
 	            displayUnit = "$";
 	            valClass = 'text-blue-600 font-bold';
@@ -2719,7 +2844,7 @@ function renderCalculatorResults(results, currentMode) {
 	        if (res.displayValPotential && res.displayValPotential !== res.displayVal) {
 	            let potentialVal = res.displayValPotential;
 	            let potentialUnit = res.displayUnitPotential;
-	            if (allowFeeNet && hasFee && feeNetPotential !== null) {
+	            if (allowFeeNet && hasNetImpact && feeNetPotential !== null) {
 	                potentialVal = feeNetPotential;
 	                potentialUnit = "$";
 	            }
@@ -2767,7 +2892,7 @@ function renderCalculatorResults(results, currentMode) {
 	            <div class="w-2/3 pr-2">
 	                <div class="font-bold text-gray-800 text-sm truncate">${res.cardName}</div>
 	                <div class="text-xs text-gray-500 mt-1">${renderBreakdown(res.breakdown)}</div>
-	                ${hasFee && !showFeeEquation ? feeLineHtml : ''}
+	                ${feeLineHtml}
 	            </div>
 	            <div class="text-right w-1/3 flex flex-col items-end">
 	                ${mainValHtml}
@@ -3314,6 +3439,20 @@ function renderSettings(userProfile) {
         </select>
     </div>`);
 
+    if (ownedSet.has("hsbc_easy")) ensureBucket(preferenceBlocksByCard, "hsbc_easy").push(`<div class="border p-3 rounded-md bg-[#fcfcfc] border-[#e9e9e7]">
+        <div class="text-xs font-semibold text-[#37352f] mb-2">HSBC Easy：會員等級與會員日</div>
+        <div class="space-y-2 text-xs">
+            <div class="flex justify-between items-center bg-white border border-[#e9e9e7] rounded p-2">
+                <span>VIP 會員（百佳/屈臣氏/豐澤按 6X 計）</span>
+                ${renderSettingsToggle({ id: "st-hsbc-easy-vip", checked: !!userProfile.settings.hsbc_easy_is_vip, onchange: "toggleSetting('hsbc_easy_is_vip')" })}
+            </div>
+        </div>
+        <div class="mt-2 text-[11px] text-gray-500">
+            會員日折扣已自動套用（需配合商戶選擇）；只按條款可判斷條件（未覆蓋所有貨品/服務排除）。
+            <a href="https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf" target="_blank" rel="noopener" class="underline underline-offset-2">條款</a>
+        </div>
+    </div>`);
+
     const moxMode = String(userProfile.settings.mox_reward_mode || "cashback");
     if (ownedSet.has("mox_credit")) pushScopedSettingRow("mox_deposit_task_enabled", `<div class="border p-3 rounded-md bg-[#fcfcfc] border-[#e9e9e7]">
         <label class="text-xs font-semibold text-[#37352f] block mb-2">Mox Credit 獎賞模式</label>
@@ -3713,3 +3852,139 @@ window.handleClearHistory = function () {
         if (typeof showToast === "function") showToast("已清除所有記帳記錄。", "info");
     }
 }
+
+// ───────── Merchant Search ─────────
+
+let _merchantSearchIndex = null;
+let _merchantFuse = null;
+
+function buildMerchantSearchIndex() {
+    const merchants = (typeof DATA !== "undefined" && DATA.merchants) ? DATA.merchants : {};
+    _merchantSearchIndex = Object.entries(merchants).map(([id, m]) => ({
+        id,
+        name: m.name || id,
+        searchText: [m.name || "", ...(m.aliases || [])].join(' ').toLowerCase(),
+        defaultCategory: m.defaultCategory || "general"
+    }));
+
+    // Build Fuse.js index for fuzzy matching (graceful fallback if CDN fails)
+    if (typeof Fuse !== "undefined") {
+        _merchantFuse = new Fuse(_merchantSearchIndex, {
+            keys: [
+                { name: 'name', weight: 2 },
+                { name: 'searchText', weight: 1 }
+            ],
+            threshold: 0.4,
+            ignoreLocation: true,
+            minMatchCharLength: 1,
+            shouldSort: true
+        });
+    }
+}
+
+window.onMerchantSearch = function (query) {
+    if (!_merchantSearchIndex) buildMerchantSearchIndex();
+    const dropdown = document.getElementById('merchant-dropdown');
+    if (!dropdown) return;
+    const q = (query || "").trim().toLowerCase();
+
+    if (q.length < 1) {
+        dropdown.classList.add('hidden');
+        return;
+    }
+
+    let matches;
+    if (_merchantFuse) {
+        matches = _merchantFuse.search(q, { limit: 15 }).map(r => r.item);
+    } else {
+        matches = _merchantSearchIndex
+            .filter(m => m.searchText.includes(q))
+            .slice(0, 15);
+    }
+
+    if (matches.length === 0) {
+        dropdown.innerHTML = '<div class="p-2 text-xs text-gray-400">找不到商戶</div>';
+        dropdown.classList.remove('hidden');
+        return;
+    }
+
+    const cats = (typeof DATA !== "undefined" && DATA.categories) ? DATA.categories : {};
+    dropdown.innerHTML = matches.map(m => {
+        const catDef = cats[m.defaultCategory];
+        const catLabel = catDef ? catDef.label : m.defaultCategory;
+        return `<div class="p-2 cursor-pointer hover:bg-[#f7f7f5] text-sm border-b border-[#e9e9e7] last:border-0"
+                     onclick="selectMerchant('${m.id}')">
+            <span class="font-medium">${escapeHtml(m.name)}</span>
+            <span class="text-[10px] text-gray-400 ml-1">${escapeHtml(catLabel)}</span>
+        </div>`;
+    }).join('');
+    dropdown.classList.remove('hidden');
+};
+
+window.selectMerchant = function (merchantId) {
+    const merchants = (typeof DATA !== "undefined" && DATA.merchants) ? DATA.merchants : {};
+    const merchant = merchants[merchantId];
+    if (!merchant) return;
+
+    const searchInput = document.getElementById('merchant-search');
+    if (searchInput) searchInput.value = merchant.name || merchantId;
+
+    const dropdown = document.getElementById('merchant-dropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+
+    const clearBtn = document.getElementById('merchant-clear');
+    if (clearBtn) clearBtn.classList.remove('hidden');
+
+    window.__selectedMerchantId = merchantId;
+
+    // Auto-set category dropdown to merchant's default category
+    const catSelect = document.getElementById('category');
+    if (catSelect && merchant.defaultCategory) {
+        const match = Array.from(catSelect.options).find(o => o.value === merchant.defaultCategory);
+        if (match) {
+            catSelect.value = merchant.defaultCategory;
+            if (typeof toggleCategoryHelp === "function") toggleCategoryHelp();
+        }
+    }
+
+    if (typeof runCalc === "function") runCalc();
+};
+
+// Clear merchant UI state. If skipCalc=true, does not re-trigger runCalc
+// (useful when called from category onchange which already calls runCalc).
+function clearMerchantState(skipCalc) {
+    window.__selectedMerchantId = null;
+    const searchInput = document.getElementById('merchant-search');
+    if (searchInput) searchInput.value = '';
+
+    const clearBtn = document.getElementById('merchant-clear');
+    if (clearBtn) clearBtn.classList.add('hidden');
+
+    const dropdown = document.getElementById('merchant-dropdown');
+    if (dropdown) dropdown.classList.add('hidden');
+
+    const infoEl = document.getElementById('merchant-info');
+    if (infoEl) infoEl.classList.add('hidden');
+
+    if (!skipCalc && typeof runCalc === "function") runCalc();
+}
+
+window.clearMerchant = function () {
+    clearMerchantState(false);
+};
+
+// Called from category dropdown onchange — clears merchant without re-triggering calc
+window.onCategoryChange = function () {
+    if (window.__selectedMerchantId) clearMerchantState(true);
+    if (typeof toggleCategoryHelp === "function") toggleCategoryHelp();
+    if (typeof runCalc === "function") runCalc();
+};
+
+// Close merchant dropdown when clicking outside
+document.addEventListener('click', function (e) {
+    const dropdown = document.getElementById('merchant-dropdown');
+    const searchInput = document.getElementById('merchant-search');
+    if (dropdown && searchInput && !searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.add('hidden');
+    }
+});
