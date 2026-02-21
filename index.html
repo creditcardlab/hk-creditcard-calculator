@@ -23,63 +23,60 @@
         <div id="cap-monitors" class="space-y-3"></div>
     </div>
 
-    <div id="view-calculator" role="tabpanel" aria-labelledby="btn-calculator" class="p-4 space-y-6 tab-content hidden">
-        <div class="flex justify-start border-b border-[#e9e9e7] mb-2">
+    <div id="view-calculator" role="tabpanel" aria-labelledby="btn-calculator" class="p-4 space-y-5 tab-content hidden">
+        <div class="flex justify-start border-b border-[#e9e9e7]">
             <button id="btn-mode-miles" onclick="toggleMode('miles')"
                 class="px-4 py-2 text-sm font-medium border-b-2 border-[#37352f] text-[#37352f] transition-all">里數 (Miles)</button>
             <button id="btn-mode-cash" onclick="toggleMode('cash')"
                 class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-400 transition-all hover:text-gray-600">現金 ($)</button>
         </div>
 
-        <div id="fee-deduct-wrap" class="flex items-center text-[11px] text-gray-500">
-            <label class="flex items-center gap-2 cursor-pointer hover:bg-[#f7f7f5] px-2 py-1 rounded">
-                <input id="toggle-fee-deduct" type="checkbox" class="accent-gray-700" onchange="toggleFeeDeduct(this.checked)">
-                扣除外幣手續費（只影響排序）
-            </label>
+        <div class="py-2">
+            <div class="flex items-center">
+                <span class="text-3xl font-light text-gray-300 mr-1">$</span>
+                <input type="number" id="amount" value="3000"
+                    class="w-full bg-transparent text-4xl font-semibold tracking-tight text-[#37352f] focus:outline-none placeholder-gray-200" style="letter-spacing: -0.03em" placeholder="0" oninput="runCalc()">
+            </div>
         </div>
 
-        <div class="border border-[#e9e9e7] p-4 rounded-md space-y-5 bg-white">
-            <div>
-                <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">簽賬金額 (HKD)</label>
-                <div class="relative">
-                    <span class="absolute left-3 top-2.5 text-gray-400">$</span>
-                    <input type="number" id="amount" value="3000"
-                        class="w-full pl-7 p-2 bg-[#f7f7f5] border border-transparent rounded focus:border-[#e9e9e7] focus:bg-white focus:outline-none text-lg transition-colors" oninput="runCalc()">
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">簽賬類別</label>
-                <div class="flex gap-2 mb-3">
-                    <select id="category" class="w-full p-2 border border-[#e9e9e7] rounded bg-[#f7f7f5] focus:bg-white focus:outline-none text-sm appearance-none" onchange="toggleCategoryHelp(); runCalc()">
-                        <!-- Javascript will populate this -->
-                    </select>
-                    <button id="cat-help-btn" class="hidden px-3 text-gray-400 border border-[#e9e9e7] rounded hover:bg-[#f7f7f5]"><i class="fas fa-question-circle"></i></button>
-                </div>
-
-                <div class="flex flex-wrap gap-2 text-[11px] text-gray-600">
-                    <label class="flex items-center gap-1.5 border border-[#e9e9e7] px-2 py-1 rounded cursor-pointer hover:bg-[#f7f7f5]">
-                        <input id="tx-online" type="checkbox" class="accent-gray-700" onchange="runCalc()"> 網上交易
-                    </label>
-                    <div class="flex items-center gap-1.5 border border-[#e9e9e7] px-2 py-1 rounded bg-[#f7f7f5]">
-                        <span class="text-gray-400">支付</span>
-                        <select id="tx-payment" class="bg-transparent text-gray-700 outline-none" onchange="runCalc()">
-                            <option value="physical">實體卡</option>
-                            <option value="apple_pay">Apple Pay</option>
-                            <option value="google_pay">Google Pay</option>
-                            <option value="samsung_pay">Samsung Pay</option>
-                            <option value="unionpay_cloud">雲閃付</option>
-                            <option value="omycard">OmyCard</option>
+        <div class="border border-[#e9e9e7] rounded-md bg-white overflow-hidden">
+            <div class="grid grid-cols-2 gap-0">
+                <div class="p-3 border-b border-r border-[#e9e9e7]">
+                    <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">簽賬類別</label>
+                    <div class="flex gap-1.5">
+                        <select id="category" class="w-full p-1.5 border border-[#e9e9e7] rounded bg-[#f7f7f5] focus:bg-white focus:outline-none text-sm" onchange="toggleCategoryHelp(); runCalc()">
+                            <!-- Javascript will populate this -->
                         </select>
+                        <button id="cat-help-btn" class="hidden px-2 text-gray-400 border border-[#e9e9e7] rounded hover:bg-[#f7f7f5] text-xs"><i class="fas fa-question-circle"></i></button>
                     </div>
                 </div>
-            </div>
-
-            <div>
-                <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1">簽賬日期</label>
-                <div class="flex gap-2 items-center">
-                    <input type="date" id="tx-date" class="p-2 border border-[#e9e9e7] rounded bg-[#f7f7f5] focus:bg-white focus:outline-none text-sm flex-1" onchange="runCalc()" required>
-                    <span id="holiday-badge" class="hidden border border-red-200 text-red-600 px-2 py-1 rounded text-[11px] font-medium">🔴 公眾假期</span>
+                <div class="p-3 border-b border-[#e9e9e7]">
+                    <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">支付方式</label>
+                    <select id="tx-payment" class="w-full p-1.5 border border-[#e9e9e7] rounded bg-[#f7f7f5] focus:bg-white focus:outline-none text-sm" onchange="runCalc()">
+                        <option value="physical">實體卡</option>
+                        <option value="apple_pay">Apple Pay</option>
+                        <option value="google_pay">Google Pay</option>
+                        <option value="samsung_pay">Samsung Pay</option>
+                        <option value="unionpay_cloud">雲閃付</option>
+                        <option value="omycard">OmyCard</option>
+                    </select>
+                </div>
+                <div class="p-3 border-r border-[#e9e9e7]">
+                    <label class="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">簽賬日期</label>
+                    <div class="flex gap-1.5 items-center">
+                        <input type="date" id="tx-date" class="w-full p-1.5 border border-[#e9e9e7] rounded bg-[#f7f7f5] focus:bg-white focus:outline-none text-sm" onchange="runCalc()" required>
+                        <span id="holiday-badge" class="hidden text-red-500 text-xs" title="公眾假期">🔴</span>
+                    </div>
+                </div>
+                <div class="p-3 flex flex-col justify-end gap-2.5">
+                    <label class="flex items-center gap-1.5 cursor-pointer hover:bg-[#f7f7f5] px-1 py-0.5 rounded">
+                        <input id="tx-online" type="checkbox" class="accent-gray-700 w-3.5 h-3.5" onchange="runCalc()">
+                        <span class="text-[11px] text-gray-600">網上交易</span>
+                    </label>
+                    <label id="fee-deduct-wrap" class="flex items-center gap-1.5 cursor-pointer hover:bg-[#f7f7f5] px-1 py-0.5 rounded">
+                        <input id="toggle-fee-deduct" type="checkbox" class="accent-gray-700 w-3.5 h-3.5" onchange="toggleFeeDeduct(this.checked)">
+                        <span class="text-[11px] text-gray-500">扣除手續費排序</span>
+                    </label>
                 </div>
             </div>
         </div>
