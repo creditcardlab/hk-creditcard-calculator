@@ -7690,6 +7690,146 @@
         "topValue": 5.6,
         "breakdownFlags": { "hasLocked": true, "hasCapped": false, "hasPartial": false }
       }
+    },
+    {
+      "id": "case_271_citi_club_circle_k_maps_designated",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2025-06-18",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "circle_k",
+        "ownedCards": ["citi_club"],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_club",
+        "topValue": 40,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_272_citi_club_venchi_maps_designated",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2025-06-18",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "venchi",
+        "ownedCards": ["citi_club"],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_club",
+        "topValue": 40,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_273_citi_club_1010_maps_telecom",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2025-06-18",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "one_o_one_zero",
+        "ownedCards": ["citi_club"],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_club",
+        "topValue": 30,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_274_citi_club_csl_maps_telecom",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2025-06-18",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "csl",
+        "ownedCards": ["citi_club"],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_club",
+        "topValue": 30,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_275_citi_club_netvigator_maps_telecom",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2025-06-18",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "netvigator",
+        "ownedCards": ["citi_club"],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_club",
+        "topValue": 30,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_276_citi_club_nowtv_maps_telecom",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2025-06-18",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "now_tv",
+        "ownedCards": ["citi_club"],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_club",
+        "topValue": 30,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_277_citi_club_club_shopping_maps_category",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2025-06-18",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "the_club_shopping",
+        "ownedCards": ["citi_club"],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "citi_club",
+        "topValue": 20,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
     }
   ],
   "period_cases": [

@@ -135,17 +135,198 @@ const merchantsDB = {
         defaultCategory: "telecom",
         byCardId: { "citi_club": "citi_club_telecom" }
     },
-    "the_club": {
-        name: "The Club",
-        aliases: ["the club", "club hkt", "hkt club"],
-        defaultCategory: "citi_club_merchant",
-        byCardId: { "citi_club": "citi_club_merchant" }
-    },
     "the_club_shopping": {
         name: "The Club Shopping",
         aliases: ["club shopping", "the club shopping", "theclub shopping"],
         defaultCategory: "online",
         byCardId: { "citi_club": "club_shopping" }
+    },
+    // Citi The Club designated merchants (source: merchants.pdf, checked 2026-02-22)
+    "akin_nanyang_tea_room": {
+        name: "亞金南洋茶室",
+        aliases: ["亞金南洋茶室", "akin nanyang tea room", "akin"],
+        defaultCategory: "dining",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "thirteen_aunt_sour_fish": {
+        name: "十三姨酸菜魚",
+        aliases: ["十三姨酸菜魚", "thirteen aunt sour fish", "十三姨"],
+        defaultCategory: "dining",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "broadway_circuit": {
+        name: "百老匯院線 Broadway Circuit",
+        aliases: ["百老匯院線", "broadway circuit", "broadway cinema"],
+        defaultCategory: "entertainment",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "cafe_togather_log_on": {
+        name: "cafe ToGather by LOG-ON",
+        aliases: ["cafe togather by log-on", "cafe togather", "togather"],
+        defaultCategory: "dining",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "simatuoche_chaoshan_restaurant": {
+        name: "駟馬拖車潮汕飯店",
+        aliases: ["駟馬拖車潮汕飯店", "simatuoche", "潮汕飯店"],
+        defaultCategory: "dining",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "cinema_city": {
+        name: "Cinema City",
+        aliases: ["cinema city"],
+        defaultCategory: "entertainment",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "citysuper_eki": {
+        name: "city'super EKI",
+        aliases: ["citysuper eki", "city'super eki"],
+        defaultCategory: "grocery",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "farfetch_hk": {
+        name: "Farfetch HK",
+        aliases: ["farfetch", "farfetch hk"],
+        defaultCategory: "apparel",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "gh_cinemas": {
+        name: "嘉禾院線 GH Cinemas",
+        aliases: ["嘉禾院線", "gh cinemas", "嘉禾"],
+        defaultCategory: "entertainment",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "hair_corner": {
+        name: "Hair Corner",
+        aliases: ["hair corner"],
+        defaultCategory: "health_beauty",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "hktaxi": {
+        name: "HKTaxi",
+        aliases: ["hktaxi", "hk taxi"],
+        defaultCategory: "transport",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "hyatt_regency_shatin_dining": {
+        name: "香港沙田凱悅酒店餐飲",
+        aliases: ["香港沙田凱悅酒店", "hyatt regency shatin", "cafe 沙田凱悅", "shatin18", "tin tin bar"],
+        defaultCategory: "dining",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "hyatt_regency_tst_dining": {
+        name: "香港尖沙咀凱悅酒店餐飲",
+        aliases: ["香港尖沙咀凱悅酒店", "hyatt regency tsim sha tsui", "cafe 尖沙咀凱悅", "hugo's", "the chinese restaurant"],
+        defaultCategory: "dining",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "izabis_citysuper": {
+        name: "iza'bis by city'super",
+        aliases: ["iza'bis by city'super", "izabis", "iza bis"],
+        defaultCategory: "dining",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "jin_gong_guan": {
+        name: "金公館",
+        aliases: ["金公館", "jin gong guan"],
+        defaultCategory: "dining",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "kam_kee_cafe": {
+        name: "金記冰室",
+        aliases: ["金記冰室", "kam kee cafe", "kam kee"],
+        defaultCategory: "dining",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "kee_wah_bakery": {
+        name: "奇華餅家 Kee Wah",
+        aliases: ["奇華餅家", "kee wah", "kee wah bakery"],
+        defaultCategory: "dining",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "lai_heung_yuen_cafe": {
+        name: "麗香園冰室",
+        aliases: ["麗香園冰室", "lai heung yuen cafe", "lai heung yuen"],
+        defaultCategory: "dining",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "lane_crawford": {
+        name: "連卡佛 Lane Crawford",
+        aliases: ["連卡佛", "lane crawford"],
+        defaultCategory: "apparel",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "lei_garden": {
+        name: "利苑 Lei Garden",
+        aliases: ["利苑", "lei garden"],
+        defaultCategory: "dining",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "leonardo3_hair_corner": {
+        name: "LEONARDO3 MUSEUM HAIR CORNER",
+        aliases: ["leonardo3 museum hair corner", "leonardo3"],
+        defaultCategory: "health_beauty",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "lobby_by_hair_corner_apm": {
+        name: "Lobby by Hair Corner (APM)",
+        aliases: ["lobby by hair corner apm", "lobby hair corner apm"],
+        defaultCategory: "health_beauty",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "lobby_by_hair_corner_the_wai": {
+        name: "Lobby by Hair Corner (The Wai)",
+        aliases: ["lobby by hair corner the wai", "lobby hair corner the wai"],
+        defaultCategory: "health_beauty",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "lobby_hair_mongkok": {
+        name: "LOBBY hair (旺角)",
+        aliases: ["lobby hair", "lobby hair mongkok", "lobby hair 旺角"],
+        defaultCategory: "health_beauty",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "pinkoi": {
+        name: "Pinkoi",
+        aliases: ["pinkoi"],
+        defaultCategory: "apparel",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "quality_healthcare": {
+        name: "卓健醫療中心 Quality Healthcare",
+        aliases: ["卓健醫療中心", "quality healthcare", "卓健"],
+        defaultCategory: "medical",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "saloon_kowloon_tong": {
+        name: "Saloon (九龍塘)",
+        aliases: ["saloon 九龍塘", "saloon kowloon tong"],
+        defaultCategory: "health_beauty",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "saloon_roarguns": {
+        name: "Saloon Roarguns (太古廣場)",
+        aliases: ["saloon roarguns", "roarguns", "saloon 太古廣場"],
+        defaultCategory: "health_beauty",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "smart_charge": {
+        name: "Smart Charge",
+        aliases: ["smart charge"],
+        defaultCategory: "transport",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "so_sweet_kids_salon": {
+        name: "So Sweet Kids Salon (尖沙咀)",
+        aliases: ["so sweet kids salon", "so sweet kids salon tsim sha tsui"],
+        defaultCategory: "health_beauty",
+        byCardId: { "citi_club": "citi_club_merchant" }
+    },
+    "venchi": {
+        name: "Venchi",
+        aliases: ["venchi"],
+        defaultCategory: "dining",
+        byCardId: { "citi_club": "citi_club_merchant" }
     },
     "sogo": {
         name: "SOGO 崇光",
@@ -192,7 +373,7 @@ const merchantsDB = {
         name: "McDonald's 麥當勞",
         aliases: ["mcd", "mcdonalds", "mcdonald's", "麥當勞"],
         defaultCategory: "fastfood",
-        byCardId: { "sc_smart": "smart_designated" }
+        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant" }
     },
     "kfc": {
         name: "KFC 肯德基",
@@ -226,7 +407,7 @@ const merchantsDB = {
         name: "Starbucks 星巴克",
         aliases: ["starbucks", "星巴克"],
         defaultCategory: "dining",
-        byCardId: { "hsbc_everymile": "em_designated_spend" }
+        byCardId: { "hsbc_everymile": "em_designated_spend", "citi_club": "citi_club_merchant" }
     },
     "tenren_tea": {
         name: "TenRen's Tea 天仁茗茶",
@@ -368,7 +549,7 @@ const merchantsDB = {
         name: "foodpanda",
         aliases: ["foodpanda", "富胖達"],
         defaultCategory: "dining",
-        byCardId: { "sc_smart": "smart_designated" }
+        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant" }
     },
     "deliveroo": {
         name: "Deliveroo 戶戶送",
@@ -482,7 +663,8 @@ const merchantsDB = {
         name: "city'super",
         aliases: ["citysuper", "city'super"],
         defaultCategory: "grocery",
-        byPrefix: { "hsbc": "department_store" }
+        byPrefix: { "hsbc": "department_store" },
+        byCardId: { "citi_club": "citi_club_merchant" }
     },
     "seven_eleven": {
         name: "7-Eleven",
@@ -493,14 +675,14 @@ const merchantsDB = {
         name: "Circle K OK便利店",
         aliases: ["circle k", "ok 便利店", "ok便利店", "ok store"],
         defaultCategory: "grocery",
-        byCardId: { "sc_smart": "smart_designated" }
+        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant" }
     },
     "hktvmall": {
         name: "HKTVmall",
         aliases: ["hktvmall", "香港電視mall", "香港電視 mall"],
         defaultCategory: "online",
         byPrefix: { "hsbc": "department_store" },
-        byCardId: { "sc_smart": "smart_designated" }
+        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant" }
     },
 
     // HSBC 最紅自主「賞家居」- 家居用品
@@ -680,13 +862,15 @@ const merchantsDB = {
         name: "city'super neighbourhood",
         aliases: ["citysuper neighbourhood", "city'super neighbourhood"],
         defaultCategory: "department_store",
-        byPrefix: { "hsbc": "department_store" }
+        byPrefix: { "hsbc": "department_store" },
+        byCardId: { "citi_club": "citi_club_merchant" }
     },
     "citysuper_log_on": {
         name: "city'super LOG-ON",
         aliases: ["citysuper log-on", "city'super log-on"],
         defaultCategory: "department_store",
-        byPrefix: { "hsbc": "department_store" }
+        byPrefix: { "hsbc": "department_store" },
+        byCardId: { "citi_club": "citi_club_merchant" }
     },
     "guk_san": {
         name: "谷辰",
@@ -708,9 +892,10 @@ const merchantsDB = {
     },
     "log_on": {
         name: "LOG-ON",
-        aliases: ["log-on", "log on"],
+        aliases: ["log-on", "log on", "cafe togather by log-on", "cafe togather"],
         defaultCategory: "department_store",
-        byPrefix: { "hsbc": "department_store" }
+        byPrefix: { "hsbc": "department_store" },
+        byCardId: { "citi_club": "citi_club_merchant" }
     },
     "marks_and_spencer": {
         name: "MARKS & SPENCER",
@@ -952,7 +1137,7 @@ const merchantsDB = {
         name: "莎莎 Sa Sa",
         aliases: ["莎莎", "sasa", "sa sa"],
         defaultCategory: "health_beauty",
-        byCardId: { "sc_smart": "smart_designated" }
+        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant" }
     },
     "serge_lutens": {
         name: "Serge Lutens",
@@ -992,7 +1177,8 @@ const merchantsDB = {
     "vita_green": {
         name: "維特健靈 Vita Green",
         aliases: ["維特健靈", "vita green"],
-        defaultCategory: "health_beauty"
+        defaultCategory: "health_beauty",
+        byCardId: { "citi_club": "citi_club_merchant" }
     },
     "wai_yuen_tong": {
         name: "位元堂 Wai Yuen Tong",
@@ -1027,6 +1213,7 @@ const merchantsDB = {
         name: "ROYCE'",
         aliases: ["royce", "royce'"],
         defaultCategory: "general",
+        byCardId: { "citi_club": "citi_club_merchant" },
         byPrefix: { "hsbc": "department_store" }
     },
     "watsons_wine": {
@@ -1270,7 +1457,7 @@ const merchantsDB = {
         name: "Klook",
         aliases: ["klook", "客路"],
         defaultCategory: "travel",
-        byCardId: { "hsbc_everymile": "em_designated_spend", "sc_smart": "smart_designated" }
+        byCardId: { "hsbc_everymile": "em_designated_spend", "sc_smart": "smart_designated", "citi_club": "citi_club_merchant" }
     },
     "booking_com": {
         name: "Booking.com",
@@ -1369,7 +1556,8 @@ const merchantsDB = {
     "emperor_cinemas": {
         name: "英皇戲院 Emperor Cinemas",
         aliases: ["英皇戲院", "emperor cinemas"],
-        defaultCategory: "entertainment"
+        defaultCategory: "entertainment",
+        byCardId: { "citi_club": "citi_club_merchant" }
     },
     "festival_grand_cinema": {
         name: "Festival Grand Cinema",
@@ -1394,7 +1582,8 @@ const merchantsDB = {
     "mcl_cinemas": {
         name: "MCL 院線",
         aliases: ["mcl", "mcl cinemas", "mcl 院線"],
-        defaultCategory: "entertainment"
+        defaultCategory: "entertainment",
+        byCardId: { "citi_club": "citi_club_merchant" }
     },
     "movie_town": {
         name: "Movie Town",
@@ -1430,7 +1619,7 @@ const merchantsDB = {
         name: "快達票 HK Ticketing",
         aliases: ["快達票", "hk ticketing", "hkticketing"],
         defaultCategory: "entertainment",
-        byCardId: { "sc_smart": "smart_designated" }
+        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant" }
     },
     "kkbox": {
         name: "KKBOX",

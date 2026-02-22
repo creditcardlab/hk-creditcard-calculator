@@ -3926,6 +3926,24 @@ window.selectMerchant = function (merchantId) {
     const merchant = merchants[merchantId];
     if (!merchant) return;
 
+    const isOnlineLikeCategory = (categoryId) => {
+        const id = String(categoryId || "").trim();
+        if (!id) return false;
+        if (id === "club_shopping") return true;
+        if (id === "online" || id.startsWith("online_") || id.includes("_online")) return true;
+
+        const cats = (typeof DATA !== "undefined" && DATA.categories) ? DATA.categories : {};
+        let cursor = id;
+        const seen = new Set();
+        while (cursor && !seen.has(cursor)) {
+            if (cursor === "online") return true;
+            seen.add(cursor);
+            const def = cats[cursor];
+            cursor = (def && def.parent) ? String(def.parent) : "";
+        }
+        return false;
+    };
+
     const searchInput = document.getElementById('merchant-search');
     if (searchInput) searchInput.value = merchant.name || merchantId;
 
@@ -3937,15 +3955,29 @@ window.selectMerchant = function (merchantId) {
 
     window.__selectedMerchantId = merchantId;
 
+    const categoryHints = [
+        merchant.defaultCategory,
+        ...Object.values(merchant.byCardId || {}),
+        ...Object.values(merchant.byPrefix || {})
+    ].filter(Boolean);
+    const shouldAutoOnline = categoryHints.some(isOnlineLikeCategory);
+    const onlineToggle = document.getElementById('tx-online');
+    if (shouldAutoOnline && onlineToggle) onlineToggle.checked = true;
+
     // Auto-set category dropdown to merchant's default category
     const catSelect = document.getElementById('category');
+    let categoryChanged = false;
     if (catSelect && merchant.defaultCategory) {
         const match = Array.from(catSelect.options).find(o => o.value === merchant.defaultCategory);
         if (match) {
             catSelect.value = merchant.defaultCategory;
-            if (typeof toggleCategoryHelp === "function") toggleCategoryHelp();
+            categoryChanged = true;
+        } else if (shouldAutoOnline && catSelect.querySelector('option[value="general"]')) {
+            catSelect.value = "general";
+            categoryChanged = true;
         }
     }
+    if (categoryChanged && typeof toggleCategoryHelp === "function") toggleCategoryHelp();
 
     if (typeof runCalc === "function") runCalc();
 };
@@ -3975,6 +4007,15 @@ window.clearMerchant = function () {
 
 // Called from category dropdown onchange — clears merchant without re-triggering calc
 window.onCategoryChange = function () {
+    const categoryEl = document.getElementById('category');
+    const onlineToggle = document.getElementById('tx-online');
+    if (categoryEl && categoryEl.value === 'online') {
+        if (categoryEl.querySelector('option[value="general"]')) {
+            categoryEl.value = 'general';
+        }
+        if (onlineToggle) onlineToggle.checked = true;
+    }
+
     if (window.__selectedMerchantId) clearMerchantState(true);
     if (typeof toggleCategoryHelp === "function") toggleCategoryHelp();
     if (typeof runCalc === "function") runCalc();
