@@ -93,9 +93,10 @@ const categoriesDB = {
     ae_plat_travel_designated: { label: "✈️ AE 白金指定旅遊商戶（+7X）", order: 115, req: "ae_platinum" },
     ae_plat_daily_designated: { label: "🛒 AE 白金指定日常商戶（+7X）", order: 116, req: "ae_platinum" },
     ae_pcc_designated: { label: "🏬 AE 大頭指定商戶（Double Points）", order: 117, req: "ae_platinum_credit" },
-    enjoy_4x: { label: "🟡 enJoy 指定商戶 4X（2%）", order: 118, req: "hangseng_enjoy" },
-    enjoy_3x: { label: "🟠 enJoy 指定商戶 3X（1.5%）", order: 119, req: "hangseng_enjoy" },
-    enjoy_2x: { label: "🔵 enJoy 指定商戶 2X（1%）", order: 120, req: "hangseng_enjoy" },
+    enjoy_4x: { label: "🟡 enJoy 指定商戶 4X（含商戶積分）", order: 118, req: "hangseng_enjoy", hidden: true },
+    enjoy_3x: { label: "🟠 enJoy 指定商戶 3X（含商戶積分）", order: 119, req: "hangseng_enjoy", hidden: true },
+    enjoy_2x: { label: "🔵 enJoy 指定商戶 2X（銀行）", order: 120, req: "hangseng_enjoy", hidden: true },
+    enjoy_shell_2x: { label: "⛽ enJoy Shell 2X（含商戶積分）", req: "hangseng_enjoy", hidden: true },
     // Legacy compatibility bucket. New transactions should use isOnline + non-overseas instead.
     fubon_upgrade_online: { label: "🛒 Fubon 指定本地網購（舊）", order: 121, req: (cards) => cards.includes("fubon_travel") || cards.includes("fubon_infinite"), parent: "online", hidden: true },
     sim_designated_merchant: {

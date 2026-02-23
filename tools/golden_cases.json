@@ -1586,7 +1586,7 @@
       },
       "expected": {
         "topCardId": "hangseng_enjoy",
-        "topValue": 5,
+        "topValue": 10,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -1619,6 +1619,93 @@
           "hasCapped": false,
           "hasPartial": false
         }
+      }
+    },
+    {
+      "id": "case_051a_hangseng_enjoy_3x_disabled_bank2x",
+      "input": {
+        "amount": 1000,
+        "category": "enjoy_3x",
+        "date": "2025-11-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": ["hangseng_enjoy"],
+        "settings": {
+          "hangseng_enjoy_points4x_enabled": false
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hangseng_enjoy",
+        "topValue": 10,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_051b_hangseng_enjoy_shell_linked_total2x",
+      "input": {
+        "amount": 1000,
+        "category": "gas",
+        "date": "2025-11-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "shell",
+        "ownedCards": ["hangseng_enjoy"],
+        "settings": {
+          "hangseng_enjoy_points4x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hangseng_enjoy",
+        "topValue": 10,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_051c_hangseng_enjoy_shell_unlinked_base1x",
+      "input": {
+        "amount": 1000,
+        "category": "gas",
+        "date": "2025-11-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "shell",
+        "ownedCards": ["hangseng_enjoy"],
+        "settings": {
+          "hangseng_enjoy_points4x_enabled": false
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hangseng_enjoy",
+        "topValue": 5,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_051d_hangseng_enjoy_jade_garden_unlinked_bank2x",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2025-11-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "jade_garden",
+        "ownedCards": ["hangseng_enjoy"],
+        "settings": {
+          "hangseng_enjoy_points4x_enabled": false
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "hangseng_enjoy",
+        "topValue": 10,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
       }
     },
     {

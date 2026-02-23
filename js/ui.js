@@ -2036,10 +2036,9 @@ function showEnjoyPoints4xGuide(tierLabel) {
         "- 3X = 1.5%\n" +
         "- 2X = 1%\n" +
         "- 其他簽賬 = 1X = 0.5%\n\n" +
-        "快速記法（你可先用呢個分類）：\n" +
-        "- 2X（多為美心集團高檔食肆）\n" +
-        "- 3X（多為 yuu 旗下便利店及超市）\n" +
-        "- 4X（多為美心集團輕食/平民食肆）\n\n" +
+        "計法（按條款簡化）：\n" +
+        "- 銀行部分：指定商戶多數為 2X（其他一般商戶 1X）\n" +
+        "- 商戶部分：需 yuu 綁定先計（4X/3X/Shell 2X 由此組成）\n\n" +
         "⚠️ 如唔肯定商戶屬於邊一檔，先用較保守檔位或一般簽賬；最終以官方列表為準。";
     if (confirm(`${msg}\n\n按「確定」開啟恒生官方 Points4X 頁面。`)) {
         window.open(url, "_blank", "noopener");
@@ -3496,7 +3495,7 @@ function renderSettings(userProfile) {
 
     if (ownedSet.has("hangseng_enjoy")) pushScopedSettingRow("hangseng_enjoy_points4x_enabled", `<div class="border p-3 rounded-xl bg-amber-50 border-amber-100">
         <div class="flex justify-between items-center">
-            <label class="text-xs font-bold text-amber-800">Hang Seng enJoy：已綁定 yuu（Points4X 生效）</label>
+            <label class="text-xs font-bold text-amber-800">Hang Seng enJoy：已綁定 yuu（計入商戶積分）</label>
             ${renderSettingsToggle({ id: "st-enjoy-points4x", checked: !!userProfile.settings.hangseng_enjoy_points4x_enabled, onchange: "toggleSetting('hangseng_enjoy_points4x_enabled')" })}
         </div>
     </div>`, "hangseng_enjoy");

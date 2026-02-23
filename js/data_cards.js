@@ -379,7 +379,17 @@ const cardsDB = [
         currency: "YUU_Points",
         type: "visa",
         fcf: 0.0195,
-        rewardModules: ["enjoy_base", "enjoy_4x", "enjoy_3x", "enjoy_2x", "enjoy_dining", "enjoy_retail"],
+        rewardModules: [
+            "enjoy_base",
+            "enjoy_bank_bonus_4x",
+            "enjoy_merchant_bonus_4x",
+            "enjoy_bank_bonus_3x",
+            "enjoy_merchant_bonus_3x",
+            "enjoy_bank_bonus_2x",
+            "enjoy_shell_merchant_bonus",
+            "enjoy_dining",
+            "enjoy_retail"
+        ],
         trackers: [],
         redemption: {
           unit: "YUU",

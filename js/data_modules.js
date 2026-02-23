@@ -717,31 +717,54 @@ const modulesDB = {
         // It fits.
     },
 
-    // enJoy
-    // Points system.
-    "enjoy_base": { type: "always", rate: 1, desc: "基本 1X" },
-    "enjoy_4x": {
+    // enJoy (yuu points):
+    // - Base: 1 yuu/$1 on all retail spending.
+    // - Some designated merchants have a bank-side uplift to 2 yuu/$1.
+    // - Additional merchant-side yuu points require linked yuu membership.
+    "enjoy_base": { type: "always", rate: 1, desc: "基本 1X（銀行）" },
+    "enjoy_bank_bonus_4x": {
         type: "category",
         match: ["enjoy_4x"],
-        rate: 4,
-        desc: "enJoy 指定商戶 4X",
-        mode: "replace",
+        rate: 1,
+        desc: "指定商戶銀行部分 +1X（合共銀行 2X）",
+        mode: "add"
+    },
+    "enjoy_merchant_bonus_4x": {
+        type: "category",
+        match: ["enjoy_4x"],
+        rate: 2,
+        desc: "指定商戶 yuu 商戶部分 +2X（合共 4X）",
+        mode: "add",
         setting_key: "hangseng_enjoy_points4x_enabled"
     },
-    "enjoy_3x": {
+    "enjoy_bank_bonus_3x": {
         type: "category",
         match: ["enjoy_3x"],
-        rate: 3,
-        desc: "enJoy 指定商戶 3X",
-        mode: "replace",
+        rate: 1,
+        desc: "指定商戶銀行部分 +1X（合共銀行 2X）",
+        mode: "add"
+    },
+    "enjoy_merchant_bonus_3x": {
+        type: "category",
+        match: ["enjoy_3x"],
+        rate: 1,
+        desc: "指定商戶 yuu 商戶部分 +1X（合共 3X）",
+        mode: "add",
         setting_key: "hangseng_enjoy_points4x_enabled"
     },
-    "enjoy_2x": {
+    "enjoy_bank_bonus_2x": {
         type: "category",
         match: ["enjoy_2x"],
-        rate: 2,
-        desc: "enJoy 指定商戶 2X",
-        mode: "replace",
+        rate: 1,
+        desc: "指定商戶銀行部分 +1X（合共 2X）",
+        mode: "add"
+    },
+    "enjoy_shell_merchant_bonus": {
+        type: "category",
+        match: ["enjoy_shell_2x"],
+        rate: 1,
+        desc: "Shell yuu 商戶部分 +1X（合共 2X）",
+        mode: "add",
         setting_key: "hangseng_enjoy_points4x_enabled"
     },
     // Legacy hidden categories (kept for existing ledger data)

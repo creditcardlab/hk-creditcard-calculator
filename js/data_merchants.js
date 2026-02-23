@@ -378,11 +378,18 @@ const merchantsDB = {
     "kfc": {
         name: "KFC 肯德基",
         aliases: ["kfc", "肯德基"],
-        defaultCategory: "fastfood"
+        defaultCategory: "fastfood",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
     },
     "pizza_hut": {
         name: "Pizza Hut 必勝客",
-        aliases: ["pizza hut", "必勝客"],
+        aliases: ["pizza hut", "必勝客", "phd", "pizza hut delivery"],
+        defaultCategory: "fastfood",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "pizza_hut_hkia": {
+        name: "Pizza Hut / PHD (HKIA)",
+        aliases: ["pizza hut hkia", "phd hkia", "pizza hut airport", "phd airport", "必勝客機場", "機場phd"],
         defaultCategory: "fastfood"
     },
     "cafe_de_coral": {
@@ -407,7 +414,11 @@ const merchantsDB = {
         name: "Starbucks 星巴克",
         aliases: ["starbucks", "星巴克"],
         defaultCategory: "dining",
-        byCardId: { "hsbc_everymile": "em_designated_spend", "citi_club": "citi_club_merchant" }
+        byCardId: {
+            "hsbc_everymile": "em_designated_spend",
+            "citi_club": "citi_club_merchant",
+            "hangseng_enjoy": "enjoy_4x"
+        }
     },
     "tenren_tea": {
         name: "TenRen's Tea 天仁茗茶",
@@ -540,10 +551,257 @@ const merchantsDB = {
         aliases: ["焙著你烘焙", "be your own baker"],
         defaultCategory: "entertainment"
     },
-    "maxims": {
-        name: "Maxim's 美心集團",
-        aliases: ["maxims", "maxim's", "美心", "美心集團"],
+    // Hang Seng enJoy / yuu 指定食肆（美心體系，按商戶獨立列出）
+    "jade_garden": {
+        name: "翠園 Jade Garden",
+        aliases: ["翠園", "jade garden"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "plaza_inn": {
+        name: "翠園廣場飯店 Plaza Inn",
+        aliases: ["翠園廣場飯店", "plaza inn"],
         defaultCategory: "dining"
+    },
+    "maxims_palace": {
+        name: "美心皇宮 Maxim's Palace",
+        aliases: ["美心皇宮", "maxim's palace", "maxims palace"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "august_moon": {
+        name: "八月花",
+        aliases: ["八月花", "august moon"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "cuisine_cuisine": {
+        name: "翠玉軒 Cuisine Cuisine",
+        aliases: ["翠玉軒", "cuisine cuisine"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "purple_magnolia": {
+        name: "紫玉蘭",
+        aliases: ["紫玉蘭", "purple magnolia"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "chiu_kong_chun": {
+        name: "潮江春",
+        aliases: ["潮江春"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "chiu_ting": {
+        name: "潮庭",
+        aliases: ["潮庭"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "peking_garden": {
+        name: "北京樓 Peking Garden",
+        aliases: ["北京樓", "peking garden"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "city_duck_house": {
+        name: "城中鴨子",
+        aliases: ["城中鴨子"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "m_c_duck": {
+        name: "美中．鴨子",
+        aliases: ["美中．鴨子", "美中鴨子", "m&c duck", "m and c duck"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "can_lah": {
+        name: "Can Lah",
+        aliases: ["can lah"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "bistrocity": {
+        name: "#bistrocity",
+        aliases: ["#bistrocity", "bistrocity"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "goose_lou_palace": {
+        name: "鵝鹵宮",
+        aliases: ["鵝鹵宮"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "cafe_landmark": {
+        name: "Café Landmark",
+        aliases: ["cafe landmark", "café landmark"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "muses_hk": {
+        name: "MUSES",
+        aliases: ["muses"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "wildfire_pizzabar": {
+        name: "Wildfire Pizzabar",
+        aliases: ["wildfire pizzabar", "wildfire"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "mx_restaurant": {
+        name: "MX 美心MX",
+        aliases: ["mx", "美心mx", "美心快餐", "mx restaurant", "maxim mx"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "simplylife": {
+        name: "simplylife",
+        aliases: ["simplylife", "simply life", "simplylife bakery"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "simplylife_foodplace": {
+        name: "simplylife FOODPLACE",
+        aliases: ["simplylife foodplace", "simply life foodplace"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "kikusan": {
+        name: "吉谷舍 Kikusan",
+        aliases: ["吉谷舍", "kikusan"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "and_you": {
+        name: "&YOU",
+        aliases: ["&you", "and you"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "and_btr": {
+        name: "&btR",
+        aliases: ["&btr", "and btr"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "and_tmr": {
+        name: "&tmR",
+        aliases: ["&tmr", "and tmr"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "genki_sushi": {
+        name: "Genki Sushi 元氣壽司",
+        aliases: ["genki sushi", "genki", "元氣壽司"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "jollibee_hk": {
+        name: "Jollibee",
+        aliases: ["jollibee"],
+        defaultCategory: "fastfood",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "deli_o": {
+        name: "Deli-O",
+        aliases: ["deli-o", "deli o"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "thai_basil": {
+        name: "Thai Basil",
+        aliases: ["thai basil"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "exp_hk": {
+        name: "EXP",
+        aliases: ["exp"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "pu_dian": {
+        name: "葡點",
+        aliases: ["葡點"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "ming_gu": {
+        name: "明谷",
+        aliases: ["明谷"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "hong_kong_day": {
+        name: "香港地",
+        aliases: ["香港地"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "canteen_maxims": {
+        name: "can.teen",
+        aliases: ["can.teen", "canteen"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "maxims_food2": {
+        name: "Maxim's Food2",
+        aliases: ["maxim's food2", "maxims food2", "food2"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "arome_bakery": {
+        name: "東海堂 Arome Bakery",
+        aliases: ["東海堂", "arome", "arome bakery"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "maxims_cakes": {
+        name: "美心西餅",
+        aliases: ["美心西餅", "maxim's cakes", "maxims cakes"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "paper_stone_bakery": {
+        name: "Paper Stone Bakery",
+        aliases: ["paper stone bakery", "paper stone"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "urban_bakery": {
+        name: "URBAN Bakery",
+        aliases: ["urban bakery", "urban"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "maxims_bakery": {
+        name: "美心烘焙所",
+        aliases: ["美心烘焙所"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "homebake_hk": {
+        name: "HOMEBAKE",
+        aliases: ["homebake", "home bake"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "don_don_ya": {
+        name: "丼丼屋",
+        aliases: ["丼丼屋", "don don ya"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
+    },
+    "uoshang": {
+        name: "魚尚",
+        aliases: ["魚尚", "uoshang"],
+        defaultCategory: "dining",
+        byCardId: { "hangseng_enjoy": "enjoy_4x" }
     },
     "foodpanda": {
         name: "foodpanda",
@@ -566,12 +824,68 @@ const merchantsDB = {
     "wellcome": {
         name: "Wellcome 惠康",
         aliases: ["wellcome", "惠康"],
-        defaultCategory: "grocery"
+        defaultCategory: "grocery",
+        byCardId: { "hangseng_enjoy": "enjoy_3x" }
     },
     "market_place": {
         name: "Market Place by Jasons",
         aliases: ["market place", "jasons", "market place by jasons"],
-        defaultCategory: "grocery"
+        defaultCategory: "grocery",
+        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+    },
+    "threesixty": {
+        name: "3hreesixty",
+        aliases: ["3hreesixty", "three sixty", "3hree sixty"],
+        defaultCategory: "grocery",
+        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+    },
+    "olivers": {
+        name: "Oliver's",
+        aliases: ["oliver's", "olivers", "oliver's the delicatessen"],
+        defaultCategory: "grocery",
+        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+    },
+    "mannings": {
+        name: "Mannings 萬寧",
+        aliases: ["mannings", "萬寧"],
+        defaultCategory: "health_beauty",
+        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+    },
+    "ikea_hk": {
+        name: "IKEA 宜家家居",
+        aliases: ["ikea", "ikea hk", "宜家", "宜家家居"],
+        defaultCategory: "general",
+        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+    },
+    "gnc_hk": {
+        name: "GNC",
+        aliases: ["gnc", "gnc hk"],
+        defaultCategory: "health_beauty",
+        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+    },
+    "market_place_by_jasons_app": {
+        name: "Market Place by Jasons App",
+        aliases: ["market place by jasons app", "market place app", "jasons app", "market place by jasons mobile app"],
+        defaultCategory: "online",
+        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+    },
+    "yuu_app": {
+        name: "yuu App",
+        aliases: ["yuu app", "yuu", "yuu to me"],
+        defaultCategory: "online",
+        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+    },
+    "mannings_online_store": {
+        name: "Mannings Online Store",
+        aliases: ["mannings online", "mannings online store", "萬寧網店"],
+        defaultCategory: "online",
+        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+    },
+    "ikea_online_shopping": {
+        name: "IKEA Online Shopping",
+        aliases: ["ikea online", "ikea online shopping", "宜家網店", "ikea e-shop"],
+        defaultCategory: "online",
+        byCardId: { "hangseng_enjoy": "enjoy_3x" }
     },
     "aeon_store": {
         name: "AEON",
@@ -671,7 +985,8 @@ const merchantsDB = {
     "seven_eleven": {
         name: "7-Eleven",
         aliases: ["7-eleven", "7 eleven", "seven eleven", "7仔"],
-        defaultCategory: "grocery"
+        defaultCategory: "grocery",
+        byCardId: { "hangseng_enjoy": "enjoy_3x" }
     },
     "circle_k": {
         name: "Circle K OK便利店",
@@ -1316,7 +1631,7 @@ const merchantsDB = {
         name: "Shell 蜆殼",
         aliases: ["shell", "蜆殼"],
         defaultCategory: "gas",
-        byCardId: { "hsbc_everymile": "em_designated_spend" },
+        byCardId: { "hsbc_everymile": "em_designated_spend", "hangseng_enjoy": "enjoy_shell_2x" },
         byPrefix: { "hsbc": "supermarket" }
     },
     "caltex": {
