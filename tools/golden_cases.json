@@ -7830,6 +7830,138 @@
         "topValue": 20,
         "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
       }
+    },
+    {
+      "id": "case_278_dbs_live_fresh_nowtv_maps_travel_designated",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "now_tv",
+        "ownedCards": ["dbs_live_fresh"],
+        "settings": {
+          "live_fresh_pref": "travel"
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_live_fresh",
+        "topValue": 54,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_279_dbs_live_fresh_amazon_maps_fashion_designated",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "amazon_com",
+        "ownedCards": ["dbs_live_fresh"],
+        "settings": {
+          "live_fresh_pref": "fashion"
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_live_fresh",
+        "topValue": 54,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_280_dbs_live_fresh_hktvmall_maps_charity_designated",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "hktvmall",
+        "ownedCards": ["dbs_live_fresh"],
+        "settings": {
+          "live_fresh_pref": "charity"
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_live_fresh",
+        "topValue": 54,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_281_dbs_live_fresh_hktvmall_wrong_pref_no_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "hktvmall",
+        "ownedCards": ["dbs_live_fresh"],
+        "settings": {
+          "live_fresh_pref": "travel"
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_live_fresh",
+        "topValue": 4,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_282_dbs_live_fresh_netflix_offline_designated_subscription",
+      "input": {
+        "amount": 1000,
+        "category": "ott_streaming",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "netflix",
+        "ownedCards": ["dbs_live_fresh"],
+        "settings": {
+          "live_fresh_pref": "travel"
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_live_fresh",
+        "topValue": 54,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_283_dbs_live_fresh_hktvmall_offline_charity_designated",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "hktvmall",
+        "ownedCards": ["dbs_live_fresh"],
+        "settings": {
+          "live_fresh_pref": "charity"
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "dbs_live_fresh",
+        "topValue": 54,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
     }
   ],
   "period_cases": [

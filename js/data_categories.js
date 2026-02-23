@@ -9,9 +9,9 @@
 // - order: UI ordering
 const categoriesDB = {
     // Core / UI
-    general: { label: "本地零售 (Local Retail)", order: 1 },
-    dining: { label: "🍽️ 餐飲 (Dining)", order: 2, red_hot: "dining" },
-    fastfood: { label: "🍔 快餐店 (Fast Food)", order: 2.1 },
+    general: { label: "本地零售", order: 1 },
+    dining: { label: "🍽️ 餐飲", order: 2, red_hot: "dining" },
+    fastfood: { label: "🍔 快餐", order: 2.1 },
     online: { label: "💻 網上購物 (Online)", order: 3, hidden: true },
 
     overseas: { label: "🌍 海外 (母類)", hidden: true, red_hot: "world" },
@@ -28,24 +28,28 @@ const categoriesDB = {
 
     alipay: { label: "📱 Alipay / WeChat Pay", order: 9 },
     gym: { label: "🏋️‍♂️ 健身/運動", order: 10 },
-    sportswear: { label: "👟 運動服飾 (Sportswear)", order: 16.5 },
+    sportswear: { label: "👟 運動服飾", order: 16.5 },
     medical: { label: "🏥 醫療/保健", order: 11 },
-    transport: { label: "🚇 交通 (Transport)", order: 12 },
-    tunnel: { label: "🛣️ 隧道/泊車 (Tunnel/Parking)", order: 12.5, parent: "transport" },
-    grocery: { label: "🧺 超市 (Grocery)", order: 13 },
-    travel: { label: "✈️ 旅遊 (Travel)", order: 14 },
-    entertainment: { label: "🎟️ 娛樂 (Entertainment)", order: 15, red_hot: "enjoyment" },
-    apparel: { label: "👗 服飾/百貨 (Apparel/Dept)", order: 16 },
-    health_beauty: { label: "💄 美容/藥妝 (Beauty/Watsons)", order: 17 },
+    transport: { label: "🚇 交通", order: 12, hidden: true },
+    public_transport: { label: "🚌 公共交通工具", order: 12.1, parent: "transport" },
+    tunnel: { label: "🛣️ 隧道/泊車", order: 12.5, parent: "transport" },
+    grocery: { label: "🧺 超市", order: 13 },
+    travel: { label: "✈️ 旅遊", order: 14, hidden: true },
+    travel_agency: { label: "🧳 旅行社/旅行團", order: 14.05, parent: "travel" },
+    travel_ticket: { label: "🎫 門票平台", order: 14.1, parent: "travel" },
+    entertainment: { label: "🎟️ 娛樂", order: 15, red_hot: "enjoyment" },
+    apparel: { label: "👗 服飾/鞋履", order: 16 },
+    health_beauty: { label: "💄 美容/個人護理", order: 17 },
     electronics: { label: "🔌 電器/電子產品", order: 18 },
     telecom: { label: "📞 電訊繳費", order: 19 },
 
     // Hidden / internal categories used by modules or rules
     china_consumption: { label: "🇨🇳 中國/澳門消費", hidden: true, parent: "overseas", red_hot: "world" },
     department_store: { label: "🏬 百貨公司", order: 16.2, red_hot: "style" },
-    hotel: { label: "🏨 酒店", order: 14.2 },
-    airline: { label: "✈️ 航空公司", order: 14.3 },
-    supermarket: { label: "🛒 超級市場", order: 13.2, red_hot: "home" },
+    hotel: { label: "🏨 酒店", order: 14.2, parent: "travel" },
+    airline: { label: "✈️ 航空公司", order: 14.3, parent: "travel" },
+    // Internal bucket for issuer-specific mapping (e.g. HSBC), hide from user dropdown to avoid duplicate with grocery.
+    supermarket: { label: "🛒 超級市場", order: 13.2, red_hot: "home", hidden: true },
     nfc_payment: { label: "📳 NFC/手機支付", hidden: true },
     payme: { label: "💬 PayMe", hidden: true },
     oepay: { label: "💬 O!Pay", hidden: true },
@@ -54,11 +58,17 @@ const categoriesDB = {
     overseas_jktt: { label: "🇯🇵 海外 (日本-舊)", hidden: true, parent: "overseas" }, // legacy typo
     travel_plus_tier1: { label: "✈️ Travel+ Tier1", hidden: true, parent: "overseas" },
     charity: { label: "❤️ 慈善", hidden: true },
-    streaming: { label: "🎬 串流/訂閱", order: 15.2 },
+    // Legacy compatibility bucket; keep for existing rules/transactions but hide from dropdown.
+    streaming: { label: "🎬 串流/訂閱", order: 15.2, hidden: true },
+    ott_streaming: { label: "📺 OTT 串流平台", order: 15.25 },
+    saas_subscription: { label: "🧠 軟件訂閱 / SaaS", order: 15.3 },
     wechat: { label: "💬 WeChat Pay", hidden: true },
-    gas: { label: "⛽ 油站", order: 12.2 },
+    gas: { label: "⛽ 油站", order: 12.2, parent: "transport" },
 
     live_fresh_selected: { label: "DBS Live Fresh Selected", hidden: true },
+    live_fresh_travel_designated: { label: "DBS Live Fresh Travel/Subscription 指定", hidden: true },
+    live_fresh_fashion_designated: { label: "DBS Live Fresh Fashion 指定網購", hidden: true },
+    live_fresh_charity_designated: { label: "DBS Live Fresh Charity 指定商戶", hidden: true },
 
     // Card-specific / UI gated
     // Easy Card「易賞錢」指定商戶：不同商戶有不同基本賺分（$5=1分 / $10=1分）。

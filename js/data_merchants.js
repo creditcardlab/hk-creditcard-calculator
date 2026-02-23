@@ -35,13 +35,13 @@ const merchantsDB = {
         name: "Watsons 屈臣氏",
         aliases: ["watsons", "屈臣氏", "watsons eshop", "屈臣氏網店"],
         defaultCategory: "health_beauty",
-        byCardId: { "hsbc_easy": "moneyback_pns_watsons", "sc_smart": "smart_designated" }
+        byCardId: { "hsbc_easy": "moneyback_pns_watsons", "sc_smart": "smart_designated", "dbs_live_fresh": "live_fresh_charity_designated" }
     },
     "fortress": {
         name: "Fortress 豐澤",
         aliases: ["fortress", "豐澤", "fortress eshop", "techlife by fortress", "techlife"],
         defaultCategory: "electronics",
-        byCardId: { "hsbc_easy": "moneyback_fortress" }
+        byCardId: { "hsbc_easy": "moneyback_fortress", "dbs_live_fresh": "live_fresh_charity_designated" }
     },
 
     // HSBC Red (source: hsbc.com.hk Red card page designated merchant section, checked 2026-02-21)
@@ -126,8 +126,8 @@ const merchantsDB = {
     "now_tv": {
         name: "Now TV",
         aliases: ["now tv", "nowtv"],
-        defaultCategory: "telecom",
-        byCardId: { "citi_club": "citi_club_telecom" }
+        defaultCategory: "ott_streaming",
+        byCardId: { "citi_club": "citi_club_telecom", "dbs_live_fresh": "live_fresh_travel_designated" }
     },
     "netvigator": {
         name: "網上行 Netvigator",
@@ -205,7 +205,7 @@ const merchantsDB = {
     "hktaxi": {
         name: "HKTaxi",
         aliases: ["hktaxi", "hk taxi"],
-        defaultCategory: "transport",
+        defaultCategory: "public_transport",
         byCardId: { "citi_club": "citi_club_merchant" }
     },
     "hyatt_regency_shatin_dining": {
@@ -313,7 +313,7 @@ const merchantsDB = {
     "smart_charge": {
         name: "Smart Charge",
         aliases: ["smart charge"],
-        defaultCategory: "transport",
+        defaultCategory: "gas",
         byCardId: { "citi_club": "citi_club_merchant" }
     },
     "so_sweet_kids_salon": {
@@ -549,7 +549,7 @@ const merchantsDB = {
         name: "foodpanda",
         aliases: ["foodpanda", "富胖達"],
         defaultCategory: "dining",
-        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant" }
+        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant", "dbs_live_fresh": "live_fresh_travel_designated" }
     },
     "deliveroo": {
         name: "Deliveroo 戶戶送",
@@ -582,7 +582,8 @@ const merchantsDB = {
     "donki": {
         name: "DON DON DONKI",
         aliases: ["donki", "don don donki"],
-        defaultCategory: "grocery"
+        defaultCategory: "grocery",
+        byCardId: { "dbs_live_fresh": "live_fresh_charity_designated" }
     },
     "store_759": {
         name: "759 阿信屋",
@@ -612,7 +613,8 @@ const merchantsDB = {
     "greenprice": {
         name: "GreenPrice",
         aliases: ["greenprice"],
-        defaultCategory: "grocery"
+        defaultCategory: "grocery",
+        byCardId: { "dbs_live_fresh": "live_fresh_charity_designated" }
     },
     "hont_bay_aquatic": {
         name: "本灣水產",
@@ -682,7 +684,7 @@ const merchantsDB = {
         aliases: ["hktvmall", "香港電視mall", "香港電視 mall"],
         defaultCategory: "online",
         byPrefix: { "hsbc": "department_store" },
-        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant" }
+        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant", "dbs_live_fresh": "live_fresh_charity_designated" }
     },
 
     // HSBC 最紅自主「賞家居」- 家居用品
@@ -756,7 +758,8 @@ const merchantsDB = {
     "broadway_hk": {
         name: "百老滙 Broadway",
         aliases: ["百老滙", "broadway"],
-        defaultCategory: "electronics"
+        defaultCategory: "electronics",
+        byCardId: { "dbs_live_fresh": "live_fresh_charity_designated" }
     },
     "bruno_hk": {
         name: "BRUNO",
@@ -1220,7 +1223,7 @@ const merchantsDB = {
         name: "屈臣氏酒窖 Watson's Wine",
         aliases: ["屈臣氏酒窖", "watson's wine", "watsons wine"],
         defaultCategory: "grocery",
-        byCardId: { "hsbc_easy": "easy_additional_3x" },
+        byCardId: { "hsbc_easy": "easy_additional_3x", "dbs_live_fresh": "live_fresh_charity_designated" },
         byPrefix: { "hsbc": "department_store" }
     },
 
@@ -1228,35 +1231,35 @@ const merchantsDB = {
     "mtr": {
         name: "港鐵 MTR",
         aliases: ["mtr", "港鐵"],
-        defaultCategory: "transport",
+        defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" },
         byPrefix: { "hsbc": "supermarket" }
     },
     "kmb": {
         name: "九巴 KMB",
         aliases: ["kmb", "九巴"],
-        defaultCategory: "transport",
+        defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" },
         byPrefix: { "hsbc": "supermarket" }
     },
     "citybus": {
         name: "城巴 Citybus",
         aliases: ["citybus", "城巴"],
-        defaultCategory: "transport",
+        defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" },
         byPrefix: { "hsbc": "supermarket" }
     },
     "hong_kong_tramways": {
         name: "Hong Kong Tramways 香港電車",
         aliases: ["hong kong tramways", "香港電車", "電車", "tram", "ding ding"],
-        defaultCategory: "transport",
+        defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" },
         byPrefix: { "hsbc": "supermarket" }
     },
     "uber": {
         name: "Uber",
         aliases: ["uber", "優步"],
-        defaultCategory: "transport",
+        defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" }
     },
     "china_railway_12306": {
@@ -1268,71 +1271,71 @@ const merchantsDB = {
     "eternal_east_tours": {
         name: "Eternal East Tours 永東旅行社",
         aliases: ["eternal east tours", "永東旅行社", "eternal east"],
-        defaultCategory: "travel",
+        defaultCategory: "travel_agency",
         byCardId: { "hsbc_everymile": "em_designated_spend" }
     },
     "cts_hk": {
         name: "CTS Hong Kong 中旅社",
         aliases: ["cts", "cts hk", "china travel service", "中旅社", "中旅"],
-        defaultCategory: "travel",
+        defaultCategory: "travel_agency",
         byCardId: { "hsbc_everymile": "em_designated_spend" }
     },
     "gobybus_hk": {
         name: "GoByBus.hk",
         aliases: ["gobybus", "gobybus.hk", "go巴出行"],
-        defaultCategory: "transport",
+        defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" }
     },
     "kwoon_chung_bus": {
         name: "Kwoon Chung Bus 冠忠巴士",
         aliases: ["kwoon chung bus", "冠忠巴士", "冠忠"],
-        defaultCategory: "transport",
+        defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" }
     },
     "esso": {
         name: "Esso 埃索",
         aliases: ["esso", "埃索"],
-        defaultCategory: "transport",
+        defaultCategory: "gas",
         byCardId: { "hsbc_everymile": "em_designated_spend" },
         byPrefix: { "hsbc": "supermarket" }
     },
     "petrochina": {
         name: "PetroChina 中國石油",
         aliases: ["petrochina", "中國石油"],
-        defaultCategory: "transport",
+        defaultCategory: "gas",
         byCardId: { "hsbc_everymile": "em_designated_spend" }
     },
     "sinopec": {
         name: "Sinopec 中石化",
         aliases: ["sinopec", "中石化"],
-        defaultCategory: "transport",
+        defaultCategory: "gas",
         byCardId: { "hsbc_everymile": "em_designated_spend" },
         byPrefix: { "hsbc": "supermarket" }
     },
     "shell": {
         name: "Shell 蜆殼",
         aliases: ["shell", "蜆殼"],
-        defaultCategory: "transport",
+        defaultCategory: "gas",
         byCardId: { "hsbc_everymile": "em_designated_spend" },
         byPrefix: { "hsbc": "supermarket" }
     },
     "caltex": {
         name: "Caltex 加德士",
         aliases: ["caltex", "加德士"],
-        defaultCategory: "transport",
+        defaultCategory: "gas",
         byCardId: { "hsbc_everymile": "em_designated_spend" },
         byPrefix: { "hsbc": "supermarket" }
     },
     "tesla_supercharger": {
         name: "Tesla SuperCharger",
         aliases: ["tesla supercharger", "tesla charger"],
-        defaultCategory: "transport",
+        defaultCategory: "gas",
         byCardId: { "hsbc_everymile": "em_designated_spend" }
     },
     "everymile_carparks": {
         name: "EveryMile 停車場／車位（類別）",
         aliases: ["everymile 停車場", "carparks", "parking spaces", "停車場", "車位"],
-        defaultCategory: "transport",
+        defaultCategory: "tunnel",
         byCardId: { "hsbc_everymile": "em_designated_spend" }
     },
     "everymile_tunnel_toll": {
@@ -1344,48 +1347,48 @@ const merchantsDB = {
     "amigo_taxi": {
         name: "Amigo",
         aliases: ["amigo taxi", "amigo"],
-        defaultCategory: "transport",
+        defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" }
     },
     "big_bee": {
         name: "Big Bee 大黃蜂",
         aliases: ["big bee", "大黃蜂", "big bee大黃蜂愛心車隊"],
-        defaultCategory: "transport",
+        defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" }
     },
     "dash_taxi": {
         name: "Dash",
         aliases: ["dash taxi", "dash"],
-        defaultCategory: "transport",
+        defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" }
     },
     "joie_taxi": {
         name: "Joie 樂行",
         aliases: ["joie taxi", "joie", "樂行"],
-        defaultCategory: "transport",
+        defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" }
     },
     "syncab": {
         name: "SynCab 星群的士",
         aliases: ["syncab", "星群的士"],
-        defaultCategory: "transport",
+        defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" }
     },
     "trip_com": {
         name: "Trip.com",
         aliases: ["trip.com", "trip com", "攜程"],
-        defaultCategory: "travel"
+        defaultCategory: "travel_agency"
     },
     "hutchgo": {
         name: "hutchgo",
         aliases: ["hutchgo"],
-        defaultCategory: "travel",
+        defaultCategory: "travel_agency",
         byCardId: { "hsbc_easy": "easy_additional_3x" }
     },
     "hutchgo_mall": {
         name: "hutchgo mall",
         aliases: ["hutchgo mall", "hutchgomall"],
-        defaultCategory: "travel"
+        defaultCategory: "travel_agency"
     },
     "harbour_plaza_8_degrees": {
         name: "Harbour Plaza 8 Degrees 八度海逸酒店",
@@ -1450,14 +1453,14 @@ const merchantsDB = {
     "kkday": {
         name: "KKday",
         aliases: ["kkday", "kk day"],
-        defaultCategory: "travel",
-        byCardId: { "hsbc_everymile": "em_designated_spend" }
+        defaultCategory: "travel_ticket",
+        byCardId: { "hsbc_everymile": "em_designated_spend", "dbs_live_fresh": "live_fresh_travel_designated" }
     },
     "klook": {
         name: "Klook",
         aliases: ["klook", "客路"],
-        defaultCategory: "travel",
-        byCardId: { "hsbc_everymile": "em_designated_spend", "sc_smart": "smart_designated", "citi_club": "citi_club_merchant" }
+        defaultCategory: "travel_ticket",
+        byCardId: { "hsbc_everymile": "em_designated_spend", "sc_smart": "smart_designated", "citi_club": "citi_club_merchant", "dbs_live_fresh": "live_fresh_travel_designated" }
     },
     "booking_com": {
         name: "Booking.com",
@@ -1467,7 +1470,8 @@ const merchantsDB = {
     "agoda": {
         name: "Agoda",
         aliases: ["agoda"],
-        defaultCategory: "travel"
+        defaultCategory: "travel",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
     },
     "expedia": {
         name: "Expedia",
@@ -1501,22 +1505,22 @@ const merchantsDB = {
     "miramar_travel": {
         name: "Miramar Travel 美麗華旅遊",
         aliases: ["miramar travel", "美麗華旅遊"],
-        defaultCategory: "travel"
+        defaultCategory: "travel_agency"
     },
     "sunflower_travel": {
         name: "Sunflower Travel 新華旅遊",
         aliases: ["sunflower travel", "新華旅遊"],
-        defaultCategory: "travel"
+        defaultCategory: "travel_agency"
     },
     "wing_on_travel": {
         name: "Wing On Travel 永安旅遊",
         aliases: ["wing on travel", "永安旅遊"],
-        defaultCategory: "travel"
+        defaultCategory: "travel_agency"
     },
     "ymt_travel": {
         name: "YMT Travel 油麻地旅遊",
         aliases: ["ymt travel", "油麻地旅遊", "yau ma tei travel"],
-        defaultCategory: "travel"
+        defaultCategory: "travel_agency"
     },
     "airsim": {
         name: "AirSIM",
@@ -1539,12 +1543,14 @@ const merchantsDB = {
     "cathay_pacific": {
         name: "Cathay Pacific 國泰航空",
         aliases: ["cathay", "cathay pacific", "國泰", "國泰航空"],
-        defaultCategory: "airline"
+        defaultCategory: "airline",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
     },
     "hk_express": {
         name: "HK Express 香港快運",
         aliases: ["hk express", "hong kong express", "香港快運"],
-        defaultCategory: "cathay_hkexpress"
+        defaultCategory: "cathay_hkexpress",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
     },
 
     // --- Entertainment / subscription ---
@@ -1583,7 +1589,7 @@ const merchantsDB = {
         name: "MCL 院線",
         aliases: ["mcl", "mcl cinemas", "mcl 院線"],
         defaultCategory: "entertainment",
-        byCardId: { "citi_club": "citi_club_merchant" }
+        byCardId: { "citi_club": "citi_club_merchant", "dbs_live_fresh": "live_fresh_travel_designated" }
     },
     "movie_town": {
         name: "Movie Town",
@@ -1598,7 +1604,8 @@ const merchantsDB = {
     "cityline_hk": {
         name: "購票通 Cityline",
         aliases: ["購票通", "cityline"],
-        defaultCategory: "entertainment"
+        defaultCategory: "entertainment",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
     },
     "cityplaza_ice_palace": {
         name: "太古城中心冰上皇宮",
@@ -1624,17 +1631,20 @@ const merchantsDB = {
     "kkbox": {
         name: "KKBOX",
         aliases: ["kkbox"],
-        defaultCategory: "entertainment"
+        defaultCategory: "ott_streaming",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
     },
     "kktix": {
         name: "KKTix",
         aliases: ["kktix"],
-        defaultCategory: "entertainment"
+        defaultCategory: "entertainment",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
     },
     "moov": {
         name: "MOOV",
         aliases: ["moov"],
-        defaultCategory: "entertainment"
+        defaultCategory: "ott_streaming",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
     },
     "neway_ceo": {
         name: "Neway CEO Karaoke",
@@ -1654,22 +1664,284 @@ const merchantsDB = {
     "netflix": {
         name: "Netflix",
         aliases: ["netflix"],
-        defaultCategory: "entertainment"
+        defaultCategory: "ott_streaming",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
     },
     "disney_plus": {
         name: "Disney+",
         aliases: ["disney+", "disney plus"],
-        defaultCategory: "entertainment"
+        defaultCategory: "ott_streaming",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
     },
     "spotify": {
         name: "Spotify",
         aliases: ["spotify"],
-        defaultCategory: "entertainment"
+        defaultCategory: "ott_streaming",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
     },
     "youtube_premium": {
         name: "YouTube Premium",
-        aliases: ["youtube premium"],
-        defaultCategory: "entertainment"
+        aliases: ["youtube premium", "youtube", "youtube music"],
+        defaultCategory: "ott_streaming",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "joox": {
+        name: "JOOX",
+        aliases: ["joox"],
+        defaultCategory: "ott_streaming",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "app_store": {
+        name: "App Store",
+        aliases: ["app store", "apple app store", "itunes app store"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "google_play": {
+        name: "Google Play",
+        aliases: ["google play", "google play store", "play store"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "airasia_move": {
+        name: "AirAsia MOVE",
+        aliases: ["airasia move", "airasia superapp", "airasia"],
+        defaultCategory: "travel",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "airbnb": {
+        name: "Airbnb",
+        aliases: ["airbnb"],
+        defaultCategory: "travel",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "google_one": {
+        name: "Google One",
+        aliases: ["google one"],
+        defaultCategory: "general",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "openrice": {
+        name: "OpenRice",
+        aliases: ["openrice", "開飯喇"],
+        defaultCategory: "dining",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "steam": {
+        name: "Steam",
+        aliases: ["steam", "steam store"],
+        defaultCategory: "entertainment",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "amazon_prime": {
+        name: "Amazon Prime",
+        aliases: ["amazon prime"],
+        defaultCategory: "ott_streaming",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "adobe_creative_cloud": {
+        name: "Adobe Creative Cloud",
+        aliases: ["adobe creative cloud", "adobe cc"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "canva_pro": {
+        name: "Canva Pro",
+        aliases: ["canva pro", "canva"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "chatgpt_plus": {
+        name: "ChatGPT Plus",
+        aliases: ["chatgpt plus", "chatgpt", "openai"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "copy_ai": {
+        name: "Copy.ai",
+        aliases: ["copy.ai", "copy ai"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "deepseek": {
+        name: "DeepSeek",
+        aliases: ["deepseek"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "elevenlabs": {
+        name: "ElevenLabs",
+        aliases: ["elevenlabs", "eleven labs"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "grammarly": {
+        name: "Grammarly",
+        aliases: ["grammarly"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "grok": {
+        name: "Grok",
+        aliases: ["grok"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "hbo_max": {
+        name: "HBO Max",
+        aliases: ["hbo max", "max"],
+        defaultCategory: "ott_streaming",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "hulu": {
+        name: "Hulu",
+        aliases: ["hulu"],
+        defaultCategory: "ott_streaming",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "jasper_ai": {
+        name: "Jasper",
+        aliases: ["jasper", "jasper ai"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "kimi": {
+        name: "Kimi",
+        aliases: ["kimi"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "manus": {
+        name: "Manus",
+        aliases: ["manus"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "microsoft_365": {
+        name: "Microsoft 365",
+        aliases: ["microsoft 365", "office 365"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "midjourney": {
+        name: "Midjourney",
+        aliases: ["midjourney"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "notion_ai": {
+        name: "Notion AI",
+        aliases: ["notion ai", "notion"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "otter_ai": {
+        name: "Otter.ai",
+        aliases: ["otter.ai", "otter ai"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "paramount_plus": {
+        name: "Paramount+",
+        aliases: ["paramount+", "paramount plus"],
+        defaultCategory: "ott_streaming",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "perplexity": {
+        name: "Perplexity",
+        aliases: ["perplexity", "perplexity ai"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "poe": {
+        name: "Poe",
+        aliases: ["poe"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "shopify": {
+        name: "Shopify",
+        aliases: ["shopify"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "shopline": {
+        name: "Shopline",
+        aliases: ["shopline"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "soundraw": {
+        name: "Soundraw",
+        aliases: ["soundraw"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "synthesia": {
+        name: "Synthesia",
+        aliases: ["synthesia"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "uber_one": {
+        name: "Uber One",
+        aliases: ["uber one"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "viutv": {
+        name: "ViuTV",
+        aliases: ["viutv", "viu tv"],
+        defaultCategory: "ott_streaming",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "mytv_super": {
+        name: "myTV SUPER",
+        aliases: ["mytv super", "mytvsuper", "my tv super", "mytv"],
+        defaultCategory: "ott_streaming",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "writesonic": {
+        name: "Writesonic",
+        aliases: ["writesonic"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "youku": {
+        name: "Youku",
+        aliases: ["youku", "優酷"],
+        defaultCategory: "ott_streaming",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "zoom_workplace": {
+        name: "Zoom Workplace",
+        aliases: ["zoom workplace", "zoom ai companion", "zoom ai", "zoom"],
+        defaultCategory: "saas_subscription",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+    },
+    "amazon_com": {
+        name: "Amazon.com",
+        aliases: ["amazon.com", "amazon com", "amazon"],
+        defaultCategory: "online",
+        byCardId: { "dbs_live_fresh": "live_fresh_fashion_designated" }
+    },
+    "rakuten_japan": {
+        name: "Rakuten (Japan)",
+        aliases: ["rakuten japan", "rakuten jp", "rakuten"],
+        defaultCategory: "online",
+        byCardId: { "dbs_live_fresh": "live_fresh_fashion_designated" }
+    },
+    "gmarket": {
+        name: "Gmarket",
+        aliases: ["gmarket"],
+        defaultCategory: "online",
+        byCardId: { "dbs_live_fresh": "live_fresh_fashion_designated" }
+    },
+    "apple_online_store": {
+        name: "Apple Online Store",
+        aliases: ["apple online store", "apple store online", "apple.com", "apple"],
+        defaultCategory: "electronics",
+        byCardId: { "dbs_live_fresh": "live_fresh_charity_designated" }
     },
 
     // --- Telecom ---
@@ -1740,19 +2012,19 @@ const merchantsDB = {
     "pit": {
         name: "PIT",
         aliases: ["pit"],
-        defaultCategory: "transport",
+        defaultCategory: "gas",
         byPrefix: { "hsbc": "supermarket" }
     },
     "shell_recharge": {
         name: "Shell Recharge",
         aliases: ["shell recharge"],
-        defaultCategory: "transport",
+        defaultCategory: "gas",
         byPrefix: { "hsbc": "supermarket" }
     },
     "tesla": {
         name: "Tesla",
         aliases: ["tesla"],
-        defaultCategory: "transport",
+        defaultCategory: "gas",
         byPrefix: { "hsbc": "supermarket" }
     },
     "pet_line_hk": {

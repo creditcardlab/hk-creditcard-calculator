@@ -14,6 +14,13 @@ const DATA_RULES = {
             // Most cards treat fast food as dining; MMPower excludes it from the selected dining bonus.
             default: "dining",
             byCardId: { hangseng_mmpower: "fastfood" }
+        },
+        // Keep behavior backward-compatible while allowing finer merchant tagging.
+        ott_streaming: {
+            default: "streaming"
+        },
+        saas_subscription: {
+            default: "general"
         }
     },
     cardCategoryOverrides: {
@@ -25,15 +32,15 @@ const DATA_RULES = {
                     mapTo: "live_fresh_selected"
                 },
                 travel: {
-                    matches: ["travel", "entertainment", "streaming", "cathay_hkexpress", "airline", "hotel"],
+                    matches: ["travel", "travel_agency", "travel_ticket", "entertainment", "streaming", "cathay_hkexpress", "airline", "hotel", "live_fresh_travel_designated"],
                     mapTo: "live_fresh_selected"
                 },
                 fashion: {
-                    matches: ["apparel", "health_beauty"],
+                    matches: ["apparel", "health_beauty", "live_fresh_fashion_designated"],
                     mapTo: "live_fresh_selected"
                 },
                 charity: {
-                    matches: ["charity"],
+                    matches: ["charity", "live_fresh_charity_designated"],
                     mapTo: "live_fresh_selected"
                 }
             }

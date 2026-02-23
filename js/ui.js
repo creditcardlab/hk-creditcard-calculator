@@ -1092,7 +1092,7 @@ const CARD_REFERENCE_FALLBACKS = {
     },
     dbs_live_fresh: {
         tncUrl: "https://www.dbs.com.hk/iwov-resources/pdf/creditcards/Live_Fresh_5_SIR_TC_2026_chi.pdf",
-        promoUrl: "https://www.dbs.com.hk/iwov-resources/pdf/creditcards/TnC_1percent_OnlineFX_zh.pdf"
+        promoUrl: "https://www.dbs.com.hk/iwov-resources/pdf/creditcards/LF_5_2026list_chi.pdf"
     },
     boc_chill: {
         tncUrl: "https://www.bochk.com/dam/boccreditcard/chillcard/chill_offer_tnc_tc.pdf",
@@ -1846,6 +1846,7 @@ function updateCategoryDropdown(ownedCards) {
     const currentVal = select.value;
 
     const options = getCategoryList(ownedCards);
+    const visibleIds = new Set(options.map(o => o.id));
     const parentGroups = {};
     const ungrouped = [];
     options.forEach(o => {
@@ -1859,6 +1860,10 @@ function updateCategoryDropdown(ownedCards) {
     let htmlParts = [];
     const renderedParents = new Set();
     options.forEach(o => {
+        if (o.parent && visibleIds.has(o.parent)) {
+            htmlParts.push(`<option value="${o.id}">↳ ${o.label}</option>`);
+            return;
+        }
         if (o.parent) {
             if (!renderedParents.has(o.parent)) {
                 renderedParents.add(o.parent);
@@ -3929,7 +3934,15 @@ window.selectMerchant = function (merchantId) {
     const isOnlineLikeCategory = (categoryId) => {
         const id = String(categoryId || "").trim();
         if (!id) return false;
-        if (id === "club_shopping") return true;
+        const alwaysOnline = new Set([
+            "club_shopping",
+            "streaming",
+            "ott_streaming",
+            "saas_subscription",
+            "live_fresh_travel_designated",
+            "live_fresh_fashion_designated"
+        ]);
+        if (alwaysOnline.has(id)) return true;
         if (id === "online" || id.startsWith("online_") || id.includes("_online")) return true;
 
         const cats = (typeof DATA !== "undefined" && DATA.categories) ? DATA.categories : {};

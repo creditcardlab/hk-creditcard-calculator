@@ -580,7 +580,28 @@ const modulesDB = {
         cap_limit: 200,
         cap_key: "dbs_live_fresh_cap",
         cap: { key: "dbs_live_fresh_cap", period: "month" },
-        eligible_check: (cat, ctx) => !!(ctx && ctx.isOnline)
+        eligible_check: (cat, ctx) => {
+            if (!ctx) return false;
+            if (ctx.isOnline) return true;
+
+            const pref = ctx.settings && ctx.settings.live_fresh_pref ? String(ctx.settings.live_fresh_pref) : "";
+            const inputCategory = String(ctx.inputCategory || "");
+            const merchantCategory = String(ctx.merchantCategory || "");
+
+            // DBS LF 2026 list allows physical transactions for:
+            // - Entertainment spending (travel preference)
+            // - Designated service subscriptions (travel preference, designated merchants)
+            // - Charity preference designated merchants (donations remain online-only)
+            if (pref === "travel") {
+                if (inputCategory === "entertainment") return true;
+                if (merchantCategory === "live_fresh_travel_designated") return true;
+                return false;
+            }
+            if (pref === "charity") {
+                return merchantCategory === "live_fresh_charity_designated";
+            }
+            return false;
+        }
     },
     "dbs_live_fresh_online_foreign": {
         type: "category",

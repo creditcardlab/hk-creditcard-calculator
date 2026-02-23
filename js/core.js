@@ -1386,6 +1386,9 @@ function evaluateModules(activeModules, amount, category, ctx) {
         isMobilePay: !!ctx.isMobilePay,
         paymentMethod: ctx.paymentMethod,
         merchantId: String(ctx.merchantId || "").trim(),
+        merchantCategory: String(ctx.merchantCategory || "").trim(),
+        inputCategory: String(ctx.inputCategory || "").trim(),
+        resolvedCategory: String(resolvedCategory || "").trim(),
         cardId: ctx.cardId || "",
         txDate: ctx.txDate || "",
         isHoliday: !!ctx.isHoliday,
@@ -1907,8 +1910,20 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     });
 
     const modResult = evaluateModules(activeModules, rewardAmount, resolvedCategory, {
-        modulesDB: modules, resolvedCategory, userProfile, missionDeltaByKey, conv, isOnline,
-        isMobilePay, paymentMethod, txDate, isHoliday, merchantId, cardId: card.id
+        modulesDB: modules,
+        resolvedCategory,
+        inputCategory: category,
+        merchantCategory,
+        userProfile,
+        missionDeltaByKey,
+        conv,
+        isOnline,
+        isMobilePay,
+        paymentMethod,
+        txDate,
+        isHoliday,
+        merchantId,
+        cardId: card.id
     });
 
     // Append mission tag breakdown entries
