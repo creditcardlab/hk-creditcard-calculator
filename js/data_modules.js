@@ -916,7 +916,7 @@ const modulesDB = {
 
     // 狂賞派 (Amazing Rewards) - 只限7大本地消費類別
     "boc_amazing_weekday": {
-        type: "category", match: ["dining", "travel", "entertainment", "telecom", "medical", "apparel", "hotel"],
+        type: "category", match: ["dining", "travel", "entertainment", "electronics", "medical", "apparel", "sportswear", "hotel", "pet"],
         rate: 5, desc: "🔥 狂賞派 (平日 +2%)", valid_on_red_day: false,
         setting_key: "boc_amazing_enabled", min_single_spend: 500, req_mission_key: "spend_boc_amazing_local", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 30000, cap_key: "boc_amazing_local_weekday_cap",
@@ -925,7 +925,7 @@ const modulesDB = {
         valid_from: "2026-01-01", valid_to: "2026-06-30"
     },
     "boc_amazing_holiday": {
-        type: "category", match: ["dining", "travel", "entertainment", "telecom", "medical", "apparel", "hotel"],
+        type: "category", match: ["dining", "travel", "entertainment", "electronics", "medical", "apparel", "sportswear", "hotel", "pet"],
         rate: 12.5, desc: "🔥 狂賞派 (紅日/星期日 +5%)", valid_on_red_day: true,
         setting_key: "boc_amazing_enabled", min_single_spend: 500, req_mission_key: "spend_boc_amazing_local", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 75000, cap_key: "boc_amazing_local_holiday_cap",
@@ -954,7 +954,7 @@ const modulesDB = {
 
     // 狂賞派 (Amazing Rewards) - VS Version
     "boc_amazing_weekday_vs": {
-        type: "category", match: ["dining", "travel", "entertainment", "telecom", "medical", "apparel", "hotel"],
+        type: "category", match: ["dining", "travel", "entertainment", "electronics", "medical", "apparel", "sportswear", "hotel", "pet"],
         rate: 5, desc: "🔥 狂賞派 (平日 +2%)", valid_on_red_day: false,
         setting_key: "boc_amazing_enabled", min_single_spend: 500, req_mission_key: "spend_boc_amazing_local", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 30000, cap_key: "boc_amazing_local_weekday_cap",
@@ -963,7 +963,7 @@ const modulesDB = {
         valid_from: "2026-01-01", valid_to: "2026-06-30"
     },
     "boc_amazing_holiday_vs": {
-        type: "category", match: ["dining", "travel", "entertainment", "telecom", "medical", "apparel", "hotel"],
+        type: "category", match: ["dining", "travel", "entertainment", "electronics", "medical", "apparel", "sportswear", "hotel", "pet"],
         rate: 12.5, desc: "🔥 狂賞派 (紅日/星期日 +5%)", valid_on_red_day: true,
         setting_key: "boc_amazing_enabled", min_single_spend: 500, req_mission_key: "spend_boc_amazing_local", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 75000, cap_key: "boc_amazing_local_holiday_cap",
@@ -1120,7 +1120,7 @@ const modulesDB = {
             if (cat === "go_merchant") return false;
             if (!ctx) return false;
             const pm = ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
-            return pm === "apple_pay" || pm === "google_pay" || pm === "samsung_pay" || pm === "unionpay_cloud";
+            return pm === "apple_pay" || pm === "samsung_pay" || pm === "huawei_pay" || pm === "boc_pay" || pm === "unionpay_cloud";
         }
     },
     "boc_go_merchant": {
@@ -1134,7 +1134,64 @@ const modulesDB = {
         cap_key: "boc_go_merchant_bonus_cap_2026",
         cap: { key: "boc_go_merchant_bonus_cap_2026", period: "month" },
         valid_from: "2025-01-01",
-        valid_to: "2026-06-30"
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => {
+            if (!ctx) return true;
+            const pm = ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
+            return pm === "physical" || pm === "apple_pay" || pm === "samsung_pay" || pm === "huawei_pay" || pm === "unionpay_cloud";
+        }
+    },
+    "boc_go_pmq126_local_mobile_2026q1": {
+        type: "category",
+        rate: 7,
+        desc: "「Go！機」本地手機簽賬額外 +7X（合共 10X）",
+        mode: "add",
+        setting_key: "boc_go_pmq126_enabled",
+        cap_mode: "reward",
+        cap_limit: 25000,
+        cap_key: "boc_go_pmq126_bonus_cap_2026q1",
+        cap: { key: "boc_go_pmq126_bonus_cap_2026q1", period: "month" },
+        valid_from: "2026-01-09",
+        valid_to: "2026-03-31",
+        tnc_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
+        source_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
+        registration_note: "需先登記；首30,000位成功登記客戶（系統未能自動核實）",
+        eligible_check: (cat, ctx) => {
+            if (!ctx) return false;
+            if (cat === "go_merchant") return false;
+            const pm = ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
+            const mobileOk = pm === "apple_pay" || pm === "samsung_pay" || pm === "huawei_pay" || pm === "boc_pay" || pm === "unionpay_cloud";
+            if (!mobileOk) return false;
+            const inputCat = String(ctx.inputCategory || cat || "");
+            const isMainland = inputCat === "overseas_cn" || inputCat === "china_consumption";
+            const isOverseas = inputCat === "overseas" || inputCat.startsWith("overseas_") || inputCat === "online_foreign" || inputCat === "china_consumption";
+            return !isMainland && !isOverseas;
+        }
+    },
+    "boc_go_pmq126_mainland_mobile_2026q1": {
+        type: "category",
+        rate: 17,
+        desc: "「Go！機」內地手機簽賬額外 +17X（合共 20X）",
+        mode: "add",
+        setting_key: "boc_go_pmq126_enabled",
+        cap_mode: "reward",
+        cap_limit: 25000,
+        cap_key: "boc_go_pmq126_bonus_cap_2026q1",
+        cap: { key: "boc_go_pmq126_bonus_cap_2026q1", period: "month" },
+        valid_from: "2026-01-09",
+        valid_to: "2026-03-31",
+        tnc_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
+        source_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
+        registration_note: "需先登記；首30,000位成功登記客戶（系統未能自動核實）",
+        eligible_check: (cat, ctx) => {
+            if (!ctx) return false;
+            if (cat === "go_merchant") return false;
+            const pm = ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
+            const mobileOk = pm === "apple_pay" || pm === "samsung_pay" || pm === "huawei_pay" || pm === "boc_pay" || pm === "unionpay_cloud";
+            if (!mobileOk) return false;
+            const inputCat = String(ctx.inputCategory || cat || "");
+            return inputCat === "overseas_cn" || inputCat === "china_consumption";
+        }
     },
     "boc_go_overseas": {
         type: "category",
@@ -1166,23 +1223,78 @@ const modulesDB = {
             if (cat === "go_merchant") return false;
             if (!ctx) return false;
             const pm = ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
-            return pm === "apple_pay" || pm === "google_pay" || pm === "samsung_pay" || pm === "unionpay_cloud";
+            return pm === "apple_pay" || pm === "samsung_pay" || pm === "huawei_pay" || pm === "boc_pay" || pm === "unionpay_cloud";
         }
     },
     "boc_go_platinum_merchant": {
         type: "category",
         match: ["go_merchant"],
-        rate: 10,
-        desc: "Go 指定商戶額外 +4%（合共 4.4%，需月簽$1,000）",
+        rate: 11.5,
+        desc: "Go 指定商戶額外 +4.6%（合共 5%）",
         mode: "add",
-        req_mission_key: "spend_boc_go_platinum_monthly",
-        req_mission_spend: 1000,
         cap_mode: "reward",
         cap_limit: 25000,
         cap_key: "boc_go_platinum_merchant_bonus_cap_2026",
         cap: { key: "boc_go_platinum_merchant_bonus_cap_2026", period: "month" },
         valid_from: "2025-01-01",
-        valid_to: "2026-06-30"
+        valid_to: "2026-06-30",
+        eligible_check: (cat, ctx) => {
+            if (!ctx) return true;
+            const pm = ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
+            return pm === "physical" || pm === "apple_pay" || pm === "samsung_pay" || pm === "huawei_pay" || pm === "unionpay_cloud";
+        }
+    },
+    "boc_go_platinum_pmq126_local_mobile_2026q1": {
+        type: "category",
+        rate: 3,
+        desc: "「Go！機」本地手機簽賬額外 +3X（合共 5X）",
+        mode: "add",
+        setting_key: "boc_go_pmq126_enabled",
+        cap_mode: "reward",
+        cap_limit: 25000,
+        cap_key: "boc_go_platinum_pmq126_bonus_cap_2026q1",
+        cap: { key: "boc_go_platinum_pmq126_bonus_cap_2026q1", period: "month" },
+        valid_from: "2026-01-09",
+        valid_to: "2026-03-31",
+        tnc_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
+        source_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
+        registration_note: "需先登記；首30,000位成功登記客戶（系統未能自動核實）",
+        eligible_check: (cat, ctx) => {
+            if (!ctx) return false;
+            if (cat === "go_merchant") return false;
+            const pm = ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
+            const mobileOk = pm === "apple_pay" || pm === "samsung_pay" || pm === "huawei_pay" || pm === "boc_pay" || pm === "unionpay_cloud";
+            if (!mobileOk) return false;
+            const inputCat = String(ctx.inputCategory || cat || "");
+            const isMainland = inputCat === "overseas_cn" || inputCat === "china_consumption";
+            const isOverseas = inputCat === "overseas" || inputCat.startsWith("overseas_") || inputCat === "online_foreign" || inputCat === "china_consumption";
+            return !isMainland && !isOverseas;
+        }
+    },
+    "boc_go_platinum_pmq126_mainland_mobile_2026q1": {
+        type: "category",
+        rate: 8,
+        desc: "「Go！機」內地手機簽賬額外 +8X（合共 10X）",
+        mode: "add",
+        setting_key: "boc_go_pmq126_enabled",
+        cap_mode: "reward",
+        cap_limit: 25000,
+        cap_key: "boc_go_platinum_pmq126_bonus_cap_2026q1",
+        cap: { key: "boc_go_platinum_pmq126_bonus_cap_2026q1", period: "month" },
+        valid_from: "2026-01-09",
+        valid_to: "2026-03-31",
+        tnc_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
+        source_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
+        registration_note: "需先登記；首30,000位成功登記客戶（系統未能自動核實）",
+        eligible_check: (cat, ctx) => {
+            if (!ctx) return false;
+            if (cat === "go_merchant") return false;
+            const pm = ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
+            const mobileOk = pm === "apple_pay" || pm === "samsung_pay" || pm === "huawei_pay" || pm === "boc_pay" || pm === "unionpay_cloud";
+            if (!mobileOk) return false;
+            const inputCat = String(ctx.inputCategory || cat || "");
+            return inputCat === "overseas_cn" || inputCat === "china_consumption";
+        }
     },
     "boc_go_platinum_overseas": {
         type: "category",
@@ -1201,16 +1313,26 @@ const modulesDB = {
     "boc_sogo_base": {
         type: "always",
         rate: 0.004,
-        desc: "中銀 SOGO 基本 0.4%"
+        desc: "中銀 SOGO 基本 0.4%",
+        last_verified_at: "2026-02-23",
+        source_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf"
     },
     "boc_sogo_designated": {
         type: "category",
         match: ["sogo_merchant"],
         rate: 0.05,
-        desc: "SOGO 指定商戶/產品 5%",
+        desc: "崇光及指定商戶/產品 5%",
         mode: "replace",
-        valid_from: "2024-01-01",
-        valid_to: "2026-12-31"
+        valid_from: "2026-01-01",
+        valid_to: "2026-12-31",
+        last_verified_at: "2026-02-23",
+        source_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf",
+        tnc_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf",
+        eligible_check: (cat, ctx) => {
+            if (!ctx) return true;
+            const pm = ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
+            return pm === "physical" || pm === "apple_pay" || pm === "google_pay" || pm === "samsung_pay";
+        }
     },
     "boc_sogo_mobile_pay": {
         type: "category",
@@ -1223,6 +1345,9 @@ const modulesDB = {
         cap: { key: "boc_sogo_mobile_bonus_cap_2026", period: "month" },
         valid_from: "2026-01-01",
         valid_to: "2026-12-31",
+        last_verified_at: "2026-02-23",
+        source_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf",
+        tnc_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf",
         eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "google_pay", "samsung_pay"].includes(ctx.paymentMethod))
     },
 

@@ -73,7 +73,7 @@ const merchantsDB = {
         name: "GU",
         aliases: ["gu"],
         defaultCategory: "apparel",
-        byCardId: { "hsbc_red": "red_designated" }
+        byCardId: { "hsbc_red": "red_designated", "boc_chill": "chill_merchant" }
     },
     "decathlon_hk": {
         name: "Decathlon Hong Kong",
@@ -335,6 +335,27 @@ const merchantsDB = {
         byCardId: { "boc_sogo": "sogo_merchant" },
         byPrefix: { "hsbc": "department_store" }
     },
+    "sogo_freshmart": {
+        name: "SOGO Freshmart",
+        aliases: ["freshmart", "sogo freshmart", "崇光 freshmart", "崇光freshmart", "freshmart 啟德", "freshmart 銅鑼灣"],
+        defaultCategory: "grocery",
+        byCardId: { "boc_sogo": "sogo_merchant" }
+    },
+    "wasanmi": {
+        name: "和三昧",
+        aliases: ["和三昧", "wasanmi"],
+        defaultCategory: "dining"
+    },
+    "sogo_japan": {
+        name: "日本 SOGO",
+        aliases: ["日本 sogo", "sogo japan", "japan sogo", "そごう", "日本崇光"],
+        defaultCategory: "overseas_jp"
+    },
+    "seibu_japan": {
+        name: "日本 SEIBU",
+        aliases: ["日本 seibu", "seibu japan", "japan seibu", "西武", "西武百貨"],
+        defaultCategory: "overseas_jp"
+    },
 
     // HSBC 最紅自主「賞享受」- 健身中心（2026-02-21 list）
     "be_earth": {
@@ -371,9 +392,9 @@ const merchantsDB = {
     // --- Dining / fast food ---
     "mcdonalds": {
         name: "McDonald's 麥當勞",
-        aliases: ["mcd", "mcdonalds", "mcdonald's", "麥當勞"],
+        aliases: ["mcd", "mcdonalds", "mcdonald's", "麥當勞", "mcdonald app", "mcdonald's app", "麥當勞 app", "麥當勞app"],
         defaultCategory: "fastfood",
-        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant" }
+        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant", "boc_chill": "chill_merchant" }
     },
     "kfc": {
         name: "KFC 肯德基",
@@ -417,7 +438,8 @@ const merchantsDB = {
         byCardId: {
             "hsbc_everymile": "em_designated_spend",
             "citi_club": "citi_club_merchant",
-            "hangseng_enjoy": "enjoy_4x"
+            "hangseng_enjoy": "enjoy_4x",
+            "boc_chill": "chill_merchant"
         }
     },
     "tenren_tea": {
@@ -430,7 +452,7 @@ const merchantsDB = {
         name: "Pacific Coffee",
         aliases: ["pacific coffee"],
         defaultCategory: "dining",
-        byCardId: { "hsbc_everymile": "em_designated_spend" }
+        byCardId: { "hsbc_everymile": "em_designated_spend", "boc_chill": "chill_merchant" }
     },
     "arabica": {
         name: "% Arabica",
@@ -825,25 +847,61 @@ const merchantsDB = {
         name: "Wellcome 惠康",
         aliases: ["wellcome", "惠康"],
         defaultCategory: "grocery",
-        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+        byCardId: { "hangseng_enjoy": "enjoy_3x", "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant" }
     },
     "market_place": {
         name: "Market Place by Jasons",
         aliases: ["market place", "jasons", "market place by jasons"],
         defaultCategory: "grocery",
-        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+        byCardId: { "hangseng_enjoy": "enjoy_3x", "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant" }
     },
     "threesixty": {
         name: "3hreesixty",
         aliases: ["3hreesixty", "three sixty", "3hree sixty"],
         defaultCategory: "grocery",
-        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+        byCardId: { "hangseng_enjoy": "enjoy_3x", "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant" }
     },
     "olivers": {
         name: "Oliver's",
         aliases: ["oliver's", "olivers", "oliver's the delicatessen"],
         defaultCategory: "grocery",
-        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+        byCardId: { "hangseng_enjoy": "enjoy_3x", "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant" }
+    },
+    "keeta": {
+        name: "Keeta",
+        aliases: ["keeta"],
+        defaultCategory: "dining",
+        byCardId: { "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant" }
+    },
+    "meituan": {
+        name: "美團 Meituan",
+        aliases: ["美團", "美团", "meituan"],
+        defaultCategory: "online",
+        byCardId: { "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant" }
+    },
+    "dazhong_dianping": {
+        name: "大眾點評 Dianping",
+        aliases: ["大眾點評", "大众点评", "dazhong dianping", "dianping"],
+        defaultCategory: "online",
+        byCardId: { "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant" }
+    },
+    "didi_chuxing": {
+        name: "滴滴出行 Didi",
+        aliases: ["滴滴出行", "滴滴", "didi chuxing", "didi"],
+        defaultCategory: "public_transport",
+        byCardId: { "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant" }
+    },
+    "hk_high_speed_rail": {
+        name: "香港高鐵 High Speed Rail",
+        aliases: ["高速鐵路", "高鐵", "high speed rail", "high speed railway", "xrl", "香港高鐵"],
+        defaultCategory: "public_transport",
+        byCardId: { "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant" }
+    },
+    "jd_com": {
+        name: "京東 JD.com",
+        aliases: ["京東", "京东", "jd.com", "jd com", "jingdong", "jd"],
+        defaultCategory: "online",
+        byCardId: { "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant" }
     },
     "mannings": {
         name: "Mannings 萬寧",
@@ -855,7 +913,7 @@ const merchantsDB = {
         name: "IKEA 宜家家居",
         aliases: ["ikea", "ikea hk", "宜家", "宜家家居"],
         defaultCategory: "general",
-        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+        byCardId: { "hangseng_enjoy": "enjoy_3x", "boc_chill": "chill_merchant" }
     },
     "gnc_hk": {
         name: "GNC",
@@ -1131,6 +1189,24 @@ const merchantsDB = {
         aliases: ["友和", "yoho"],
         defaultCategory: "electronics"
     },
+    "dyson": {
+        name: "Dyson",
+        aliases: ["dyson"],
+        defaultCategory: "electronics",
+        byCardId: { "boc_chill": "chill_merchant" }
+    },
+    "samsung": {
+        name: "Samsung",
+        aliases: ["samsung"],
+        defaultCategory: "electronics",
+        byCardId: { "boc_chill": "chill_merchant" }
+    },
+    "sony": {
+        name: "Sony",
+        aliases: ["sony"],
+        defaultCategory: "electronics",
+        byCardId: { "boc_chill": "chill_merchant" }
+    },
 
     // HSBC 最紅自主「賞購物」
     // 百貨公司
@@ -1188,7 +1264,7 @@ const merchantsDB = {
         aliases: ["citysuper log-on", "city'super log-on"],
         defaultCategory: "department_store",
         byPrefix: { "hsbc": "department_store" },
-        byCardId: { "citi_club": "citi_club_merchant" }
+        byCardId: { "citi_club": "citi_club_merchant", "boc_chill": "chill_merchant" }
     },
     "guk_san": {
         name: "谷辰",
@@ -1213,7 +1289,7 @@ const merchantsDB = {
         aliases: ["log-on", "log on", "cafe togather by log-on", "cafe togather"],
         defaultCategory: "department_store",
         byPrefix: { "hsbc": "department_store" },
-        byCardId: { "citi_club": "citi_club_merchant" }
+        byCardId: { "citi_club": "citi_club_merchant", "boc_chill": "chill_merchant" }
     },
     "marks_and_spencer": {
         name: "MARKS & SPENCER",
@@ -1392,7 +1468,8 @@ const merchantsDB = {
     "uniqlo": {
         name: "UNIQLO",
         aliases: ["uniqlo"],
-        defaultCategory: "apparel"
+        defaultCategory: "apparel",
+        byCardId: { "boc_chill": "chill_merchant" }
     },
     "zalora": {
         name: "ZALORA",
@@ -1947,7 +2024,7 @@ const merchantsDB = {
         name: "KKBOX",
         aliases: ["kkbox"],
         defaultCategory: "ott_streaming",
-        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant" }
     },
     "kktix": {
         name: "KKTix",
@@ -1955,11 +2032,17 @@ const merchantsDB = {
         defaultCategory: "entertainment",
         byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
     },
+    "apple_tv_music": {
+        name: "Apple TV/Music",
+        aliases: ["apple tv", "apple music", "apple tv/music", "apple tv music"],
+        defaultCategory: "ott_streaming",
+        byCardId: { "boc_chill": "chill_merchant" }
+    },
     "moov": {
         name: "MOOV",
         aliases: ["moov"],
         defaultCategory: "ott_streaming",
-        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant" }
     },
     "neway_ceo": {
         name: "Neway CEO Karaoke",
@@ -1980,43 +2063,55 @@ const merchantsDB = {
         name: "Netflix",
         aliases: ["netflix"],
         defaultCategory: "ott_streaming",
-        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant" }
+    },
+    "nintendo": {
+        name: "Nintendo",
+        aliases: ["nintendo", "nintendo eshop", "eshop"],
+        defaultCategory: "entertainment",
+        byCardId: { "boc_chill": "chill_merchant" }
+    },
+    "playstation": {
+        name: "PlayStation",
+        aliases: ["playstation", "playstation store", "ps store", "psn", "sony playstation"],
+        defaultCategory: "entertainment",
+        byCardId: { "boc_chill": "chill_merchant" }
     },
     "disney_plus": {
         name: "Disney+",
         aliases: ["disney+", "disney plus"],
         defaultCategory: "ott_streaming",
-        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant" }
     },
     "spotify": {
         name: "Spotify",
         aliases: ["spotify"],
         defaultCategory: "ott_streaming",
-        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant" }
     },
     "youtube_premium": {
         name: "YouTube Premium",
         aliases: ["youtube premium", "youtube", "youtube music"],
         defaultCategory: "ott_streaming",
-        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant" }
     },
     "joox": {
         name: "JOOX",
         aliases: ["joox"],
         defaultCategory: "ott_streaming",
-        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant" }
     },
     "app_store": {
         name: "App Store",
         aliases: ["app store", "apple app store", "itunes app store"],
         defaultCategory: "saas_subscription",
-        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant" }
     },
     "google_play": {
         name: "Google Play",
         aliases: ["google play", "google play store", "play store"],
         defaultCategory: "saas_subscription",
-        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant" }
     },
     "airasia_move": {
         name: "AirAsia MOVE",

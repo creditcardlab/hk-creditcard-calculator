@@ -56,6 +56,15 @@ const CAMPAIGN_REGISTRY = {
         registrationNote: "需以渣打網上理財或SC Mobile完成登記",
         implementationNote: "計算器做法：推廣期（2025-12-16 至 2026-03-03）內，海外簽賬累積達$10,000後，派一次額外2,500里數（等效首$10,000額外 +0.25 里/港元；連基本海外$4/里約為$2/里）。首30,000位限制、只限同一張已登記卡及不合資格交易名單未能自動核實。"
     },
+    boc_go_pmq126_offer: {
+        settingKey: "boc_go_pmq126_enabled",
+        warningTitle: "中銀 Go「Go！機」手機簽賬額外積分",
+        warningDesc: "需先登記",
+        tncUrl: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
+        promoUrl: "https://www.bochk.com/tc/creditcard/offer-and-incentive/gocard.html",
+        registrationNote: "計算器未能核實：首30,000位成功登記客戶限制及條款列明之不合資格交易",
+        implementationNote: "計算器做法：已登記時，2026-01-09 至 2026-03-31 按本地/內地手機簽賬加計額外積分，並套用每月額外積分上限25,000分。首30,000位限制及交易細項（如交易地點/渠道細則）未能自動核實。"
+    },
     boc_amazing: {
         settingKey: "boc_amazing_enabled",
         warningTitle: "中銀 狂賞派",
@@ -431,7 +440,7 @@ const CAMPAIGNS = [
     },
     {
         id: "boc_go_offer_platinum",
-        promo_type: "mission_cap",
+        promo_type: "cap",
         name: "中銀 Go Card Platinum 額外回贈",
         icon: "fas fa-mobile-alt",
         theme: "blue",
@@ -443,11 +452,46 @@ const CAMPAIGNS = [
         },
         cards: ["boc_go_platinum"],
         sections: [
-            { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_boc_go_platinum_monthly", target: 1000 },
             { type: "cap", label: "🛍️ Go 指定商戶額外回贈進度", capModule: "boc_go_platinum_merchant", unit: "積分" },
             { type: "cap", label: "📱 手機簽賬額外回贈進度", capModule: "boc_go_platinum_mobile", unit: "積分" }
         ],
         capKeys: ["boc_go_platinum_merchant_bonus_cap_2026", "boc_go_platinum_mobile_bonus_cap_2026"]
+    },
+    {
+        id: "boc_go_pmq126_offer",
+        promo_type: "cap",
+        name: "中銀 Go「Go！機」手機簽賬額外積分",
+        icon: "fas fa-mobile-alt",
+        theme: "blue",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2026-01-09",
+            endDate: "2026-03-31",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["boc_go_diamond"],
+        sections: [
+            { type: "cap", label: "📱 本地/內地手機簽賬額外積分進度", capModule: "boc_go_pmq126_local_mobile_2026q1", unit: "積分" }
+        ],
+        capKeys: ["boc_go_pmq126_bonus_cap_2026q1"]
+    },
+    {
+        id: "boc_go_pmq126_offer_platinum",
+        promo_type: "cap",
+        name: "中銀 Go Platinum「Go！機」手機簽賬額外積分",
+        icon: "fas fa-mobile-alt",
+        theme: "blue",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2026-01-09",
+            endDate: "2026-03-31",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["boc_go_platinum"],
+        sections: [
+            { type: "cap", label: "📱 本地/內地手機簽賬額外積分進度", capModule: "boc_go_platinum_pmq126_local_mobile_2026q1", unit: "積分" }
+        ],
+        capKeys: ["boc_go_platinum_pmq126_bonus_cap_2026q1"]
     },
     {
         id: "boc_sogo_mobile_offer",

@@ -1276,6 +1276,7 @@ function getCampaignToggleDefinitions() {
     const priorityOrder = [
         "winter_promo_enabled",
         "boc_amazing_enabled",
+        "boc_go_pmq126_enabled",
         "dbs_black_promo_enabled",
         "mmpower_promo_enabled",
         "travel_plus_promo_enabled",
@@ -2781,7 +2782,7 @@ function renderCalculatorResults(results, currentMode) {
 
 	        resultText = formatValueText(v, u);
 
-        // Net value adjustment (foreign fee / member-day discount)
+        // Net value adjustment (foreign fee / merchant discount)
         let feeNetValue = null;
         let feeNetPotential = null;
         let feeLineHtml = '';
@@ -2790,17 +2791,19 @@ function renderCalculatorResults(results, currentMode) {
         const foreignFee = Math.max(0, Number(res.foreignFee) || 0);
         const memberDayDiscount = Math.max(0, Number(res.memberDayDiscount) || 0);
         const hasNetImpact = foreignFee > 0 || memberDayDiscount > 0;
-        const selectedMerchantId = (typeof window !== "undefined" && window.__selectedMerchantId)
-            ? String(window.__selectedMerchantId)
-            : "";
-        const showMemberDayLine = !showFeeEquation && res.cardId === "hsbc_easy" && !!selectedMerchantId;
+        const selectedMerchantId = (typeof window !== "undefined" && typeof window.getEffectiveMerchantId === "function")
+            ? String(window.getEffectiveMerchantId() || "")
+            : ((typeof window !== "undefined" && window.__selectedMerchantId) ? String(window.__selectedMerchantId) : "");
+        const showMemberDayLine = !showFeeEquation
+            && !!selectedMerchantId
+            && (res.cardId === "hsbc_easy" || res.cardId === "boc_sogo");
         const adjustmentBits = [];
         if (!showFeeEquation && foreignFee > 0) {
             adjustmentBits.push(`<div class="text-xs text-amber-600 mt-0.5"><i class="fas fa-money-bill-wave mr-1"></i>外幣手續費: -$${foreignFee.toFixed(1)}</div>`);
         }
         if (showMemberDayLine) {
             const toneClass = memberDayDiscount > 0 ? "text-green-700" : "text-gray-500";
-            adjustmentBits.push(`<div class="text-xs ${toneClass} mt-0.5"><i class="fas fa-percent mr-1"></i>會員日折扣: +$${memberDayDiscount.toFixed(1)}</div>`);
+            adjustmentBits.push(`<div class="text-xs ${toneClass} mt-0.5"><i class="fas fa-percent mr-1"></i>商戶折扣: +$${memberDayDiscount.toFixed(1)}</div>`);
         }
         feeLineHtml = adjustmentBits.join('');
         if (hasNetImpact) {
@@ -3457,6 +3460,14 @@ function renderSettings(userProfile) {
         </div>
     </div>`);
 
+    if (ownedSet.has("boc_sogo")) ensureBucket(preferenceBlocksByCard, "boc_sogo").push(`<div class="border p-3 rounded-md bg-[#fcfcfc] border-[#e9e9e7]">
+        <div class="text-xs font-semibold text-[#37352f] mb-2">中銀 SOGO：商戶折扣（非迎新）</div>
+        <div class="mt-1 text-[11px] text-gray-500">
+            已按商戶 + 交易日期自動計算可量化折扣（Freshmart 逢星期一、和三昧、日本 SOGO/SEIBU）。計算只覆蓋可由系統判斷條件，並以你選擇的商戶為準。
+            <a href="https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf" target="_blank" rel="noopener" class="underline underline-offset-2">條款</a>
+        </div>
+    </div>`);
+
     const moxMode = String(userProfile.settings.mox_reward_mode || "cashback");
     if (ownedSet.has("mox_credit")) pushScopedSettingRow("mox_deposit_task_enabled", `<div class="border p-3 rounded-md bg-[#fcfcfc] border-[#e9e9e7]">
         <label class="text-xs font-semibold text-[#37352f] block mb-2">Mox Credit 獎賞模式</label>
@@ -3862,6 +3873,42 @@ window.handleClearHistory = function () {
 let _merchantSearchIndex = null;
 let _merchantFuse = null;
 
+function normalizeMerchantQuery(text) {
+    return String(text || "").trim().toLowerCase();
+}
+
+function merchantMatchesQuery(merchant, normalizedQuery) {
+    if (!merchant || !normalizedQuery) return false;
+    const candidates = [merchant.name || "", ...(Array.isArray(merchant.aliases) ? merchant.aliases : [])];
+    return candidates.some((value) => normalizeMerchantQuery(value) === normalizedQuery);
+}
+
+function inferMerchantIdFromQuery(query) {
+    const q = normalizeMerchantQuery(query);
+    if (!q || q.length < 3) return null;
+    const merchants = (typeof DATA !== "undefined" && DATA.merchants) ? DATA.merchants : {};
+    let matchedId = null;
+    for (const [id, merchant] of Object.entries(merchants)) {
+        const candidates = [id, merchant.name || "", ...(Array.isArray(merchant.aliases) ? merchant.aliases : [])];
+        const exact = candidates.some((value) => normalizeMerchantQuery(value) === q);
+        if (!exact) continue;
+        if (matchedId && matchedId !== id) return null; // ambiguous exact match
+        matchedId = id;
+    }
+    return matchedId;
+}
+
+window.inferMerchantIdFromSearchInput = function () {
+    if (window.__selectedMerchantId) return String(window.__selectedMerchantId);
+    const searchInput = document.getElementById('merchant-search');
+    return inferMerchantIdFromQuery(searchInput ? searchInput.value : "");
+};
+
+window.getEffectiveMerchantId = function () {
+    if (window.__selectedMerchantId) return String(window.__selectedMerchantId);
+    return window.inferMerchantIdFromSearchInput ? (window.inferMerchantIdFromSearchInput() || null) : null;
+};
+
 function buildMerchantSearchIndex() {
     const merchants = (typeof DATA !== "undefined" && DATA.merchants) ? DATA.merchants : {};
     _merchantSearchIndex = Object.entries(merchants).map(([id, m]) => ({
@@ -3890,10 +3937,21 @@ window.onMerchantSearch = function (query) {
     if (!_merchantSearchIndex) buildMerchantSearchIndex();
     const dropdown = document.getElementById('merchant-dropdown');
     if (!dropdown) return;
-    const q = (query || "").trim().toLowerCase();
+    const merchants = (typeof DATA !== "undefined" && DATA.merchants) ? DATA.merchants : {};
+    const q = normalizeMerchantQuery(query);
+
+    if (window.__selectedMerchantId) {
+        const selected = merchants[window.__selectedMerchantId];
+        if (!merchantMatchesQuery(selected, q)) {
+            window.__selectedMerchantId = null;
+            const clearBtn = document.getElementById('merchant-clear');
+            if (clearBtn) clearBtn.classList.add('hidden');
+        }
+    }
 
     if (q.length < 1) {
         dropdown.classList.add('hidden');
+        if (typeof runCalc === "function") runCalc();
         return;
     }
 
@@ -3909,6 +3967,7 @@ window.onMerchantSearch = function (query) {
     if (matches.length === 0) {
         dropdown.innerHTML = '<div class="p-2 text-xs text-gray-400">找不到商戶</div>';
         dropdown.classList.remove('hidden');
+        if (typeof runCalc === "function") runCalc();
         return;
     }
 
@@ -3923,6 +3982,7 @@ window.onMerchantSearch = function (query) {
         </div>`;
     }).join('');
     dropdown.classList.remove('hidden');
+    if (typeof runCalc === "function") runCalc();
 };
 
 window.selectMerchant = function (merchantId) {

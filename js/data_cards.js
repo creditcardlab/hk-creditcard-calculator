@@ -485,13 +485,13 @@ const cardsDB = [
         currency: "BOC_Points",
         type: "unionpay",
         fcf: 0,
-        rewardModules: ["boc_go_base", "boc_go_mobile", "boc_go_merchant", "boc_go_overseas"],
+        rewardModules: ["boc_go_base", "boc_go_mobile", "boc_go_pmq126_local_mobile_2026q1", "boc_go_pmq126_mainland_mobile_2026q1", "boc_go_merchant", "boc_go_overseas"],
         trackers: [],
         redemption: {
           unit: "積分",
           min: 0,
           fee: "$50/5K里（最低$100，最高$300）",
-          ratio: "15分 = 1里 | 基本 1X | Go 指定商戶合共5%（額外上限25,000分/月）| 全球手機簽賬合共3X（額外上限25,000分/月）| 海外合共2X"
+          ratio: "15分 = 1里 | 基本 1X | Go 指定商戶合共5%（額外上限25,000分/月）| 全球手機簽賬合共3X（額外上限25,000分/月）| 海外合共2X | 「Go！機」本地/內地手機額外積分（需登記，2026-01-09至03-31）"
         }
     },
     {
@@ -500,13 +500,13 @@ const cardsDB = [
         currency: "BOC_Points",
         type: "unionpay",
         fcf: 0,
-        rewardModules: ["boc_go_platinum_base", "boc_go_platinum_mobile", "boc_go_platinum_merchant", "boc_go_platinum_overseas"],
-        trackers: ["boc_go_platinum_mission_tracker"],
+        rewardModules: ["boc_go_platinum_base", "boc_go_platinum_mobile", "boc_go_platinum_pmq126_local_mobile_2026q1", "boc_go_platinum_pmq126_mainland_mobile_2026q1", "boc_go_platinum_merchant", "boc_go_platinum_overseas"],
+        trackers: [],
         redemption: {
           unit: "積分",
           min: 0,
           fee: "$50/5K里（最低$100，最高$300）",
-          ratio: "15分 = 1里 | 基本 1X | Go 指定商戶合共4.4%（需月簽$1,000，額外上限25,000分/月）| 全球手機簽賬合共2X（額外上限25,000分/月）| 海外合共2X"
+          ratio: "15分 = 1里 | 基本 1X | Go 指定商戶合共5%（額外上限25,000分/月）| 全球手機簽賬合共2X（額外上限25,000分/月）| 海外合共2X | 「Go！機」本地/內地手機額外積分（需登記，2026-01-09至03-31）"
         }
     },
     {
@@ -521,7 +521,7 @@ const cardsDB = [
           unit: "元",
           min: 0,
           fee: "N/A",
-          ratio: "基本 0.4% | SOGO 指定商戶 5% | 手機支付額外 +5%（每月上限$100，2026-01-01 至 2026-12-31）"
+          ratio: "基本 0.4% | 崇光及指定商戶/產品 5% | 手機支付額外 +5%（每月上限$100，2026-01-01 至 2026-12-31）| Freshmart（逢星期一）95折 | 和三昧 9折 | 日本SOGO/SEIBU 95折（2026）"
         }
     },
     {

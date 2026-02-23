@@ -3313,7 +3313,7 @@
       }
     },
     {
-      "id": "case_111_boc_go_platinum_merchant_locked",
+      "id": "case_111_boc_go_platinum_merchant_bonus",
       "input": {
         "amount": 500,
         "category": "go_merchant",
@@ -3329,9 +3329,9 @@
       },
       "expected": {
         "topCardId": "boc_go_platinum",
-        "topValue": 2,
+        "topValue": 25,
         "breakdownFlags": {
-          "hasLocked": true,
+          "hasLocked": false,
           "hasCapped": false,
           "hasPartial": false
         }
@@ -3350,13 +3350,11 @@
           "boc_go_platinum"
         ],
         "settings": {},
-        "usage": {
-          "spend_boc_go_platinum_monthly": 1000
-        }
+        "usage": {}
       },
       "expected": {
         "topCardId": "boc_go_platinum",
-        "topValue": 44,
+        "topValue": 50,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -3413,6 +3411,162 @@
           "hasLocked": false,
           "hasCapped": false,
           "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_114a_boc_go_mobile_google_pay_not_eligible",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "google_pay",
+        "ownedCards": [
+          "boc_go_diamond"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_diamond",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_114b_boc_go_mobile_boc_pay_eligible",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "boc_pay",
+        "ownedCards": [
+          "boc_go_diamond"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_diamond",
+        "topValue": 12,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_114c_boc_go_pmq126_local_mobile_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "boc_go_diamond"
+        ],
+        "settings": {
+          "boc_go_pmq126_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_diamond",
+        "topValue": 40,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_114d_boc_go_pmq126_mainland_mobile_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_cn",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "boc_go_diamond"
+        ],
+        "settings": {
+          "boc_go_pmq126_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_diamond",
+        "topValue": 80,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_114e_boc_go_platinum_pmq126_local_mobile_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-02-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "boc_go_platinum"
+        ],
+        "settings": {
+          "boc_go_pmq126_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_platinum",
+        "topValue": 20,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_114f_boc_go_merchant_boc_pay_not_eligible",
+      "input": {
+        "amount": 1000,
+        "category": "go_merchant",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "boc_pay",
+        "ownedCards": [
+          "boc_go_diamond"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_diamond",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
         }
       }
     },
@@ -3561,6 +3715,110 @@
       "expected": {
         "topCardId": "boc_sogo",
         "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_120a_boc_sogo_freshmart_monday_discount",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-09",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "sogo_freshmart",
+        "ownedCards": [
+          "boc_sogo"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_sogo",
+        "topValue": 47.5,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_120b_boc_sogo_freshmart_non_monday_no_discount",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "sogo_freshmart",
+        "ownedCards": [
+          "boc_sogo"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_sogo",
+        "topValue": 50,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_120c_boc_sogo_wasanmi_discount",
+      "input": {
+        "amount": 1000,
+        "category": "dining",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "wasanmi",
+        "ownedCards": [
+          "boc_sogo"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_sogo",
+        "topValue": 3.6,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_120d_boc_sogo_japan_sogo_discount",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_jp",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "sogo_japan",
+        "ownedCards": [
+          "boc_sogo"
+        ],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_sogo",
+        "topValue": 3.8,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -8047,6 +8305,91 @@
       "expected": {
         "topCardId": "dbs_live_fresh",
         "topValue": 54,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_284_boc_chill_netflix_maps_designated_merchant",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "netflix",
+        "ownedCards": ["boc_chill"],
+        "settings": {},
+        "usage": {
+          "spend_boc_chill_monthly": 1500
+        }
+      },
+      "expected": {
+        "topCardId": "boc_chill",
+        "topValue": 104,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_285_boc_chill_shared_cap_blocks_online_after_merchant",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "netflix",
+        "ownedCards": ["boc_chill"],
+        "settings": {},
+        "usage": {
+          "spend_boc_chill_monthly": 1500,
+          "boc_chill_bonus_cap_2026": 36000
+        }
+      },
+      "expected": {
+        "topCardId": "boc_chill",
+        "topValue": 10,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": true, "hasPartial": true }
+      }
+    },
+    {
+      "id": "case_286_boc_go_keeta_maps_designated_merchant",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "keeta",
+        "ownedCards": ["boc_go_diamond"],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_diamond",
+        "topValue": 50,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_287_boc_go_platinum_wellcome_maps_designated_merchant",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "wellcome",
+        "ownedCards": ["boc_go_platinum"],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "boc_go_platinum",
+        "topValue": 50,
         "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
       }
     }

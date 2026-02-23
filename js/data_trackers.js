@@ -240,21 +240,6 @@ const trackersDB = {
         effects_on_eligible: [{ key: "spend_boc_chill_monthly", amount: "tx_amount" }],
         counter: { key: "spend_boc_chill_monthly", period: "month" }
     },
-    "boc_go_platinum_mission_tracker": {
-        type: "mission_tracker",
-        desc: "🎯 Go Platinum 每月簽賬任務",
-        hide_in_equation: true,
-        mission_id: "boc_go_offer_platinum",
-        valid_from: "2025-01-01",
-        valid_to: "2026-06-30",
-        eligible_check: (cat, ctx) => {
-            const excludedCats = new Set(["alipay", "wechat", "payme", "oepay", "tuition", "charity"]);
-            if (excludedCats.has(cat)) return false;
-            return true;
-        },
-        effects_on_eligible: [{ key: "spend_boc_go_platinum_monthly", amount: "tx_amount" }],
-        counter: { key: "spend_boc_go_platinum_monthly", period: "month" }
-    },
     // DBS Black World 2026 promo:
     // - Mission spend uses qualified retail spending
     // - E-wallet spending only counts up to HK$5,000 per month toward mission threshold

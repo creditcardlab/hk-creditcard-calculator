@@ -418,7 +418,9 @@ window.runCalc = function () {
     }
 
     // Calls core.js function
-    const merchantId = window.__selectedMerchantId || null;
+    const merchantId = (typeof window.getEffectiveMerchantId === "function")
+        ? window.getEffectiveMerchantId()
+        : (window.__selectedMerchantId || null);
     const results = calculateResults(amt, cat, currentMode, userProfile, txDate, isHoliday, {
         deductFcfForRanking: !!userProfile.settings.deduct_fcf_ranking && currentMode === 'cash',
         isOnline,
@@ -570,7 +572,10 @@ function trackMissionSpend(cardId, category, amount, isOnline, isMobilePay, paym
 
 function commitTransaction(data) {
     const { amount, trackingKey, estValue, guruRC, missionTags, category, cardId, rewardTrackingKey, secondaryRewardTrackingKey, generatedReward, pendingUnlocks, isOnline } = data;
-    const merchantId = data.merchantId || (window.__selectedMerchantId) || null;
+    const fallbackMerchantId = (typeof window.getEffectiveMerchantId === "function")
+        ? window.getEffectiveMerchantId()
+        : (window.__selectedMerchantId || null);
+    const merchantId = data.merchantId || fallbackMerchantId || null;
     const paymentMethod = data.paymentMethod || (data.isMobilePay ? "mobile" : "physical");
     const isMobilePay = paymentMethod !== "physical";
     const txDate = data.txDate || "";

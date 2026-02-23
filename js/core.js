@@ -101,6 +101,7 @@ let userProfile = {
         ae_explorer_075x_enabled: false,
         ae_explorer_7x_enabled: false,
         ae_explorer_online_5x_enabled: false,
+        boc_go_pmq126_enabled: false,
         ae_platinum_9x_enabled: false,
         bea_world_flying_miles_enabled: false,
         bea_ititanium_bonus_enabled: false
@@ -131,6 +132,7 @@ const SETTING_BOOLEAN_DEFAULTS = {
     ae_explorer_075x_enabled: false,
     ae_explorer_7x_enabled: false,
     ae_explorer_online_5x_enabled: false,
+    boc_go_pmq126_enabled: false,
     ae_platinum_9x_enabled: false,
     sc_cathay_overseas_spending_offer_enabled: false,
     bea_world_flying_miles_enabled: false,
@@ -246,6 +248,14 @@ function parseTxDateParts(txDate) {
     return { year, month, day };
 }
 
+function getTxWeekday(txDate) {
+    const parts = parseTxDateParts(txDate);
+    if (!parts) return null;
+    // Use UTC noon to avoid timezone-dependent day shift.
+    const d = new Date(Date.UTC(parts.year, parts.month - 1, parts.day, 12, 0, 0));
+    return d.getUTCDay(); // 0=Sun, 1=Mon, ... 6=Sat
+}
+
 function getHsbcRedMcdDailyStampKey(txDate) {
     const s = String(txDate || "");
     if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return "";
@@ -288,7 +298,7 @@ function isHsbcRedMcdStampEligible(category, ctx) {
 }
 
 function getHsbcEasyMemberDayDiscount(card, amount, category, options) {
-    if (!card || card.id !== "hsbc_easy") return 0;
+    if (!card) return 0;
     const txAmt = Number(amount) || 0;
     if (txAmt <= 0) return 0;
     const opts = options || {};
@@ -300,39 +310,71 @@ function getHsbcEasyMemberDayDiscount(card, amount, category, options) {
     if (!dateParts) return 0;
     const isOnline = !!opts.isOnline;
 
-    const ruleByMerchant = {
-        parknshop: {
-            days: [2, 12, 22],
-            rate: 0.08,
-            cap: 64,
-            minSpendOffline: 100,
-            minSpendOnline: 800
-        },
-        watsons: {
-            days: [8, 18, 28],
-            rate: 0.08,
-            cap: 40,
-            minSpend: 400
-        },
-        watsons_wine: {
-            months: [1, 4, 7, 10],
-            days: [5],
-            rate: 0.08,
-            minSpend: 2000
-        },
-        fortress: {
-            months: [1, 5, 8, 12],
-            days: [10],
-            rate: 0.05,
-            cap: 100,
-            minSpend: 2000
-        }
-    };
+    let ruleByMerchant = null;
+    let weekday = null;
+
+    if (card.id === "hsbc_easy") {
+        ruleByMerchant = {
+            parknshop: {
+                days: [2, 12, 22],
+                rate: 0.08,
+                cap: 64,
+                minSpendOffline: 100,
+                minSpendOnline: 800
+            },
+            watsons: {
+                days: [8, 18, 28],
+                rate: 0.08,
+                cap: 40,
+                minSpend: 400
+            },
+            watsons_wine: {
+                months: [1, 4, 7, 10],
+                days: [5],
+                rate: 0.08,
+                minSpend: 2000
+            },
+            fortress: {
+                months: [1, 5, 8, 12],
+                days: [10],
+                rate: 0.05,
+                cap: 100,
+                minSpend: 2000
+            }
+        };
+    } else if (card.id === "boc_sogo") {
+        const txDate = String(opts.txDate || "");
+        if (txDate < "2026-01-01" || txDate > "2026-12-31") return 0;
+        if (isOnline) return 0;
+        weekday = getTxWeekday(txDate);
+        ruleByMerchant = {
+            sogo_freshmart: {
+                weekdays: [1], // Monday
+                rate: 0.05
+            },
+            wasanmi: {
+                rate: 0.1
+            },
+            sogo_japan: {
+                rate: 0.05
+            },
+            seibu_japan: {
+                rate: 0.05
+            }
+        };
+    } else {
+        return 0;
+    }
+
     const rule = ruleByMerchant[merchantId];
     if (!rule) return 0;
 
     if (Array.isArray(rule.months) && !rule.months.includes(dateParts.month)) return 0;
     if (Array.isArray(rule.days) && !rule.days.includes(dateParts.day)) return 0;
+    if (Array.isArray(rule.weekdays)) {
+        if (weekday === null) weekday = getTxWeekday(opts.txDate || "");
+        if (!rule.weekdays.includes(weekday)) return 0;
+    }
 
     const minSpend = isOnline
         ? (Number(rule.minSpendOnline) || Number(rule.minSpend) || 0)
@@ -799,6 +841,32 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 
         return { unlockKey, unlockTarget };
     };
+    const hasExplicitUnlockConfig = (sec) => {
+        if (!sec || typeof sec !== "object") return false;
+        if (Object.prototype.hasOwnProperty.call(sec, "unlockTarget")) return true;
+        if (typeof sec.unlockKey === "string" && sec.unlockKey.trim()) return true;
+        if (typeof sec.unlockModule === "string" && sec.unlockModule.trim()) return true;
+        if (Array.isArray(sec.unlockModules) && sec.unlockModules.some((id) => typeof id === "string" && id.trim())) return true;
+        return false;
+    };
+    const deriveUnlockSpecFromRefs = (refs) => {
+        const derivedKeys = [];
+        const derivedTargets = [];
+        uniqueList(refs).forEach((id) => {
+            const mod = getModule(id);
+            if (!mod) return;
+            if (mod.req_mission_key) derivedKeys.push(mod.req_mission_key);
+            const spend = toFiniteNumber(mod.req_mission_spend);
+            if (spend !== null) derivedTargets.push(spend);
+        });
+        const uniqKeys = uniqueList(derivedKeys);
+        const uniqTargets = uniqueList(derivedTargets);
+        const unlockKey = (uniqKeys.length === 1) ? uniqKeys[0] : null;
+        let unlockTarget = null;
+        if (uniqTargets.length === 1) unlockTarget = Number(uniqTargets[0]);
+        else if (uniqTargets.length > 1) unlockTarget = Math.max(...uniqTargets.map((n) => Number(n) || 0));
+        return { unlockKey, unlockTarget };
+    };
 
     (promo.sections || []).forEach(sec => {
         if (sec.type === "mission") {
@@ -836,8 +904,8 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 	            });
         }
 
-	        if (sec.type === "cap_rate") {
-	            const used = Number(userProfile.usage[sec.usageKey]) || 0;
+		        if (sec.type === "cap_rate") {
+		            const used = Number(userProfile.usage[sec.usageKey]) || 0;
 	            let capVal = toPositiveNumber(sec.cap);
 	            if (sec.capModule) {
 	                const capInfo = getCapFromModule(sec.capModule);
@@ -853,11 +921,13 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 	                if (rm && Number.isFinite(Number(rm.rate))) rate = Number(rm.rate);
 	            }
 	            if (!Number.isFinite(rate)) rate = 0;
-                const unlockSpec = deriveUnlockSpec(sec);
-                const fallbackTarget = toFiniteNumber(missionUnlockTarget);
-                const unlockTarget = unlockSpec.unlockTarget !== null ? unlockSpec.unlockTarget : fallbackTarget;
-                const unlockValue = unlockSpec.unlockKey ? (Number(userProfile.usage[unlockSpec.unlockKey]) || 0) : missionUnlockValue;
-                const hasCap = capVal !== null;
+	                let unlockSpec = deriveUnlockSpec(sec);
+	                if (!hasExplicitUnlockConfig(sec) && unlockSpec.unlockKey === null && unlockSpec.unlockTarget === null) {
+	                    unlockSpec = deriveUnlockSpecFromRefs([sec.capModule, sec.rateModule]);
+	                }
+	                const unlockTarget = unlockSpec.unlockTarget;
+	                const unlockValue = unlockSpec.unlockKey ? (Number(userProfile.usage[unlockSpec.unlockKey]) || 0) : null;
+	                const hasCap = capVal !== null;
 
 	            const rewardRaw = used * rate;
                 const reward = hasCap ? Math.min(capVal, rewardRaw) : rewardRaw;
@@ -974,22 +1044,24 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
             });
         }
 
-	        if (sec.type === "cap") {
-                const unlockSpec = deriveUnlockSpec(sec);
-	            let capKey = sec.capKey;
-	            let capVal = toPositiveNumber(sec.cap);
-	            if (sec.capModule) {
-	                const capInfo = getCapFromModule(sec.capModule);
-	                if (capInfo) {
-	                    capVal = toPositiveNumber(capInfo.cap);
-	                    capKey = capInfo.capKey || capKey;
+		        if (sec.type === "cap") {
+	                let unlockSpec = deriveUnlockSpec(sec);
+		            let capKey = sec.capKey;
+		            let capVal = toPositiveNumber(sec.cap);
+		            if (sec.capModule) {
+		                const capInfo = getCapFromModule(sec.capModule);
+		                if (capInfo) {
+		                    capVal = toPositiveNumber(capInfo.cap);
+		                    capKey = capInfo.capKey || capKey;
+		                }
+		            }
+	                if (!hasExplicitUnlockConfig(sec) && unlockSpec.unlockKey === null && unlockSpec.unlockTarget === null) {
+	                    unlockSpec = deriveUnlockSpecFromRefs([sec.capModule]);
 	                }
-	            }
-	            const used = Number(userProfile.usage[capKey]) || 0;
-                const fallbackTarget = toFiniteNumber(missionUnlockTarget);
-                const unlockTarget = unlockSpec.unlockTarget !== null ? unlockSpec.unlockTarget : fallbackTarget;
-                const unlockValue = unlockSpec.unlockKey ? (Number(userProfile.usage[unlockSpec.unlockKey]) || 0) : missionUnlockValue;
-	            const unlocked = (unlockTarget !== null && unlockValue !== null) ? (unlockValue >= unlockTarget) : true;
+		            const used = Number(userProfile.usage[capKey]) || 0;
+	                const unlockTarget = unlockSpec.unlockTarget;
+	                const unlockValue = unlockSpec.unlockKey ? (Number(userProfile.usage[unlockSpec.unlockKey]) || 0) : null;
+		            const unlocked = (unlockTarget !== null && unlockValue !== null) ? (unlockValue >= unlockTarget) : true;
                 const hasCap = capVal !== null;
 	            const pct = hasCap ? Math.min(100, (used / capVal) * 100) : ((unlockTarget && unlockTarget > 0) ? Math.min(100, ((unlockValue || 0) / unlockTarget) * 100) : 100);
 	            const unitRaw = sec.unit || '';
@@ -1374,6 +1446,34 @@ function evaluateModules(activeModules, amount, category, ctx) {
     let trackingKey = null;
     let rewardInfo = null;
     let pendingUnlocks = [];
+    const txRewardCapUsageByKey = Object.create(null);
+    const txRewardCapPotentialByKey = Object.create(null);
+    const getRewardCapState = (capKey, capLimit) => {
+        if (!capKey || !Number.isFinite(Number(capLimit))) return { remaining: Infinity, isMaxed: false };
+        const capCheck = checkCap(capKey, capLimit);
+        const txUsed = Number(txRewardCapUsageByKey[capKey]) || 0;
+        const remaining = Math.max(0, (Number(capCheck.remaining) || 0) - txUsed);
+        return { remaining, isMaxed: capCheck.isMaxed || remaining <= 0 };
+    };
+    const getRewardCapStatePotential = (capKey, capLimit) => {
+        if (!capKey || !Number.isFinite(Number(capLimit))) return { remaining: Infinity, isMaxed: false };
+        const capCheck = checkCap(capKey, capLimit);
+        const txUsed = Number(txRewardCapPotentialByKey[capKey]) || 0;
+        const remaining = Math.max(0, (Number(capCheck.remaining) || 0) - txUsed);
+        return { remaining, isMaxed: capCheck.isMaxed || remaining <= 0 };
+    };
+    const reserveRewardCap = (capKey, amountToReserve) => {
+        if (!capKey) return;
+        const reserve = Number(amountToReserve) || 0;
+        if (reserve <= 0) return;
+        txRewardCapUsageByKey[capKey] = (Number(txRewardCapUsageByKey[capKey]) || 0) + reserve;
+    };
+    const reserveRewardCapPotential = (capKey, amountToReserve) => {
+        if (!capKey) return;
+        const reserve = Number(amountToReserve) || 0;
+        if (reserve <= 0) return;
+        txRewardCapPotentialByKey[capKey] = (Number(txRewardCapPotentialByKey[capKey]) || 0) + reserve;
+    };
     const addBreakdown = (text, tone, flags) => {
         if (!text) return;
         breakdown.push(makeBreakdownFromText(text, tone, flags));
@@ -1410,11 +1510,11 @@ function evaluateModules(activeModules, amount, category, ctx) {
     function replaceModuleCapped(mod) {
         if (!mod || !mod.cap_limit || !mod.cap_key) return false;
         if (mod.cap_mode === 'reward') {
-            const capCheck = checkCap(mod.cap_key, mod.cap_limit);
-            let isMaxed = capCheck.isMaxed;
+            const capState = getRewardCapState(mod.cap_key, mod.cap_limit);
+            let isMaxed = capState.isMaxed;
             if (mod.secondary_cap_key && mod.secondary_cap_limit) {
-                const secCap = checkCap(mod.secondary_cap_key, mod.secondary_cap_limit);
-                if (secCap.isMaxed) isMaxed = true;
+                const secCapState = getRewardCapState(mod.secondary_cap_key, mod.secondary_cap_limit);
+                if (secCapState.isMaxed) isMaxed = true;
             }
             return isMaxed;
         }
@@ -1449,6 +1549,7 @@ function evaluateModules(activeModules, amount, category, ctx) {
         let tempDesc = null;
         let hit = false;
         let rate = 0;
+        let ratePotential = null;
         let capDisplayHandled = false;
         if (mod.setting_key && userProfile.settings[mod.setting_key] === false) return;
 
@@ -1542,14 +1643,21 @@ function evaluateModules(activeModules, amount, category, ctx) {
                     if (applyCurrent && mod.cap_mode !== 'reward') trackingKey = mod.cap_key;
 
                 if (mod.cap_mode === 'reward') {
-                    const rewardCapCheck = checkCap(mod.cap_key, mod.cap_limit);
-                    let remaining = rewardCapCheck.remaining;
-                    let isMaxed = rewardCapCheck.isMaxed;
+                    const rewardCapState = getRewardCapState(mod.cap_key, mod.cap_limit);
+                    let remaining = rewardCapState.remaining;
+                    let isMaxed = rewardCapState.isMaxed;
+
+                    const potCapState = getRewardCapStatePotential(mod.cap_key, mod.cap_limit);
+                    let remainingPot = potCapState.remaining;
+                    let isMaxedPot = potCapState.isMaxed;
 
                     if (mod.secondary_cap_key && mod.secondary_cap_limit) {
-                        const secCap = checkCap(mod.secondary_cap_key, mod.secondary_cap_limit);
-                        if (secCap.isMaxed) isMaxed = true;
-                        remaining = Math.min(remaining, secCap.remaining);
+                        const secCapState = getRewardCapState(mod.secondary_cap_key, mod.secondary_cap_limit);
+                        if (secCapState.isMaxed) isMaxed = true;
+                        remaining = Math.min(remaining, secCapState.remaining);
+                        const secCapStatePot = getRewardCapStatePotential(mod.secondary_cap_key, mod.secondary_cap_limit);
+                        if (secCapStatePot.isMaxed) isMaxedPot = true;
+                        remainingPot = Math.min(remainingPot, secCapStatePot.remaining);
                     }
 
                         if (isMaxed) {
@@ -1562,9 +1670,26 @@ function evaluateModules(activeModules, amount, category, ctx) {
                                 addModuleBreakdown(tempDesc || mod.desc);
                             } else {
                                 rate = remaining / amount;
-                                addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
+                                // For locked modules, suppress (部分) — the 🔒 prefix is sufficient
+                                if (!applyCurrent && applyPotential) {
+                                    addModuleBreakdown(tempDesc || mod.desc);
+                                } else {
+                                    addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
+                                }
                                 hit = true;
                             }
+                        }
+                        if (!isMaxedPot) {
+                            const projectedRewardPot = amount * mod.rate;
+                            if (projectedRewardPot <= remainingPot) {
+                                ratePotential = mod.rate;
+                                if (!hit) hit = true;
+                            } else {
+                                ratePotential = remainingPot / amount;
+                                if (!hit) hit = true;
+                            }
+                        } else {
+                            ratePotential = 0;
                         }
                 } else {
                     const capCheck = checkCap(mod.cap_key, mod.cap_limit);
@@ -1601,14 +1726,21 @@ function evaluateModules(activeModules, amount, category, ctx) {
                     if (applyCurrent && mod.cap_mode !== "reward") trackingKey = mod.cap_key;
 
                     if (mod.cap_mode === "reward") {
-                        const rewardCapCheck = checkCap(mod.cap_key, mod.cap_limit);
-                        let remaining = rewardCapCheck.remaining;
-                        let isMaxed = rewardCapCheck.isMaxed;
+                        const rewardCapState = getRewardCapState(mod.cap_key, mod.cap_limit);
+                        let remaining = rewardCapState.remaining;
+                        let isMaxed = rewardCapState.isMaxed;
+
+                        const potCapState = getRewardCapStatePotential(mod.cap_key, mod.cap_limit);
+                        let remainingPot = potCapState.remaining;
+                        let isMaxedPot = potCapState.isMaxed;
 
                         if (mod.secondary_cap_key && mod.secondary_cap_limit) {
-                            const secCap = checkCap(mod.secondary_cap_key, mod.secondary_cap_limit);
-                            if (secCap.isMaxed) isMaxed = true;
-                            remaining = Math.min(remaining, secCap.remaining);
+                            const secCapState = getRewardCapState(mod.secondary_cap_key, mod.secondary_cap_limit);
+                            if (secCapState.isMaxed) isMaxed = true;
+                            remaining = Math.min(remaining, secCapState.remaining);
+                            const secCapStatePot = getRewardCapStatePotential(mod.secondary_cap_key, mod.secondary_cap_limit);
+                            if (secCapStatePot.isMaxed) isMaxedPot = true;
+                            remainingPot = Math.min(remainingPot, secCapStatePot.remaining);
                         }
 
                         if (isMaxed) {
@@ -1622,6 +1754,17 @@ function evaluateModules(activeModules, amount, category, ctx) {
                             rate = remaining / amount;
                             hit = true;
                             addModuleBreakdown(partialText, null, { partial: true });
+                        }
+                        if (!isMaxedPot) {
+                            if (overflowRewardRaw <= remainingPot) {
+                                ratePotential = overflowRewardRaw / amount;
+                                if (!hit) hit = true;
+                            } else {
+                                ratePotential = remainingPot / amount;
+                                if (!hit) hit = true;
+                            }
+                        } else {
+                            ratePotential = 0;
                         }
                     } else {
                         const capCheck = checkCap(mod.cap_key, mod.cap_limit);
@@ -1690,14 +1833,21 @@ function evaluateModules(activeModules, amount, category, ctx) {
                 if (applyCurrent && mod.cap_mode !== 'reward') trackingKey = mod.cap_key;
 
                 if (mod.cap_mode === 'reward') {
-                    const rewardCapCheck = checkCap(mod.cap_key, mod.cap_limit);
-                    let remaining = rewardCapCheck.remaining;
-                    let isMaxed = rewardCapCheck.isMaxed;
+                    const rewardCapState = getRewardCapState(mod.cap_key, mod.cap_limit);
+                    let remaining = rewardCapState.remaining;
+                    let isMaxed = rewardCapState.isMaxed;
+
+                    const potCapState = getRewardCapStatePotential(mod.cap_key, mod.cap_limit);
+                    let remainingPot = potCapState.remaining;
+                    let isMaxedPot = potCapState.isMaxed;
 
                     if (mod.secondary_cap_key && mod.secondary_cap_limit) {
-                        const secCap = checkCap(mod.secondary_cap_key, mod.secondary_cap_limit);
-                        if (secCap.isMaxed) isMaxed = true;
-                        remaining = Math.min(remaining, secCap.remaining);
+                        const secCapState = getRewardCapState(mod.secondary_cap_key, mod.secondary_cap_limit);
+                        if (secCapState.isMaxed) isMaxed = true;
+                        remaining = Math.min(remaining, secCapState.remaining);
+                        const secCapStatePot = getRewardCapStatePotential(mod.secondary_cap_key, mod.secondary_cap_limit);
+                        if (secCapStatePot.isMaxed) isMaxedPot = true;
+                        remainingPot = Math.min(remainingPot, secCapStatePot.remaining);
                     }
 
                     if (isMaxed) {
@@ -1711,6 +1861,16 @@ function evaluateModules(activeModules, amount, category, ctx) {
                             rate = remaining / amount;
                             addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
                         }
+                    }
+                    if (!isMaxedPot) {
+                        const projRewardPot = amount * (ratePotential !== null ? ratePotential : rate);
+                        if (projRewardPot > remainingPot) {
+                            ratePotential = remainingPot / amount;
+                        } else if (ratePotential === null) {
+                            ratePotential = rate;
+                        }
+                    } else {
+                        ratePotential = 0;
                     }
                     capDisplayHandled = true;
                 } else {
@@ -1735,8 +1895,10 @@ function evaluateModules(activeModules, amount, category, ctx) {
                 const allowCurrent = applyCurrent && !skipCurrent;
                 const allowPotential = applyPotential && !skipPotential;
 
+                const effectivePotentialRate = ratePotential !== null ? ratePotential : rate;
+
                 if (allowCurrent) totalRate += rate;
-                if (allowPotential) totalRatePotential += rate;
+                if (allowPotential) totalRatePotential += effectivePotentialRate;
 
                 const descText = tempDesc || mod.desc;
                 const capDisplayHandledInBranch = (mod.type === "category" && !!mod.cap_limit) || capDisplayHandled;
@@ -1748,10 +1910,21 @@ function evaluateModules(activeModules, amount, category, ctx) {
                     rewardInfo.val += actualReward;
                     rewardInfo.key = mod.cap_key;
                     if (mod.secondary_cap_key) rewardInfo.secondaryKey = mod.secondary_cap_key;
+                    reserveRewardCap(mod.cap_key, actualReward);
+                    if (mod.secondary_cap_key && mod.secondary_cap_key !== mod.cap_key) {
+                        reserveRewardCap(mod.secondary_cap_key, actualReward);
+                    }
+                }
+                if ((allowCurrent || allowPotential) && mod.cap_mode === 'reward' && mod.cap_limit) {
+                    const potReward = amount * effectivePotentialRate;
+                    reserveRewardCapPotential(mod.cap_key, potReward);
+                    if (mod.secondary_cap_key && mod.secondary_cap_key !== mod.cap_key) {
+                        reserveRewardCapPotential(mod.secondary_cap_key, potReward);
+                    }
                 }
 
                 if (allowPotential && !allowCurrent && retroactive && mod.req_mission_key) {
-                    const pendingNative = amount * rate;
+                    const pendingNative = amount * effectivePotentialRate;
                     if (pendingNative > 0) {
                             pendingUnlocks.push({
                                 reqKey: mod.req_mission_key,
@@ -1815,7 +1988,7 @@ function buildFinalResult(card, amount, category, displayMode, totalRate, totalR
     const estCashNetPotential = estCashPotential - foreignFee + safeMemberDayDiscount;
     const breakdownEntries = Array.isArray(breakdown) ? [...breakdown] : [];
     if (safeMemberDayDiscount > 0 && displayMode === "cash") {
-        breakdownEntries.push(makeBreakdownEntry(`會員日折扣 +$${safeMemberDayDiscount.toFixed(1)}`, "warning"));
+        breakdownEntries.push(makeBreakdownEntry(`商戶折扣 +$${safeMemberDayDiscount.toFixed(1)}`, "warning"));
     }
 
     let valStr = "", unitStr = "";
