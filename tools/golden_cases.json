@@ -4014,7 +4014,7 @@
       },
       "expected": {
         "topCardId": "ae_explorer",
-        "topValue": 42.5,
+        "topValue": 35.833333,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -4188,11 +4188,12 @@
       "id": "case_134_ae_platinum_travel_designated_9x",
       "input": {
         "amount": 1000,
-        "category": "ae_plat_travel_designated",
+        "category": "general",
         "date": "2026-03-10",
         "displayMode": "cash",
-        "isOnline": false,
+        "isOnline": true,
         "paymentMethod": "physical",
+        "merchantId": "hutchgo",
         "ownedCards": [
           "ae_platinum"
         ],
@@ -4242,11 +4243,12 @@
       "id": "case_136_ae_platinum_promo_outside_window",
       "input": {
         "amount": 1000,
-        "category": "ae_plat_travel_designated",
+        "category": "general",
         "date": "2026-07-05",
         "displayMode": "cash",
-        "isOnline": false,
+        "isOnline": true,
         "paymentMethod": "physical",
+        "merchantId": "hutchgo",
         "ownedCards": [
           "ae_platinum"
         ],
@@ -8390,6 +8392,500 @@
       "expected": {
         "topCardId": "boc_go_platinum",
         "topValue": 50,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_288_ae_platinum_hutchgo_maps_travel_designated",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "hutchgo",
+        "ownedCards": ["ae_platinum"],
+        "settings": {
+          "ae_platinum_9x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 30,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_289_ae_platinum_parknshop_maps_daily_designated",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "parknshop",
+        "ownedCards": ["ae_platinum"],
+        "settings": {
+          "ae_platinum_9x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 30,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_290_ae_platinum_hotels_com_maps_travel_designated",
+      "input": {
+        "amount": 1000,
+        "category": "travel",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "hotels_com",
+        "ownedCards": ["ae_platinum"],
+        "settings": {
+          "ae_platinum_9x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 30,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_291_ae_platinum_sogo_freshmart_online_allowed",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "sogo_freshmart",
+        "ownedCards": ["ae_platinum"],
+        "settings": {
+          "ae_platinum_9x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 30,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_292_ae_platinum_hutchgo_unregistered_fallback_accelerator",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "hutchgo",
+        "ownedCards": ["ae_platinum"],
+        "settings": {
+          "ae_platinum_9x_enabled": false
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 6.666667,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_293_ae_platinum_parknshop_online_not_eligible_daily",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "parknshop",
+        "ownedCards": ["ae_platinum"],
+        "settings": {
+          "ae_platinum_9x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 6.666667,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_294_ae_platinum_caltex_maps_daily_designated",
+      "input": {
+        "amount": 1000,
+        "category": "gas",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "caltex",
+        "ownedCards": ["ae_platinum"],
+        "settings": {
+          "ae_platinum_9x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 30,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_295_ae_platinum_hutchgo_offline_not_eligible_travel_designated",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "hutchgo",
+        "ownedCards": ["ae_platinum"],
+        "settings": {
+          "ae_platinum_9x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 6.666667,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_296_ae_platinum_kkday_not_in_designated_online_travel_list",
+      "input": {
+        "amount": 1000,
+        "category": "travel_ticket",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "kkday",
+        "ownedCards": ["ae_platinum"],
+        "settings": {
+          "ae_platinum_9x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum",
+        "topValue": 6.666667,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_297_ae_explorer_amazon_com_maps_online_designated",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-09-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "amazon_com",
+        "ownedCards": ["ae_explorer"],
+        "settings": {
+          "ae_explorer_online_5x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_explorer",
+        "topValue": 16.666667,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_298_ae_explorer_iherb_maps_online_designated",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-09-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "iherb",
+        "ownedCards": ["ae_explorer"],
+        "settings": {
+          "ae_explorer_online_5x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_explorer",
+        "topValue": 16.666667,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_299_ae_explorer_designated_offline_no_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-09-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "mcdonalds",
+        "ownedCards": ["ae_explorer"],
+        "settings": {
+          "ae_explorer_online_5x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_explorer",
+        "topValue": 10,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_300_ae_explorer_trip_com_maps_online_travel_designated",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "trip_com",
+        "ownedCards": ["ae_explorer"],
+        "settings": {
+          "ae_explorer_075x_enabled": true,
+          "ae_explorer_7x_enabled": true,
+          "ae_explorer_online_5x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_explorer",
+        "topValue": 35.833333,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_301_ae_explorer_agoda_h2_only_online5x",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-09-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "agoda",
+        "ownedCards": ["ae_explorer"],
+        "settings": {
+          "ae_explorer_online_5x_enabled": true
+        },
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_explorer",
+        "topValue": 10,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_302_ae_pcc_parknshop_online_blocked_designated_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "parknshop",
+        "ownedCards": ["ae_platinum_credit"],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum_credit",
+        "topValue": 10,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_303_ae_pcc_sogo_freshmart_online_allowed_designated_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "merchantId": "sogo_freshmart",
+        "ownedCards": ["ae_platinum_credit"],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum_credit",
+        "topValue": 20,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_304_ae_pcc_citysuper_97_discount_with_designated_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "citysuper",
+        "ownedCards": ["ae_platinum_credit"],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum_credit",
+        "topValue": 19.4,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_305_ae_pcc_izabis_97_discount_without_designated_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "izabis_citysuper",
+        "ownedCards": ["ae_platinum_credit"],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum_credit",
+        "topValue": 9.7,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_306_ae_pcc_citysuper_discount_outside_window_not_applied",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2027-01-05",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "citysuper",
+        "ownedCards": ["ae_platinum_credit"],
+        "settings": {},
+        "usage": {}
+      },
+      "expected": {
+        "topCardId": "ae_platinum_credit",
+        "topValue": 3.333333,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_307_bea_goal_public_transport_unlocked",
+      "input": {
+        "amount": 1000,
+        "category": "public_transport",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": ["bea_goal"],
+        "settings": {},
+        "usage": {
+          "bea_goal_mission": 2000
+        }
+      },
+      "expected": {
+        "topCardId": "bea_goal",
+        "topValue": 64,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_308_bea_goal_gas_not_in_transport_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "gas",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": ["bea_goal"],
+        "settings": {},
+        "usage": {
+          "bea_goal_mission": 2000
+        }
+      },
+      "expected": {
+        "topCardId": "bea_goal",
+        "topValue": 4,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_309_bea_goal_grocery_mobile_no_extra_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "grocery",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": ["bea_goal"],
+        "settings": {},
+        "usage": {
+          "bea_goal_mission": 2000
+        }
+      },
+      "expected": {
+        "topCardId": "bea_goal",
+        "topValue": 4,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_310_bea_goal_public_transport_mobile_no_double_count",
+      "input": {
+        "amount": 1000,
+        "category": "public_transport",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "apple_pay",
+        "ownedCards": ["bea_goal"],
+        "settings": {},
+        "usage": {
+          "bea_goal_mission": 2000
+        }
+      },
+      "expected": {
+        "topCardId": "bea_goal",
+        "topValue": 64,
         "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
       }
     }

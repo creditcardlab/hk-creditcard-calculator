@@ -2796,7 +2796,7 @@ function renderCalculatorResults(results, currentMode) {
             : ((typeof window !== "undefined" && window.__selectedMerchantId) ? String(window.__selectedMerchantId) : "");
         const showMemberDayLine = !showFeeEquation
             && !!selectedMerchantId
-            && (res.cardId === "hsbc_easy" || res.cardId === "boc_sogo");
+            && (res.cardId === "hsbc_easy" || res.cardId === "boc_sogo" || res.cardId === "ae_platinum_credit");
         const adjustmentBits = [];
         if (!showFeeEquation && foreignFee > 0) {
             adjustmentBits.push(`<div class="text-xs text-amber-600 mt-0.5"><i class="fas fa-money-bill-wave mr-1"></i>外幣手續費: -$${foreignFee.toFixed(1)}</div>`);
@@ -3465,6 +3465,14 @@ function renderSettings(userProfile) {
         <div class="mt-1 text-[11px] text-gray-500">
             已按商戶 + 交易日期自動計算可量化折扣（Freshmart 逢星期一、和三昧、日本 SOGO/SEIBU）。計算只覆蓋可由系統判斷條件，並以你選擇的商戶為準。
             <a href="https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf" target="_blank" rel="noopener" class="underline underline-offset-2">條款</a>
+        </div>
+    </div>`);
+    if (ownedSet.has("ae_platinum_credit")) ensureBucket(preferenceBlocksByCard, "ae_platinum_credit").push(`<div class="border p-3 rounded-md bg-[#fcfcfc] border-[#e9e9e7]">
+        <div class="text-xs font-semibold text-[#37352f] mb-2">AE 大頭：指定商戶 97 折</div>
+        <div class="mt-1 text-[11px] text-gray-500">
+            已按商戶自動計算 97 折（city'super、LOG-ON、cookedDeli、city'super EKI、味蔵、iza'bis、cafe ToGather）。
+            只覆蓋可由系統判斷條件，未核實「指定正價貨品/食品及飲品」等細項排除。
+            <a href="https://www.americanexpress.com/content/dam/amex/hk/benefits/pdf/TnCs_platinum-membership-rewards-accelerator.pdf" target="_blank" rel="noopener" class="underline underline-offset-2">條款</a>
         </div>
     </div>`);
 

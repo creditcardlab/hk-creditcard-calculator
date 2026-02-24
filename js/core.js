@@ -362,6 +362,19 @@ function getHsbcEasyMemberDayDiscount(card, amount, category, options) {
                 rate: 0.05
             }
         };
+    } else if (card.id === "ae_platinum_credit") {
+        const txDate = String(opts.txDate || "");
+        if (txDate < "2025-01-01" || txDate > "2026-12-31") return 0;
+        ruleByMerchant = {
+            citysuper: { rate: 0.03 },
+            log_on: { rate: 0.03 },
+            citysuper_log_on: { rate: 0.03 },
+            cookeddeli: { rate: 0.03 },
+            citysuper_eki: { rate: 0.03 },
+            mizokura_citysuper: { rate: 0.03 },
+            izabis_citysuper: { rate: 0.03 },
+            cafe_togather_log_on: { rate: 0.03 }
+        };
     } else {
         return 0;
     }

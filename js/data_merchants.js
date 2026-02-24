@@ -29,13 +29,13 @@ const merchantsDB = {
             "便利佳", "百佳冷凍食品", "百佳網店", "parknshop online"
         ],
         defaultCategory: "grocery",
-        byCardId: { "hsbc_easy": "moneyback_pns_watsons", "sc_smart": "smart_designated" }
+        byCardId: { "hsbc_easy": "moneyback_pns_watsons", "sc_smart": "smart_designated", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "watsons": {
         name: "Watsons 屈臣氏",
         aliases: ["watsons", "屈臣氏", "watsons eshop", "屈臣氏網店"],
         defaultCategory: "health_beauty",
-        byCardId: { "hsbc_easy": "moneyback_pns_watsons", "sc_smart": "smart_designated", "dbs_live_fresh": "live_fresh_charity_designated" }
+        byCardId: { "hsbc_easy": "moneyback_pns_watsons", "sc_smart": "smart_designated", "dbs_live_fresh": "live_fresh_charity_designated", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "fortress": {
         name: "Fortress 豐澤",
@@ -166,6 +166,11 @@ const merchantsDB = {
         defaultCategory: "dining",
         byCardId: { "citi_club": "citi_club_merchant" }
     },
+    "mizokura_citysuper": {
+        name: "味蔵 by city'super",
+        aliases: ["味蔵 by city'super", "味蔵", "mizokura by city'super", "mizokura"],
+        defaultCategory: "dining"
+    },
     "simatuoche_chaoshan_restaurant": {
         name: "駟馬拖車潮汕飯店",
         aliases: ["駟馬拖車潮汕飯店", "simatuoche", "潮汕飯店"],
@@ -182,7 +187,7 @@ const merchantsDB = {
         name: "city'super EKI",
         aliases: ["citysuper eki", "city'super eki"],
         defaultCategory: "grocery",
-        byCardId: { "citi_club": "citi_club_merchant" }
+        byCardId: { "citi_club": "citi_club_merchant", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "farfetch_hk": {
         name: "Farfetch HK",
@@ -337,9 +342,9 @@ const merchantsDB = {
     },
     "sogo_freshmart": {
         name: "SOGO Freshmart",
-        aliases: ["freshmart", "sogo freshmart", "崇光 freshmart", "崇光freshmart", "freshmart 啟德", "freshmart 銅鑼灣"],
+        aliases: ["freshmart", "sogo freshmart", "崇光 freshmart", "崇光freshmart", "freshmart 啟德", "freshmart 銅鑼灣", "崇光超市", "sogo supermarket"],
         defaultCategory: "grocery",
-        byCardId: { "boc_sogo": "sogo_merchant" }
+        byCardId: { "boc_sogo": "sogo_merchant", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "wasanmi": {
         name: "和三昧",
@@ -394,7 +399,7 @@ const merchantsDB = {
         name: "McDonald's 麥當勞",
         aliases: ["mcd", "mcdonalds", "mcdonald's", "麥當勞", "mcdonald app", "mcdonald's app", "麥當勞 app", "麥當勞app"],
         defaultCategory: "fastfood",
-        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant", "boc_chill": "chill_merchant" }
+        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant", "boc_chill": "chill_merchant", "ae_explorer": "ae_online_designated" }
     },
     "kfc": {
         name: "KFC 肯德基",
@@ -829,7 +834,7 @@ const merchantsDB = {
         name: "foodpanda",
         aliases: ["foodpanda", "富胖達"],
         defaultCategory: "dining",
-        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant", "dbs_live_fresh": "live_fresh_travel_designated" }
+        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant", "dbs_live_fresh": "live_fresh_travel_designated", "ae_explorer": "ae_online_designated" }
     },
     "deliveroo": {
         name: "Deliveroo 戶戶送",
@@ -847,25 +852,30 @@ const merchantsDB = {
         name: "Wellcome 惠康",
         aliases: ["wellcome", "惠康"],
         defaultCategory: "grocery",
-        byCardId: { "hangseng_enjoy": "enjoy_3x", "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant" }
+        byCardId: { "hangseng_enjoy": "enjoy_3x", "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "market_place": {
         name: "Market Place by Jasons",
-        aliases: ["market place", "jasons", "market place by jasons"],
+        aliases: ["market place", "jasons", "market place by jasons", "marketplace"],
         defaultCategory: "grocery",
-        byCardId: { "hangseng_enjoy": "enjoy_3x", "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant" }
+        byCardId: { "hangseng_enjoy": "enjoy_3x", "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "threesixty": {
         name: "3hreesixty",
         aliases: ["3hreesixty", "three sixty", "3hree sixty"],
         defaultCategory: "grocery",
-        byCardId: { "hangseng_enjoy": "enjoy_3x", "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant" }
+        byCardId: { "hangseng_enjoy": "enjoy_3x", "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "olivers": {
         name: "Oliver's",
         aliases: ["oliver's", "olivers", "oliver's the delicatessen"],
         defaultCategory: "grocery",
-        byCardId: { "hangseng_enjoy": "enjoy_3x", "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant" }
+        byCardId: { "hangseng_enjoy": "enjoy_3x", "boc_go_diamond": "go_merchant", "boc_go_platinum": "go_merchant", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
+    },
+    "olivers_super_sandwiches": {
+        name: "Oliver's Super Sandwiches",
+        aliases: ["oliver's super sandwiches", "olivers super sandwiches", "oss"],
+        defaultCategory: "dining"
     },
     "keeta": {
         name: "Keeta",
@@ -907,7 +917,19 @@ const merchantsDB = {
         name: "Mannings 萬寧",
         aliases: ["mannings", "萬寧"],
         defaultCategory: "health_beauty",
-        byCardId: { "hangseng_enjoy": "enjoy_3x" }
+        byCardId: { "hangseng_enjoy": "enjoy_3x", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
+    },
+    "mannings_baby": {
+        name: "Mannings Baby",
+        aliases: ["mannings baby", "萬寧 baby", "萬寧baby"],
+        defaultCategory: "health_beauty",
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
+    },
+    "mannings_plus": {
+        name: "Mannings Plus",
+        aliases: ["mannings plus", "萬寧 plus", "萬寧plus"],
+        defaultCategory: "health_beauty",
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "ikea_hk": {
         name: "IKEA 宜家家居",
@@ -949,18 +971,20 @@ const merchantsDB = {
         name: "AEON",
         aliases: ["aeon", "永旺"],
         defaultCategory: "grocery",
-        byPrefix: { "hsbc": "department_store" }
+        byPrefix: { "hsbc": "department_store" },
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "donki": {
         name: "DON DON DONKI",
         aliases: ["donki", "don don donki"],
         defaultCategory: "grocery",
-        byCardId: { "dbs_live_fresh": "live_fresh_charity_designated" }
+        byCardId: { "dbs_live_fresh": "live_fresh_charity_designated", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "store_759": {
         name: "759 阿信屋",
         aliases: ["759", "759阿信屋", "阿信屋"],
-        defaultCategory: "grocery"
+        defaultCategory: "grocery",
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "big_c": {
         name: "Big C",
@@ -996,37 +1020,44 @@ const merchantsDB = {
     "fusion": {
         name: "FUSION",
         aliases: ["fusion"],
-        defaultCategory: "grocery"
+        defaultCategory: "grocery",
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "taste": {
         name: "TASTE",
         aliases: ["taste"],
-        defaultCategory: "grocery"
+        defaultCategory: "grocery",
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "taste_x_fresh": {
         name: "TASTE x FRESH",
         aliases: ["taste x fresh", "tastexfresh"],
-        defaultCategory: "grocery"
+        defaultCategory: "grocery",
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "international": {
         name: "INTERNATIONAL",
         aliases: ["international supermarket", "international"],
-        defaultCategory: "grocery"
+        defaultCategory: "grocery",
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "food_le_parc": {
         name: "food le parc",
         aliases: ["food le parc", "foodleparc"],
-        defaultCategory: "grocery"
+        defaultCategory: "grocery",
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "gourmet_store": {
         name: "GOURMET",
         aliases: ["gourmet"],
-        defaultCategory: "grocery"
+        defaultCategory: "grocery",
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "great_food_hall": {
         name: "GREAT FOOD HALL",
         aliases: ["great food hall"],
-        defaultCategory: "grocery"
+        defaultCategory: "grocery",
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "dolaimai": {
         name: "多來買",
@@ -1035,10 +1066,16 @@ const merchantsDB = {
     },
     "citysuper": {
         name: "city'super",
-        aliases: ["citysuper", "city'super"],
+        aliases: ["citysuper", "city'super", "citysuper e-shop", "city'super e-shop", "citysuper eshop", "city'super eshop"],
         defaultCategory: "grocery",
         byPrefix: { "hsbc": "department_store" },
-        byCardId: { "citi_club": "citi_club_merchant" }
+        byCardId: { "citi_club": "citi_club_merchant", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
+    },
+    "cookeddeli": {
+        name: "cookedDeli",
+        aliases: ["cookeddeli", "cooked deli", "citysuper cookeddeli"],
+        defaultCategory: "grocery",
+        byCardId: { "ae_platinum_credit": "ae_pcc_designated" }
     },
     "seven_eleven": {
         name: "7-Eleven",
@@ -1050,14 +1087,42 @@ const merchantsDB = {
         name: "Circle K OK便利店",
         aliases: ["circle k", "ok 便利店", "ok便利店", "ok store"],
         defaultCategory: "grocery",
-        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant" }
+        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "hktvmall": {
         name: "HKTVmall",
         aliases: ["hktvmall", "香港電視mall", "香港電視 mall"],
         defaultCategory: "online",
         byPrefix: { "hsbc": "department_store" },
-        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant", "dbs_live_fresh": "live_fresh_charity_designated" }
+        byCardId: { "sc_smart": "smart_designated", "citi_club": "citi_club_merchant", "dbs_live_fresh": "live_fresh_charity_designated", "ae_explorer": "ae_online_designated" }
+    },
+    "u_select": {
+        name: "U select",
+        aliases: ["u select", "u-select"],
+        defaultCategory: "grocery",
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
+    },
+    "cr_vanguard": {
+        name: "華潤萬家",
+        aliases: ["華潤萬家", "cr vanguard", "china resources vanguard"],
+        defaultCategory: "grocery",
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
+    },
+    "vango": {
+        name: "VanGO",
+        aliases: ["vango", "van go"],
+        defaultCategory: "grocery",
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
+    },
+    "wellcome_delivers": {
+        name: "wellcome Delivers",
+        aliases: ["wellcome delivers", "wellcome deliver", "惠康送貨", "惠康送貨服務"],
+        defaultCategory: "online"
+    },
+    "yuu_online_shop": {
+        name: "yuu online shop",
+        aliases: ["yuu online shop", "yuu 網店", "yuu e-shop", "yuu eshop"],
+        defaultCategory: "online"
     },
 
     // HSBC 最紅自主「賞家居」- 家居用品
@@ -1214,19 +1279,22 @@ const merchantsDB = {
         name: "AEON STYLE",
         aliases: ["aeon style"],
         defaultCategory: "department_store",
-        byPrefix: { "hsbc": "department_store" }
+        byPrefix: { "hsbc": "department_store" },
+        byCardId: { "ae_platinum": "ae_plat_daily_designated" }
     },
     "aeon_supermarket": {
         name: "AEON SUPERMARKET",
         aliases: ["aeon supermarket"],
         defaultCategory: "department_store",
-        byPrefix: { "hsbc": "department_store" }
+        byPrefix: { "hsbc": "department_store" },
+        byCardId: { "ae_platinum": "ae_plat_daily_designated" }
     },
     "apita": {
         name: "APITA",
         aliases: ["apita"],
         defaultCategory: "department_store",
-        byPrefix: { "hsbc": "department_store" }
+        byPrefix: { "hsbc": "department_store" },
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "bento_express_aeon": {
         name: "Bento Express by AEON",
@@ -1250,7 +1318,8 @@ const merchantsDB = {
         name: "千色 Citistore",
         aliases: ["citistore", "千色", "千色citistore"],
         defaultCategory: "department_store",
-        byPrefix: { "hsbc": "department_store" }
+        byPrefix: { "hsbc": "department_store" },
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "citysuper_neighbourhood": {
         name: "city'super neighbourhood",
@@ -1264,7 +1333,7 @@ const merchantsDB = {
         aliases: ["citysuper log-on", "city'super log-on"],
         defaultCategory: "department_store",
         byPrefix: { "hsbc": "department_store" },
-        byCardId: { "citi_club": "citi_club_merchant", "boc_chill": "chill_merchant" }
+        byCardId: { "citi_club": "citi_club_merchant", "boc_chill": "chill_merchant", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "guk_san": {
         name: "谷辰",
@@ -1289,7 +1358,7 @@ const merchantsDB = {
         aliases: ["log-on", "log on", "cafe togather by log-on", "cafe togather"],
         defaultCategory: "department_store",
         byPrefix: { "hsbc": "department_store" },
-        byCardId: { "citi_club": "citi_club_merchant", "boc_chill": "chill_merchant" }
+        byCardId: { "citi_club": "citi_club_merchant", "boc_chill": "chill_merchant", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "marks_and_spencer": {
         name: "MARKS & SPENCER",
@@ -1313,7 +1382,8 @@ const merchantsDB = {
         name: "UNY 生活創富",
         aliases: ["uny", "uny 生活創富", "生活創富"],
         defaultCategory: "department_store",
-        byPrefix: { "hsbc": "department_store" }
+        byPrefix: { "hsbc": "department_store" },
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "wing_on_department_store": {
         name: "永安百貨",
@@ -1323,9 +1393,10 @@ const merchantsDB = {
     },
     "yata": {
         name: "一田 YATA",
-        aliases: ["一田", "yata"],
+        aliases: ["一田", "yata", "yata supermarket", "yataday", "一田超市", "一田 yataday"],
         defaultCategory: "department_store",
-        byPrefix: { "hsbc": "department_store" }
+        byPrefix: { "hsbc": "department_store" },
+        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
 
     // 書店
@@ -1615,7 +1686,7 @@ const merchantsDB = {
         name: "屈臣氏酒窖 Watson's Wine",
         aliases: ["屈臣氏酒窖", "watson's wine", "watsons wine"],
         defaultCategory: "grocery",
-        byCardId: { "hsbc_easy": "easy_additional_3x", "dbs_live_fresh": "live_fresh_charity_designated" },
+        byCardId: { "hsbc_easy": "easy_additional_3x", "dbs_live_fresh": "live_fresh_charity_designated", "ae_explorer": "ae_online_designated" },
         byPrefix: { "hsbc": "department_store" }
     },
 
@@ -1688,14 +1759,14 @@ const merchantsDB = {
         name: "Esso 埃索",
         aliases: ["esso", "埃索"],
         defaultCategory: "gas",
-        byCardId: { "hsbc_everymile": "em_designated_spend" },
+        byCardId: { "hsbc_everymile": "em_designated_spend", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" },
         byPrefix: { "hsbc": "supermarket" }
     },
     "petrochina": {
         name: "PetroChina 中國石油",
         aliases: ["petrochina", "中國石油"],
         defaultCategory: "gas",
-        byCardId: { "hsbc_everymile": "em_designated_spend" }
+        byCardId: { "hsbc_everymile": "em_designated_spend", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
     },
     "sinopec": {
         name: "Sinopec 中石化",
@@ -1708,14 +1779,14 @@ const merchantsDB = {
         name: "Shell 蜆殼",
         aliases: ["shell", "蜆殼"],
         defaultCategory: "gas",
-        byCardId: { "hsbc_everymile": "em_designated_spend", "hangseng_enjoy": "enjoy_shell_2x" },
+        byCardId: { "hsbc_everymile": "em_designated_spend", "hangseng_enjoy": "enjoy_shell_2x", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" },
         byPrefix: { "hsbc": "supermarket" }
     },
     "caltex": {
         name: "Caltex 加德士",
         aliases: ["caltex", "加德士"],
         defaultCategory: "gas",
-        byCardId: { "hsbc_everymile": "em_designated_spend" },
+        byCardId: { "hsbc_everymile": "em_designated_spend", "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" },
         byPrefix: { "hsbc": "supermarket" }
     },
     "tesla_supercharger": {
@@ -1769,13 +1840,38 @@ const merchantsDB = {
     "trip_com": {
         name: "Trip.com",
         aliases: ["trip.com", "trip com", "攜程"],
-        defaultCategory: "travel_agency"
+        defaultCategory: "travel_ticket",
+        byCardId: { "ae_platinum": "ae_plat_travel_designated", "ae_explorer": "ae_online_travel_designated" }
     },
     "hutchgo": {
         name: "hutchgo",
         aliases: ["hutchgo"],
-        defaultCategory: "travel_agency",
-        byCardId: { "hsbc_easy": "easy_additional_3x" }
+        defaultCategory: "travel_ticket",
+        byCardId: { "hsbc_easy": "easy_additional_3x", "ae_platinum": "ae_plat_travel_designated", "ae_explorer": "ae_online_travel_designated" }
+    },
+    "amex_travel_online": {
+        name: "American Express Travel Online",
+        aliases: ["american express travel online", "amex travel online", "american express travel", "amex travel"],
+        defaultCategory: "travel_ticket",
+        byCardId: { "ae_platinum": "ae_plat_travel_designated", "ae_explorer": "ae_online_travel_designated" }
+    },
+    "club_med": {
+        name: "Club Med",
+        aliases: ["club med", "clubmed"],
+        defaultCategory: "travel_ticket",
+        byCardId: { "ae_platinum": "ae_plat_travel_designated", "ae_explorer": "ae_online_travel_designated" }
+    },
+    "hotels_com": {
+        name: "Hotels.com",
+        aliases: ["hotels.com", "hotels com"],
+        defaultCategory: "travel_ticket",
+        byCardId: { "ae_platinum": "ae_plat_travel_designated", "ae_explorer": "ae_online_travel_designated" }
+    },
+    "kaligo": {
+        name: "Kaligo",
+        aliases: ["kaligo"],
+        defaultCategory: "travel_ticket",
+        byCardId: { "ae_platinum": "ae_plat_travel_designated", "ae_explorer": "ae_online_travel_designated" }
     },
     "hutchgo_mall": {
         name: "hutchgo mall",
@@ -1852,23 +1948,25 @@ const merchantsDB = {
         name: "Klook",
         aliases: ["klook", "客路"],
         defaultCategory: "travel_ticket",
-        byCardId: { "hsbc_everymile": "em_designated_spend", "sc_smart": "smart_designated", "citi_club": "citi_club_merchant", "dbs_live_fresh": "live_fresh_travel_designated" }
+        byCardId: { "hsbc_everymile": "em_designated_spend", "sc_smart": "smart_designated", "citi_club": "citi_club_merchant", "dbs_live_fresh": "live_fresh_travel_designated", "ae_platinum": "ae_plat_travel_designated", "ae_explorer": "ae_online_travel_designated" }
     },
     "booking_com": {
         name: "Booking.com",
         aliases: ["booking.com", "booking com"],
-        defaultCategory: "travel"
+        defaultCategory: "travel_ticket",
+        byCardId: { "ae_platinum": "ae_plat_travel_designated", "ae_explorer": "ae_online_travel_designated" }
     },
     "agoda": {
         name: "Agoda",
         aliases: ["agoda"],
-        defaultCategory: "travel",
-        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+        defaultCategory: "travel_ticket",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "ae_platinum": "ae_plat_travel_designated", "ae_explorer": "ae_online_travel_designated" }
     },
     "expedia": {
         name: "Expedia",
         aliases: ["expedia"],
-        defaultCategory: "travel"
+        defaultCategory: "travel_ticket",
+        byCardId: { "ae_platinum": "ae_plat_travel_designated", "ae_explorer": "ae_online_travel_designated" }
     },
     "avis": {
         name: "AVIS",
@@ -2034,9 +2132,9 @@ const merchantsDB = {
     },
     "apple_tv_music": {
         name: "Apple TV/Music",
-        aliases: ["apple tv", "apple music", "apple tv/music", "apple tv music"],
+        aliases: ["apple tv", "apple music", "apple tv/music", "apple tv music", "apple tv+", "apple tv plus"],
         defaultCategory: "ott_streaming",
-        byCardId: { "boc_chill": "chill_merchant" }
+        byCardId: { "boc_chill": "chill_merchant", "ae_explorer": "ae_online_designated" }
     },
     "moov": {
         name: "MOOV",
@@ -2063,7 +2161,7 @@ const merchantsDB = {
         name: "Netflix",
         aliases: ["netflix"],
         defaultCategory: "ott_streaming",
-        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant" }
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant", "ae_explorer": "ae_online_designated" }
     },
     "nintendo": {
         name: "Nintendo",
@@ -2081,7 +2179,7 @@ const merchantsDB = {
         name: "Disney+",
         aliases: ["disney+", "disney plus"],
         defaultCategory: "ott_streaming",
-        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant" }
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant", "ae_explorer": "ae_online_designated" }
     },
     "spotify": {
         name: "Spotify",
@@ -2103,9 +2201,9 @@ const merchantsDB = {
     },
     "app_store": {
         name: "App Store",
-        aliases: ["app store", "apple app store", "itunes app store"],
+        aliases: ["app store", "apple app store", "itunes app store", "itunes", "icloud", "icloud+", "apple one"],
         defaultCategory: "saas_subscription",
-        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant" }
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "boc_chill": "chill_merchant", "ae_explorer": "ae_online_designated" }
     },
     "google_play": {
         name: "Google Play",
@@ -2122,8 +2220,8 @@ const merchantsDB = {
     "airbnb": {
         name: "Airbnb",
         aliases: ["airbnb"],
-        defaultCategory: "travel",
-        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
+        defaultCategory: "travel_ticket",
+        byCardId: { "dbs_live_fresh": "live_fresh_travel_designated", "ae_platinum": "ae_plat_travel_designated", "ae_explorer": "ae_online_travel_designated" }
     },
     "google_one": {
         name: "Google One",
@@ -2329,11 +2427,29 @@ const merchantsDB = {
         defaultCategory: "saas_subscription",
         byCardId: { "dbs_live_fresh": "live_fresh_travel_designated" }
     },
+    "amex_insurance_services": {
+        name: "American Express Insurance 保障服務",
+        aliases: ["american express insurance", "american express insurance services", "amex insurance", "保險服務", "amex 保險服務"],
+        defaultCategory: "online",
+        byCardId: { "ae_explorer": "ae_online_designated" }
+    },
     "amazon_com": {
         name: "Amazon.com",
         aliases: ["amazon.com", "amazon com", "amazon"],
         defaultCategory: "online",
-        byCardId: { "dbs_live_fresh": "live_fresh_fashion_designated" }
+        byCardId: { "dbs_live_fresh": "live_fresh_fashion_designated", "ae_explorer": "ae_online_designated" }
+    },
+    "iherb": {
+        name: "iHerb",
+        aliases: ["iherb", "i-herb"],
+        defaultCategory: "online",
+        byCardId: { "ae_explorer": "ae_online_designated" }
+    },
+    "taobao": {
+        name: "淘寶 Taobao",
+        aliases: ["taobao", "淘寶", "taobao hk", "taobao hong kong"],
+        defaultCategory: "online",
+        byCardId: { "ae_explorer": "ae_online_designated" }
     },
     "rakuten_japan": {
         name: "Rakuten (Japan)",
@@ -2351,7 +2467,7 @@ const merchantsDB = {
         name: "Apple Online Store",
         aliases: ["apple online store", "apple store online", "apple.com", "apple"],
         defaultCategory: "electronics",
-        byCardId: { "dbs_live_fresh": "live_fresh_charity_designated" }
+        byCardId: { "dbs_live_fresh": "live_fresh_charity_designated", "ae_explorer": "ae_online_designated" }
     },
 
     // --- Telecom ---

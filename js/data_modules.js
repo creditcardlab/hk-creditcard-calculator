@@ -1406,7 +1406,7 @@ const modulesDB = {
     },
     "ae_explorer_online_5x_bonus_2026": {
         type: "category",
-        match: ["ae_online_designated", "ae_online_travel_designated"],
+        match: ["ae_online_designated"],
         rate: 2,
         desc: "指定網上商戶額外 +2X（合共5X，已登記）",
         mode: "add",
@@ -1419,7 +1419,8 @@ const modulesDB = {
         valid_to: "2026-12-31",
         eligible_check: (cat, ctx) => {
             const pm = (ctx && ctx.paymentMethod) ? String(ctx.paymentMethod) : "physical";
-            return pm === "physical";
+            if (pm !== "physical") return false;
+            return !!(ctx && ctx.isOnline);
         }
     },
 
@@ -1479,7 +1480,33 @@ const modulesDB = {
         valid_to: "2026-06-30",
         eligible_check: (cat, ctx) => {
             const pm = (ctx && ctx.paymentMethod) ? String(ctx.paymentMethod) : "physical";
-            return pm === "physical" || pm === "apple_pay" || pm === "google_pay" || pm === "samsung_pay";
+            const paymentOk = pm === "physical" || pm === "apple_pay" || pm === "google_pay" || pm === "samsung_pay";
+            if (!paymentOk) return false;
+            // T&C: 指定「網上」旅遊商戶。
+            if (!(ctx && ctx.isOnline)) return false;
+            const merchantId = String((ctx && ctx.merchantId) || "").trim();
+            const designatedMerchants = new Set([
+                "agoda",
+                "amex_travel_online",
+                "airbnb",
+                "booking_com",
+                "club_med",
+                "expedia",
+                "hotels_com",
+                "hutchgo",
+                "kaligo",
+                "klook",
+                "trip_com"
+            ]);
+            if (!designatedMerchants.has(merchantId)) return false;
+            // HKD 結算條件系統未能直接讀取；以非 overseas 類別作近似判斷。
+            const inputCat = String((ctx && ctx.inputCategory) || "");
+            const isForeignLike = inputCat === "overseas"
+                || inputCat.startsWith("overseas_")
+                || inputCat === "online_foreign"
+                || inputCat === "china_consumption";
+            if (isForeignLike) return false;
+            return true;
         }
     },
     "ae_plat_daily": {
@@ -1497,7 +1524,14 @@ const modulesDB = {
         valid_to: "2026-06-30",
         eligible_check: (cat, ctx) => {
             const pm = (ctx && ctx.paymentMethod) ? String(ctx.paymentMethod) : "physical";
-            return pm === "physical" || pm === "apple_pay" || pm === "google_pay" || pm === "samsung_pay";
+            const paymentOk = pm === "physical" || pm === "apple_pay" || pm === "google_pay" || pm === "samsung_pay";
+            if (!paymentOk) return false;
+            // T&C: 日常清單大部分只限門市；現階段只放行「SOGO Freshmart」網店。
+            if (ctx && ctx.isOnline) {
+                const merchantId = String(ctx.merchantId || "").trim();
+                return merchantId === "sogo_freshmart";
+            }
+            return true;
         }
     },
 
@@ -1531,7 +1565,11 @@ const modulesDB = {
         cap: { key: "ae_pcc_double_cap", period: "month" },
         valid_from: "2025-01-01",
         valid_to: "2026-12-31",
-        eligible_check: () => {
+        eligible_check: (cat, ctx) => {
+            const merchantId = String((ctx && ctx.merchantId) || "").trim();
+            const isOnline = !!(ctx && ctx.isOnline);
+            // 條款：^ 商戶只限門市；崇光超市可門市及網店。
+            if (isOnline && merchantId !== "sogo_freshmart") return false;
             const used = (typeof userProfile !== "undefined" && userProfile && userProfile.usage)
                 ? (Number(userProfile.usage["ae_pcc_program_3x_cap"]) || 0)
                 : 0;
@@ -1550,7 +1588,11 @@ const modulesDB = {
         cap: { key: "ae_pcc_double_cap", period: "month" },
         valid_from: "2025-01-01",
         valid_to: "2026-12-31",
-        eligible_check: () => {
+        eligible_check: (cat, ctx) => {
+            const merchantId = String((ctx && ctx.merchantId) || "").trim();
+            const isOnline = !!(ctx && ctx.isOnline);
+            // 條款：^ 商戶只限門市；崇光超市可門市及網店。
+            if (isOnline && merchantId !== "sogo_freshmart") return false;
             const used = (typeof userProfile !== "undefined" && userProfile && userProfile.usage)
                 ? (Number(userProfile.usage["ae_pcc_program_3x_cap"]) || 0)
                 : 0;
@@ -2095,9 +2137,9 @@ const modulesDB = {
     "bea_goal_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
     "bea_goal_travel_transport": {
         type: "category",
-        match: ["travel", "transport"],
+        match: ["travel", "public_transport"],
         rate: 0.06,
-        desc: "旅遊/本地交通額外 +6%（合共 6.4%）",
+        desc: "旅遊/公共交通工具額外 +6%（合共 6.4%）",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 200,
@@ -2138,8 +2180,14 @@ const modulesDB = {
         valid_to: "2026-06-30",
         eligible_check: (cat, ctx) => {
             const c = String(cat || "");
-            const isHighTierCategory = c === "travel" || c === "transport" || c === "entertainment";
+            const isHighTierCategory = (typeof isCategoryMatch === "function")
+                ? isCategoryMatch(["travel", "public_transport", "entertainment"], c)
+                : (c === "travel" || c === "public_transport" || c === "entertainment");
             if (isHighTierCategory) return false;
+            const isGroceryCategory = (typeof isCategoryMatch === "function")
+                ? isCategoryMatch(["grocery", "supermarket"], c)
+                : (c === "grocery" || c === "supermarket");
+            if (isGroceryCategory) return false;
             const isMobilePm = !!(ctx && ["apple_pay", "google_pay", "mobile"].includes(ctx.paymentMethod));
             return !!(ctx && (ctx.isOnline || isMobilePm));
         }
