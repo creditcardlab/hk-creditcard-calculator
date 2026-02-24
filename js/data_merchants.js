@@ -1436,6 +1436,12 @@ const merchantsDB = {
         aliases: ["agnes b", "agnès b", "agnes b."],
         defaultCategory: "apparel"
     },
+    "adidas": {
+        name: "adidas",
+        aliases: ["adidas"],
+        defaultCategory: "sportswear",
+        byCardId: { "sim_credit": "sim_designated_merchant", "sim_world": "sim_designated_merchant" }
+    },
     "birkenstock": {
         name: "BIRKENSTOCK",
         aliases: ["birkenstock"],
@@ -1466,6 +1472,12 @@ const merchantsDB = {
         aliases: ["ecco"],
         defaultCategory: "apparel"
     },
+    "fila": {
+        name: "FILA",
+        aliases: ["fila"],
+        defaultCategory: "sportswear",
+        byCardId: { "sim_credit": "sim_designated_merchant", "sim_world": "sim_designated_merchant" }
+    },
     "egg_optical": {
         name: "eGG Optical Boutique",
         aliases: ["egg optical boutique", "egg optical"],
@@ -1490,6 +1502,12 @@ const merchantsDB = {
         name: "眼鏡88",
         aliases: ["眼鏡88", "optical 88"],
         defaultCategory: "apparel"
+    },
+    "puma": {
+        name: "PUMA",
+        aliases: ["puma"],
+        defaultCategory: "sportswear",
+        byCardId: { "sim_credit": "sim_designated_merchant", "sim_world": "sim_designated_merchant" }
     },
     "oriental_traffic": {
         name: "ORiental Traffic",
@@ -1531,6 +1549,12 @@ const merchantsDB = {
         aliases: ["twist"],
         defaultCategory: "apparel"
     },
+    "tokyo_lifestyle": {
+        name: "東京生活館 Tokyo Lifestyle",
+        aliases: ["東京生活館", "tokyo lifestyle", "tokyo lifestyle hk"],
+        defaultCategory: "general",
+        byCardId: { "sim_credit": "sim_designated_merchant", "sim_world": "sim_designated_merchant" }
+    },
     "ugg": {
         name: "UGG",
         aliases: ["ugg"],
@@ -1557,7 +1581,14 @@ const merchantsDB = {
     "atcosme_store": {
         name: "@cosme STORE",
         aliases: ["@cosme store", "cosme store", "atcosme"],
-        defaultCategory: "health_beauty"
+        defaultCategory: "health_beauty",
+        byCardId: { "sim_credit": "sim_designated_merchant", "sim_world": "sim_designated_merchant" }
+    },
+    "matsukiyo_hk": {
+        name: "松本清香港 Matsukiyo HK",
+        aliases: ["松本清", "松本清香港", "matsukiyo", "matsukiyo hk"],
+        defaultCategory: "health_beauty",
+        byCardId: { "sim_credit": "sim_designated_merchant", "sim_world": "sim_designated_merchant" }
     },
     "beauty_avenue": {
         name: "BEAUTY AVENUE",
@@ -1705,9 +1736,14 @@ const merchantsDB = {
         byCardId: { "hsbc_everymile": "em_designated_spend" },
         byPrefix: { "hsbc": "supermarket" }
     },
+    "lwb": {
+        name: "龍運巴士 LWB",
+        aliases: ["lwb", "龍運", "龍運巴士"],
+        defaultCategory: "public_transport"
+    },
     "citybus": {
         name: "城巴 Citybus",
-        aliases: ["citybus", "城巴"],
+        aliases: ["citybus", "城巴", "城巴機場快線"],
         defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" },
         byPrefix: { "hsbc": "supermarket" }
@@ -1718,6 +1754,11 @@ const merchantsDB = {
         defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" },
         byPrefix: { "hsbc": "supermarket" }
+    },
+    "star_ferry": {
+        name: "天星小輪 Star Ferry",
+        aliases: ["天星小輪", "star ferry", "天星"],
+        defaultCategory: "public_transport"
     },
     "uber": {
         name: "Uber",

@@ -43,6 +43,12 @@ const categoriesDB = {
     health_beauty: { label: "💄 美容/個人護理", order: 17 },
     electronics: { label: "🔌 電器/電子產品", order: 18 },
     telecom: { label: "📞 電訊繳費", order: 19 },
+    bill_services: { label: "🧾 繳費服務", order: 20, hidden: true },
+    tax: { label: "🏛️ 交稅", order: 20.1, parent: "bill_services", hidden: true },
+    utilities: { label: "💡 水費/電費", order: 20.2, parent: "bill_services" },
+    rates: { label: "🏢 差餉", order: 20.3, parent: "bill_services" },
+    management_fee: { label: "🏘️ 管理費", order: 20.4, parent: "bill_services" },
+    debt_repayment: { label: "💳 償還債務", order: 20.6, parent: "bill_services" },
 
     // Hidden / internal categories used by modules or rules
     china_consumption: { label: "🇨🇳 中國/澳門消費", hidden: true, parent: "overseas", red_hot: "world" },
@@ -78,7 +84,7 @@ const categoriesDB = {
     moneyback_pns_watsons: { label: "🏠 易賞錢：百佳/屈臣氏", order: 100, red_hot: "home", req: "hsbc_easy", hidden: true },
     moneyback_fortress: { label: "🏠 易賞錢：豐澤", order: 101, red_hot: "home", req: "hsbc_easy", hidden: true },
     easy_additional_3x: { label: "🏷️ Easy 指定商戶 3X", order: 101.5, req: "hsbc_easy", hidden: true },
-    tuition: { label: "🎓 學費", order: 102, req: "hsbc_gold_student" },
+    tuition: { label: "🎓 學費", order: 20.5, parent: "bill_services" },
     red_designated: { label: "🟥 Red 指定商戶 (8%)", order: 103, req: "hsbc_red", hidden: true },
     em_designated_spend: { label: "🌐 EveryMile 指定 ($2/里)", order: 104, req: "hsbc_everymile", hidden: true },
     smart_designated: { label: "💳 Smart 指定商戶 (5%)", order: 105, req: "sc_smart", hidden: true },
@@ -104,12 +110,15 @@ const categoriesDB = {
     sim_designated_merchant: {
         label: "🛍️ sim 指定商戶（3%）",
         order: 122,
-        req: (cards) => cards.includes("sim_credit") || cards.includes("sim_world")
+        req: (cards) => cards.includes("sim_credit") || cards.includes("sim_world"),
+        hidden: true
     },
     sim_billpay: {
         label: "🧾 sim App 指定繳費（2%）",
         order: 123,
-        req: (cards) => cards.includes("sim_credit") || cards.includes("sim_world")
+        req: (cards) => cards.includes("sim_credit") || cards.includes("sim_world"),
+        parent: "bill_services",
+        hidden: true
     },
 
     // Enjoy-specific (hidden)

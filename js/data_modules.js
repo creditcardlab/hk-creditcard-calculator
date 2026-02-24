@@ -1851,7 +1851,7 @@ const modulesDB = {
     },
     "sim_billpay": {
         type: "category",
-        match: ["sim_billpay"],
+        match: ["sim_billpay", "utilities", "rates", "management_fee", "tuition", "debt_repayment"],
         rate: 0.016,
         desc: "指定繳費額外 +1.6%（合共 2%）",
         mode: "add",
@@ -1926,7 +1926,7 @@ const modulesDB = {
     },
     "sim_world_billpay": {
         type: "category",
-        match: ["sim_billpay"],
+        match: ["sim_billpay", "utilities", "rates", "management_fee", "tuition", "debt_repayment"],
         rate: 0.016,
         desc: "sim World 指定繳費額外 +1.6%（合共 2%）",
         mode: "add",

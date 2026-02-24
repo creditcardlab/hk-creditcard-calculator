@@ -8888,6 +8888,77 @@
         "topValue": 64,
         "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
       }
+    },
+    {
+      "id": "case_311_sim_credit_adidas_maps_designated_merchant",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "adidas",
+        "ownedCards": ["sim_credit"],
+        "settings": {
+          "sim_promo_enabled": true
+        },
+        "usage": {
+          "sim_non_online_spend": 1000
+        }
+      },
+      "expected": {
+        "topCardId": "sim_credit",
+        "topValue": 30,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_312_sim_world_matsukiyo_maps_designated_merchant",
+      "input": {
+        "amount": 1000,
+        "category": "general",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "merchantId": "matsukiyo_hk",
+        "ownedCards": ["sim_world"],
+        "settings": {
+          "sim_world_promo_enabled": true
+        },
+        "usage": {
+          "sim_world_non_online_spend": 1000
+        }
+      },
+      "expected": {
+        "topCardId": "sim_world",
+        "topValue": 30,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
+    },
+    {
+      "id": "case_313_sim_credit_tax_not_in_billpay_bonus",
+      "input": {
+        "amount": 1000,
+        "category": "tax",
+        "date": "2026-03-12",
+        "displayMode": "cash",
+        "isOnline": false,
+        "paymentMethod": "physical",
+        "ownedCards": ["sim_credit"],
+        "settings": {
+          "sim_promo_enabled": true
+        },
+        "usage": {
+          "sim_non_online_spend": 1000
+        }
+      },
+      "expected": {
+        "topCardId": "sim_credit",
+        "topValue": 4,
+        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+      }
     }
   ],
   "period_cases": [
