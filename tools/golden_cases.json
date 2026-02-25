@@ -9088,6 +9088,102 @@
       "expectedUsageKey": "spend_hsbc_everymile",
       "unexpectedUsageKey": "em_q1_total",
       "expectedUsageValue": 1000
+    },
+    {
+      "id": "tx_003_winter_general_counts_threshold",
+      "ownedCards": [
+        "hsbc_red"
+      ],
+      "settings": {
+        "winter_promo_enabled": true
+      },
+      "cardId": "hsbc_red",
+      "category": "general",
+      "amount": 1000,
+      "isOnline": false,
+      "paymentMethod": "physical",
+      "txDate": "2026-01-15",
+      "date": "2026-01-15T10:00:00.000Z",
+      "expectedUsageKey": "winter_total",
+      "expectedUsageValue": 1000
+    },
+    {
+      "id": "tx_004_winter_sogo_excluded_for_threshold",
+      "ownedCards": [
+        "hsbc_red"
+      ],
+      "settings": {
+        "winter_promo_enabled": true
+      },
+      "cardId": "hsbc_red",
+      "category": "general",
+      "merchantId": "sogo",
+      "amount": 1000,
+      "isOnline": false,
+      "paymentMethod": "physical",
+      "txDate": "2025-12-20",
+      "date": "2025-12-20T10:00:00.000Z",
+      "expectedUsageKey": "spend_hsbc_red",
+      "unexpectedUsageKey": "winter_total",
+      "expectedUsageValue": 1000
+    },
+    {
+      "id": "tx_005_winter_sogo_counts_after_exclusion_window",
+      "ownedCards": [
+        "hsbc_red"
+      ],
+      "settings": {
+        "winter_promo_enabled": true
+      },
+      "cardId": "hsbc_red",
+      "category": "general",
+      "merchantId": "sogo",
+      "amount": 1000,
+      "isOnline": false,
+      "paymentMethod": "physical",
+      "txDate": "2026-01-10",
+      "date": "2026-01-10T10:00:00.000Z",
+      "expectedUsageKey": "winter_total",
+      "expectedUsageValue": 1000
+    },
+    {
+      "id": "tx_006_winter_mannings_excluded_for_threshold",
+      "ownedCards": [
+        "hsbc_red"
+      ],
+      "settings": {
+        "winter_promo_enabled": true
+      },
+      "cardId": "hsbc_red",
+      "category": "general",
+      "merchantId": "mannings",
+      "amount": 1000,
+      "isOnline": false,
+      "paymentMethod": "physical",
+      "txDate": "2026-02-01",
+      "date": "2026-02-01T10:00:00.000Z",
+      "expectedUsageKey": "spend_hsbc_red",
+      "unexpectedUsageKey": "winter_total",
+      "expectedUsageValue": 1000
+    },
+    {
+      "id": "tx_007_winter_non_eligible_card_not_counted",
+      "ownedCards": [
+        "dbs_compass"
+      ],
+      "settings": {
+        "winter_promo_enabled": true
+      },
+      "cardId": "dbs_compass",
+      "category": "general",
+      "amount": 1000,
+      "isOnline": false,
+      "paymentMethod": "physical",
+      "txDate": "2026-01-15",
+      "date": "2026-01-15T10:00:00.000Z",
+      "expectedUsageKey": "spend_dbs_compass",
+      "unexpectedUsageKey": "winter_total",
+      "expectedUsageValue": 1000
     }
   ]
 }

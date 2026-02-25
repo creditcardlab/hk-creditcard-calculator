@@ -271,6 +271,7 @@ function main() {
         txDate: c.txDate,
         cardId: c.cardId,
         category: c.category,
+        merchantId: c.merchantId || null,
         isOnline: !!c.isOnline,
         isMobilePay: !!c.isMobilePay,
         paymentMethod: c.paymentMethod || "physical",

@@ -15,7 +15,7 @@ const cardsDB = [
           unit: "RC",
           min: 40,
           fee: "免費",
-          ratio: "1 RC = 20 里"
+          ratio: "1 RC = 20 里 | 基本 1% | 主要額外：串流/訂閱/EveryMile 指定 2.5% + 超市 0.4% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -32,7 +32,7 @@ const cardsDB = [
           unit: "RC",
           min: 40,
           fee: "免費",
-          ratio: "1 RC = 10 里"
+          ratio: "1 RC = 10 里 | 基本 0.4% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -44,7 +44,13 @@ const cardsDB = [
         last_verified_at: "2026-02-06",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
         rewardModules: ["red_base", "red_online", "red_designated_bonus", "red_designated_online_overflow_bonus", "red_mcd_stamp_cashback", "travel_guru_v2"],
-        trackers: ["winter_tracker", "red_mcd_stamp_tracker"]
+        trackers: ["winter_tracker", "red_mcd_stamp_tracker"],
+        redemption: {
+          unit: "RC",
+          min: 40,
+          fee: "免費",
+          ratio: "1 RC = 10 里 | 基本 0.4% | 任務/上限/重置見進度卡"
+        }
     },
     {
       id: "hsbc_pulse",
@@ -58,7 +64,13 @@ const cardsDB = [
       // Mainland China + Macau are fee-free; other foreign spend uses the card's fcf.
       fcf_exempt_categories: ["overseas_cn", "overseas_mo", "china_consumption"],
       rewardModules: ["hsbc_std_base", "red_hot_variable", "pulse_china_bonus", "travel_guru_v2"],
-      trackers: ["winter_tracker"]
+      trackers: ["winter_tracker"],
+      redemption: {
+        unit: "RC",
+        min: 40,
+        fee: "免費",
+        ratio: "1 RC = 10 里 | 基本 0.4% | 任務/上限/重置見進度卡"
+      }
     },
     {
       id: "hsbc_unionpay_std",
@@ -72,7 +84,13 @@ const cardsDB = [
       // Mainland China is fee-free; other foreign spend (including Macau bucket) uses the card's fcf.
       fcf_exempt_categories: ["overseas_cn", "china_consumption"],
       rewardModules: ["hsbc_std_base", "red_hot_variable", "travel_guru_v2"],
-      trackers: ["winter_tracker"]
+      trackers: ["winter_tracker"],
+      redemption: {
+        unit: "RC",
+        min: 40,
+        fee: "免費",
+        ratio: "1 RC = 10 里 | 基本 0.4% | 任務/上限/重置見進度卡"
+      }
     },
     {
         id: "hsbc_easy",
@@ -93,7 +111,13 @@ const cardsDB = [
             "easy_moneyback_bonus", // legacy: support already-recorded transactions
             "travel_guru_v2"
         ],
-        trackers: ["winter_tracker"]
+        trackers: ["winter_tracker"],
+        redemption: {
+          unit: "RC",
+          min: 40,
+          fee: "免費",
+          ratio: "1 RC = 10 里 | 基本 0.4% | 任務/上限/重置見進度卡"
+        }
     },
     {
         id: "hsbc_gold_student",
@@ -104,7 +128,13 @@ const cardsDB = [
         last_verified_at: "2026-02-06",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
         rewardModules: ["hsbc_std_base", "red_hot_variable", "student_tuition_bonus", "travel_guru_v2"],
-        trackers: ["winter_tracker"]
+        trackers: ["winter_tracker"],
+        redemption: {
+          unit: "RC",
+          min: 40,
+          fee: "免費",
+          ratio: "1 RC = 10 里 | 基本 0.4% | 任務/上限/重置見進度卡"
+        }
     },
     {
         id: "hsbc_gold",
@@ -115,7 +145,13 @@ const cardsDB = [
         last_verified_at: "2026-02-06",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
         rewardModules: ["hsbc_std_base", "red_hot_variable", "travel_guru_v2"],
-        trackers: ["winter_tracker"]
+        trackers: ["winter_tracker"],
+        redemption: {
+          unit: "RC",
+          min: 40,
+          fee: "免費",
+          ratio: "1 RC = 10 里 | 基本 0.4% | 任務/上限/重置見進度卡"
+        }
     },
     {
         id: "hsbc_premier",
@@ -126,7 +162,13 @@ const cardsDB = [
         last_verified_at: "2026-02-06",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
         rewardModules: ["hsbc_std_base", "red_hot_variable", "travel_guru_v2"],
-        trackers: ["winter_tracker"]
+        trackers: ["winter_tracker"],
+        redemption: {
+          unit: "RC",
+          min: 40,
+          fee: "免費",
+          ratio: "1 RC = 10 里 | 基本 0.4% | 任務/上限/重置見進度卡"
+        }
     },
     {
         id: "sc_cathay_std",
@@ -185,7 +227,7 @@ const cardsDB = [
           unit: "積分",
           min: 12000,
           fee: "免費",
-          ratio: "12分 = 1里"
+          ratio: "12分 = 1里 | 基本每 $1 賺 1.5 積分 (0.6%) | 主要額外：海外每 $1 賺 3 積分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -200,7 +242,7 @@ const cardsDB = [
           unit: "積分",
           min: 12000,
           fee: "免費",
-          ratio: "12分 = 1里"
+          ratio: "12分 = 1里 | 基本每 $1 賺 2 積分 (0.8%) | 主要額外：海外每 $1 賺 3 積分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -215,7 +257,7 @@ const cardsDB = [
           unit: "積分",
           min: 18000,
           fee: "HK$200/兌換",
-          ratio: "15分 = 1里"
+          ratio: "15分 = 1里 | 基本每 $1 賺 1 積分 (0.4%) | 主要額外：購物/娛樂額外每 $1 +7.1 積分 + 流動支付額外每 $1 +1.7 積分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -230,7 +272,7 @@ const cardsDB = [
           unit: "The Club積分",
           min: 5,
           fee: "免費",
-          ratio: "5積分 = HK$1"
+          ratio: "5積分 = HK$1 | 基本 1% | 主要額外：The Club 指定商戶額外 3% + The Club 電訊 總回贈 3% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -263,7 +305,7 @@ const cardsDB = [
           unit: "DBS$",
           min: 0,
           fee: "免費 (Black專享)",
-          ratio: "DBS$48 = 1,000里"
+          ratio: "DBS$48 = 1,000里 | 基本 0.8% | 主要額外：海外 1.2% + 海外推廣額外 1.2% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -279,7 +321,7 @@ const cardsDB = [
           unit: "DBS$",
           min: 0,
           fee: "HK$100/5,000里",
-          ratio: "DBS$72 = 1,000里 或 DBS$1 = $1"
+          ratio: "DBS$72 = 1,000里 或 DBS$1 = $1 | 基本 0.4% | 主要額外：指定類別額外 4.6% + 其他零售額外 0.6% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -295,7 +337,7 @@ const cardsDB = [
           unit: "DBS$",
           min: 0,
           fee: "HK$100/5,000里",
-          ratio: "DBS$72 = 1,000里 或 DBS$1 = $1"
+          ratio: "DBS$72 = 1,000里 或 DBS$1 = $1 | 基本 0.4% | 主要額外：指定類別額外 4.6% + 其他零售額外 0.6% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -310,7 +352,7 @@ const cardsDB = [
           unit: "CD",
           min: 0,
           fee: "HK$100/5,000里",
-          ratio: "$100 CD = 1,000里 或 $1 CD = $1"
+          ratio: "$100 CD = 1,000里 或 $1 CD = $1 | 基本 0.4% | 主要額外：四圍簽，好 COM 賺 電子錢包額外 2.6% + Super Wednesday 超市額外 7.6% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -325,7 +367,7 @@ const cardsDB = [
           unit: "DBS$",
           min: 0,
           fee: "HK$100/5,000里",
-          ratio: "DBS$72 = 1,000里 或 DBS$1 = $1"
+          ratio: "DBS$72 = 1,000里 或 DBS$1 = $1 | 基本 0.4% | 主要額外：DBS Live Fresh 網上外幣簽賬 1% + DBS Live Fresh 一簽即賞額外 5% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -340,7 +382,7 @@ const cardsDB = [
           unit: "+FUN Dollar",
           min: 0,
           fee: "免費",
-          ratio: "$1 +FUN = $1"
+          ratio: "$1 +FUN = $1 | 基本 0.4% | 主要額外：+FUN Dollars 獎賞計劃 海外簽賬額外 5.6% + +FUN Dollars 獎賞計劃 網上簽賬額外 4.6% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -355,7 +397,7 @@ const cardsDB = [
           unit: "+FUN Dollar",
           min: 0,
           fee: "免費",
-          ratio: "$1 +FUN = $1"
+          ratio: "$1 +FUN = $1 | 基本 0.4% | 主要額外：Travel+ 指定外幣額外 6.6% + Travel+ 其他外幣額外 4.6% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -370,7 +412,7 @@ const cardsDB = [
           unit: "+FUN Dollar",
           min: 0,
           fee: "免費",
-          ratio: "$1 +FUN = $1"
+          ratio: "$1 +FUN = $1 | 基本 0.4% | 主要額外：大學學費額外 2% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -395,7 +437,7 @@ const cardsDB = [
           unit: "YUU",
           min: 0,
           fee: "免費",
-          ratio: "200分 = $1"
+          ratio: "200分 = $1 | 基本每 $1 賺 1 YUU (0.5%) | 主要額外：指定商戶銀行部分額外每 $1 +1 YUU | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -428,7 +470,7 @@ const cardsDB = [
           unit: "積分",
           min: 0,
           fee: "免手續費 ✅",
-          ratio: "15分 = 1里 | 2026上半年餐飲: 10X (Cap 100k) | 外幣: 10X (Cap 250k)"
+          ratio: "15分 = 1里 | 基本每 $1 賺 1 積分 (0.4%) | 主要額外：中銀 Cheers Visa Infinite 餐飲每 $1 賺 10 積分 + 中銀 Cheers Visa Infinite 外幣簽賬每 $1 賺 10 積分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -461,7 +503,7 @@ const cardsDB = [
           unit: "積分",
           min: 0,
           fee: "免手續費 ✅",
-          ratio: "15分 = 1里 | 2026上半年餐飲: 8X (Cap 60k) | 外幣: 8X (Cap 150k)"
+          ratio: "15分 = 1里 | 基本每 $1 賺 1 積分 (0.4%) | 主要額外：中銀 Cheers Visa Signature 餐飲每 $1 賺 8 積分 + 中銀 Cheers Visa Signature 外幣簽賬每 $1 賺 8 積分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -475,8 +517,8 @@ const cardsDB = [
         redemption: {
           unit: "積分",
           min: 0,
-          fee: "$50/5K里（最低$100，最高$300）",
-          ratio: "15分 = 1里 | 基本 1X + Chill 指定商戶額外10%（需月簽$1,500）+ 網上/外幣額外5% | 額外回贈上限$150/月（至2026-06-30）"
+          fee: "$50/5,000里（最低$100，最高$300）",
+          ratio: "15分 = 1里 | 基本每 $1 賺 1 積分 (0.4%) | 主要額外：Chill 指定商戶額外每 $1 +25 積分 + 網上/外幣額外每 $1 +12.5 積分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -490,8 +532,8 @@ const cardsDB = [
         redemption: {
           unit: "積分",
           min: 0,
-          fee: "$50/5K里（最低$100，最高$300）",
-          ratio: "15分 = 1里 | 基本 1X | Go 指定商戶合共5%（額外上限25,000分/月）| 全球手機簽賬合共3X（額外上限25,000分/月）| 海外合共2X | 「Go！機」本地/內地手機額外積分（需登記，2026-01-09至03-31）"
+          fee: "$50/5,000里（最低$100，最高$300）",
+          ratio: "15分 = 1里 | 基本每 $1 賺 1 積分 (0.4%) | 主要額外：Go 指定商戶額外每 $1 +11.5 積分 + 全球手機簽賬額外每 $1 +2 積分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -505,8 +547,8 @@ const cardsDB = [
         redemption: {
           unit: "積分",
           min: 0,
-          fee: "$50/5K里（最低$100，最高$300）",
-          ratio: "15分 = 1里 | 基本 1X | Go 指定商戶合共5%（額外上限25,000分/月）| 全球手機簽賬合共2X（額外上限25,000分/月）| 海外合共2X | 「Go！機」本地/內地手機額外積分（需登記，2026-01-09至03-31）"
+          fee: "$50/5,000里（最低$100，最高$300）",
+          ratio: "15分 = 1里 | 基本每 $1 賺 1 積分 (0.4%) | 主要額外：Go 指定商戶額外每 $1 +11.5 積分 + 全球手機簽賬額外每 $1 +1 積分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -521,7 +563,7 @@ const cardsDB = [
           unit: "元",
           min: 0,
           fee: "N/A",
-          ratio: "基本 0.4% | 崇光及指定商戶/產品 5% | 手機支付額外 +5%（每月上限$100，2026-01-01 至 2026-12-31）| Freshmart（逢星期一）95折 | 和三昧 9折 | 日本SOGO/SEIBU 95折（2026）"
+          ratio: "基本 0.4% | 主要額外：崇光及指定商戶/產品 5% + 手機支付額外 5% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -542,7 +584,7 @@ const cardsDB = [
           unit: "積分",
           min: 0,
           fee: "免費",
-          ratio: "18分 = 1里 | 基本 3X | 海外/旅遊額外 +0.75X + 7X（2026-01-02 至 2026-06-30，每季首$10,000）| 指定網上商戶合共 5X（額外積分每季上限90,000，至2026-12-31）"
+          ratio: "18分 = 1里 | 基本每 $1 賺 3 積分 (1%) | 主要額外：指定網上商戶額外每 $1 +2 積分 + 海外額外每 $1 +7 積分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -557,7 +599,7 @@ const cardsDB = [
           unit: "積分",
           min: 0,
           fee: "免費",
-          ratio: "18分 = 1里 | 基本 1X + 計倍計賞額外1X（每年首$160,000）| 外幣基本合共 3X | 推廣期外幣/指定旅遊/指定日常可達 9X（每季各首$15,000，需登記）"
+          ratio: "18分 = 1里 | 基本每 $1 賺 1 積分 (0.33%) | 主要額外：外幣簽賬額外每 $1 +2 積分 + 指定旅遊商戶額外每 $1 +7 積分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -572,7 +614,7 @@ const cardsDB = [
           unit: "積分",
           min: 0,
           fee: "免費",
-          ratio: "18分 = 1里 | 基本 1X + 計劃額外 2X（推廣期首$120,000）| 指定商戶 Double Points：Program未封頂合共6X / Program封頂後合共2X（額外積分每月上限30,000）"
+          ratio: "18分 = 1里 | 基本每 $1 賺 1 積分 (0.33%) | 主要額外：指定商戶額外每 $1 +3 積分 + 指定商戶額外每 $1 +1 積分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -587,7 +629,7 @@ const cardsDB = [
           unit: "積分",
           min: 0,
           fee: "HK$50/5000里",
-          ratio: "15分 = 1里 | 250分 = $1"
+          ratio: "15分 = 1里 | 基本每 $1 賺 1 積分 (0.5%) | 主要額外：網上簽賬額外每 $1 +19 積分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -602,7 +644,7 @@ const cardsDB = [
           unit: "積分",
           min: 0,
           fee: "HK$50/5000里",
-          ratio: "15分 = 1里 | 250分 = $1 | 台灣20X / 日本韓國10X / 外幣5X | 本地週末2X（2026）"
+          ratio: "15分 = 1里 | 基本每 $1 賺 1 積分 (0.4%) | 主要額外：台灣額外每 $1 +19 積分 + 日本/韓國額外每 $1 +9 積分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -624,7 +666,7 @@ const cardsDB = [
           unit: "積分",
           min: 0,
           fee: "HK$50/5000里",
-          ratio: "15分 = 1里 | 海外簽賬低至$0.75/里 | 本地指定網購高達$1.5/里（需登記）"
+          ratio: "15分 = 1里 | 基本每 $1 賺 1 積分 (0.5%) | 主要額外：台灣每 $1 賺 20 積分 + 日本/韓國每 $1 賺 10 積分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -639,7 +681,7 @@ const cardsDB = [
           unit: "$",
           min: 0,
           fee: "免費",
-          ratio: "推廣期：網上/交通 8%、指定商戶 3%、指定繳費 2%"
+          ratio: "基本 0.4% | 主要額外：網上零售額外 7.6% + 指定本地交通額外 7.6% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -654,7 +696,7 @@ const cardsDB = [
           unit: "$",
           min: 0,
           fee: "免費",
-          ratio: "推廣期：網上/海外 8%、指定商戶 3%、指定繳費 2%"
+          ratio: "基本 0.4% | 主要額外：sim World 網上零售額外 7.6% + sim World 海外簽賬額外 7.6% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -669,7 +711,7 @@ const cardsDB = [
           unit: "$",
           min: 0,
           fee: "免費",
-          ratio: "推廣期：網上 6% | 日本 3% | 本地餐飲 1%"
+          ratio: "基本 0.4% | 主要額外：網上簽賬額外 5.6% + 日本海外簽賬額外 2.6% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -684,7 +726,7 @@ const cardsDB = [
           unit: "$",
           min: 0,
           fee: "免費",
-          ratio: "基本 0.4%；自選類別 4%（需月簽$1,500，額外上限$200）"
+          ratio: "基本 0.4% | 主要額外：自選類別額外 3.6% + 海外指定地區額外 5% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -699,7 +741,7 @@ const cardsDB = [
           unit: "$",
           min: 0,
           fee: "免費",
-          ratio: "基本 1% + 推廣額外 1%（優惠期額外上限 $800）"
+          ratio: "基本 1% | 主要額外：推廣期額外 1% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -714,7 +756,7 @@ const cardsDB = [
           unit: "$",
           min: 0,
           fee: "免費",
-          ratio: "CashBack：1% / 2%（達條件）+ 超市 3%；Asia Miles：$4/$8/$10 = 1里"
+          ratio: "基本 1% | 主要額外：任務達標額外 1% + 超市 3% + 指定類別 10%（里數模式） | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -738,7 +780,7 @@ const cardsDB = [
           unit: "BEA分",
           min: 0,
           fee: "無",
-          ratio: "250分 = $1"
+          ratio: "250分 = $1 | 基本每 $1 賺 1 BEA分 (0.4%) | 主要額外：BEA Spending Points 指定類別每 $1 賺 12.5 BEA分 + BEA Flying Miles 海外簽賬每 $1 賺 2 BEA分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -753,7 +795,7 @@ const cardsDB = [
           unit: "BEA分",
           min: 0,
           fee: "無",
-          ratio: "250分 = $1"
+          ratio: "250分 = $1 | 基本每 $1 賺 1 BEA分 (0.4%) | 主要額外：BEA Spending Points 指定類別每 $1 賺 12.5 BEA分 + BEA Flying Miles 海外簽賬每 $1 賺 2 BEA分 | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -768,7 +810,7 @@ const cardsDB = [
           unit: "i-Dollar",
           min: 0,
           fee: "無",
-          ratio: "1 i-Dollar = $1"
+          ratio: "1 i-Dollar = $1 | 基本 0.4% | 主要額外：網上零售/手機支付 3.6% | 任務/上限/重置見進度卡"
         }
     },
     {
@@ -783,7 +825,7 @@ const cardsDB = [
           unit: "BEA分",
           min: 0,
           fee: "無",
-          ratio: "250分 = $1"
+          ratio: "250分 = $1 | 基本每 $1 賺 1 BEA分 (0.4%) | 主要額外：人民幣簽賬每 $1 賺 13 BEA分 + 外幣簽賬每 $1 賺 11 BEA分 | 任務/上限/重置見進度卡"
         }
     }
 ];

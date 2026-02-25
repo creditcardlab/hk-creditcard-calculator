@@ -37,7 +37,7 @@ const CORE_OVERRIDES = {
       "promo_type": "custom"
     },
     "em_promo": {
-      "name": "EveryMile 外幣簽帳優惠",
+      "name": "EveryMile 外幣簽賬優惠",
       "period_policy": {
         "mode": "composite",
         "windows": [
@@ -167,13 +167,13 @@ const CORE_OVERRIDES = {
       "desc": "EveryMile 超市 (0.4%)"
     },
     "em_overseas_bonus": {
-      "desc": "EveryMile 外幣簽帳優惠 (1.5%)"
+      "desc": "EveryMile 外幣簽賬優惠"
     },
     "pulse_china_bonus": {
       "cap_key": "pulse_china_bonus_cap",
       "cap_limit": 80000,
       "cap_mode": "spending",
-      "desc": "中國內地/澳門流動支付 (2%)",
+      "desc": "中國內地/澳門流動支付",
       "promo_end": "2026-06-30",
       "rate": 0.02,
       "valid_from": "2026-01-01",
@@ -205,7 +205,7 @@ const CORE_OVERRIDES = {
       "cap_key": "student_tuition_cap",
       "cap_limit": 200,
       "cap_mode": "reward",
-      "desc": "學生卡學費回贈 (2.4%)",
+      "desc": "學生卡學費回贈",
       "promo_end": "2026-03-31",
       "rate": 0.024,
       "valid_from": "2025-10-01",
@@ -215,7 +215,7 @@ const CORE_OVERRIDES = {
       "cap_key": "vs_red_hot_bonus_cap",
       "cap_limit": 100000,
       "cap_mode": "spending",
-      "desc": "Visa Signature 特別獎賞 (1.2%)",
+      "desc": "Visa Signature 特別獎賞",
       "multiplier": 3,
       "promo_end": "2026-12-31",
       "rate_per_x": 0.004,
@@ -225,7 +225,7 @@ const CORE_OVERRIDES = {
   },
   "trackers": {
     "em_overseas_mission": {
-      "desc": "🌏 EveryMile 外幣簽帳優惠"
+      "desc": "🌏 EveryMile 外幣簽賬優惠"
     },
     "winter_tracker": {
       "desc": "❄️ 最紅冬日賞"

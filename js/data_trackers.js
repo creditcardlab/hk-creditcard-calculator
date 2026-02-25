@@ -1,5 +1,40 @@
 // js/data_trackers.js - Tracker-only definitions
 
+function isWinterPromoTrackerDateEligible(txDate) {
+    const d = String(txDate || "").trim();
+    if (!d) return false;
+    return d >= "2025-12-01" && d <= "2026-02-28";
+}
+
+function isWinterPromoDesignatedMerchantTxn(merchantId, txDate) {
+    const id = String(merchantId || "").trim();
+    const d = String(txDate || "").trim();
+    if (!id || !d) return false;
+    const inRange = (start, end) => d >= start && d <= end;
+
+    // T&C clause 24(b)(i): SOGO HK stores / sogo.com.hk
+    if (inRange("2025-11-26", "2026-01-06")) {
+        if (id === "sogo" || id === "sogo_freshmart") return true;
+    }
+
+    // T&C clause 24(b)(ii)-(iii): Broadway / Mannings / GNC designated windows
+    if (inRange("2025-12-01", "2026-02-28")) {
+        if (id === "broadway_hk") return true;
+        if (id === "mannings" || id === "mannings_plus" || id === "mannings_baby" || id === "mannings_online_store") return true;
+        if (id === "gnc_hk") return true;
+    }
+
+    return false;
+}
+
+function isWinterPromoTrackerEligible(cat, ctx) {
+    const trackerCtx = ctx || {};
+    const txDate = String(trackerCtx.txDate || "").trim();
+    if (!isWinterPromoTrackerDateEligible(txDate)) return false;
+    if (isWinterPromoDesignatedMerchantTxn(trackerCtx.merchantId, txDate)) return false;
+    return true;
+}
+
 const trackersDB = {
     // --- HSBC ---
     "em_overseas_mission": {
@@ -20,12 +55,12 @@ const trackersDB = {
     "winter_tracker": {
         type: "mission_tracker",
         setting_key: "winter_promo_enabled",
-        match: ["dining", "overseas"],
         desc: "❄️ 冬日賞",
         mission_id: "winter_promo",
+        valid_from: "2025-12-01",
         promo_end: "2026-02-28",
         valid_to: "2026-02-28",
-        eligible_check: (cat, ctx) => !ctx || !ctx.isOnline,
+        eligible_check: (cat, ctx) => isWinterPromoTrackerEligible(cat, ctx),
         effects_on_eligible: [
             { key: "winter_total", amount: "tx_amount" },
             { key: "winter_eligible", amount: "tx_amount" }

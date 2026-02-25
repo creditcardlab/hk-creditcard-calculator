@@ -120,13 +120,544 @@ function buildReferenceMeta(meta) {
     };
 }
 
+function isCurrencyLikeUnit(unit) {
+    const clean = String(unit || "").trim();
+    return !clean || clean === "$" || clean === "HKD" || clean === "元" || clean === "HK$" || clean === "現金";
+}
+
+function formatTrimmedNumber(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "";
+    if (Math.abs(n - Math.round(n)) < 1e-9) return String(Math.round(n));
+    const abs = Math.abs(n);
+    const decimals = abs >= 10 ? 1 : 2;
+    return n.toFixed(decimals).replace(/\.?0+$/, "");
+}
+
+function formatRatePercent(rate) {
+    const n = Number(rate);
+    if (!Number.isFinite(n)) return "";
+    const pct = n * 100;
+    const rounded = pct >= 10 ? pct.toFixed(1) : pct.toFixed(2);
+    return `${rounded.replace(/\.?0+$/, "")}%`;
+}
+
+function getCardRewardUnit(card) {
+    const c = (card && typeof card === "object") ? card : {};
+    const unit = c.redemption && c.redemption.unit ? String(c.redemption.unit).trim() : "";
+    return unit || "";
+}
+
+function formatRateHint(rate, opts) {
+    const n = Number(rate);
+    if (!Number.isFinite(n)) return "";
+    const options = opts || {};
+    const mode = String(options.mode || "").trim();
+    const unit = String(options.unit || "").trim();
+    const showNative = !!unit && !isCurrencyLikeUnit(unit) && n >= 1;
+
+    if (showNative) {
+        const numText = formatTrimmedNumber(n);
+        if (!numText) return "";
+        if (mode === "add") return `每 $1 額外賺 ${numText} ${unit}`;
+        if (mode === "replace") return `每 $1 賺 ${numText} ${unit}（取代基本）`;
+        return `每 $1 賺 ${numText} ${unit}`;
+    }
+
+    const pctText = formatRatePercent(n);
+    if (!pctText) return "";
+    if (mode === "add") return `額外 ${pctText}`;
+    if (mode === "replace") return `回贈 ${pctText}（取代基本）`;
+    return `回贈 ${pctText}`;
+}
+
+function formatCapHint(cap, opts) {
+    const options = opts || {};
+    const fmtMoney = options.fmtMoney;
+    if (typeof fmtMoney !== "function") return "";
+    const n = Number(cap);
+    if (!Number.isFinite(n)) return "";
+
+    const capMode = String(options.capMode || "").trim();
+    if (capMode === "spending") {
+        const spendText = fmtMoney(n, "$");
+        return spendText ? `每期最多計算 ${spendText} 合資格簽賬` : "";
+    }
+
+    const capText = fmtMoney(n, options.unit || "");
+    if (!capText) return "";
+    if (capMode === "reward") return `每期最多派發 ${capText}`;
+    return `每期上限 ${capText}`;
+}
+
+function formatPeriodHint(mod) {
+    const m = (mod && typeof mod === "object") ? mod : {};
+    const parts = [];
+    const capPeriod = (m.cap && m.cap.period) ? m.cap.period : null;
+    const counterPeriod = (m.counter && m.counter.period) ? m.counter.period : null;
+    const period = capPeriod || counterPeriod;
+    if (period) {
+        if (typeof period === "string") {
+            if (period === "month") parts.push("每月重置");
+            else if (period === "quarter") parts.push("每季重置");
+            else if (period === "year") parts.push("每年重置");
+        } else if (typeof period === "object" && period.type) {
+            if (period.type === "month") parts.push("每月重置");
+            else if (period.type === "quarter") parts.push("每季重置");
+            else if (period.type === "year") parts.push("每年重置");
+            else if (period.type === "promo") {
+                const end = String(period.endDate || "").trim();
+                if (end) parts.push(`推廣期至 ${end}`);
+                else parts.push("推廣期內有效");
+            }
+        }
+    }
+    const validTo = String(m.valid_to || m.promo_end || "").trim();
+    if (validTo && !parts.some(p => p.includes(validTo))) {
+        parts.push(`至 ${validTo}`);
+    }
+    return parts.join(" · ");
+}
+
+function formatRetroactiveHint(mod) {
+    const m = (mod && typeof mod === "object") ? mod : {};
+    if (typeof m.retroactive === "undefined" || m.retroactive === null) return "";
+    if (!m.req_mission_spend || !m.req_mission_key) return "";
+    if (m.retroactive === true) return "達標後會補回先前簽賬";
+    if (m.retroactive === false) return "達標前簽賬不計入";
+    return "";
+}
+
+function buildModuleInfoLines(mod, card, profile) {
+    const m = (mod && typeof mod === "object") ? mod : {};
+    const cardRef = (card && typeof card === "object") ? card : {};
+    const p = (profile && typeof profile === "object")
+        ? profile
+        : ((typeof userProfile !== "undefined" && userProfile) ? userProfile : null);
+    const rewardUnit = getCardRewardUnit(cardRef);
+    const lines = [];
+    const isHsbcCard = String(cardRef.id || "").startsWith("hsbc_");
+    const suppressMetaHints = (
+        m.type === "red_hot_allocation" ||
+        m.type === "red_hot_fixed_bonus" ||
+        m.hide_meta_hints === true ||
+        isHsbcCard
+    );
+    const categoryLabel = (key) => {
+        if (!key) return "";
+        const cat = (typeof DATA !== "undefined" && DATA && DATA.categories) ? DATA.categories[key] : null;
+        if (!cat || !cat.label) return String(key);
+        return String(cat.label).replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
+    };
+    const fmtAmount = (value, unit) => {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return "";
+        const rounded = Math.floor(n).toLocaleString();
+        const cleanUnit = String(unit || "").trim();
+        if (!cleanUnit || isCurrencyLikeUnit(cleanUnit)) return `$${rounded}`;
+        return `${rounded} ${cleanUnit}`;
+    };
+    const redHotGroupLabel = (key) => {
+        if (key === "dining") return "賞滋味";
+        if (key === "world") return "賞世界";
+        if (key === "enjoyment") return "賞享受";
+        if (key === "home") return "賞家居";
+        if (key === "style") return "賞購物";
+        return String(key || "");
+    };
+
+    if (m.type === "red_hot_allocation") {
+        lines.push({ icon: "fas fa-tag", text: "適用：最紅自主類別（賞滋味/賞世界/賞享受/賞家居/賞購物）" });
+        const perX = Number(m.rate_per_x) || 0;
+        if (perX > 0) {
+            lines.push({ icon: "fas fa-coins", text: `每 1X = 額外 ${formatRatePercent(perX)}` });
+        }
+        const alloc = (p && p.settings && p.settings.red_hot_allocation && typeof p.settings.red_hot_allocation === "object")
+            ? p.settings.red_hot_allocation
+            : null;
+        if (alloc) {
+            const keys = ["dining", "world", "enjoyment", "home", "style"];
+            const parts = keys
+                .map((k) => {
+                    const x = Number(alloc[k]) || 0;
+                    if (x <= 0) return "";
+                    return `${redHotGroupLabel(k)} ${x}X`;
+                })
+                .filter(Boolean);
+            if (parts.length > 0) {
+                lines.push({ icon: "fas fa-sliders-h", text: `目前分配：${parts.join("；")}` });
+            } else {
+                lines.push({ icon: "fas fa-sliders-h", text: "目前分配：尚未分配 5X 權重" });
+            }
+        }
+    } else if (m.type === "red_hot_fixed_bonus") {
+        lines.push({ icon: "fas fa-tag", text: "適用：最紅自主類別" });
+        const perX = Number(m.rate_per_x) || 0;
+        const mul = Number(m.multiplier) || 0;
+        if (perX > 0 && mul > 0) {
+            lines.push({ icon: "fas fa-coins", text: `固定額外 ${formatRatePercent(perX * mul)}` });
+        }
+    } else {
+        // 1. Trigger condition (only for non-trivial modules)
+        if (m.type !== "always") {
+            const match = Array.isArray(m.match) ? m.match.filter(Boolean) : [];
+            const triggerLabels = [];
+            if (match.length > 0) {
+                const labels = match.slice(0, 3).map((k) => categoryLabel(k));
+                const suffix = match.length > 3 ? ` 等${match.length}類` : "";
+                triggerLabels.push(`${labels.join("、")}${suffix}`);
+            }
+
+            const eligibleSrc = (typeof m.eligible_check === "function")
+                ? String(m.eligible_check)
+                : "";
+            const textForMobileHint = `${String(m.display_name_zhhk || "")} ${String(m.desc || "")}`;
+            const requiresMobilePay = /手機/.test(textForMobileHint)
+                || (/paymentMethod/.test(eligibleSrc) && (
+                    /!==\s*["']physical["']/.test(eligibleSrc)
+                    || /!=\s*["']physical["']/.test(eligibleSrc)
+                    || /(apple_pay|google_pay|samsung_pay|unionpay_cloud|omycard)/.test(eligibleSrc)
+                ));
+            if (requiresMobilePay) {
+                triggerLabels.push("手機支付");
+            }
+
+            const triggerDisplay = Array.from(new Set(triggerLabels.filter(Boolean)));
+            if (triggerDisplay.length > 0) {
+                lines.push({ icon: "fas fa-tag", text: `適用：${triggerDisplay.join("、")}` });
+            }
+        }
+
+        // 2. Rate
+        if (Number.isFinite(Number(m.rate))) {
+            const rateHint = formatRateHint(m.rate, { unit: rewardUnit, mode: m.mode || "" });
+            if (rateHint) lines.push({ icon: "fas fa-coins", text: rateHint });
+        } else if (Number.isFinite(Number(m.rate_per_x)) && Number.isFinite(Number(m.multiplier))) {
+            const perX = Number(m.rate_per_x);
+            const mul = Number(m.multiplier);
+            const pctText = formatRatePercent(perX * mul);
+            if (pctText) lines.push({ icon: "fas fa-coins", text: `${mul}X × ${formatRatePercent(perX)} = ${pctText}` });
+        }
+    }
+
+    // 3. Mission
+    if (Number.isFinite(Number(m.req_mission_spend)) && m.req_mission_key) {
+        const target = Math.floor(Number(m.req_mission_spend));
+        let missionText = `需先月簽 $${target.toLocaleString()}`;
+        const retroHint = formatRetroactiveHint(m);
+        if (retroHint) missionText += `（${retroHint}）`;
+        lines.push({ icon: "fas fa-bullseye", text: missionText });
+    }
+
+    // 4. Cap
+    if (!suppressMetaHints && Number.isFinite(Number(m.cap_limit)) && m.cap_key) {
+        const capHint = formatCapHint(m.cap_limit, {
+            fmtMoney: (value, unit) => fmtAmount(value, unit),
+            capMode: m.cap_mode || "",
+            unit: rewardUnit
+        });
+        if (capHint) lines.push({ icon: "fas fa-info-circle", text: capHint });
+    }
+
+    // 5. Period / window
+    if (!suppressMetaHints) {
+        const periodHint = formatPeriodHint(m);
+        if (periodHint) lines.push({ icon: "fas fa-calendar-alt", text: periodHint });
+    }
+
+    if (lines.length === 0) {
+        lines.push({ icon: "fas fa-info-circle", text: "按此模組的門檻、比率及上限計算" });
+    }
+
+    return lines;
+}
+
+function buildCampaignInfoLines(campaign) {
+    const c = (campaign && typeof campaign === "object") ? campaign : {};
+    const manualInfoLines = Array.isArray(c.info_lines)
+        ? c.info_lines
+            .map((line) => {
+                if (typeof line === "string") {
+                    const text = String(line || "").trim();
+                    return text ? { icon: "fas fa-info-circle", text } : null;
+                }
+                if (!line || typeof line !== "object") return null;
+                const text = String(line.text || "").trim();
+                if (!text) return null;
+                return {
+                    icon: String(line.icon || "fas fa-info-circle").trim() || "fas fa-info-circle",
+                    text
+                };
+            })
+            .filter(Boolean)
+        : [];
+    if (manualInfoLines.length > 0) return manualInfoLines;
+
+    const lines = [];
+    const modules = (typeof DATA !== "undefined" && DATA && DATA.modules) ? DATA.modules : {};
+    const cards = (typeof DATA !== "undefined" && DATA && Array.isArray(DATA.cards)) ? DATA.cards : [];
+    const cardById = {};
+    cards.forEach((card) => { if (card && card.id) cardById[card.id] = card; });
+
+    const campaignCardIds = Array.isArray(c.cards) ? c.cards : [];
+    const campaignModuleEntries = [];
+    const seenIds = new Set();
+    campaignCardIds.forEach((cardId) => {
+        const card = cardById[cardId] || null;
+        const modIds = Array.isArray(card && card.rewardModules) ? card.rewardModules : [];
+        modIds.forEach((modId) => {
+            if (!modId || seenIds.has(modId)) return;
+            const mod = modules[modId] || null;
+            if (!mod) return;
+            seenIds.add(modId);
+            campaignModuleEntries.push({ id: modId, mod });
+        });
+    });
+
+    // Get reward unit from first campaign card
+    let rewardUnit = "";
+    for (let i = 0; i < campaignCardIds.length; i++) {
+        const card = cardById[campaignCardIds[i]];
+        const u = getCardRewardUnit(card);
+        if (u) { rewardUnit = u; break; }
+    }
+
+    // Collect unique rate hints from campaign modules (non-always, non-base)
+    const categoryLabel = (key) => {
+        if (!key) return "";
+        const cat = (typeof DATA !== "undefined" && DATA && DATA.categories) ? DATA.categories[key] : null;
+        if (!cat || !cat.label) return String(key);
+        return String(cat.label).replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
+    };
+    // Short label for rate prefixes — strip emojis, parenthetical notes (both ASCII and fullwidth)
+    const categoryShort = (key) => {
+        if (!key) return "";
+        const cat = (typeof DATA !== "undefined" && DATA && DATA.categories) ? DATA.categories[key] : null;
+        if (!cat || !cat.label) return String(key);
+        return String(cat.label)
+            .replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE00}-\u{FEFF}]/gu, "")
+            .replace(/\s*[（(][^）)]*[）)]\s*/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+    };
+    const isOverseasCategory = (key) => {
+        if (!key) return false;
+        const cats = (typeof DATA !== "undefined" && DATA && DATA.categories) ? DATA.categories : {};
+        let current = String(key);
+        for (let i = 0; i < 6; i += 1) {
+            if (current === "overseas") return true;
+            const cat = cats[current];
+            if (!cat || !cat.parent) break;
+            current = String(cat.parent);
+        }
+        return String(key).startsWith("overseas");
+    };
+    const overseasShort = (key) => {
+        if (!key || key === "overseas") return "海外";
+        if (key === "overseas_cn" || key === "china_consumption") return "中國海外";
+        if (key === "overseas_mo") return "澳門海外";
+        const cat = (typeof DATA !== "undefined" && DATA && DATA.categories) ? DATA.categories[key] : null;
+        const raw = String((cat && cat.label) || "");
+        const m = raw.match(/[（(]([^）)]+)[）)]/);
+        if (m && m[1]) {
+            const region = String(m[1]).replace(/-舊/g, "").replace(/\s+/g, " ").trim();
+            if (region && region !== "母類") return region === "其他" ? "其他海外" : `${region}海外`;
+        }
+        return "海外";
+    };
+
+    const rateEntries = []; // { cats: ["label", ...], hint: "每 $1 額外 25 積分" }
+    const triggerLabels = [];
+    const seenTriggers = new Set();
+    let hasMission = false;
+    let missionSpend = 0;
+    let retroactive = null;
+
+    // Filter to modules relevant to this campaign's sections
+    const sectionCapKeys = new Set();
+    const sectionModuleIds = new Set();
+    const secs = Array.isArray(c.sections) ? c.sections : [];
+    secs.forEach((sec) => {
+        if (!sec) return;
+        if (sec.capKey) sectionCapKeys.add(sec.capKey);
+        if (sec.capModule) sectionModuleIds.add(sec.capModule);
+        if (sec.rateModule) sectionModuleIds.add(sec.rateModule);
+        if (sec.missionModule) sectionModuleIds.add(sec.missionModule);
+        if (sec.unlockModule) sectionModuleIds.add(sec.unlockModule);
+        if (Array.isArray(sec.missionModules)) sec.missionModules.forEach(id => sectionModuleIds.add(id));
+        if (Array.isArray(sec.unlockModules)) sec.unlockModules.forEach(id => sectionModuleIds.add(id));
+    });
+
+    let relevantModules = campaignModuleEntries
+        .filter((entry) => {
+            const mod = entry && entry.mod ? entry.mod : null;
+            if (!mod || mod.type === "always") return false;
+            const capKey = String(mod.cap_key || "").trim();
+            if (entry.id && sectionModuleIds.has(entry.id)) return true;
+            return capKey && sectionCapKeys.has(capKey);
+        })
+        .map((entry) => entry.mod);
+
+    const hasSectionRefs = sectionCapKeys.size > 0 || sectionModuleIds.size > 0;
+    if (relevantModules.length === 0 && hasSectionRefs) {
+        relevantModules = campaignModuleEntries
+            .map((entry) => entry.mod)
+            .filter((mod) => {
+                if (!mod || mod.type === "always") return false;
+                if (Number.isFinite(Number(mod.rate))) return true;
+                if (Number.isFinite(Number(mod.req_mission_spend)) && mod.req_mission_key) return true;
+                if (Number.isFinite(Number(mod.cap_limit)) && mod.cap_key) return true;
+                return false;
+            });
+    }
+
+    relevantModules.forEach((mod) => {
+        // Trigger categories
+        const match = Array.isArray(mod.match) ? mod.match.filter(Boolean) : [];
+        const matchUnique = Array.from(new Set(match));
+        const modCatShorts = [];
+        const inferredTriggerLabels = [];
+        const descText = String(mod.desc || "");
+        const isAllOverseas = matchUnique.length > 0 && matchUnique.every(isOverseasCategory);
+
+        if (match.length === 0) {
+            if (/本地.*手機|手機.*本地/.test(descText)) inferredTriggerLabels.push("本地手機簽賬");
+            if (/內地.*手機|手機.*內地|中國.*手機/.test(descText)) inferredTriggerLabels.push("內地手機簽賬");
+            if (inferredTriggerLabels.length === 0 && /手機/.test(descText)) inferredTriggerLabels.push("手機簽賬");
+        }
+
+        if (isAllOverseas) {
+            const overseasTriggerKey = "category:overseas";
+            if (!seenTriggers.has(overseasTriggerKey)) {
+                seenTriggers.add(overseasTriggerKey);
+                triggerLabels.push("海外");
+            }
+            const hasCn = matchUnique.includes("overseas_cn") || matchUnique.includes("china_consumption");
+            const hasMo = matchUnique.includes("overseas_mo");
+            if (/中澳/.test(descText)) {
+                modCatShorts.push("中澳海外");
+            } else if (/其他海外/.test(descText)) {
+                modCatShorts.push("其他海外");
+            } else if (hasCn && hasMo && matchUnique.length === 2) {
+                modCatShorts.push("中澳海外");
+            } else if (matchUnique.length >= 3) {
+                modCatShorts.push("海外");
+            } else {
+                matchUnique.forEach((k) => {
+                    modCatShorts.push(overseasShort(k));
+                });
+            }
+        } else {
+            matchUnique.forEach((k) => {
+                modCatShorts.push(categoryShort(k));
+                if (!seenTriggers.has(k)) {
+                    seenTriggers.add(k);
+                    triggerLabels.push(categoryLabel(k));
+                }
+            });
+        }
+        inferredTriggerLabels.forEach((label) => {
+            if (!label) return;
+            modCatShorts.push(label);
+            const triggerKey = `inferred:${label}`;
+            if (!seenTriggers.has(triggerKey)) {
+                seenTriggers.add(triggerKey);
+                triggerLabels.push(label);
+            }
+        });
+        const uniqueModCatShorts = Array.from(new Set(modCatShorts.filter(Boolean)));
+
+        // Rate hints — associate with this module's short category labels
+        if (Number.isFinite(Number(mod.rate))) {
+            const hint = formatRateHint(mod.rate, { unit: rewardUnit, mode: mod.mode || "" });
+            if (hint) {
+                const dayType = (mod.valid_on_red_day === true)
+                    ? "red_day"
+                    : (mod.valid_on_red_day === false ? "weekday" : "");
+                rateEntries.push({ cats: uniqueModCatShorts, hint, dayType });
+            }
+        }
+
+        // Mission
+        if (Number.isFinite(Number(mod.req_mission_spend)) && mod.req_mission_key) {
+            hasMission = true;
+            missionSpend = Math.max(missionSpend, Number(mod.req_mission_spend));
+            if (typeof mod.retroactive !== "undefined") retroactive = mod.retroactive;
+        }
+    });
+
+    // 1. Trigger
+    if (triggerLabels.length > 0) {
+        const display = triggerLabels.slice(0, 4);
+        const suffix = triggerLabels.length > 4 ? ` 等${triggerLabels.length}類` : "";
+        lines.push({ icon: "fas fa-tag", text: `適用：${display.join("、")}${suffix}` });
+    }
+
+    // 2. Rates
+    const dayAwareEntries = rateEntries.filter((e) => e && e.dayType);
+    if (dayAwareEntries.length > 0) {
+        const dayLabels = { weekday: "平日", red_day: "紅日" };
+        const dayParts = [];
+        ["weekday", "red_day"].forEach((dayType) => {
+            const entries = dayAwareEntries.filter((e) => e.dayType === dayType);
+            if (entries.length === 0) return;
+            const uniqueHintsByDay = [...new Set(entries.map((e) => e.hint))];
+            if (uniqueHintsByDay.length === 1) {
+                dayParts.push(`${dayLabels[dayType]}：${uniqueHintsByDay[0]}`);
+                return;
+            }
+            const parts = entries.slice(0, 3).map((e) => {
+                const catPrefix = e.cats.length > 0 ? e.cats.join("/") + "：" : "";
+                return catPrefix + e.hint;
+            });
+            dayParts.push(`${dayLabels[dayType]}：${parts.join("；")}`);
+        });
+        if (dayParts.length > 0) {
+            lines.push({ icon: "fas fa-coins", text: dayParts.join("；") });
+        }
+    } else {
+        const uniqueHints = [...new Set(rateEntries.map(e => e.hint))];
+        if (uniqueHints.length === 1) {
+            // All modules share the same rate — no need for per-category labels
+            lines.push({ icon: "fas fa-coins", text: uniqueHints[0] });
+        } else if (rateEntries.length > 0) {
+            // Different rates — prefix each with short category label
+            const parts = rateEntries.slice(0, 3).map(e => {
+                const catPrefix = e.cats.length > 0 ? e.cats.join("/") + "：" : "";
+                return catPrefix + e.hint;
+            });
+            lines.push({ icon: "fas fa-coins", text: parts.join("；") });
+        }
+    }
+
+    // 3. Mission
+    if (hasMission && missionSpend > 0) {
+        let missionText = `需先月簽 $${Math.floor(missionSpend).toLocaleString()}`;
+        if (retroactive === true) missionText += "（達標後會補回先前簽賬）";
+        else if (retroactive === false) missionText += "（達標前簽賬不計入）";
+        lines.push({ icon: "fas fa-bullseye", text: missionText });
+    }
+
+    if (lines.length === 0) {
+        lines.push({ icon: "fas fa-info-circle", text: "按此推廣的門檻、比率及上限計算" });
+    }
+
+    return lines;
+}
+
 function buildCampaignImplementationNote(campaign) {
     const c = (campaign && typeof campaign === "object") ? campaign : {};
     if (c.implementation_note && String(c.implementation_note).trim()) {
         return String(c.implementation_note).trim();
     }
     const modules = (typeof DATA !== "undefined" && DATA && DATA.modules) ? DATA.modules : {};
+    const cards = (typeof DATA !== "undefined" && DATA && Array.isArray(DATA.cards)) ? DATA.cards : [];
+    const cardById = {};
+    cards.forEach((card) => {
+        if (card && card.id) cardById[card.id] = card;
+    });
     const toNum = (v) => {
+        if (v === null || v === undefined || v === "") return null;
         const n = Number(v);
         return Number.isFinite(n) ? n : null;
     };
@@ -134,22 +665,44 @@ function buildCampaignImplementationNote(campaign) {
         const n = toNum(value);
         if (n === null) return "";
         const cleanUnit = String(unit || "").trim();
-        const isCurrency = !cleanUnit || cleanUnit === "$" || cleanUnit === "HKD" || cleanUnit === "元" || cleanUnit === "HK$" || cleanUnit === "現金" || cleanUnit === "RC";
-        if (cleanUnit === "RC") return `${Math.floor(n).toLocaleString()} RC`;
-        if (isCurrency) return `$${Math.floor(n).toLocaleString()}`;
+        if (!cleanUnit || isCurrencyLikeUnit(cleanUnit)) return `$${Math.floor(n).toLocaleString()}`;
         return `${Math.floor(n).toLocaleString()} ${cleanUnit}`;
     };
-    const fmtPct = (rate) => {
-        const n = toNum(rate);
-        if (n === null) return "";
-        const pct = n * 100;
-        const rounded = pct >= 10 ? pct.toFixed(1) : pct.toFixed(2);
-        return `${rounded.replace(/\.?0+$/, "")}%`;
-    };
+    const fmtPct = (rate) => formatRatePercent(rate);
     const getModule = (id) => {
         if (!id) return null;
         return modules[id] || null;
     };
+    const campaignCardIds = Array.isArray(c.cards) ? c.cards : [];
+    const campaignModuleEntries = [];
+    const seenCampaignModuleIds = new Set();
+    campaignCardIds.forEach((cardId) => {
+        const card = cardById[cardId] || null;
+        const moduleIds = Array.isArray(card && card.rewardModules) ? card.rewardModules : [];
+        moduleIds.forEach((moduleId) => {
+            if (!moduleId || seenCampaignModuleIds.has(moduleId)) return;
+            const mod = getModule(moduleId);
+            if (!mod) return;
+            seenCampaignModuleIds.add(moduleId);
+            campaignModuleEntries.push({ id: moduleId, mod });
+        });
+    });
+    const getCampaignModulesByCapKey = (capKey) => {
+        const key = String(capKey || "").trim();
+        if (!key) return [];
+        return campaignModuleEntries
+            .filter((entry) => entry && entry.mod && String(entry.mod.cap_key || "").trim() === key)
+            .map((entry) => entry.mod);
+    };
+    const getCampaignRewardUnit = () => {
+        for (let i = 0; i < campaignCardIds.length; i += 1) {
+            const card = cardById[campaignCardIds[i]];
+            const unit = getCardRewardUnit(card);
+            if (unit) return unit;
+        }
+        return "";
+    };
+    const campaignRewardUnit = getCampaignRewardUnit();
     const getModuleRefs = (sec, singleKey, listKey) => {
         const refs = [];
         const single = sec && sec[singleKey];
@@ -190,14 +743,60 @@ function buildCampaignImplementationNote(campaign) {
         const capModule = sec && sec.capModule ? getModule(sec.capModule) : null;
         return toNum(capModule && capModule.cap_limit);
     };
-    const getRateFromSection = (sec) => {
-        const explicit = toNum(sec && sec.rate);
-        if (explicit !== null) return explicit;
-        const rateModule = sec && sec.rateModule ? getModule(sec.rateModule) : null;
-        const fromRateModule = toNum(rateModule && rateModule.rate);
-        if (fromRateModule !== null) return fromRateModule;
+    const getCapModeFromSection = (sec) => {
+        const explicit = sec && typeof sec.capMode === "string" ? String(sec.capMode).trim() : "";
+        if (explicit) return explicit;
         const capModule = sec && sec.capModule ? getModule(sec.capModule) : null;
-        return toNum(capModule && capModule.rate);
+        if (capModule && capModule.cap_mode) return String(capModule.cap_mode).trim();
+        const capKey = sec && sec.capKey ? String(sec.capKey).trim() : "";
+        if (!capKey) return "";
+        const modes = Array.from(new Set(
+            getCampaignModulesByCapKey(capKey)
+                .map((mod) => String((mod && mod.cap_mode) || "").trim())
+                .filter(Boolean)
+        ));
+        if (modes.length === 1) return modes[0];
+        return "";
+    };
+    const getRateUnitFromSection = (sec) => {
+        const sectionUnit = String((sec && sec.unit) || "").trim();
+        if (sectionUnit && !isCurrencyLikeUnit(sectionUnit)) return sectionUnit;
+        if (campaignRewardUnit && !isCurrencyLikeUnit(campaignRewardUnit)) return campaignRewardUnit;
+        return sectionUnit || campaignRewardUnit || "";
+    };
+    const getRateHintsForSection = (sec) => {
+        const hints = [];
+        const seenHints = new Set();
+        const rateUnit = getRateUnitFromSection(sec);
+        const pushRateHint = (rateValue, modeValue) => {
+            const rateNum = toNum(rateValue);
+            if (rateNum === null) return;
+            const hint = formatRateHint(rateNum, { unit: rateUnit, mode: modeValue || "" });
+            if (!hint || seenHints.has(hint)) return;
+            seenHints.add(hint);
+            hints.push(hint);
+        };
+
+        const explicitRate = toNum(sec && sec.rate);
+        if (explicitRate !== null) {
+            pushRateHint(explicitRate, sec && sec.mode ? sec.mode : "");
+            return hints;
+        }
+
+        const rateModule = sec && sec.rateModule ? getModule(sec.rateModule) : null;
+        if (rateModule) pushRateHint(rateModule.rate, rateModule.mode || "");
+
+        const capModule = sec && sec.capModule ? getModule(sec.capModule) : null;
+        if (capModule) pushRateHint(capModule.rate, capModule.mode || "");
+
+        if (hints.length > 0) return hints;
+
+        const capKey = sec && sec.capKey ? String(sec.capKey).trim() : "";
+        if (!capKey) return hints;
+        getCampaignModulesByCapKey(capKey).forEach((mod) => {
+            pushRateHint(mod && mod.rate, mod && mod.mode ? mod.mode : "");
+        });
+        return hints;
     };
     const sections = Array.isArray(c.sections) ? c.sections : [];
     const parts = [];
@@ -221,13 +820,20 @@ function buildCampaignImplementationNote(campaign) {
             const unlockTarget = getUnlockTargetFromSection(sec);
             const fallbackTarget = missionTargets.length > 0 ? missionTargets[0] : null;
             const target = unlockTarget !== null ? unlockTarget : fallbackTarget;
-            const rate = getRateFromSection(sec);
+            const rateHints = getRateHintsForSection(sec);
             const cap = getCapLimitFromSection(sec);
-            const unit = String(sec.unit || "");
+            const capMode = getCapModeFromSection(sec);
+            const capUnit = capMode === "reward"
+                ? (String(sec.unit || "").trim() || campaignRewardUnit || "$")
+                : "$";
             const steps = [];
             if (target !== null) steps.push(`達 ${fmtMoney(target)} 後`);
-            if (rate !== null) steps.push(`按 ${fmtPct(rate)} 計算`);
-            if (cap !== null) steps.push(`上限 ${fmtMoney(cap, unit)}`);
+            if (rateHints.length === 1) steps.push(rateHints[0]);
+            else if (rateHints.length > 1) steps.push(`適用比率：${rateHints.join(" / ")}`);
+            if (cap !== null) {
+                const capHint = formatCapHint(cap, { capMode, unit: capUnit, fmtMoney });
+                if (capHint) steps.push(capHint);
+            }
             if (steps.length > 0) {
                 parts.push(`${label ? `「${label}」` : "回贈"}：${steps.join("，")}`);
             }
@@ -254,11 +860,22 @@ function buildCampaignImplementationNote(campaign) {
 
         if (sec.type === "cap") {
             const target = getUnlockTargetFromSection(sec);
+            const fallbackTarget = missionTargets.length > 0 ? missionTargets[0] : null;
+            const effectiveTarget = target !== null ? target : fallbackTarget;
+            const rateHints = getRateHintsForSection(sec);
             const cap = getCapLimitFromSection(sec);
-            const unit = String(sec.unit || "");
+            const capMode = getCapModeFromSection(sec);
+            const capUnit = capMode === "reward"
+                ? (String(sec.unit || "").trim() || campaignRewardUnit || "$")
+                : "$";
             const bits = [];
-            if (target !== null) bits.push(`達 ${fmtMoney(target)} 後`);
-            if (cap !== null) bits.push(`可用上限 ${fmtMoney(cap, unit)}`);
+            if (effectiveTarget !== null) bits.push(`達 ${fmtMoney(effectiveTarget)} 後`);
+            if (rateHints.length === 1) bits.push(rateHints[0]);
+            else if (rateHints.length > 1) bits.push(`適用比率：${rateHints.join(" / ")}`);
+            if (cap !== null) {
+                const capHint = formatCapHint(cap, { capMode, unit: capUnit, fmtMoney });
+                if (capHint) bits.push(capHint);
+            }
             if (bits.length > 0) parts.push(`${label ? `「${label}」` : "上限進度"}：${bits.join("，")}`);
         }
     });
@@ -283,23 +900,18 @@ function buildCampaignImplementationNote(campaign) {
 function buildModuleImplementationNote(mod, card, title) {
     const m = (mod && typeof mod === "object") ? mod : {};
     const cardRef = (card && typeof card === "object") ? card : {};
-    const pct = (value) => {
+    const rewardUnit = getCardRewardUnit(cardRef);
+    const pct = (value) => formatRatePercent(value);
+    const money = (value, unit) => {
         const n = Number(value);
         if (!Number.isFinite(n)) return "";
-        const p = n * 100;
-        const rounded = p >= 10 ? p.toFixed(1) : p.toFixed(2);
-        return `${rounded.replace(/\.?0+$/, "")}%`;
+        const cleanUnit = String(unit || "").trim();
+        if (!cleanUnit || isCurrencyLikeUnit(cleanUnit)) return `$${Math.floor(n).toLocaleString()}`;
+        return `${Math.floor(n).toLocaleString()} ${cleanUnit}`;
     };
-    const money = (value) => {
+    const spendMoney = (value) => {
         const n = Number(value);
         if (!Number.isFinite(n)) return "";
-        return `$${Math.floor(n).toLocaleString()}`;
-    };
-    const rewardCap = (value) => {
-        const n = Number(value);
-        if (!Number.isFinite(n)) return "";
-        const unit = (cardRef.redemption && cardRef.redemption.unit) ? String(cardRef.redemption.unit) : "$";
-        if (unit && unit !== "$") return `${Math.floor(n).toLocaleString()} ${unit}`;
         return `$${Math.floor(n).toLocaleString()}`;
     };
     const categoryLabel = (key) => {
@@ -322,21 +934,17 @@ function buildModuleImplementationNote(mod, card, title) {
 
     if (m.type === "red_hot_allocation") {
         const perX = pct(m.rate_per_x);
-        if (perX) parts.push(`先分配最紅 5X，當中每 1X = +${perX}`);
+        if (perX) parts.push(`先分配最紅 5X，當中每 1X 對應額外 ${perX}`);
         parts.push("實際回贈 = 基本回贈 + 最紅加成");
     } else if (m.type === "red_hot_fixed_bonus") {
         const perX = Number(m.rate_per_x);
         const mul = Number(m.multiplier);
         if (Number.isFinite(perX) && Number.isFinite(mul)) {
-            parts.push(`固定加成：${mul}X × ${pct(perX)} = ${pct(perX * mul)}`);
+            parts.push(`固定額外 ${pct(perX * mul)}`);
         }
     } else if (Number.isFinite(Number(m.rate))) {
-        const rateText = pct(m.rate);
-        if (rateText) {
-            if (m.mode === "add") parts.push(`額外回贈 = 合資格簽賬 × ${rateText}（加在基本回贈之上）`);
-            else if (m.mode === "replace") parts.push(`符合條件時改用 ${rateText} 計算（取代基本回贈）`);
-            else parts.push(`回贈 = 合資格簽賬 × ${rateText}`);
-        }
+        const rateHint = formatRateHint(m.rate, { unit: rewardUnit, mode: m.mode || "" });
+        if (rateHint) parts.push(rateHint);
     } else if (Number.isFinite(Number(m.rate_per_x)) && Number.isFinite(Number(m.multiplier))) {
         const perX = Number(m.rate_per_x);
         const mul = Number(m.multiplier);
@@ -344,13 +952,19 @@ function buildModuleImplementationNote(mod, card, title) {
     }
 
     if (Number.isFinite(Number(m.req_mission_spend)) && m.req_mission_key) {
-        parts.push(`需先累積門檻簽賬 ${money(m.req_mission_spend)} 才生效`);
+        let missionPart = `需先累積門檻簽賬 ${spendMoney(m.req_mission_spend)} 才生效`;
+        const retroHint = formatRetroactiveHint(m);
+        if (retroHint) missionPart += `（${retroHint}）`;
+        parts.push(missionPart);
     }
 
     if (Number.isFinite(Number(m.cap_limit)) && m.cap_key) {
-        if (m.cap_mode === "spending") parts.push(`每期最多計 ${money(m.cap_limit)} 合資格簽賬`);
-        else parts.push(`每期回贈上限 ${rewardCap(m.cap_limit)}`);
+        if (m.cap_mode === "spending") parts.push(`每期最多計算 ${spendMoney(m.cap_limit)} 合資格簽賬`);
+        else parts.push(`每期最多派發 ${money(m.cap_limit, rewardUnit || "$")}`);
     }
+
+    const periodHint = formatPeriodHint(m);
+    if (periodHint) parts.push(periodHint);
 
     if (parts.length === 0) {
         const label = normalizeInfoText(title || m.desc || "此推廣", 60);
@@ -386,7 +1000,7 @@ function buildCardImplementationNote(cardId) {
     if (capCount > 0) parts.push(`有 ${capCount} 項設有每期上限`);
 
     if (parts.length === 0) parts.push(`此卡由 ${modules.length} 項回贈規則組成`);
-    parts.push("詳細比率、門檻與上限可在該推廣卡按「? 點樣計」查看");
+    parts.push("詳細比率、門檻與上限已顯示於推廣卡資訊列");
     return `計算器做法：${parts.join("；")}。`;
 }
 
@@ -539,10 +1153,12 @@ function formatDateWithDaysLeft(dateStr) {
 }
 
 // Helper: Reset Date Display (重置於 YYYY-MM-DD (剩 X 日))
-function formatResetDate(dateStr) {
+function formatResetDate(dateStr, periodType) {
     if (!dateStr) return "";
     const days = getDaysLeft(dateStr);
-    return `於 ${dateStr} 重置 (剩 ${days} 日)`;
+    const periodLabel = periodType === "month" ? "每月" : periodType === "quarter" ? "每季" : periodType === "year" ? "每年" : "";
+    const prefix = periodLabel ? `${periodLabel} · ` : "";
+    return `${prefix}於 ${dateStr} 重置 (剩 ${days} 日)`;
 }
 
 // Helper: Promo End Date Display (推廣期至 YYYY-MM-DD (剩 X 日))
@@ -579,7 +1195,7 @@ function formatPeriodEndBadge(periodSpec, campaignId) {
 
     const resetDate = new Date(nextStart.getTime());
     resetDate.setDate(resetDate.getDate() - 1);
-    return formatResetDate(formatDateKey(resetDate));
+    return formatResetDate(formatDateKey(resetDate), periodSpec.type);
 }
 
 function getCampaignBadgeText(campaign) {
@@ -711,11 +1327,30 @@ function getCampaignOffers() {
                 firstCardMeta.registrationNote
             ]);
             const resolvedCampaignModel = (raw && raw.id) ? raw : offer;
+            const normalizeInfoLines = (arr) => {
+                if (!Array.isArray(arr)) return [];
+                return arr
+                    .map((line) => {
+                        if (typeof line === "string") {
+                            const text = String(line || "").trim();
+                            return text ? { icon: "fas fa-info-circle", text } : null;
+                        }
+                        if (!line || typeof line !== "object") return null;
+                        const text = String(line.text || "").trim();
+                        if (!text) return null;
+                        return {
+                            icon: String(line.icon || "fas fa-info-circle").trim() || "fas fa-info-circle",
+                            text
+                        };
+                    })
+                    .filter(Boolean);
+            };
             return {
                 ...offer,
                 display_name_zhhk: offer.display_name_zhhk || raw.display_name_zhhk || "",
                 name: offer.name || raw.name || "",
                 note_zhhk: offer.note_zhhk || raw.note_zhhk || (firstRefModule ? (firstRefModule.note_zhhk || "") : ""),
+                info_lines: normalizeInfoLines(offer.info_lines || raw.info_lines),
                 source_url: firstNonEmpty([offer.source_url, raw.source_url, fallbackSourceUrl]),
                 source_title: firstNonEmpty([offer.source_title, raw.source_title, fallbackSourceTitle]),
                 tnc_url: firstNonEmpty([offer.tnc_url, raw.tnc_url, reg.tncUrl, explicitNoTnc ? "" : fallbackTncUrl]),
@@ -794,7 +1429,7 @@ function getResetBadgeForKey(key, userProfile) {
 
     const resetDate = new Date(nextStart.getTime());
     resetDate.setDate(resetDate.getDate() - 1);
-    return formatResetDate(formatDateKey(resetDate));
+    return formatResetDate(formatDateKey(resetDate), entry.periodType);
 }
 
 function getPromoBadgeForModule(mod) {
@@ -1795,10 +2430,15 @@ function renderRedMcdStampProgressBody(userProfile) {
     </div>`;
 }
 
-function breakdownToneClass(tone, flags) {
+function breakdownToneClass(tone, flags, meta) {
     const classes = [];
     const safeTone = tone || "normal";
-    if (safeTone === "muted") classes.push("text-gray-400");
+    const isLockedOrCapped = !!(flags && (flags.locked || flags.capped || flags.strike));
+    const isModuleEntry = !!(meta && (meta.modType || meta.modMode));
+    if (isLockedOrCapped) classes.push("text-gray-400");
+    else if (isModuleEntry && meta.modType === "always") classes.push("text-stone-500");
+    else if (isModuleEntry) classes.push("text-emerald-600");
+    else if (safeTone === "muted") classes.push("text-gray-400");
     else if (safeTone === "warning") classes.push("text-yellow-600");
     else if (safeTone === "accent") classes.push("text-purple-600");
     else if (safeTone === "danger") classes.push("text-red-500");
@@ -1809,14 +2449,48 @@ function breakdownToneClass(tone, flags) {
     return classes.join(" ");
 }
 
-function renderBreakdown(entries) {
+function renderBreakdown(entries, res) {
     if (!Array.isArray(entries) || entries.length === 0) return "基本回贈";
-    return entries.map(entry => {
-        if (typeof entry === "string") return escapeHtml(entry);
+    const fmtPct = (v) => formatRatePercent(v / 100);
+
+    // Extract % for each entry
+    const parsed = entries.map(entry => {
+        if (typeof entry === "string") return { text: escapeHtml(entry), cls: "", pct: "" };
         const text = escapeHtml(entry.text || "");
-        const cls = breakdownToneClass(entry.tone, entry.flags);
-        return cls ? `<span class="${cls}">${text}</span>` : text;
-    }).join(" + ");
+        const meta = entry.meta || null;
+        const cls = breakdownToneClass(entry.tone, entry.flags, meta);
+        // Derive cash % — skip if text already contains one
+        let pct = "";
+        const textHasPct = /\d+(\.\d+)?%/.test(text);
+        if (meta && Number.isFinite(meta.rate) && Number.isFinite(meta.cashRate) && meta.rate > 0) {
+            const cashPct = meta.rate * meta.cashRate * 100; // already in %
+            pct = fmtPct(cashPct);
+        } else if (textHasPct) {
+            // Extract the last percentage from text for alignment
+            const m = text.match(/(\d+(?:\.\d+)?%)/g);
+            if (m) pct = m[m.length - 1];
+        }
+        return { text, cls, pct, textHasPct };
+    });
+
+    // Build rows: two-column with right-aligned %
+    const rows = parsed.map(p => {
+        // Strip inline % from text if we're showing it in the right column
+        let displayText = p.text;
+        if (p.textHasPct && p.pct) {
+            // Remove the trailing (X%) or just X% we extracted
+            displayText = displayText.replace(/\s*[\(（]\d+(?:\.\d+)?%[\)）]\s*$/, "").replace(/\s*\d+(?:\.\d+)?%\s*$/, "").trim();
+        }
+        const pctHtml = p.pct ? `<span class="tabular-nums whitespace-nowrap">${p.pct}</span>` : "";
+        return `<div class="flex justify-between gap-2 ${p.cls}"><span>${displayText}</span>${pctHtml}</div>`;
+    });
+
+    // Total line — only show current unlocked total
+    const totalPct = res && Number.isFinite(res.totalCashPercent) ? res.totalCashPercent : 0;
+    if (totalPct > 0) {
+        rows.push(`<div class="flex justify-between gap-2 text-stone-700 font-medium border-t border-stone-200 mt-0.5 pt-0.5"><span>合共</span><span class="tabular-nums">${fmtPct(totalPct)}</span></div>`);
+    }
+    return rows.join("");
 }
 
 // Helper: Toggle Collapsible Section
@@ -2054,7 +2728,7 @@ function createProgressCard(config) {
     const {
         title, icon, badge, subTitle, sections, warning, actionButton, description,
         sourceUrl, sourceTitle, tncUrl, promoUrl, registrationUrl, registrationStart, registrationEnd, registrationNote,
-        implementationNote, daysLeft, customBodyHtml
+        implementationNote, daysLeft, customBodyHtml, infoLines
     } = config;
 
     // Use pure flat design instead of themes
@@ -2079,7 +2753,7 @@ function createProgressCard(config) {
         showRegistration: true,
         showPromo: true,
         showTnc: true,
-        showImplementation: true
+        showImplementation: false
     });
     const infoHtml = (descriptionText || refsHtml) ? `<div class="flex flex-wrap items-center gap-2">
         ${descriptionText ? `<span class="text-[11px] text-gray-500">${escapeHtml(descriptionText)}</span>` : ""}
@@ -2096,6 +2770,13 @@ function createProgressCard(config) {
     const customBodySection = customBodyHtml ? `<div>${customBodyHtml}</div>` : '';
     const sectionsHtml = sections ? renderPromoSections(sections, { text: 'text-[#37352f]', bar: 'bg-[#37352f]' }) : '';
 
+    const safeInfoLines = Array.isArray(infoLines) ? infoLines.filter(l => l && l.text) : [];
+    const infoLinesHtml = safeInfoLines.length > 0
+        ? `<div class="pc-info-lines">${safeInfoLines.map(l =>
+            `<div class="pc-info-line"><i class="${escapeHtml(l.icon || "fas fa-info-circle")} pc-info-icon"></i><span>${escapeHtml(l.text)}</span></div>`
+        ).join("")}</div>`
+        : "";
+
     return `<div class="bg-white border border-[#e9e9e7] rounded-md overflow-hidden mb-3">
         <div class="p-3 border-b border-[#e9e9e7] flex justify-between items-start bg-[#fcfcfc]">
             <div class="flex flex-col">
@@ -2110,6 +2791,7 @@ function createProgressCard(config) {
             ${infoHtml}
             ${warningHtml}
             ${customBodySection}
+            ${infoLinesHtml}
             ${sectionsHtml}
             ${actionButtonHtml}
         </div>
@@ -2122,7 +2804,7 @@ function createResultCard(res, dataStr, mainValHtml, redemptionHtml) {
     return `<div class="card-enter bg-white p-3 rounded-md border border-[#e9e9e7] hover:bg-[#fcfcfc] transition-colors flex justify-between items-start mb-2 group">
         <div class="w-2/3 pr-2">
             <div class="font-medium text-[#37352f] text-sm truncate">${res.cardName}</div>
-            <div class="text-[11px] text-gray-500 mt-0.5">${renderBreakdown(res.breakdown)}</div>
+            <div class="text-[11px] mt-0.5 leading-relaxed">${renderBreakdown(res.breakdown, res)}</div>
         </div>
         <div class="text-right w-1/3 flex flex-col items-end">
             ${mainValHtml}
@@ -2242,7 +2924,8 @@ function renderDashboard(userProfile) {
                 registrationNote: state.registrationNote || stateModel.registrationNote || stateModel.registration_note || "",
                 implementationNote: state.implementationNote || "",
                 sections: state.sections || [],
-                actionButton: state.actionButton || null
+                actionButton: state.actionButton || null,
+                infoLines: state.infoLines || []
             });
             if (scope.type === "card") {
                 pushBlock(scope.cardId, blockHtml);
@@ -2376,7 +3059,8 @@ function renderDashboard(userProfile) {
                 registrationStart: campaign.registration_start || "",
                 registrationEnd: campaign.registration_end || "",
                 registrationNote: campaign.registration_note || "",
-                implementationNote: campaign.implementation_note || buildCampaignImplementationNote(campaign)
+                implementationNote: campaign.implementation_note || buildCampaignImplementationNote(campaign),
+                infoLines: buildCampaignInfoLines(campaign)
             });
 
             const campaignSortMeta = { daysLeft: (typeof campaignDaysLeft === "number" && Number.isFinite(campaignDaysLeft)) ? campaignDaysLeft : Infinity, state: "active" };
@@ -2549,7 +3233,7 @@ function renderDashboard(userProfile) {
                 theme: "gray",
                 badge: getPromoBadgeForModule(mod),
                 subTitle: getResetBadgeForKey(mod.cap_key, userProfile),
-                description: mod.note_zhhk || mod.desc || "",
+                description: mod.note_zhhk || "",
                 sourceUrl: mod.source_url || (card && card.source_url) || (cardReferenceMeta.sourceUrl || ""),
                 sourceTitle: mod.source_title || (card && card.source_title) || (cardReferenceMeta.sourceTitle || ""),
                 tncUrl: mod.tnc_url || (card && card.tnc_url) || (cardReferenceMeta.tncUrl || ""),
@@ -2559,7 +3243,8 @@ function renderDashboard(userProfile) {
                 registrationEnd: mod.registration_end || (card && card.registration_end) || (cardReferenceMeta.registrationEnd || ""),
                 registrationNote: mod.registration_note || (card && card.registration_note) || (cardReferenceMeta.registrationNote || ""),
                 implementationNote: buildModuleImplementationNote(mod, card, title),
-                sections: sections
+                sections: sections,
+                infoLines: buildModuleInfoLines(mod, card, userProfile)
             }));
         });
     });
@@ -2848,12 +3533,49 @@ function renderCalculatorResults(results, currentMode) {
 		            mainValHtml += `<div class="text-[10px] text-gray-400 mt-0.5">${escapeHtml(cget("calc.unsupportedMode", "不支援此模式"))}</div>`;
 		        }
 	        let potentialHtml = "";
-	        if (res.displayValPotential && res.displayValPotential !== res.displayVal) {
+	        const lockedNonModulePotentialNative = Array.isArray(res.breakdown)
+	            ? res.breakdown.reduce((sum, entry) => {
+	                if (!entry || typeof entry !== "object") return sum;
+	                const text = String(entry.text || "");
+	                const flags = entry.flags || {};
+	                if (!(flags.locked || text.includes("🔒"))) return sum;
+	                const meta = entry.meta || {};
+	                if (meta.modType || meta.modMode) return sum;
+	                const rate = Number(meta.rate);
+	                if (!Number.isFinite(rate) || rate <= 0) return sum;
+	                return sum + ((Number(res.amount) || 0) * rate);
+	            }, 0)
+	            : 0;
+	        const lockedNonModulePotentialDisplayAddon = (() => {
+	            if (!(lockedNonModulePotentialNative > 0)) return 0;
+	            const nativePot = Number(res.nativeValPotential) || 0;
+	            const nativeNow = Number(res.nativeVal) || 0;
+	            const milesPerNative = nativePot > 0
+	                ? ((Number(res.estMilesPotential) || 0) / nativePot)
+	                : (nativeNow > 0 ? ((Number(res.estMiles) || 0) / nativeNow) : 0);
+	            const cashPerNative = nativePot > 0
+	                ? ((Number(res.estCashPotential) || 0) / nativePot)
+	                : (nativeNow > 0 ? ((Number(res.estCash) || 0) / nativeNow) : 0);
+	            if (currentMode === "miles") return lockedNonModulePotentialNative * milesPerNative;
+	            return lockedNonModulePotentialNative * cashPerNative;
+	        })();
+	        const hasPendingUnlock = Array.isArray(res.pendingUnlocks) && res.pendingUnlocks.length > 0;
+	        const hasPotentialDelta = (Number(res.nativeValPotential) || 0) > ((Number(res.nativeVal) || 0) + 1e-9);
+	        const hasLockedBreakdown = Array.isArray(res.breakdown) && res.breakdown.some((entry) => {
+	            const text = typeof entry === "string" ? entry : String((entry && entry.text) || "");
+	            const flags = (entry && typeof entry === "object" && entry.flags) ? entry.flags : {};
+	            return !!flags.locked || text.includes("🔒");
+	        });
+	        if (res.displayValPotential && (res.displayValPotential !== res.displayVal || hasPotentialDelta || hasPendingUnlock || hasLockedBreakdown)) {
 	            let potentialVal = res.displayValPotential;
 	            let potentialUnit = res.displayUnitPotential;
 	            if (allowFeeNet && hasNetImpact && feeNetPotential !== null) {
 	                potentialVal = feeNetPotential;
 	                potentialUnit = "$";
+	            }
+	            const parsedPotential = Number(String(potentialVal).replace(/,/g, ""));
+	            if (Number.isFinite(parsedPotential) && lockedNonModulePotentialDisplayAddon > 0) {
+	                potentialVal = Math.floor(Math.max(0, parsedPotential + lockedNonModulePotentialDisplayAddon)).toLocaleString();
 	            }
 	            potentialHtml = `<div class="text-[10px] text-gray-500 mt-0.5">🔓 解鎖後：${escapeHtml(formatValueText(potentialVal, potentialUnit))}</div>`;
 	        }
@@ -2879,13 +3601,15 @@ function renderCalculatorResults(results, currentMode) {
 		                `;
 		            }
 
-	            redemptionHtml = `
-	                <div class="mt-1 flex justify-end">
-	                    <button onclick="event.stopPropagation(); alert('【兌換詳情】\\n💰 手續費: ${rd.fee}\\n📉 最低兌換: ${rd.min.toLocaleString()} ${rd.unit}\\n🔄 比率: ${rd.ratio}')" 
-	                        class="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded flex items-center gap-1 hover:bg-yellow-200 transition-colors">
-	                        <i class="fas fa-exclamation-circle"></i> 條款
-	                    </button>
-	                </div>`;
+	            const feeStr = (rd.fee || "").replace(/✅/g, "").trim();
+	            const isFree = /^(免費|免手續費|無|N\/A|免費)$/i.test(feeStr) || !feeStr;
+	            if (!isFree) {
+	                const shortFee = escapeHtml(feeStr.replace(/\s*[（(][^）)]*[）)]\s*$/, "").trim());
+	                redemptionHtml = `
+	                    <div class="mt-1 flex justify-end">
+	                        <span class="text-[10px] text-amber-600">⚠️ 手續費 ${shortFee}</span>
+	                    </div>`;
+	            }
 	        }
 
 	        // Add top result styling for top 3
@@ -2898,7 +3622,7 @@ function renderCalculatorResults(results, currentMode) {
 	            ${topBadge}
 	            <div class="w-2/3 pr-2">
 	                <div class="font-bold text-gray-800 text-sm truncate">${res.cardName}</div>
-	                <div class="text-xs text-gray-500 mt-1">${renderBreakdown(res.breakdown)}</div>
+	                <div class="text-xs mt-1 leading-relaxed">${renderBreakdown(res.breakdown, res)}</div>
 	                ${feeLineHtml}
 	            </div>
 	            <div class="text-right w-1/3 flex flex-col items-end">
@@ -3392,7 +4116,7 @@ function renderSettings(userProfile) {
         : (guruSourceMeta.registrationNote || "");
     const guruImplementationNote = (guruRefMeta && (guruRefMeta.implementationNote || guruRefMeta.implementation_note))
         ? String(guruRefMeta.implementationNote || guruRefMeta.implementation_note)
-        : "計算器做法：登記後可啟動 GO 級；其後海外合資格簽賬按等級計算（GO +3% 上限 500 RC、GING +4% 上限 1,200 RC、GURU +6% 上限 2,200 RC），每級達升級門檻後可升級並重置該級進度。";
+        : "計算器做法：登記後可啟動 GO 級；其後海外合資格簽賬按等級計算（GO 額外 3% 上限 500 RC、GING 額外 4% 上限 1,200 RC、GURU 額外 6% 上限 2,200 RC），每級達升級門檻後可升級並重置該級進度。";
     const guruRefsHtml = renderReferenceActions({
         sourceUrl: guruSourceMeta.sourceUrl || "",
         sourceTitle: guruSourceMeta.sourceTitle || "",

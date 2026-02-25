@@ -2,12 +2,14 @@
 
 const modulesDB = {
     // --- HSBC ---
-    "hsbc_std_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)", last_verified_at: "2026-02-06", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf" },
-    "vs_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)", last_verified_at: "2026-02-06", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/visa-signature/special-reward-tnc.pdf" },
+    "hsbc_std_base": { type: "always", rate: 0.004, desc: "基本 0.4%", last_verified_at: "2026-02-06", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf" },
+    "vs_base": { type: "always", rate: 0.004, desc: "基本 0.4%", last_verified_at: "2026-02-06", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/visa-signature/special-reward-tnc.pdf" },
     "red_hot_variable": {
         type: "red_hot_allocation",
         rate_per_x: 0.004,
         desc: "最紅自主",
+        display_name_zhhk: "HSBC 最紅自主獎賞",
+        note_zhhk: "按你分配嘅 5X 最紅自主權重計算；每 1X = 額外 0.4%，只限最紅自主類別及條款列明合資格交易。",
         setting_key: "red_hot_rewards_enabled",
         last_verified_at: "2026-02-05",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/rewards/2026-red-hot-rewards-of-your-choice-terms-and-conditions.pdf, https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/#3",
@@ -20,11 +22,20 @@ const modulesDB = {
         // 「最紅自主」通常以年度為週期（之後如要自訂週期，可用 periodOverrides.byKey/modules 擴展）。
         cap: { period: { type: "year", startMonth: 1, startDay: 1 } }
     },
-    "vs_red_hot_bonus": { type: "red_hot_fixed_bonus", multiplier: 3, rate_per_x: 0.004, desc: "VS專屬賞 (1.2%)", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/rewards/2026-red-hot-rewards-of-your-choice-terms-and-conditions.pdf, https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/#3" },
+    "vs_red_hot_bonus": {
+        type: "red_hot_fixed_bonus",
+        multiplier: 3,
+        rate_per_x: 0.004,
+        desc: "VS專屬賞",
+        display_name_zhhk: "Visa Signature 特別獎賞",
+        note_zhhk: "Visa Signature 於最紅自主類別之合資格簽賬，固定額外 1.2%，可與最紅自主分配同時生效。",
+        last_verified_at: "2026-02-05",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/rewards/2026-red-hot-rewards-of-your-choice-terms-and-conditions.pdf, https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/#3"
+    },
     // Easy Card「易賞錢」：百佳/屈臣氏 $5=1分；豐澤 $10=1分（同樣 6 倍會出現兩個不同回贈率）。
     // - 新交易請用細分 category；舊 category 仍保留以支援已記帳資料。
     "easy_moneyback_bonus": {
-        type: "category", match: ["moneyback_merchant"], rate: 0.024, desc: "易賞錢指定商戶 6倍 (約2.4%)", mode: "replace",
+        type: "category", match: ["moneyback_merchant"], rate: 0.024, desc: "易賞錢指定商戶 6倍 2.4%", mode: "replace",
         note_zhhk: "基本「易賞錢」獎賞積分即於百佳及屈臣氏作每港幣 5 元簽賬相等於 1「易賞錢」積分或於豐澤作\n每港幣 10 元簽賬相等於 1「易賞錢」積分;6 倍「易賞錢」獎賞積分即於百佳及屈臣氏作每港幣 5 元\n簽賬相等於 6「易賞錢」 積分或於豐澤作每港幣 10 元簽賬相等於 6「易賞錢」積分;而 4 倍「易賞錢\n」獎賞積分即於百佳及屈臣氏作每港幣 5 元簽賬相等於 4「易賞錢」積分或於豐澤作每港幣 10 元簽\n賬相等於 4「易賞錢」積分。有關「易賞錢」積分的條款及細則請參閱「易賞錢」網頁",
         last_verified_at: "2026-02-06",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf"
@@ -33,7 +44,7 @@ const modulesDB = {
         type: "category",
         match: ["moneyback_pns_watsons"],
         rate: 0.016,
-        desc: "易賞錢：百佳/屈臣氏 4倍 (1.6%)",
+        desc: "易賞錢：百佳/屈臣氏 4倍 1.6%",
         mode: "replace",
         valid_from: "2025-05-19",
         valid_to: "2026-12-31",
@@ -44,7 +55,7 @@ const modulesDB = {
         type: "category",
         match: ["moneyback_pns_watsons"],
         rate: 0.024,
-        desc: "易賞錢：百佳/屈臣氏 6倍 (2.4%，VIP)",
+        desc: "易賞錢：百佳/屈臣氏 6倍 2.4% (VIP)",
         mode: "replace",
         valid_from: "2025-05-19",
         valid_to: "2026-12-31",
@@ -55,7 +66,7 @@ const modulesDB = {
         type: "category",
         match: ["moneyback_fortress"],
         rate: 0.008,
-        desc: "易賞錢：豐澤 4倍 (0.8%)",
+        desc: "易賞錢：豐澤 4倍 0.8%",
         mode: "replace",
         valid_from: "2025-05-19",
         valid_to: "2026-12-31",
@@ -66,7 +77,7 @@ const modulesDB = {
         type: "category",
         match: ["moneyback_fortress"],
         rate: 0.012,
-        desc: "易賞錢：豐澤 6倍 (1.2%，VIP)",
+        desc: "易賞錢：豐澤 6倍 1.2% (VIP)",
         mode: "replace",
         valid_from: "2025-05-19",
         valid_to: "2026-12-31",
@@ -77,7 +88,7 @@ const modulesDB = {
         type: "category",
         match: ["easy_additional_3x"],
         rate: 0.012,
-        desc: "指定商戶 3X「易賞錢」積分 (1.2%)",
+        desc: "指定商戶 3X 易賞錢積分 1.2%",
         mode: "replace",
         valid_from: "2025-05-19",
         valid_to: "2026-02-28",
@@ -92,7 +103,8 @@ const modulesDB = {
         type: "category",
         match: ["tuition"],
         rate: 0.024,
-        desc: "學費回贈 (2.4%)",
+        desc: "學費回贈 2.4%",
+        display_name_zhhk: "HSBC 學生卡學費回贈",
         last_verified_at: "2026-02-06",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/tc/tuition-fee-payment-tcs1.pdf",
         cap_mode: "reward",
@@ -104,20 +116,20 @@ const modulesDB = {
         type: "category",
         match: ["china_consumption"],
         rate: 0.02,
-        desc: "內地/澳門手機支付 (+2%)",
-        note_zhhk: "要手機支付!!!",
+        desc: "內地/澳門手機支付額外 2%",
+        display_name_zhhk: "HSBC Pulse 內地/澳門手機支付額外回贈",
         last_verified_at: "2026-02-06",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
         mode: "add",
         eligible_check: (cat, ctx) => !!(ctx && ctx.paymentMethod && ctx.paymentMethod !== "physical")
     },
-    "em_base": { type: "always", rate: 0.01, desc: "基本 (1%)", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
-    "em_designated": { type: "category", match: ["streaming", "em_designated_spend"], rate: 0.025, desc: "指定 $2/里 (2.5%)", mode: "replace", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
-    "em_grocery_low": { type: "category", match: ["grocery"], rate: 0.004, desc: "超市 (0.4%)", mode: "replace", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
+    "em_base": { type: "always", rate: 0.01, desc: "基本 1%", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
+    "em_designated": { type: "category", match: ["streaming", "em_designated_spend"], rate: 0.025, desc: "串流/訂閱/EveryMile 指定 2.5%", mode: "replace", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
+    "em_grocery_low": { type: "category", match: ["grocery"], rate: 0.004, desc: "超市 0.4%", mode: "replace", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
     "red_base": {
         type: "always",
         rate: 0.004,
-        desc: "基本 (0.4%)",
+        desc: "基本 0.4%",
         last_verified_at: "2026-02-21",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf"
     },
@@ -125,7 +137,8 @@ const modulesDB = {
         type: "category",
         match: ["online"],
         rate: 0.036,
-        desc: "網購額外 +3.6%（合共4%）",
+        desc: "網購額外 3.6%",
+        display_name_zhhk: "HSBC Red 網上購物額外回贈",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 360,
@@ -139,7 +152,8 @@ const modulesDB = {
         type: "category",
         match: ["red_designated"],
         rate: 0.076,
-        desc: "指定商戶額外 +7.6%（合共8%）",
+        desc: "指定商戶額外 7.6%",
+        display_name_zhhk: "HSBC Red 指定商戶額外回贈",
         mode: "add",
         cap_mode: "spending",
         cap_limit: 1250,
@@ -152,7 +166,8 @@ const modulesDB = {
         type: "category_overflow_bonus",
         match: ["online"],
         rate: 0.036,
-        desc: "指定商戶封頂後網購額外 +3.6%（合共4%）",
+        desc: "指定商戶封頂後網購額外 3.6%",
+        display_name_zhhk: "HSBC Red 網上購物額外回贈（指定商戶封頂後）",
         mode: "add",
         overflow_after_cap_key: "red_designated_spend_cap",
         overflow_after_cap_limit: 1250,
@@ -191,7 +206,8 @@ const modulesDB = {
     // [NEW] Actual Calculation Module for EveryMile Promo
     // Base 1% + Bonus 1.5% = 2.5% ($2/mile). Req $12,000 spend.
     "em_overseas_bonus": {
-        type: "category", match: ["overseas"], rate: 0.015, desc: "EM推廣 (+1.5%)",
+        type: "category", match: ["overseas"], rate: 0.015, desc: "EM推廣額外 1.5%",
+        display_name_zhhk: "EveryMile 外幣簽賬優惠",
         mode: "add", setting_key: "em_promo_enabled",
         last_verified_at: "2026-02-12",
         source_url: "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/everymile-spending-offer/, https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf",
@@ -222,24 +238,24 @@ const modulesDB = {
         registration_end: "2025-10-31",
         registration_note: "分階段登記：2025-06-16至07-03、09-01至09-30、10-01至10-31",
         config: {
-            1: { rate: 0.03, cap_rc: 500, desc: "GO級 (+3%)" },
-            2: { rate: 0.04, cap_rc: 1200, desc: "GING級 (+4%)" },
-            3: { rate: 0.06, cap_rc: 2200, desc: "GURU級 (+6%)" }
+            1: { rate: 0.03, cap_rc: 500, desc: "Travel Guru GO級 3%" },
+            2: { rate: 0.04, cap_rc: 1200, desc: "Travel Guru GING級 4%" },
+            3: { rate: 0.06, cap_rc: 2200, desc: "Travel Guru GURU級 6%" }
         },
         usage_key: "guru_rc_used"
     },
 
     // --- SC ---
     "sc_cathay_base": { type: "always", rate: 1 / 6, desc: "基本 $6/里" },
-    "sc_cathay_dining_hotel": { type: "category", match: ["dining", "hotel"], rate: 0.25, desc: "食肆/酒店 $4/里", mode: "replace" },
+    "sc_cathay_dining_hotel": { type: "category", match: ["dining", "hotel"], rate: 0.25, desc: "餐飲/酒店 $4/里", mode: "replace" },
     "sc_cathay_overseas_std": { type: "category", match: ["overseas"], rate: 0.25, desc: "海外 $4/里", mode: "replace" },
-    "sc_cathay_overseas_priority": { type: "category", match: ["overseas"], rate: 1 / 3, desc: "優先理財: 海外 $3/里", mode: "replace" },
-    "sc_cathay_private": { type: "category", match: ["overseas"], rate: 0.5, desc: "優先私人: 海外 $2/里", mode: "replace" },
+    "sc_cathay_overseas_priority": { type: "category", match: ["overseas"], rate: 1 / 3, desc: "優先理財：海外 $3/里", mode: "replace" },
+    "sc_cathay_private": { type: "category", match: ["overseas"], rate: 0.5, desc: "優先私人：海外 $2/里", mode: "replace" },
     "sc_cathay_overseas_spending_offer_2026q2": {
         type: "category",
         match: ["overseas"],
         rate: 0.25,
-        desc: "海外簽賬額外 +2,500 里（首$10,000）",
+        desc: "海外簽賬推廣額外 $4/里",
         mode: "add",
         setting_key: "sc_cathay_overseas_spending_offer_enabled",
         req_mission_spend: 10000,
@@ -261,7 +277,7 @@ const modulesDB = {
     "sc_cathay_airlines": {
         type: "category",
         rate: 2667 / 8000,
-        desc: "國泰航空 / HK Express 每季累積滿$8,000 +2,667里",
+        desc: "國泰/HK Express 額外每 $8,000 +2,667 里",
         mode: "add",
         req_mission_spend: 8000,
         req_mission_key: "sc_cathay_cxuo_spend",
@@ -277,19 +293,19 @@ const modulesDB = {
             return merchantId === "cathay_pacific" || merchantId === "hk_express";
         }
     },
-    "sc_simply_cash_base": { type: "always", rate: 0.015, desc: "本地 1.5%" },
+    "sc_simply_cash_base": { type: "always", rate: 0.015, desc: "基本 1.5%" },
     "sc_simply_cash_foreign": { type: "category", match: ["overseas"], rate: 0.02, desc: "外幣 2%", mode: "replace" },
     "sc_smart_base": {
         type: "always",
         rate: 0.0056,
-        desc: "每月合資格簽賬滿 $4,000：基本 0.56%",
+        desc: "基本 0.56%",
         req_mission_spend: 4000,
         req_mission_key: "sc_smart_monthly_eligible"
     },
     "sc_smart_base_tier2_bonus": {
         type: "always",
         rate: 0.0064,
-        desc: "每月合資格簽賬滿 $15,000：額外 +0.64%（合共 1.2%）",
+        desc: "月簽滿 $15,000 額外 0.64%",
         req_mission_spend: 15000,
         req_mission_key: "sc_smart_monthly_eligible"
     },
@@ -297,7 +313,7 @@ const modulesDB = {
         type: "category",
         match: ["smart_designated"],
         rate: 0.0444,
-        desc: "指定商戶加碼（達門檻後合共 5%，每月上限 $5,000）",
+        desc: "指定商戶加碼額外 4.4%",
         mode: "add",
         req_mission_spend: 4000,
         req_mission_key: "sc_smart_monthly_eligible",
@@ -317,7 +333,7 @@ const modulesDB = {
         type: "category",
         match: ["smart_designated"],
         rate: -0.0064,
-        desc: "指定商戶高階調整（維持合共 5%）",
+        desc: "指定商戶高階調整 -0.64%",
         mode: "add",
         req_mission_spend: 15000,
         req_mission_key: "sc_smart_monthly_eligible",
@@ -334,22 +350,22 @@ const modulesDB = {
         cap: { key: "sc_smart_cap", period: "month" }
     },
 
-"sc_cathay_overseas_private": { type: "category", match: ["overseas"], rate: 0.5, desc: "Private: Overseas $2/mi", mode: "replace" },
+"sc_cathay_overseas_private": { type: "category", match: ["overseas"], rate: 0.5, desc: "優先私人：海外 $2/里", mode: "replace" },
 
     // --- Citi ---
-    "citi_pm_base": { type: "always", rate: 1.5, desc: "基本 1.5X ($8/里)" },
-    "citi_pm_overseas": { type: "category", match: ["overseas"], rate: 3, desc: "海外 3X ($4/里)", mode: "replace" },
-    "citi_prestige_base": { type: "always", rate: 2, desc: "基本 2X ($6/里)" },
-    "citi_prestige_overseas": { type: "category", match: ["overseas"], rate: 3, desc: "海外 3X ($4/里)", mode: "replace" },
+    "citi_pm_base": { type: "always", rate: 1.5, desc: "基本每 $1 賺 1.5 積分 (0.6%)" },
+    "citi_pm_overseas": { type: "category", match: ["overseas"], rate: 3, desc: "海外每 $1 賺 3 積分", mode: "replace" },
+    "citi_prestige_base": { type: "always", rate: 2, desc: "基本每 $1 賺 2 積分 (0.8%)" },
+    "citi_prestige_overseas": { type: "category", match: ["overseas"], rate: 3, desc: "海外每 $1 賺 3 積分", mode: "replace" },
     "citi_prestige_annual_bonus": { type: "prestige_annual_bonus", desc: "Citi Prestige 高達額外年資獎賞" },
 
     // Citi Rewards: base + bonus model.
-    "citi_rewards_base": { type: "always", rate: 1, desc: "基本 1X積分" },
+    "citi_rewards_base": { type: "always", rate: 1, desc: "基本每 $1 賺 1 積分 (0.4%)" },
     "citi_rewards_mobile": {
         type: "category",
         match: ["dining", "grocery", "transport", "telecom", "general", "moneyback_merchant", "moneyback_pns_watsons", "moneyback_fortress", "smart_designated", "citi_club_merchant"],
         rate: 1.7,
-        desc: "流動支付（Apple/Google/Samsung Pay，港幣零售）額外 +1.7X（連基本 1X 合共 2.7X，相當於 1%）",
+        desc: "流動支付額外每 $1 +1.7 積分",
         mode: "add",
         eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "google_pay", "samsung_pay"].includes(ctx.paymentMethod)),
         cap_mode: "reward",
@@ -361,7 +377,7 @@ const modulesDB = {
         type: "category",
         match: ["department_store", "apparel", "entertainment"],
         rate: 7.1,
-        desc: "購物/娛樂額外 +7.1X（合共 8.1X；與手機支付同時符合時取較高者）",
+        desc: "購物/娛樂額外每 $1 +7.1 積分",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 113400,
@@ -374,7 +390,7 @@ const modulesDB = {
         type: "category",
         match: ["citi_club_merchant"],
         rate: 0.15,
-        desc: "The Club 指定商戶額外 3%（每月上限 1,500 Club積分）",
+        desc: "The Club 指定商戶額外 3%",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 1500,
@@ -385,7 +401,7 @@ const modulesDB = {
         type: "category",
         match: ["club_shopping"],
         rate: 0.05,
-        desc: "Club Shopping 額外 1%（每月上限 500 Club積分）",
+        desc: "Club Shopping額外 1%",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 500,
@@ -396,15 +412,15 @@ const modulesDB = {
         type: "category",
         match: ["citi_club_telecom"],
         rate: 0.15,
-        desc: "The Club 電訊（csl/1010/Now TV/網上行）總回贈 3%",
+        desc: "The Club 電訊 總回贈 3%",
         mode: "replace"
     },
-    "citi_cb_base": { type: "always", rate: 0.01, desc: "基本 (1%)" },
+    "citi_cb_base": { type: "always", rate: 0.01, desc: "基本 1%" },
     "citi_cb_special": {
         type: "category",
         match: ["dining", "hotel", "overseas"],
         rate: 0.02,
-        desc: "特選類別 (2%)｜英國/歐洲經濟區(EEA) 實體簽賬除外（網上適用）",
+        desc: "特選類別 ｜英國/歐洲經濟區 實體簽賬除外 2%",
         mode: "replace",
         eligible_check: (cat, ctx) => !(cat === "overseas_uk_eea" && !(ctx && ctx.isOnline))
     },
@@ -417,7 +433,7 @@ const modulesDB = {
         type: "category",
         match: ["transport"],
         rate: 0.15,
-        desc: "交通 15%（Tier 2）",
+        desc: "交通 15%",
         mode: "replace",
         eligible_check: (cat, ctx) => {
             if (cat === "tunnel") return false;
@@ -436,7 +452,7 @@ const modulesDB = {
         type: "category",
         match: ["transport"],
         rate: 0.15,
-        desc: "交通 15%（Tier 1）",
+        desc: "交通 15%",
         mode: "replace",
         eligible_check: (cat, ctx) => {
             if (cat === "tunnel") return false;
@@ -469,10 +485,10 @@ const modulesDB = {
     },
 
     // --- Other Banks ---
-    "dbs_black_base": { type: "always", rate: 0.008, desc: "本地 ($6/里)" },
-    "dbs_black_overseas_std": { type: "category", match: ["overseas"], rate: 0.012, desc: "海外 ($4/里)", mode: "replace" },
+    "dbs_black_base": { type: "always", rate: 0.008, desc: "基本 0.8%" },
+    "dbs_black_overseas_std": { type: "category", match: ["overseas"], rate: 0.012, desc: "海外 1.2%", mode: "replace" },
     "dbs_black_overseas_promo": {
-        type: "category", match: ["overseas"], rate: 0.012, desc: "海外推廣額外（合共$2/里）", mode: "add",
+        type: "category", match: ["overseas"], rate: 0.012, desc: "海外推廣額外 1.2%", mode: "add",
         setting_key: "dbs_black_promo_enabled", req_mission_key: "spend_dbs_black_qual", req_mission_spend: 20000,
         valid_from: "2026-01-01", valid_to: "2026-12-31",
         cap_mode: "reward", cap_limit: 240, cap_key: "dbs_black_bonus_cap_monthly",
@@ -484,7 +500,7 @@ const modulesDB = {
     // - Designated categories (single tx >= HK$300): 5% total = 0.4% base + 4.6% bonus
     // - Other retail (incl. designated < HK$300): 1% total = 0.4% base + 0.6% bonus
     "dbs_eminent_bonus": {
-        type: "category", match: ["dining", "gym", "sportswear", "medical"], rate: 0.046, desc: "指定類別額外 (+4.6%，單一簽賬滿$300)",
+        type: "category", match: ["dining", "gym", "sportswear", "medical"], rate: 0.046, desc: "指定類別額外 4.6%",
         mode: "add", min_spend: 300,
         display_name_zhhk: "DBS Eminent Signature 指定類別額外回贈",
         cap_limit: 8000, cap_key: "dbs_eminent_bonus_cap",
@@ -493,7 +509,7 @@ const modulesDB = {
     "dbs_eminent_other_bonus": {
         type: "category",
         match: ["general", "dining", "gym", "sportswear", "medical", "transport", "grocery", "travel", "entertainment", "apparel", "health_beauty", "telecom", "electronics", "online", "overseas", "alipay", "wechat", "payme", "oepay", "streaming", "charity"],
-        rate: 0.006, desc: "其他零售額外 (+0.6%)",
+        rate: 0.006, desc: "其他零售額外 0.6%",
         mode: "add",
         // For designated categories with single tx >= HK$300, only the 5% designated bucket should apply.
         eligible_check: (cat, ctx) => {
@@ -509,7 +525,7 @@ const modulesDB = {
     // - Same rates/threshold as Signature, lower caps:
     //   designated cap HK$4,000 ; other retail cap HK$15,000 (monthly).
     "dbs_eminent_bonus_platinum": {
-        type: "category", match: ["dining", "gym", "sportswear", "medical"], rate: 0.046, desc: "指定類別額外 (+4.6%，單一簽賬滿$300)",
+        type: "category", match: ["dining", "gym", "sportswear", "medical"], rate: 0.046, desc: "指定類別額外 4.6%",
         mode: "add", min_spend: 300,
         display_name_zhhk: "DBS Eminent Platinum 指定類別額外回贈",
         cap_limit: 4000, cap_key: "dbs_eminent_bonus_cap_platinum",
@@ -518,7 +534,7 @@ const modulesDB = {
     "dbs_eminent_other_bonus_platinum": {
         type: "category",
         match: ["general", "dining", "gym", "sportswear", "medical", "transport", "grocery", "travel", "entertainment", "apparel", "health_beauty", "telecom", "electronics", "online", "overseas", "alipay", "wechat", "payme", "oepay", "streaming", "charity"],
-        rate: 0.006, desc: "其他零售額外 (+0.6%)",
+        rate: 0.006, desc: "其他零售額外 0.6%",
         mode: "add",
         eligible_check: (cat, ctx) => {
             const designated = new Set(["dining", "gym", "sportswear", "medical"]);
@@ -529,13 +545,13 @@ const modulesDB = {
         cap_limit: 15000, cap_key: "dbs_eminent_base_cap_platinum",
         cap: { key: "dbs_eminent_base_cap_platinum", period: "month" }
     },
-    "dbs_eminent_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
+    "dbs_eminent_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
 
     "dbs_compass_grocery_wed": {
         type: "category",
         match: ["grocery", "supermarket"],
         rate: 0.076,
-        desc: "Super Wednesday 超市 (8%，逢星期三單一簽賬滿$300)",
+        desc: "Super Wednesday 超市額外 7.6%",
         display_name_zhhk: "DBS COMPASS 週三超市 8%",
         mode: "add",
         min_spend: 300,
@@ -554,7 +570,7 @@ const modulesDB = {
         type: "category",
         match: ["alipay", "wechat"],
         rate: 0.026,
-        desc: "四圍簽，好 COM 賺 電子錢包額外 (+2.6%，連基本合共3%)",
+        desc: "四圍簽，好 COM 賺 電子錢包額外 2.6%",
         display_name_zhhk: "DBS COMPASS 電子錢包 3%（四圍簽，好 COM 賺）",
         mode: "add",
         min_spend: 300,
@@ -565,13 +581,13 @@ const modulesDB = {
         cap_key: "dbs_compass_com_bonus_cap",
         cap: { key: "dbs_compass_com_bonus_cap", period: "month" }
     },
-    "dbs_compass_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" }, // 1/250 = 0.004
+    "dbs_compass_base": { type: "always", rate: 0.004, desc: "基本 0.4%" }, // 1/250 = 0.004
 
     "dbs_live_fresh_selected": {
         type: "category",
         match: ["live_fresh_selected"],
         rate: 0.05,
-        desc: "DBS Live Fresh 一簽即賞額外 (+5%)",
+        desc: "DBS Live Fresh 一簽即賞額外 5%",
         mode: "add",
         min_spend: 300,
         valid_from: "2026-01-01",
@@ -607,7 +623,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas", "live_fresh_selected"],
         rate: 0.01,
-        desc: "DBS Live Fresh 網上外幣簽賬 (1%，不設上限)",
+        desc: "DBS Live Fresh 網上外幣簽賬 1%",
         mode: "replace",
         valid_from: "2026-01-01",
         valid_to: "2026-12-31",
@@ -620,15 +636,15 @@ const modulesDB = {
             return true;
         }
     },
-    "dbs_live_fresh_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
+    "dbs_live_fresh_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
 
     // --- Hang Seng Modules (V10.13) ---
-    "hangseng_base": { type: "always", rate: 0.004, desc: "基本 (0.4%)" },
+    "hangseng_base": { type: "always", rate: 0.004, desc: "基本 0.4%" },
 
     // MMPower (Base 0.4% + Bonus)
     // Overseas: 6% Total => 5.6% Bonus. Cap $500 Reward.
     "mmpower_overseas_bonus": {
-        type: "category", match: ["overseas"], rate: 0.056, desc: "+FUN Dollars 獎賞計劃 海外簽賬 (+5.6%)",
+        type: "category", match: ["overseas"], rate: 0.056, desc: "+FUN Dollars 獎賞計劃 海外簽賬額外 5.6%",
         mode: "add", setting_key: "mmpower_promo_enabled",
         cap_mode: "reward", cap_limit: 500, cap_key: "mmpower_reward_cap",
         req_mission_spend: 5000, req_mission_key: "spend_hangseng_mmpower",
@@ -637,7 +653,7 @@ const modulesDB = {
     },
     // Online: 5% Total => 4.6% Bonus. Cap $500 Reward (Shared).
     "mmpower_online_bonus": {
-        type: "category", match: ["online"], rate: 0.046, desc: "+FUN Dollars 獎賞計劃 網上簽賬 (+4.6%)",
+        type: "category", match: ["online"], rate: 0.046, desc: "+FUN Dollars 獎賞計劃 網上簽賬額外 4.6%",
         mode: "add", setting_key: "mmpower_promo_enabled",
         cap_mode: "reward", cap_limit: 500, cap_key: "mmpower_reward_cap",
         req_mission_spend: 5000, req_mission_key: "spend_hangseng_mmpower"
@@ -647,7 +663,7 @@ const modulesDB = {
     // If it's 1%, and base is 0.4%, bonus is 0.6%.
     // Match: dining, electronics, entertainment
     "mmpower_selected_bonus": {
-        type: "category", match: ["dining", "electronics", "entertainment", "streaming"], rate: 0.006, desc: "+FUN Dollars 獎賞計劃 自選類別 (+0.6%，3選2)",
+        type: "category", match: ["dining", "electronics", "entertainment", "streaming"], rate: 0.006, desc: "+FUN Dollars 獎賞計劃 自選類別額外 0.6%",
         mode: "add", setting_key: "mmpower_promo_enabled",
         cap_mode: "reward", cap_limit: 500, cap_key: "mmpower_reward_cap",
         req_mission_spend: 5000, req_mission_key: "spend_hangseng_mmpower",
@@ -669,7 +685,7 @@ const modulesDB = {
     // Base 0.4% + bonus modules below.
     // Tier 1 designated foreign: 7% total => +6.6% bonus.
     "travel_plus_tier1_bonus": {
-        type: "category", match: ["travel_plus_tier1"], rate: 0.066, desc: "Travel+ 指定外幣 (6.6%)",
+        type: "category", match: ["travel_plus_tier1"], rate: 0.066, desc: "Travel+ 指定外幣額外 6.6%",
         mode: "add", setting_key: "travel_plus_promo_enabled",
         cap_mode: "reward", cap_limit: 500, cap_key: "travel_plus_reward_cap",
         req_mission_spend: 6000, req_mission_key: "spend_hangseng_travel_plus",
@@ -678,7 +694,7 @@ const modulesDB = {
     },
     // Tier 2 other foreign: 5% total => +4.6% bonus.
     "travel_plus_tier2_bonus": {
-        type: "category", match: ["overseas"], rate: 0.046, desc: "Travel+ 其他外幣 (4.6%)",
+        type: "category", match: ["overseas"], rate: 0.046, desc: "Travel+ 其他外幣額外 4.6%",
         mode: "add", setting_key: "travel_plus_promo_enabled",
         cap_mode: "reward", cap_limit: 500, cap_key: "travel_plus_reward_cap",
         req_mission_spend: 6000, req_mission_key: "spend_hangseng_travel_plus",
@@ -687,7 +703,7 @@ const modulesDB = {
     },
     // Dining: 5% Total => 4.6% Bonus.
     "travel_plus_dining_bonus": {
-        type: "category", match: ["dining"], rate: 0.046, desc: "Travel+ 餐飲 (4.6%)",
+        type: "category", match: ["dining"], rate: 0.046, desc: "Travel+ 餐飲額外 4.6%",
         mode: "add", setting_key: "travel_plus_promo_enabled",
         cap_mode: "reward", cap_limit: 500, cap_key: "travel_plus_reward_cap",
         req_mission_spend: 6000, req_mission_key: "spend_hangseng_travel_plus",
@@ -706,7 +722,7 @@ const modulesDB = {
     // Since University card probably has 0.4% base elsewhere, let's use Base + Bonus.
     // Bonus = 2.0%. Cap $200 Reward.
     "university_tuition": {
-        type: "category", match: ["tuition"], rate: 0.02, desc: "大學學費 (2%)",
+        type: "category", match: ["tuition"], rate: 0.02, desc: "大學學費額外 2%",
         cap_limit: 8333, cap_key: "university_tuition_cap" // Spending cap is easier ($8333 * 2.4% ~= $200)
         // Wait, if I use spending cap on Bonus (2%), $8333 * 2% = $166.
         // Total rate 2.4%. $8333 * 2.4% = $199.99.
@@ -721,19 +737,19 @@ const modulesDB = {
     // - Base: 1 yuu/$1 on all retail spending.
     // - Some designated merchants have a bank-side uplift to 2 yuu/$1.
     // - Additional merchant-side yuu points require linked yuu membership.
-    "enjoy_base": { type: "always", rate: 1, desc: "基本 1X（銀行）" },
+    "enjoy_base": { type: "always", rate: 1, desc: "基本每 $1 賺 1 YUU (0.5%)" },
     "enjoy_bank_bonus_4x": {
         type: "category",
         match: ["enjoy_4x"],
         rate: 1,
-        desc: "指定商戶銀行部分 +1X（合共銀行 2X）",
+        desc: "指定商戶銀行部分額外每 $1 +1 YUU",
         mode: "add"
     },
     "enjoy_merchant_bonus_4x": {
         type: "category",
         match: ["enjoy_4x"],
         rate: 2,
-        desc: "指定商戶 yuu 商戶部分 +2X（合共 4X）",
+        desc: "指定商戶 yuu 商戶部分額外每 $1 +2 YUU",
         mode: "add",
         setting_key: "hangseng_enjoy_points4x_enabled"
     },
@@ -741,14 +757,14 @@ const modulesDB = {
         type: "category",
         match: ["enjoy_3x"],
         rate: 1,
-        desc: "指定商戶銀行部分 +1X（合共銀行 2X）",
+        desc: "指定商戶銀行部分額外每 $1 +1 YUU",
         mode: "add"
     },
     "enjoy_merchant_bonus_3x": {
         type: "category",
         match: ["enjoy_3x"],
         rate: 1,
-        desc: "指定商戶 yuu 商戶部分 +1X（合共 3X）",
+        desc: "指定商戶 yuu 商戶部分額外每 $1 +1 YUU",
         mode: "add",
         setting_key: "hangseng_enjoy_points4x_enabled"
     },
@@ -756,14 +772,14 @@ const modulesDB = {
         type: "category",
         match: ["enjoy_2x"],
         rate: 1,
-        desc: "指定商戶銀行部分 +1X（合共 2X）",
+        desc: "指定商戶銀行部分額外每 $1 +1 YUU",
         mode: "add"
     },
     "enjoy_shell_merchant_bonus": {
         type: "category",
         match: ["enjoy_shell_2x"],
         rate: 1,
-        desc: "Shell yuu 商戶部分 +1X（合共 2X）",
+        desc: "Shell yuu 商戶部分額外每 $1 +1 YUU",
         mode: "add",
         setting_key: "hangseng_enjoy_points4x_enabled"
     },
@@ -772,27 +788,27 @@ const modulesDB = {
         type: "category",
         match: ["dining_enjoy"],
         rate: 3,
-        desc: "enJoy 指定餐飲（舊）+3X",
+        desc: "enJoy 指定餐飲額外每 $1 +3 YUU",
         setting_key: "hangseng_enjoy_points4x_enabled"
     },
     "enjoy_retail": {
         type: "category",
         match: ["retail_enjoy"],
         rate: 2,
-        desc: "enJoy 指定零售（舊）+2X",
+        desc: "enJoy 指定零售額外每 $1 +2 YUU",
         setting_key: "hangseng_enjoy_points4x_enabled"
     },
 
     // --- BOC Modules ---
     // Cheers Base
-    "boc_cheers_base": { type: "always", rate: 1, desc: "中銀 Cheers 基本 (1X積分)" },
+    "boc_cheers_base": { type: "always", rate: 1, desc: "基本每 $1 賺 1 積分 (0.4%)" },
 
     // Cheers 2026 H1 (2026-01-01 to 2026-06-30)
     "boc_cheers_vi_dining_2026h1": {
         type: "category",
         match: ["dining"],
         rate: 10,
-        desc: "中銀 Cheers Visa Infinite 餐飲 10X積分",
+        desc: "中銀 Cheers Visa Infinite 餐飲每 $1 賺 10 積分",
         mode: "replace",
         req_mission_key: "spend_boc_cheers_vi_qual",
         req_mission_spend: 5000,
@@ -805,14 +821,17 @@ const modulesDB = {
         valid_to: "2026-06-30",
         eligible_check: (cat, ctx) => {
             const pm = ctx && ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
-            return pm !== "omycard";
+            const c = String(cat || "");
+            if (pm === "omycard" || pm === "boc_pay") return false;
+            if (c === "alipay" || c === "wechat") return false;
+            return true;
         }
     },
     "boc_cheers_vi_fx_2026h1": {
         type: "category",
-        match: ["overseas", "travel", "cathay_hkexpress"],
+        match: ["overseas"],
         rate: 10,
-        desc: "中銀 Cheers Visa Infinite 外幣簽賬 10X積分",
+        desc: "中銀 Cheers Visa Infinite 外幣簽賬每 $1 賺 10 積分",
         mode: "replace",
         req_mission_key: "spend_boc_cheers_vi_qual",
         req_mission_spend: 5000,
@@ -825,14 +844,17 @@ const modulesDB = {
         valid_to: "2026-06-30",
         eligible_check: (cat, ctx) => {
             const pm = ctx && ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
-            return pm !== "omycard";
+            const c = String(cat || "");
+            if (pm === "omycard" || pm === "boc_pay") return false;
+            if (c === "alipay" || c === "wechat") return false;
+            return true;
         }
     },
     "boc_cheers_vs_dining_2026h1": {
         type: "category",
         match: ["dining"],
         rate: 8,
-        desc: "中銀 Cheers Visa Signature 餐飲 8X積分",
+        desc: "中銀 Cheers Visa Signature 餐飲每 $1 賺 8 積分",
         mode: "replace",
         req_mission_key: "spend_boc_cheers_vs_qual",
         req_mission_spend: 5000,
@@ -845,14 +867,17 @@ const modulesDB = {
         valid_to: "2026-06-30",
         eligible_check: (cat, ctx) => {
             const pm = ctx && ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
-            return pm !== "omycard";
+            const c = String(cat || "");
+            if (pm === "omycard" || pm === "boc_pay") return false;
+            if (c === "alipay" || c === "wechat") return false;
+            return true;
         }
     },
     "boc_cheers_vs_fx_2026h1": {
         type: "category",
-        match: ["overseas", "travel", "cathay_hkexpress"],
+        match: ["overseas"],
         rate: 8,
-        desc: "中銀 Cheers Visa Signature 外幣簽賬 8X積分",
+        desc: "中銀 Cheers Visa Signature 外幣簽賬每 $1 賺 8 積分",
         mode: "replace",
         req_mission_key: "spend_boc_cheers_vs_qual",
         req_mission_spend: 5000,
@@ -865,20 +890,23 @@ const modulesDB = {
         valid_to: "2026-06-30",
         eligible_check: (cat, ctx) => {
             const pm = ctx && ctx.paymentMethod ? String(ctx.paymentMethod) : "physical";
-            return pm !== "omycard";
+            const c = String(cat || "");
+            if (pm === "omycard" || pm === "boc_pay") return false;
+            if (c === "alipay" || c === "wechat") return false;
+            return true;
         }
     },
 
     // Cheers Legacy (kept for historical ledger replay)
     "boc_cheers_dining": {
-        type: "category", match: ["dining"], rate: 10, desc: "餐飲 10X積分",
+        type: "category", match: ["dining"], rate: 10, desc: "餐飲每 $1 賺 10 積分",
         mode: "replace", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 100000, cap_key: "boc_cheers_dining_cap",
         secondary_cap_key: "boc_cheers_total_cap_vi", secondary_cap_limit: 300000, // VI Total 300k
         valid_to: "2025-12-31"
     },
     "boc_cheers_travel": {
-        type: "category", match: ["travel", "cathay_hkexpress"], rate: 10, desc: "旅遊 10X積分",
+        type: "category", match: ["travel", "cathay_hkexpress"], rate: 10, desc: "旅遊每 $1 賺 10 積分",
         mode: "replace", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vi", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 250000, cap_key: "boc_cheers_travel_cap",
         secondary_cap_key: "boc_cheers_total_cap_vi", secondary_cap_limit: 300000,
@@ -886,14 +914,14 @@ const modulesDB = {
     },
     // Cheers VS
     "boc_cheers_dining_vs": {
-        type: "category", match: ["dining"], rate: 8, desc: "餐飲 8X積分",
+        type: "category", match: ["dining"], rate: 8, desc: "餐飲每 $1 賺 8 積分",
         mode: "replace", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 60000, cap_key: "boc_cheers_dining_cap_vs",
         secondary_cap_key: "boc_cheers_total_cap_vs", secondary_cap_limit: 180000, // VS Total 180k
         valid_to: "2025-12-31"
     },
     "boc_cheers_travel_vs": {
-        type: "category", match: ["travel", "cathay_hkexpress"], rate: 8, desc: "旅遊 8X積分",
+        type: "category", match: ["travel", "cathay_hkexpress"], rate: 8, desc: "旅遊每 $1 賺 8 積分",
         mode: "replace", setting_key: "boc_amazing_enabled", req_mission_key: "spend_boc_cheers_vs", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 150000, cap_key: "boc_cheers_travel_cap_vs",
         secondary_cap_key: "boc_cheers_total_cap_vs", secondary_cap_limit: 180000,
@@ -902,13 +930,13 @@ const modulesDB = {
 
     // Cheers 海外簽賬
     "boc_cheers_overseas": {
-        type: "category", match: ["overseas"], rate: 9, desc: "外幣 +9X積分",
+        type: "category", match: ["overseas"], rate: 9, desc: "外幣額外每 $1 +9 積分",
         cap_mode: "reward", cap_limit: 250000, cap_key: "boc_cheers_travel_cap",
         secondary_cap_key: "boc_cheers_total_cap_vi", secondary_cap_limit: 300000,
         valid_to: "2025-12-31"
     },
     "boc_cheers_overseas_vs": {
-        type: "category", match: ["overseas"], rate: 9, desc: "外幣 +9X積分",
+        type: "category", match: ["overseas"], rate: 9, desc: "外幣額外每 $1 +9 積分",
         cap_mode: "reward", cap_limit: 150000, cap_key: "boc_cheers_travel_cap_vs",
         secondary_cap_key: "boc_cheers_total_cap_vs", secondary_cap_limit: 180000,
         valid_to: "2025-12-31"
@@ -917,7 +945,7 @@ const modulesDB = {
     // 狂賞派 (Amazing Rewards) - 只限7大本地消費類別
     "boc_amazing_weekday": {
         type: "category", match: ["dining", "travel", "entertainment", "electronics", "medical", "apparel", "sportswear", "hotel", "pet"],
-        rate: 5, desc: "🔥 狂賞派 (平日 +2%)", valid_on_red_day: false,
+        rate: 5, desc: "🔥 狂賞派額外每 $1 +5 積分", valid_on_red_day: false,
         setting_key: "boc_amazing_enabled", min_single_spend: 500, req_mission_key: "spend_boc_amazing_local", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 30000, cap_key: "boc_amazing_local_weekday_cap",
         secondary_cap_key: "boc_amazing_local_weekday_cap_2026h1", secondary_cap_limit: 180000,
@@ -926,7 +954,7 @@ const modulesDB = {
     },
     "boc_amazing_holiday": {
         type: "category", match: ["dining", "travel", "entertainment", "electronics", "medical", "apparel", "sportswear", "hotel", "pet"],
-        rate: 12.5, desc: "🔥 狂賞派 (紅日/星期日 +5%)", valid_on_red_day: true,
+        rate: 12.5, desc: "🔥 狂賞派額外每 $1 +12.5 積分", valid_on_red_day: true,
         setting_key: "boc_amazing_enabled", min_single_spend: 500, req_mission_key: "spend_boc_amazing_local", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 75000, cap_key: "boc_amazing_local_holiday_cap",
         secondary_cap_key: "boc_amazing_local_holiday_cap_2026h1", secondary_cap_limit: 450000,
@@ -935,7 +963,7 @@ const modulesDB = {
     },
     "boc_amazing_online_weekday": {
         type: "category", match: ["online"],
-        rate: 5, desc: "🔥 狂賞派網購 (平日 +2%)", valid_on_red_day: false,
+        rate: 5, desc: "🔥 狂賞派網購額外每 $1 +5 積分", valid_on_red_day: false,
         setting_key: "boc_amazing_enabled", min_single_spend: 500,
         cap_mode: "reward", cap_limit: 15000, cap_key: "boc_amazing_online_weekday_cap",
         secondary_cap_key: "boc_amazing_online_weekday_cap_2026h1", secondary_cap_limit: 90000,
@@ -944,7 +972,7 @@ const modulesDB = {
     },
     "boc_amazing_online_holiday": {
         type: "category", match: ["online"],
-        rate: 12.5, desc: "🔥 狂賞派網購 (紅日/星期日 +5%)", valid_on_red_day: true,
+        rate: 12.5, desc: "🔥 狂賞派網購額外每 $1 +12.5 積分", valid_on_red_day: true,
         setting_key: "boc_amazing_enabled", min_single_spend: 500,
         cap_mode: "reward", cap_limit: 50000, cap_key: "boc_amazing_online_holiday_cap",
         secondary_cap_key: "boc_amazing_online_holiday_cap_2026h1", secondary_cap_limit: 300000,
@@ -955,7 +983,7 @@ const modulesDB = {
     // 狂賞派 (Amazing Rewards) - VS Version
     "boc_amazing_weekday_vs": {
         type: "category", match: ["dining", "travel", "entertainment", "electronics", "medical", "apparel", "sportswear", "hotel", "pet"],
-        rate: 5, desc: "🔥 狂賞派 (平日 +2%)", valid_on_red_day: false,
+        rate: 5, desc: "🔥 狂賞派額外每 $1 +5 積分", valid_on_red_day: false,
         setting_key: "boc_amazing_enabled", min_single_spend: 500, req_mission_key: "spend_boc_amazing_local", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 30000, cap_key: "boc_amazing_local_weekday_cap",
         secondary_cap_key: "boc_amazing_local_weekday_cap_2026h1", secondary_cap_limit: 180000,
@@ -964,7 +992,7 @@ const modulesDB = {
     },
     "boc_amazing_holiday_vs": {
         type: "category", match: ["dining", "travel", "entertainment", "electronics", "medical", "apparel", "sportswear", "hotel", "pet"],
-        rate: 12.5, desc: "🔥 狂賞派 (紅日/星期日 +5%)", valid_on_red_day: true,
+        rate: 12.5, desc: "🔥 狂賞派額外每 $1 +12.5 積分", valid_on_red_day: true,
         setting_key: "boc_amazing_enabled", min_single_spend: 500, req_mission_key: "spend_boc_amazing_local", req_mission_spend: 5000,
         cap_mode: "reward", cap_limit: 75000, cap_key: "boc_amazing_local_holiday_cap",
         secondary_cap_key: "boc_amazing_local_holiday_cap_2026h1", secondary_cap_limit: 450000,
@@ -973,7 +1001,7 @@ const modulesDB = {
     },
     "boc_amazing_online_weekday_vs": {
         type: "category", match: ["online"],
-        rate: 5, desc: "🔥 狂賞派網購 (平日 +2%)", valid_on_red_day: false,
+        rate: 5, desc: "🔥 狂賞派網購額外每 $1 +5 積分", valid_on_red_day: false,
         setting_key: "boc_amazing_enabled", min_single_spend: 500,
         cap_mode: "reward", cap_limit: 15000, cap_key: "boc_amazing_online_weekday_cap",
         secondary_cap_key: "boc_amazing_online_weekday_cap_2026h1", secondary_cap_limit: 90000,
@@ -982,7 +1010,7 @@ const modulesDB = {
     },
     "boc_amazing_online_holiday_vs": {
         type: "category", match: ["online"],
-        rate: 12.5, desc: "🔥 狂賞派網購 (紅日/星期日 +5%)", valid_on_red_day: true,
+        rate: 12.5, desc: "🔥 狂賞派網購額外每 $1 +12.5 積分", valid_on_red_day: true,
         setting_key: "boc_amazing_enabled", min_single_spend: 500,
         cap_mode: "reward", cap_limit: 50000, cap_key: "boc_amazing_online_holiday_cap",
         secondary_cap_key: "boc_amazing_online_holiday_cap_2026h1", secondary_cap_limit: 300000,
@@ -995,7 +1023,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas_cn", "overseas_mo"],
         rate: 15,
-        desc: "✈️ 狂賞飛 中澳額外 +6%",
+        desc: "✈️ 狂賞飛 中澳額外每 $1 +15 積分",
         mode: "add",
         setting_key: "boc_amazing_enabled",
         min_single_spend: 500,
@@ -1015,7 +1043,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas_jkt", "overseas_jp", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
         rate: 7.5,
-        desc: "✈️ 狂賞飛 其他海外額外 +3%",
+        desc: "✈️ 狂賞飛 其他海外額外每 $1 +7.5 積分",
         mode: "add",
         setting_key: "boc_amazing_enabled",
         min_single_spend: 500,
@@ -1035,7 +1063,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas_cn", "overseas_mo"],
         rate: 15,
-        desc: "✈️ 狂賞飛 中澳額外 +6%",
+        desc: "✈️ 狂賞飛 中澳額外每 $1 +15 積分",
         mode: "add",
         setting_key: "boc_amazing_enabled",
         min_single_spend: 500,
@@ -1055,7 +1083,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas_jkt", "overseas_jp", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
         rate: 7.5,
-        desc: "✈️ 狂賞飛 其他海外額外 +3%",
+        desc: "✈️ 狂賞飛 其他海外額外每 $1 +7.5 積分",
         mode: "add",
         setting_key: "boc_amazing_enabled",
         min_single_spend: 500,
@@ -1073,12 +1101,12 @@ const modulesDB = {
     },
 
     // Chill Card (World Mastercard) 2025-01-01 to 2026-06-30
-    "boc_chill_base": { type: "always", rate: 1, desc: "基本 (1X積分)" },
+    "boc_chill_base": { type: "always", rate: 1, desc: "基本每 $1 賺 1 積分 (0.4%)" },
     "boc_chill_merchant": {
         type: "category",
         match: ["chill_merchant"],
         rate: 25,
-        desc: "Chill 指定商戶額外 +10%（需每月合資格實體簽賬滿$1,500）",
+        desc: "Chill 指定商戶額外每 $1 +25 積分",
         mode: "add",
         req_mission_key: "spend_boc_chill_monthly",
         req_mission_spend: 1500,
@@ -1093,7 +1121,7 @@ const modulesDB = {
         type: "category",
         match: ["online", "overseas"],
         rate: 12.5,
-        desc: "網上/外幣額外 +5%",
+        desc: "網上/外幣額外每 $1 +12.5 積分",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 37500,
@@ -1104,11 +1132,11 @@ const modulesDB = {
     },
 
     // Go Card
-    "boc_go_base": { type: "always", rate: 1, desc: "基本 (1X積分)" },
+    "boc_go_base": { type: "always", rate: 1, desc: "基本每 $1 賺 1 積分 (0.4%)" },
     "boc_go_mobile": {
         type: "category",
         rate: 2,
-        desc: "全球手機簽賬額外 +2X（合共 3X）",
+        desc: "全球手機簽賬額外每 $1 +2 積分",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 25000,
@@ -1127,7 +1155,7 @@ const modulesDB = {
         type: "category",
         match: ["go_merchant"],
         rate: 11.5,
-        desc: "Go 指定商戶額外 +4.6%（合共 5%）",
+        desc: "Go 指定商戶額外每 $1 +11.5 積分",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 25000,
@@ -1144,7 +1172,7 @@ const modulesDB = {
     "boc_go_pmq126_local_mobile_2026q1": {
         type: "category",
         rate: 7,
-        desc: "「Go！機」本地手機簽賬額外 +7X（合共 10X）",
+        desc: "Go！機本地手機簽賬額外每 $1 +7 積分",
         mode: "add",
         setting_key: "boc_go_pmq126_enabled",
         cap_mode: "reward",
@@ -1171,7 +1199,7 @@ const modulesDB = {
     "boc_go_pmq126_mainland_mobile_2026q1": {
         type: "category",
         rate: 17,
-        desc: "「Go！機」內地手機簽賬額外 +17X（合共 20X）",
+        desc: "Go！機內地手機簽賬額外每 $1 +17 積分",
         mode: "add",
         setting_key: "boc_go_pmq126_enabled",
         cap_mode: "reward",
@@ -1197,7 +1225,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas"],
         rate: 1,
-        desc: "海外簽賬額外 +1X（合共 2X）",
+        desc: "海外簽賬額外每 $1 +1 積分",
         mode: "add",
         valid_from: "2025-01-01",
         valid_to: "2026-06-30",
@@ -1207,11 +1235,11 @@ const modulesDB = {
             return pm === "physical";
         }
     },
-    "boc_go_platinum_base": { type: "always", rate: 1, desc: "基本 (1X積分)" },
+    "boc_go_platinum_base": { type: "always", rate: 1, desc: "基本每 $1 賺 1 積分 (0.4%)" },
     "boc_go_platinum_mobile": {
         type: "category",
         rate: 1,
-        desc: "全球手機簽賬額外 +1X（合共 2X）",
+        desc: "全球手機簽賬額外每 $1 +1 積分",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 25000,
@@ -1230,7 +1258,7 @@ const modulesDB = {
         type: "category",
         match: ["go_merchant"],
         rate: 11.5,
-        desc: "Go 指定商戶額外 +4.6%（合共 5%）",
+        desc: "Go 指定商戶額外每 $1 +11.5 積分",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 25000,
@@ -1247,7 +1275,7 @@ const modulesDB = {
     "boc_go_platinum_pmq126_local_mobile_2026q1": {
         type: "category",
         rate: 3,
-        desc: "「Go！機」本地手機簽賬額外 +3X（合共 5X）",
+        desc: "Go！機本地手機簽賬額外每 $1 +3 積分",
         mode: "add",
         setting_key: "boc_go_pmq126_enabled",
         cap_mode: "reward",
@@ -1274,7 +1302,7 @@ const modulesDB = {
     "boc_go_platinum_pmq126_mainland_mobile_2026q1": {
         type: "category",
         rate: 8,
-        desc: "「Go！機」內地手機簽賬額外 +8X（合共 10X）",
+        desc: "Go！機內地手機簽賬額外每 $1 +8 積分",
         mode: "add",
         setting_key: "boc_go_pmq126_enabled",
         cap_mode: "reward",
@@ -1300,7 +1328,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas"],
         rate: 1,
-        desc: "海外簽賬額外 +1X（合共 2X）",
+        desc: "海外簽賬額外每 $1 +1 積分",
         mode: "add",
         valid_from: "2025-01-01",
         valid_to: "2026-06-30",
@@ -1313,7 +1341,7 @@ const modulesDB = {
     "boc_sogo_base": {
         type: "always",
         rate: 0.004,
-        desc: "中銀 SOGO 基本 0.4%",
+        desc: "基本 0.4%",
         last_verified_at: "2026-02-23",
         source_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf"
     },
@@ -1337,7 +1365,7 @@ const modulesDB = {
     "boc_sogo_mobile_pay": {
         type: "category",
         rate: 0.05,
-        desc: "手機支付額外 +5%（每月上限$100）",
+        desc: "手機支付額外 5%",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 100,
@@ -1353,12 +1381,12 @@ const modulesDB = {
 
 
     // --- American Express Modules ---
-    "ae_explorer_base": { type: "always", rate: 3, desc: "基本 3X" },
+    "ae_explorer_base": { type: "always", rate: 3, desc: "基本每 $1 賺 3 積分 (1%)" },
     "ae_explorer_fx_travel_bonus_075_2026h1": {
         type: "category",
         match: ["overseas", "travel", "cathay_hkexpress", "ae_online_travel_designated"],
         rate: 0.75,
-        desc: "海外/旅遊額外 +0.75X（已登記）",
+        desc: "海外/旅遊額外 0.25%",
         mode: "add",
         setting_key: "ae_explorer_075x_enabled",
         valid_from: "2026-01-02",
@@ -1372,7 +1400,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas"],
         rate: 7,
-        desc: "海外額外 +7X（每季首$10,000，已登記）",
+        desc: "海外額外每 $1 +7 積分",
         mode: "add",
         setting_key: "ae_explorer_7x_enabled",
         cap_mode: "spending",
@@ -1390,7 +1418,7 @@ const modulesDB = {
         type: "category",
         match: ["travel", "cathay_hkexpress", "ae_online_travel_designated"],
         rate: 7,
-        desc: "旅遊/機票額外 +7X（每季首$10,000，已登記）",
+        desc: "旅遊/機票額外每 $1 +7 積分",
         mode: "add",
         setting_key: "ae_explorer_7x_enabled",
         cap_mode: "spending",
@@ -1408,7 +1436,7 @@ const modulesDB = {
         type: "category",
         match: ["ae_online_designated"],
         rate: 2,
-        desc: "指定網上商戶額外 +2X（合共5X，已登記）",
+        desc: "指定網上商戶額外每 $1 +2 積分",
         mode: "add",
         setting_key: "ae_explorer_online_5x_enabled",
         cap_mode: "reward",
@@ -1428,12 +1456,12 @@ const modulesDB = {
     "ae_plat_base": {
         type: "always",
         rate: 1,
-        desc: "AE 白金基本 1X"
+        desc: "基本每 $1 賺 1 積分 (0.33%)"
     },
     "ae_plat_accelerator_bonus": {
         type: "always",
         rate: 1,
-        desc: "計倍計賞額外 +1X（每年首$160,000）",
+        desc: "基本每 $1 賺 1 積分 (0.33%)",
         mode: "add",
         cap_mode: "spending",
         cap_limit: 160000,
@@ -1444,14 +1472,14 @@ const modulesDB = {
         type: "category",
         match: ["overseas"],
         rate: 2,
-        desc: "外幣簽賬額外 +2X（基本合共 3X）",
+        desc: "外幣簽賬額外每 $1 +2 積分",
         mode: "add"
     },
     "ae_plat_fx_5x_promo_2026h1": {
         type: "category",
         match: ["overseas"],
         rate: 5,
-        desc: "外幣簽賬額外 +5X（每季首$15,000，已登記）",
+        desc: "外幣簽賬額外每 $1 +5 積分",
         mode: "add",
         setting_key: "ae_platinum_9x_enabled",
         cap_mode: "spending",
@@ -1469,7 +1497,7 @@ const modulesDB = {
         type: "category",
         match: ["ae_plat_travel_designated"],
         rate: 7,
-        desc: "指定旅遊商戶額外 +7X（每季首$15,000，已登記）",
+        desc: "指定旅遊商戶額外每 $1 +7 積分",
         mode: "add",
         setting_key: "ae_platinum_9x_enabled",
         cap_mode: "spending",
@@ -1513,7 +1541,7 @@ const modulesDB = {
         type: "category",
         match: ["ae_plat_daily_designated"],
         rate: 7,
-        desc: "指定日常商戶額外 +7X（每季首$15,000，已登記）",
+        desc: "指定日常商戶額外每 $1 +7 積分",
         mode: "add",
         setting_key: "ae_platinum_9x_enabled",
         cap_mode: "spending",
@@ -1539,12 +1567,12 @@ const modulesDB = {
     "ae_pcc_base": {
         type: "always",
         rate: 1,
-        desc: "基本 1X"
+        desc: "基本每 $1 賺 1 積分 (0.33%)"
     },
     "ae_pcc_program_bonus_2x": {
         type: "always",
         rate: 2,
-        desc: "計劃額外 +2X（推廣期首 360,000 積分 = 約$120,000簽賬）",
+        desc: "基本每 $1 賺 2 積分 (0.67%)",
         mode: "add",
         cap_mode: "spending",
         cap_limit: 120000,
@@ -1557,7 +1585,7 @@ const modulesDB = {
         type: "category",
         match: ["ae_pcc_designated"],
         rate: 3,
-        desc: "指定商戶額外 +3X（Program 未封頂）",
+        desc: "指定商戶額外每 $1 +3 積分",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 30000,
@@ -1580,7 +1608,7 @@ const modulesDB = {
         type: "category",
         match: ["ae_pcc_designated"],
         rate: 1,
-        desc: "指定商戶額外 +1X（Program 已封頂）",
+        desc: "指定商戶額外每 $1 +1 積分",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 30000,
@@ -1601,9 +1629,9 @@ const modulesDB = {
     },
 
     // --- Fubon Series ---
-    "fubon_in_base": { type: "always", rate: 1, desc: "基本 1X (0.4%)" },
+    "fubon_in_base": { type: "always", rate: 1, desc: "基本每 $1 賺 1 積分 (0.5%)" },
     "fubon_in_online": {
-        type: "category", match: ["online"], rate: 19, desc: "網上簽賬額外 +19X（合共20X，需每月合資格簽賬滿$1,000）",
+        type: "category", match: ["online"], rate: 19, desc: "網上簽賬額外每 $1 +19 積分",
         mode: "add",
         req_mission_key: "fubon_in_monthly_eligible_spend",
         req_mission_spend: 1000,
@@ -1617,12 +1645,12 @@ const modulesDB = {
     // Fubon Platinum / Titanium
     // 2026 海外簽賬獎賞：台灣20X、日本/韓國10X、其他外幣5X。
     // 海外額外積分上限：每月 80,000 分；全年 240,000 分（共享）。
-    "fubon_travel_base": { type: "always", rate: 1, desc: "基本 1X (0.4%)" },
+    "fubon_travel_base": { type: "always", rate: 1, desc: "基本每 $1 賺 1 積分 (0.4%)" },
     "fubon_travel_tw": {
         type: "category",
         match: ["overseas_tw"],
         rate: 19,
-        desc: "台灣額外 +19X（合共20X）",
+        desc: "台灣額外每 $1 +19 積分",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 80000,
@@ -1639,7 +1667,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas_jkt", "overseas_jp", "overseas_jpkr"],
         rate: 9,
-        desc: "日本/韓國額外 +9X（合共10X）",
+        desc: "日本/韓國額外每 $1 +9 積分",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 80000,
@@ -1654,7 +1682,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas_cn", "overseas_mo", "overseas_th", "overseas_uk_eea", "overseas_other"],
         rate: 4,
-        desc: "其他外幣額外 +4X（合共5X）",
+        desc: "其他外幣額外每 $1 +4 積分",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 80000,
@@ -1668,7 +1696,7 @@ const modulesDB = {
     "fubon_travel_local_weekend": {
         type: "category",
         rate: 1,
-        desc: "本地簽賬週末額外 +1X（合共2X）",
+        desc: "本地簽賬週末額外每 $1 +1 積分",
         mode: "add",
         valid_from: "2026-01-01",
         valid_to: "2026-12-31",
@@ -1687,7 +1715,7 @@ const modulesDB = {
         type: "category",
         match: ["online"],
         rate: 10,
-        desc: "指定本地網購 10X（需登記）",
+        desc: "指定本地網購每 $1 賺 10 積分",
         mode: "replace",
         setting_key: "fubon_travel_upgrade_enabled",
         eligible_check: (cat, ctx) => {
@@ -1703,12 +1731,12 @@ const modulesDB = {
         valid_to: "2026-06-30"
     },
     // Fubon Visa Infinite
-    "fubon_infinite_base": { type: "always", rate: 1, desc: "基本 1X (0.5%)" },
+    "fubon_infinite_base": { type: "always", rate: 1, desc: "基本每 $1 賺 1 積分 (0.5%)" },
     "fubon_infinite_fx_other": {
         type: "category",
         match: ["overseas_cn", "overseas_mo", "overseas_th", "overseas_uk_eea", "overseas_other"],
         rate: 5,
-        desc: "其他外幣 5X",
+        desc: "其他外幣每 $1 賺 5 積分",
         mode: "replace",
         cap_mode: "reward",
         cap_limit: 80000,
@@ -1723,7 +1751,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas_jkt", "overseas_jp", "overseas_jpkr"],
         rate: 10,
-        desc: "日本/韓國 10X",
+        desc: "日本/韓國每 $1 賺 10 積分",
         mode: "replace",
         cap_mode: "reward",
         cap_limit: 80000,
@@ -1738,7 +1766,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas_tw"],
         rate: 20,
-        desc: "台灣 20X",
+        desc: "台灣每 $1 賺 20 積分",
         mode: "replace",
         cap_mode: "reward",
         cap_limit: 80000,
@@ -1753,7 +1781,7 @@ const modulesDB = {
     "fubon_infinite_local_weekend": {
         type: "category",
         rate: 1,
-        desc: "本地簽賬（單一滿$300）週末額外 +1X（合共2X）",
+        desc: "本地簽賬 週末額外每 $1 +1 積分",
         mode: "add",
         min_single_spend: 300,
         valid_from: "2026-01-01",
@@ -1772,7 +1800,7 @@ const modulesDB = {
         type: "category",
         match: ["online"],
         rate: 8,
-        desc: "指定本地網購額外 +8X（需登記，月簽$1,000）",
+        desc: "指定本地網購額外每 $1 +8 積分",
         mode: "add",
         setting_key: "fubon_infinite_upgrade_enabled",
         req_mission_key: "fubon_infinite_upgrade_monthly_spend",
@@ -1796,7 +1824,7 @@ const modulesDB = {
         type: "category",
         match: ["online"],
         rate: 0.076,
-        desc: "網上零售額外 +7.6%（合共 8%，單筆滿 $500）",
+        desc: "網上零售額外 7.6%",
         mode: "add",
         setting_key: "sim_promo_enabled",
         req_mission_key: "sim_non_online_spend",
@@ -1815,7 +1843,7 @@ const modulesDB = {
         type: "category",
         match: ["transport"],
         rate: 0.076,
-        desc: "指定本地交通額外 +7.6%（合共 8%）",
+        desc: "指定本地交通額外 7.6%",
         mode: "add",
         setting_key: "sim_promo_enabled",
         req_mission_key: "sim_non_online_spend",
@@ -1834,7 +1862,7 @@ const modulesDB = {
         type: "category",
         match: ["sim_designated_merchant"],
         rate: 0.026,
-        desc: "指定商戶額外 +2.6%（合共 3%）",
+        desc: "指定商戶額外 2.6%",
         mode: "add",
         setting_key: "sim_promo_enabled",
         req_mission_key: "sim_non_online_spend",
@@ -1853,7 +1881,7 @@ const modulesDB = {
         type: "category",
         match: ["sim_billpay", "utilities", "rates", "management_fee", "tuition", "debt_repayment"],
         rate: 0.016,
-        desc: "指定繳費額外 +1.6%（合共 2%）",
+        desc: "指定繳費額外 1.6%",
         mode: "add",
         setting_key: "sim_promo_enabled",
         req_mission_key: "sim_non_online_spend",
@@ -1871,7 +1899,7 @@ const modulesDB = {
         type: "category",
         match: ["online"],
         rate: 0.076,
-        desc: "sim World 網上零售額外 +7.6%（合共 8%，單筆滿 $500）",
+        desc: "sim World 網上零售額外 7.6%",
         mode: "add",
         setting_key: "sim_world_promo_enabled",
         req_mission_key: "sim_world_non_online_spend",
@@ -1890,7 +1918,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas"],
         rate: 0.076,
-        desc: "sim World 海外簽賬額外 +7.6%（合共 8%）",
+        desc: "sim World 海外簽賬額外 7.6%",
         mode: "add",
         setting_key: "sim_world_promo_enabled",
         req_mission_key: "sim_world_non_online_spend",
@@ -1909,7 +1937,7 @@ const modulesDB = {
         type: "category",
         match: ["sim_designated_merchant"],
         rate: 0.026,
-        desc: "sim World 指定商戶額外 +2.6%（合共 3%）",
+        desc: "sim World 指定商戶額外 2.6%",
         mode: "add",
         setting_key: "sim_world_promo_enabled",
         req_mission_key: "sim_world_non_online_spend",
@@ -1928,7 +1956,7 @@ const modulesDB = {
         type: "category",
         match: ["sim_billpay", "utilities", "rates", "management_fee", "tuition", "debt_repayment"],
         rate: 0.016,
-        desc: "sim World 指定繳費額外 +1.6%（合共 2%）",
+        desc: "sim World 指定繳費額外 1.6%",
         mode: "add",
         setting_key: "sim_world_promo_enabled",
         req_mission_key: "sim_world_non_online_spend",
@@ -1953,7 +1981,7 @@ const modulesDB = {
     "mox_task_bonus": {
         type: "always",
         rate: 0.01,
-        desc: "條件達成額外 +1%（合共 2%）",
+        desc: "條件達成額外 1%",
         mode: "add",
         setting_key: "mox_deposit_task_enabled",
         valid_from: "2025-12-01",
@@ -1980,7 +2008,7 @@ const modulesDB = {
     "mox_miles_base_promo": {
         type: "category",
         rate: 1 / 8,
-        desc: "Asia Miles $8/里（未達條件）",
+        desc: "Asia Miles $8/里（推廣期）",
         mode: "replace",
         valid_from: "2025-12-01",
         valid_to: "2026-03-31",
@@ -1992,7 +2020,7 @@ const modulesDB = {
     "mox_miles_base_regular": {
         type: "category",
         rate: 1 / 10,
-        desc: "Asia Miles $10/里（未達條件）",
+        desc: "Asia Miles $10/里（常規）",
         mode: "replace",
         valid_from: "2026-04-01",
         eligible_check: (cat, ctx) => {
@@ -2007,7 +2035,7 @@ const modulesDB = {
         type: "category",
         match: ["online"],
         rate: 0.056,
-        desc: "網上簽賬額外 +5.6%（合共 6%，單筆滿 $500）",
+        desc: "網上簽賬額外 5.6%",
         mode: "add",
         min_single_spend: 500,
         cap_mode: "reward",
@@ -2021,7 +2049,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas_jp"],
         rate: 0.026,
-        desc: "日本海外簽賬額外 +2.6%（合共 3%）",
+        desc: "日本海外簽賬額外 2.6%",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 200,
@@ -2035,7 +2063,7 @@ const modulesDB = {
         type: "category",
         match: ["dining"],
         rate: 0.006,
-        desc: "本地餐飲額外 +0.6%（合共 1%）",
+        desc: "本地餐飲額外 0.6%",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 200,
@@ -2051,7 +2079,7 @@ const modulesDB = {
     "wewa_selected_bonus": {
         type: "category",
         rate: 0.036,
-        desc: "自選類別額外 +3.6%（合共 4%，需月簽 $1,500）",
+        desc: "自選類別額外 3.6%",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 200,
@@ -2095,7 +2123,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas_jkt", "overseas_jp", "overseas_jpkr", "overseas_th", "overseas_tw", "overseas_uk_eea", "overseas_other"],
         rate: 0.05,
-        desc: "海外指定地區額外 +5%（每階段上限 $500，需累積滿 $500）",
+        desc: "海外指定地區額外 5%",
         mode: "add",
         setting_key: "wewa_overseas_5pct_enabled",
         cap_mode: "reward",
@@ -2119,7 +2147,7 @@ const modulesDB = {
     "earnmore_bonus_2026q1": {
         type: "always",
         rate: 0.01,
-        desc: "推廣額外 +1%",
+        desc: "推廣期額外 1%",
         display_name_zhhk: "EarnMORE 推廣額外 +1%",
         mode: "add",
         cap_mode: "reward",
@@ -2139,7 +2167,7 @@ const modulesDB = {
         type: "category",
         match: ["travel", "public_transport"],
         rate: 0.06,
-        desc: "旅遊/公共交通工具額外 +6%（合共 6.4%）",
+        desc: "旅遊/公共交通工具額外 6%",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 200,
@@ -2154,7 +2182,7 @@ const modulesDB = {
         type: "category",
         match: ["entertainment"],
         rate: 0.05,
-        desc: "娛樂額外 +5%（合共 5.4%）",
+        desc: "娛樂額外 5%",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 200,
@@ -2168,7 +2196,7 @@ const modulesDB = {
     "bea_goal_online_mobile": {
         type: "category",
         rate: 0.04,
-        desc: "網上/手機支付額外 +4%（合共 4.4%）",
+        desc: "網上/手機支付額外 4%",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 200,
@@ -2193,12 +2221,12 @@ const modulesDB = {
         }
     },
 
-    "bea_world_base": { type: "always", rate: 1, desc: "基本 1X" },
+    "bea_world_base": { type: "always", rate: 1, desc: "基本每 $1 賺 1 BEA分 (0.4%)" },
     "bea_world_bonus": {
         type: "category",
         match: ["overseas", "dining", "electronics", "sportswear", "gym", "medical"],
         rate: 12.5,
-        desc: "BEA Spending Points 指定類別 12.5X",
+        desc: "BEA Spending Points 指定類別每 $1 賺 12.5 BEA分",
         mode: "replace",
         cap_mode: "reward",
         cap_limit: 115000,
@@ -2214,7 +2242,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas"],
         rate: 2,
-        desc: "BEA Flying Miles 海外簽賬 2X",
+        desc: "BEA Flying Miles 海外簽賬每 $1 賺 2 BEA分",
         mode: "replace",
         setting_key: "bea_world_flying_miles_enabled",
         cap_mode: "reward",
@@ -2230,7 +2258,7 @@ const modulesDB = {
         type: "category",
         match: ["dining", "electronics", "sportswear", "gym", "medical"],
         rate: 1.6,
-        desc: "BEA Flying Miles 本地指定商戶 1.6X",
+        desc: "BEA Flying Miles 本地指定商戶每 $1 賺 1.6 BEA分",
         mode: "replace",
         setting_key: "bea_world_flying_miles_enabled",
         cap_mode: "reward",
@@ -2265,12 +2293,12 @@ const modulesDB = {
         }
     },
 
-    "bea_unionpay_base": { type: "always", rate: 1, desc: "基本 1X" },
+    "bea_unionpay_base": { type: "always", rate: 1, desc: "基本每 $1 賺 1 BEA分 (0.4%)" },
     "bea_unionpay_rmb": {
         type: "category",
         match: ["overseas_cn"],
         rate: 13,
-        desc: "人民幣簽賬 13X",
+        desc: "人民幣簽賬每 $1 賺 13 BEA分",
         mode: "replace",
         cap_mode: "reward",
         cap_limit: 100000,
@@ -2283,7 +2311,7 @@ const modulesDB = {
         type: "category",
         match: ["overseas"],
         rate: 11,
-        desc: "外幣簽賬 11X",
+        desc: "外幣簽賬每 $1 賺 11 BEA分",
         mode: "replace",
         cap_mode: "reward",
         cap_limit: 100000,
@@ -2297,7 +2325,7 @@ const modulesDB = {
         type: "category",
         match: ["dining"],
         rate: 4,
-        desc: "本地食肆 4X",
+        desc: "本地食肆每 $1 賺 4 BEA分",
         mode: "replace",
         cap_mode: "reward",
         cap_limit: 100000,
@@ -2310,7 +2338,7 @@ const modulesDB = {
         type: "category",
         match: ["general"],
         rate: 3,
-        desc: "本地零售 3X",
+        desc: "本地零售每 $1 賺 3 BEA分",
         mode: "replace",
         cap_mode: "reward",
         cap_limit: 100000,

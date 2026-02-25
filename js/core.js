@@ -452,9 +452,10 @@ function getLevelLifecycleModelDefaults(modelId) {
             title: "Travel Guru",
             icon: "fas fa-trophy",
             theme: "yellow",
+            description: "適用海外簽賬；按等級獲額外回贈，達門檻可升級並重置該級進度。",
             settingKey: "guru_level",
             registrationSettingKey: "travel_guru_registered",
-            implementationNote: "計算器做法：登記後可啟動 GO 級；其後海外合資格簽賬按等級計算（GO +3% 上限 500 RC、GING +4% 上限 1,200 RC、GURU +6% 上限 2,200 RC），每級達升級門檻後可升級並重置該級進度。",
+            implementationNote: "計算器做法：登記後可啟動 GO 級；其後海外合資格簽賬按等級計算（GO 額外 3% 上限 500 RC、GING 額外 4% 上限 1,200 RC、GURU 額外 6% 上限 2,200 RC），每級達升級門檻後可升級並重置該級進度。",
             spendKey: "guru_spend_accum",
             rewardKey: "guru_rc_used",
             rewardUnit: "RC",
@@ -468,6 +469,7 @@ function getLevelLifecycleModelDefaults(modelId) {
         title: modelId,
         icon: "fas fa-chart-line",
         theme: "gray",
+        description: "",
         settingKey: "",
         registrationSettingKey: "",
         implementationNote: "",
@@ -533,6 +535,7 @@ function getLevelLifecycleModel(modelId) {
         title: raw.title || raw.display_name_zhhk || raw.name || defaults.title,
         icon: raw.icon || defaults.icon,
         theme: raw.theme || defaults.theme,
+        description: raw.description || raw.note_zhhk || defaults.description || "",
         settingKey: raw.settingKey || raw.setting_key || defaults.settingKey,
         registrationSettingKey: raw.registrationSettingKey || raw.registration_setting_key || defaults.registrationSettingKey,
         implementationNote: raw.implementationNote || raw.implementation_note || defaults.implementationNote || "",
@@ -582,6 +585,35 @@ function getLevelLifecycleState(modelId, profile) {
         registrationEnd: model.registrationEnd || "",
         registrationNote: model.registrationNote || ""
     };
+    const fmtPct = (rate) => {
+        const n = Number(rate);
+        if (!Number.isFinite(n)) return "";
+        const pct = n * 100;
+        const rounded = pct >= 10 ? pct.toFixed(1) : pct.toFixed(2);
+        return `${rounded.replace(/\.?0+$/, "")}%`;
+    };
+    const getModelRateForLevel = (lv) => {
+        const moduleId = String(model.module || "");
+        if (!moduleId || !DATA || !DATA.modules) return null;
+        const mod = DATA.modules[moduleId];
+        const cfg = mod && mod.config && typeof mod.config === "object" ? mod.config[lv] : null;
+        const rate = Number(cfg && cfg.rate);
+        return Number.isFinite(rate) ? rate : null;
+    };
+    const buildRateSummary = () => {
+        const keys = Object.keys(model.levels || {})
+            .map((k) => Number(k))
+            .filter((n) => Number.isFinite(n) && n > 0)
+            .sort((a, b) => a - b);
+        const parts = keys.map((lv) => {
+            const rate = getModelRateForLevel(lv);
+            const pctText = fmtPct(rate);
+            const levelCfg = model.levels && model.levels[lv] ? model.levels[lv] : null;
+            const levelName = levelCfg && levelCfg.name ? levelCfg.name : `${lv}級`;
+            return pctText ? `${levelName} ${pctText}` : "";
+        }).filter(Boolean);
+        return parts.join("；");
+    };
 
     const eligibleCards = Array.isArray(model.cards) ? model.cards : [];
     if (eligibleCards.length > 0) {
@@ -604,6 +636,13 @@ function getLevelLifecycleState(modelId, profile) {
 
     if (level <= 0) {
         const unlockPct = unlockSpend > 0 ? Math.min(100, (unlockAccum / unlockSpend) * 100) : 100;
+        const rateSummary = buildRateSummary();
+        const unlockNeedText = unlockSpend > 0 ? `$${unlockSpend.toLocaleString()}` : "$0";
+        const inactiveInfoLines = [
+            { icon: "fas fa-tag", text: "適用：海外簽賬" },
+            { icon: "fas fa-coins", text: rateSummary || "按等級回贈" },
+            { icon: "fas fa-bullseye", text: `需先累積海外簽賬 ${unlockNeedText}（達標後可啟動 GO級）` }
+        ];
         return {
             eligible: true,
             active: true,
@@ -613,7 +652,9 @@ function getLevelLifecycleState(modelId, profile) {
             title: model.title,
             icon: model.icon,
             theme: model.theme,
+            description: model.description || "",
             implementationNote: model.implementationNote || "",
+            infoLines: inactiveInfoLines,
             ...modelRefs,
             badge: rewardUnlocked ? "可啟動GO級" : "待解鎖",
             actionButton: rewardUnlocked
@@ -658,6 +699,18 @@ function getLevelLifecycleState(modelId, profile) {
     const canUpgrade = !!model.upgradeAction && targetSpend > 0 && spendAccum >= targetSpend && level < maxLevel;
     const rewardUnit = model.rewardUnit || "";
     const rewardSuffix = rewardUnit ? ` ${rewardUnit}` : "";
+    const currentRatePct = fmtPct(getModelRateForLevel(level));
+    const nextTargetText = targetSpend > 0 ? `$${targetSpend.toLocaleString()}` : "$0";
+    const activeInfoLines = [
+        { icon: "fas fa-tag", text: "適用：海外簽賬" },
+        {
+            icon: "fas fa-coins",
+            text: currentRatePct
+                ? `當前 ${levelName}：${currentRatePct}（本級上限 ${Math.floor(rewardCap).toLocaleString()}${rewardSuffix}）`
+                : `當前 ${levelName}：本級上限 ${Math.floor(rewardCap).toLocaleString()}${rewardSuffix}`
+        },
+        { icon: "fas fa-bullseye", text: `${level < maxLevel ? "升級" : "保級"}門檻：累積海外簽賬 ${nextTargetText}` }
+    ];
 
     return {
         eligible: true,
@@ -668,7 +721,9 @@ function getLevelLifecycleState(modelId, profile) {
         title: model.title,
         icon: model.icon,
         theme: model.theme,
+        description: model.description || "",
         implementationNote: model.implementationNote || "",
+        infoLines: activeInfoLines,
         ...modelRefs,
         badge: levelName,
         actionButton: canUpgrade
@@ -1118,14 +1173,15 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 }
 
 function calculateGuru(mod, amount, level, category, options) {
-    if (level <= 0 || !isCategoryMatch([mod.category], category)) return { rate: 0, entry: null, generatedRC: 0 };
+    if (level <= 0 || !isCategoryMatch([mod.category], category)) return { rate: 0, displayRate: 0, entry: null, generatedRC: 0 };
     const conf = mod.config[level];
-    if (!conf) return { rate: 0, entry: null, generatedRC: 0 };
+    if (!conf) return { rate: 0, displayRate: 0, entry: null, generatedRC: 0 };
     const capStatus = checkCap(mod.usage_key, conf.cap_rc);
     if (capStatus.isMaxed) {
         return {
             rate: 0,
-            entry: { text: `${conf.desc} (爆Cap)`, tone: "warning", flags: { capped: true, strike: true } },
+            displayRate: conf.rate,
+            entry: { text: `💥 ${conf.desc}`, tone: "warning", flags: { capped: true, strike: true } },
             generatedRC: 0
         };
     }
@@ -1133,13 +1189,15 @@ function calculateGuru(mod, amount, level, category, options) {
     if (potentialRC <= capStatus.remaining) {
         return {
             rate: conf.rate,
-            entry: { text: conf.desc, tone: "warning", flags: { bold: true } },
+            displayRate: conf.rate,
+            entry: { text: conf.desc, tone: "warning", flags: {} },
             generatedRC: potentialRC
         };
     }
     return {
         rate: capStatus.remaining / amount,
-        entry: { text: `${conf.desc}(部分)`, tone: "warning", flags: { partial: true, bold: true } },
+        displayRate: conf.rate,
+        entry: { text: `${conf.desc}(部分)`, tone: "warning", flags: { partial: true } },
         generatedRC: capStatus.remaining
     };
 }
@@ -1393,14 +1451,14 @@ function checkValidity(mod, txDate, isHoliday) {
     return true;
 }
 
-function makeBreakdownEntry(text, tone, flags) {
-    return { text: text || "", tone: tone || "normal", flags: flags || {} };
+function makeBreakdownEntry(text, tone, flags, meta) {
+    return { text: text || "", tone: tone || "normal", flags: flags || {}, meta: meta || null };
 }
 
-function makeBreakdownFromText(text, tone, flags) {
+function makeBreakdownFromText(text, tone, flags, meta) {
     const nextFlags = { ...(flags || {}) };
     if (text && text.includes("🔒")) nextFlags.locked = true;
-    return makeBreakdownEntry(text, tone || (nextFlags.locked ? "muted" : "normal"), nextFlags);
+    return makeBreakdownEntry(text, tone || (nextFlags.locked ? "muted" : "normal"), nextFlags, meta);
 }
 
 function buildZeroCategoryResult(card, amount, category, displayMode, conv) {
@@ -1487,9 +1545,9 @@ function evaluateModules(activeModules, amount, category, ctx) {
         if (reserve <= 0) return;
         txRewardCapPotentialByKey[capKey] = (Number(txRewardCapPotentialByKey[capKey]) || 0) + reserve;
     };
-    const addBreakdown = (text, tone, flags) => {
+    const addBreakdown = (text, tone, flags, meta) => {
         if (!text) return;
-        breakdown.push(makeBreakdownFromText(text, tone, flags));
+        breakdown.push(makeBreakdownFromText(text, tone, flags, meta));
     };
 
     // Check for Replacer Module first
@@ -1581,9 +1639,27 @@ function evaluateModules(activeModules, amount, category, ctx) {
         const showLockedBreakdown = !missionRequired || applyCurrent
             ? true
             : (nextThreshold === null || nextThreshold === undefined || Number(mod.req_mission_spend) === Number(nextThreshold));
-        const addModuleBreakdown = (text, tone, flags) => {
+        const configuredRate = (() => {
+            const directRate = Number(mod.rate);
+            if (Number.isFinite(directRate)) return directRate;
+            const perX = Number(mod.rate_per_x);
+            const mul = Number(mod.multiplier);
+            if (Number.isFinite(perX) && Number.isFinite(mul)) return perX * mul;
+            return 0;
+        })();
+        const addModuleBreakdown = (text, tone, flags, meta) => {
             if (!showLockedBreakdown) return;
-            addBreakdown(text, tone, flags);
+            const explicitRate = (meta && Number.isFinite(Number(meta.rate))) ? Number(meta.rate) : null;
+            const fallbackRate = Number.isFinite(rate) && Math.abs(rate) > 1e-12
+                ? rate
+                : (Number.isFinite(ratePotential) && Math.abs(ratePotential) > 1e-12 ? ratePotential : configuredRate);
+            const rateMeta = {
+                rate: explicitRate !== null ? explicitRate : fallbackRate,
+                cashRate: (conv || { cash_rate: 0 }).cash_rate,
+                modType: mod.type,
+                modMode: mod.mode || ""
+            };
+            addBreakdown(text, tone, flags, { ...rateMeta, ...(meta || {}) });
         };
 
         if (!applyPotential) return;
@@ -1642,7 +1718,17 @@ function evaluateModules(activeModules, amount, category, ctx) {
                     projectedSpend: guruSpendProjected
                 });
                 if (res.entry) {
-                    breakdown.push(res.entry);
+                    const displayRate = Number.isFinite(Number(res.displayRate)) ? Number(res.displayRate) : Number(res.rate || 0);
+                    breakdown.push({
+                        ...res.entry,
+                        meta: {
+                            ...(res.entry.meta || {}),
+                            rate: displayRate,
+                            cashRate: (conv || { cash_rate: 0 }).cash_rate,
+                            modType: mod.type,
+                            modMode: "add"
+                        }
+                    });
                     guruRC = res.generatedRC;
                     totalRate += res.rate;
                     totalRatePotential += res.rate;
@@ -1674,7 +1760,7 @@ function evaluateModules(activeModules, amount, category, ctx) {
                     }
 
                         if (isMaxed) {
-                            addModuleBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
+                            addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
                         } else {
                             const projectedReward = amount * mod.rate;
                             if (projectedReward <= remaining) {
@@ -1706,7 +1792,7 @@ function evaluateModules(activeModules, amount, category, ctx) {
                         }
                 } else {
                     const capCheck = checkCap(mod.cap_key, mod.cap_limit);
-                    if (capCheck.isMaxed) addModuleBreakdown(tempDesc || mod.desc, "muted", { capped: true, strike: true });
+                    if (capCheck.isMaxed) addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
                     else if (amount > capCheck.remaining) { rate = (capCheck.remaining * mod.rate) / amount; addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true }); hit = true; }
                     else {
                         rate = mod.rate;
@@ -1757,7 +1843,7 @@ function evaluateModules(activeModules, amount, category, ctx) {
                         }
 
                         if (isMaxed) {
-                            addModuleBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
+                            addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
                         } else if (overflowRewardRaw <= remaining) {
                             rate = overflowRewardRaw / amount;
                             hit = true;
@@ -1782,7 +1868,7 @@ function evaluateModules(activeModules, amount, category, ctx) {
                     } else {
                         const capCheck = checkCap(mod.cap_key, mod.cap_limit);
                         if (capCheck.isMaxed) {
-                            addModuleBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
+                            addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
                         } else if (overflowAmount > capCheck.remaining) {
                             rate = (capCheck.remaining * (Number(mod.rate) || 0)) / amount;
                             hit = true;
@@ -1864,7 +1950,7 @@ function evaluateModules(activeModules, amount, category, ctx) {
                     }
 
                     if (isMaxed) {
-                        addModuleBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
+                        addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
                         hit = false;
                     } else {
                         const projectedReward = amount * rate;
@@ -1889,7 +1975,7 @@ function evaluateModules(activeModules, amount, category, ctx) {
                 } else {
                     const capCheck = checkCap(mod.cap_key, mod.cap_limit);
                     if (capCheck.isMaxed) {
-                        addModuleBreakdown(`${tempDesc || mod.desc} (爆Cap)`, "muted", { capped: true, strike: true });
+                        addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
                         hit = false;
                     } else if (amount > capCheck.remaining) {
                         rate = (capCheck.remaining * rate) / amount;
@@ -1915,7 +2001,9 @@ function evaluateModules(activeModules, amount, category, ctx) {
 
                 const descText = tempDesc || mod.desc;
                 const capDisplayHandledInBranch = (mod.type === "category" && !!mod.cap_limit) || capDisplayHandled;
-                if (!capDisplayHandledInBranch && (allowCurrent || allowPotential) && showLockedBreakdown) addBreakdown(descText);
+                if (!capDisplayHandledInBranch && (allowCurrent || allowPotential) && showLockedBreakdown) {
+                    addBreakdown(descText, null, null, { rate: rate, cashRate: (conv || { cash_rate: 0 }).cash_rate, modType: mod.type, modMode: mod.mode || "" });
+                }
 
                 if (allowCurrent && mod.cap_mode === 'reward' && mod.cap_limit) {
                     if (!rewardInfo) rewardInfo = { key: mod.cap_key, val: 0 };
@@ -2037,7 +2125,9 @@ function buildFinalResult(card, amount, category, displayMode, totalRate, totalR
         supportsMiles, supportsCash, unsupportedMode,
         nativeVal: native,
         nativeValPotential: nativePotential,
-        pendingUnlocks
+        pendingUnlocks,
+        totalCashPercent: totalRate * conv.cash_rate * 100,
+        totalCashPercentPotential: totalRatePotential * conv.cash_rate * 100
     };
 }
 
@@ -2114,9 +2204,9 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
 
     // Append mission tag breakdown entries
     const { breakdown } = modResult;
-    const addBreakdown = (text, tone, flags) => {
+    const addBreakdown = (text, tone, flags, meta) => {
         if (!text) return;
-        breakdown.push(makeBreakdownFromText(text, tone, flags));
+        breakdown.push(makeBreakdownFromText(text, tone, flags, meta));
     };
 
     const campaignById = {};
@@ -2125,6 +2215,39 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
             .filter((offer) => offer && offer.renderType === "campaign_sections" && offer.id)
             .forEach((offer) => { campaignById[offer.id] = offer; });
     }
+
+    const normalizeTagCompareText = (input) => String(input || "")
+        .normalize("NFKC")
+        .replace(/[賬帳]/g, "賬")
+        .replace(/[\s()（）[\]{}「」『』,，.。:：;；!！?？+\-_/\\]/g, "")
+        .toLowerCase();
+    const getWinterTagRateHint = (campaign) => {
+        if (!campaign || campaign.id !== "winter_promo") return null;
+        const sections = Array.isArray(campaign.sections) ? campaign.sections : [];
+        const tierSec = sections.find((sec) => sec && sec.type === "tier_cap" && Array.isArray(sec.tiers) && sec.tiers.length > 0);
+        if (!tierSec) return null;
+        const tiers = tierSec.tiers;
+        const tier1Rate = Number(tiers[0] && tiers[0].rate);
+        const tier2Rate = Number(tiers[1] && tiers[1].rate);
+        const fallbackRate = Number.isFinite(tier1Rate) ? tier1Rate : (Number.isFinite(tier2Rate) ? tier2Rate : null);
+        if (fallbackRate === null) return null;
+
+        const tier1Default = Math.max(0, Number(tiers[0] && tiers[0].threshold) || 0);
+        const tier2DefaultRaw = Math.max(0, Number(tiers[1] && tiers[1].threshold) || tier1Default);
+        const tier2Default = Math.max(tier1Default, tier2DefaultRaw);
+
+        const settingTier1 = Number(userProfile.settings && userProfile.settings.winter_tier1_threshold);
+        const settingTier2Raw = Number(userProfile.settings && userProfile.settings.winter_tier2_threshold);
+        const tier1 = (Number.isFinite(settingTier1) && settingTier1 > 0) ? settingTier1 : tier1Default;
+        const tier2 = (Number.isFinite(settingTier2Raw) && settingTier2Raw > 0)
+            ? Math.max(tier1, settingTier2Raw)
+            : tier2Default;
+
+        const total = Number(userProfile.usage && userProfile.usage[tierSec.totalKey]) || 0;
+        if (Number.isFinite(tier2Rate) && total >= tier2) return tier2Rate;
+        if (Number.isFinite(tier1Rate)) return tier1Rate;
+        return fallbackRate;
+    };
 
     missionTags.forEach(tag => {
         if (tag && tag.hideInEquation) return;
@@ -2142,13 +2265,14 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         const missionLocked = missionSections.some((sec) => sec.meta && sec.meta.unlocked === false);
         if (tag.eligible) {
             const cleanTagDesc = tag.desc.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').trim();
+            const cleanTagKey = normalizeTagCompareText(cleanTagDesc);
 
             const alreadyWarned = breakdown.some(b => {
                 const text = typeof b === "string" ? b : (b && b.text) || "";
-                const hasText = text.includes(cleanTagDesc);
+                const hasText = cleanTagKey ? normalizeTagCompareText(text).includes(cleanTagKey) : false;
                 const entryFlags = (typeof b === "object" && b && b.flags) ? b.flags : {};
                 const hasStatusFlag = !!(entryFlags.locked || entryFlags.capped || entryFlags.strike);
-                const hasStatusText = text.includes("🔒") || text.includes("🚫") || text.includes("累積中") || text.includes("爆Cap");
+                const hasStatusText = text.includes("🔒") || text.includes("🚫") || text.includes("💥") || text.includes("解鎖後") || text.includes("累積中") || text.includes("爆Cap");
                 return hasText && (hasStatusFlag || hasStatusText);
             });
 
@@ -2156,16 +2280,21 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
                 return;
             }
 
+            const winterRateHint = getWinterTagRateHint(campaign);
+            const tagMeta = (Number.isFinite(winterRateHint) && winterRateHint > 0)
+                ? { rate: winterRateHint, cashRate: 1 }
+                : null;
+
             if (hasCappedReward) {
-                label = `🚫 ${cleanTagDesc}(爆Cap)`;
+                label = `💥 ${cleanTagDesc}`;
                 tone = "muted";
                 flags = { capped: true, strike: true };
             } else if (hasLockedReward || missionLocked) {
-                label = `🔒 ${cleanTagDesc}(累積中)`;
+                label = `🔒 ${cleanTagDesc}`;
                 tone = "muted";
                 flags = { locked: true };
             }
-            addBreakdown(label, tone, flags);
+            addBreakdown(label, tone, flags, tagMeta);
         } else {
             if (campaign && missionLocked && tag.matched) {
                 addBreakdown(`⚪ 不計入${tag.desc}門檻`, "muted");

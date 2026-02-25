@@ -11,19 +11,19 @@ const CAMPAIGN_REGISTRY = {
         registrationStart: "2026-01-01",
         registrationEnd: "2026-06-30",
         registrationNote: "需於 HSBC Reward+ 應用程式登記",
-        implementationNote: "計算器做法：推廣分兩期獨立計算（2026-01-01 至 2026-03-31、2026-04-01 至 2026-06-30）。每期先累積合資格外幣簽賬滿 $12,000，達標後按額外 +1.5% 計算（連基本約 2.5%，約 $2/里），每期額外回贈上限 225 RC。"
+        implementationNote: "計算器做法：推廣分兩期獨立計算（2026-01-01 至 2026-03-31、2026-04-01 至 2026-06-30）。每期先累積合資格外幣簽賬滿 $12,000，達標後按額外 1.5% 計算（連基本約 2.5%，約 $2/里），每期額外回贈上限 225 RC。"
     },
     winter_promo: {
         settingKey: "winter_promo_enabled",
         warningTitle: "HSBC 最紅冬日賞（專屬客戶）",
-        warningDesc: "只限專屬客戶；需登記以賺取回贈",
+        warningDesc: "只限專屬客戶；需登記。部分指定商戶交易不計入合資格簽賬。",
         tncUrl: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/2025-winter-exclusive-spend.pdf",
         promoUrl: "",
         registrationUrl: "https://www.hsbc.com.hk/rewardplus/",
         registrationStart: "2025-12-01",
         registrationEnd: "2026-02-28",
         registrationNote: "只限專屬客戶，並需於 HSBC Reward+ 應用程式登記",
-        implementationNote: "計算器做法：此優惠只限專屬客戶。先累積冬日賞合資格簽賬（餐飲/海外而且非網上）。達 $20,000 後，冬日賞回贈按合資格簽賬金額 × 3% 計，上限 $250；達 $40,000 後按合資格簽賬金額 × 6% 計，上限 $800。"
+        implementationNote: "計算器做法：此優惠只限專屬客戶。達 $20,000 後按 3% 計（上限 $250）；達 $40,000 後按 6% 計（上限 $800）。合資格簽賬按條款排除指定商戶交易（SOGO〔含 sogo.com.hk〕、百老匯〔含 broadwaylifestyle.com〕、萬寧/Mannings Plus/Mannings Baby〔含 mannings.com.hk〕及 GNC 指定期間交易）。"
     },
     easy_additional_offer: {
         warningTitle: "HSBC Visa Platinum 指定商戶 3X",
@@ -177,6 +177,11 @@ const CAMPAIGNS = [
             ]
         },
         cards: ["hsbc_everymile"],
+        info_lines: [
+            { icon: "fas fa-tag", text: "適用：海外簽賬" },
+            { icon: "fas fa-coins", text: "額外 1.5%（連基本約 2.5%，約 $2/里）" },
+            { icon: "fas fa-bullseye", text: "需先每期累積合資格簽賬 $12,000（達標後會補回先前簽賬）" }
+        ],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", missionModule: "em_overseas_bonus" },
             { type: "cap_rate", label: "💰 回贈進度", usageKey: "em_q1_eligible", capModule: "em_overseas_bonus", rateModule: "em_overseas_bonus", unit: "RC", unlockModule: "em_overseas_bonus" }
@@ -211,6 +216,11 @@ const CAMPAIGNS = [
             period: { type: "promo", startDate: "2025-12-01", endDate: "2026-02-28" }
         },
         cards: ["hsbc_vs", "hsbc_red", "hsbc_pulse", "hsbc_unionpay_std", "hsbc_easy", "hsbc_gold_student", "hsbc_gold", "hsbc_premier"],
+        info_lines: [
+            { icon: "fas fa-receipt", text: "適用：合資格信用卡之本地及海外簽賬（按條款列明之不合資格交易除外）" },
+            { icon: "fas fa-ban", text: "門檻計算：除 SOGO、百老匯、萬寧/Mannings Plus/Mannings Baby、GNC 指定期間交易外，其餘合資格簽賬可計入" },
+            { icon: "fas fa-coins", text: "回贈級別：第1級 3%（上限 $250）；第2級 6%（上限 $800）" }
+        ],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", usageKey: "winter_total", target: 40000, markers: [20000, 40000] },
             {
@@ -415,7 +425,7 @@ const CAMPAIGNS = [
         cards: ["boc_chill"],
         sections: [
             { type: "mission", label: "🎯 簽賬任務進度", usageKey: "spend_boc_chill_monthly", target: 1500 },
-            { type: "cap", label: "💰 額外回贈進度（共用上限）", capKey: "boc_chill_bonus_cap_2026", cap: 37500, unit: "積分" }
+            { type: "cap", label: "💰 額外回贈進度", capKey: "boc_chill_bonus_cap_2026", cap: 37500, unit: "積分" }
         ],
         capKeys: ["boc_chill_bonus_cap_2026"]
     },
@@ -1005,7 +1015,7 @@ const SPECIAL_PROMO_MODELS = {
         registrationStart: "2025-06-16",
         registrationEnd: "2025-10-31",
         registrationNote: "分階段登記：2025-06-16至07-03、09-01至09-30、10-01至10-31",
-        implementationNote: "計算器做法：登記後可啟動 GO 級，之後海外合資格簽賬按等級計算（GO +3% 上限 500 RC、GING +4% 上限 1,200 RC、GURU +6% 上限 2,200 RC）；每級累積簽賬達升級門檻（GO 30,000；GING 70,000）可升下一級，升級後會重置該級進度。",
+        implementationNote: "計算器做法：登記後可啟動 GO 級，之後海外合資格簽賬按等級計算（GO 額外 3% 上限 500 RC、GING 額外 4% 上限 1,200 RC、GURU 額外 6% 上限 2,200 RC）；每級累積簽賬達升級門檻（GO 30,000；GING 70,000）可升下一級，升級後會重置該級進度。",
         unlockSpend: 8000,
         unlockSpendKey: "spend_guru_unlock",
         usage: {

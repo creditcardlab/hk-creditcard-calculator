@@ -154,25 +154,45 @@ function isGuruOverseasCategory(category) {
     return isCategoryMatch(["overseas"], category);
 }
 
+function isWinterPromoEligibleCard(cardId) {
+    const cid = String(cardId || "").trim();
+    if (!cid || !DATA || !Array.isArray(DATA.cards)) return false;
+    const card = DATA.cards.find((c) => c && c.id === cid);
+    return !!(card && Array.isArray(card.trackers) && card.trackers.includes("winter_tracker"));
+}
+
 function migrateWinterUsage() {
     if (!userProfile.usage) userProfile.usage = {};
-    if (userProfile.usage.winter_recalc_v2) return;
+    if (userProfile.usage.winter_recalc_v4) return;
     let total = 0;
     let eligible = 0;
     if (Array.isArray(userProfile.transactions)) {
         userProfile.transactions.forEach(tx => {
             const amt = Number(tx.amount) || 0;
+            if (amt <= 0) return;
+            const cardId = String(tx.cardId || "").trim();
+            if (!isWinterPromoEligibleCard(cardId)) return;
             const cat = tx.category;
-            const isOnline = !!tx.isOnline;
-            if (!isOnline && isCategoryMatch(["dining", "overseas"], cat)) {
-                total += amt;
-                eligible += amt;
-            }
+            const txDate = String(tx.txDate || (tx.date ? new Date(tx.date).toISOString().slice(0, 10) : "")).trim();
+            const txCtx = {
+                txDate,
+                isOnline: !!tx.isOnline,
+                merchantId: tx.merchantId || "",
+                cardId
+            };
+            const isEligible = (typeof isWinterPromoTrackerEligible === "function")
+                ? !!isWinterPromoTrackerEligible(cat, txCtx)
+                : (!txCtx.isOnline && isCategoryMatch(["dining", "overseas"], cat));
+            if (!isEligible) return;
+            total += amt;
+            eligible += amt;
         });
     }
     userProfile.usage.winter_total = total;
     userProfile.usage.winter_eligible = eligible;
     userProfile.usage.winter_recalc_v2 = true;
+    userProfile.usage.winter_recalc_v3 = true;
+    userProfile.usage.winter_recalc_v4 = true;
     saveUserData();
 }
 
@@ -313,6 +333,8 @@ function validateUsageRegistry() {
         "red_cap_month",
         "bea_month",
         "winter_recalc_v2",
+        "winter_recalc_v3",
+        "winter_recalc_v4",
         "dual_cap_tracking_v1",
         "sc_cathay_cxuo_quarterly_v1"
     ]);
@@ -357,6 +379,8 @@ function clearUsageAndStats() {
     if (prevUsage.bea_month) userProfile.usage.bea_month = prevUsage.bea_month;
     if (prevUsage.monthly_cap_month) userProfile.usage.monthly_cap_month = prevUsage.monthly_cap_month;
     if (prevUsage.winter_recalc_v2) userProfile.usage.winter_recalc_v2 = prevUsage.winter_recalc_v2;
+    if (prevUsage.winter_recalc_v3) userProfile.usage.winter_recalc_v3 = prevUsage.winter_recalc_v3;
+    if (prevUsage.winter_recalc_v4) userProfile.usage.winter_recalc_v4 = prevUsage.winter_recalc_v4;
     if (prevUsage.dual_cap_tracking_v1) userProfile.usage.dual_cap_tracking_v1 = prevUsage.dual_cap_tracking_v1;
     if (prevUsage.sc_cathay_cxuo_quarterly_v1) userProfile.usage.sc_cathay_cxuo_quarterly_v1 = prevUsage.sc_cathay_cxuo_quarterly_v1;
     userProfile.stats = { totalSpend: 0, totalVal: 0, txCount: 0 };
@@ -483,6 +507,8 @@ function rebuildUsageAndStatsFromTransactions() {
     if (prevUsage.bea_month) userProfile.usage.bea_month = prevUsage.bea_month;
     if (prevUsage.monthly_cap_month) userProfile.usage.monthly_cap_month = prevUsage.monthly_cap_month;
     if (prevUsage.winter_recalc_v2) userProfile.usage.winter_recalc_v2 = prevUsage.winter_recalc_v2;
+    if (prevUsage.winter_recalc_v3) userProfile.usage.winter_recalc_v3 = prevUsage.winter_recalc_v3;
+    if (prevUsage.winter_recalc_v4) userProfile.usage.winter_recalc_v4 = prevUsage.winter_recalc_v4;
     if (prevUsage.dual_cap_tracking_v1) userProfile.usage.dual_cap_tracking_v1 = prevUsage.dual_cap_tracking_v1;
     if (prevUsage.sc_cathay_cxuo_quarterly_v1) userProfile.usage.sc_cathay_cxuo_quarterly_v1 = prevUsage.sc_cathay_cxuo_quarterly_v1;
 
@@ -543,6 +569,8 @@ function rebuildUsageAndStatsFromTransactions() {
         userProfile.usage.red_cap_month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     }
     userProfile.usage.winter_recalc_v2 = true;
+    userProfile.usage.winter_recalc_v3 = true;
+    userProfile.usage.winter_recalc_v4 = true;
     userProfile.usage.dual_cap_tracking_v1 = true;
     userProfile.usage.sc_cathay_cxuo_quarterly_v1 = true;
 }
