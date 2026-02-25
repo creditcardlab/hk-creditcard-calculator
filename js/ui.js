@@ -2596,7 +2596,6 @@ function toggleCategoryHelp() {
     const helpMap = {
         'red_designated': showRedMerchantList,
         'em_designated_spend': showEveryMileMerchantList,
-        'grocery': showSupermarketList,
         'fastfood': showFastfoodTips,
         'tunnel': showOctopusTips,
         'china_consumption': showChinaTips,
@@ -2719,7 +2718,6 @@ function showSmartMerchantList() {
     const shouldOpen = confirm(`${msg}\n\n按「確定」開啟官方條款 PDF。`);
     if (shouldOpen) window.open(url, "_blank", "noopener");
 }
-function showSupermarketList() { alert("【🥦 超市類別定義】\n\n✅ 認可：百佳, Donki, 759, AEON\n⚠️ HSBC陷阱：❌ 不包惠康, Market Place, 萬寧"); }
 function showRedMerchantList() {
     const url = "https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/#3";
     const msg = "【HSBC Red 指定商戶】\n\n✅ Red 指定商戶/類別以 HSBC 最紅自主獎賞頁面及條款為準";
