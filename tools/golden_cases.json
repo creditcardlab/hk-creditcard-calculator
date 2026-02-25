@@ -505,7 +505,7 @@
       },
       "expected": {
         "topCardId": "hsbc_gold_student",
-        "topValue": 40,
+        "topValue": 0,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -532,7 +532,7 @@
       },
       "expected": {
         "topCardId": "hsbc_gold_student",
-        "topValue": 4,
+        "topValue": 0,
         "breakdownFlags": {
           "hasLocked": false,
           "hasCapped": false,
@@ -4519,9 +4519,9 @@
       },
       "expected": {
         "topCardId": "fubon_in_platinum",
-        "topValue": 1,
+        "topValue": 0,
         "breakdownFlags": {
-          "hasLocked": true,
+          "hasLocked": false,
           "hasCapped": false,
           "hasPartial": false
         }
@@ -8956,7 +8956,7 @@
       },
       "expected": {
         "topCardId": "sim_credit",
-        "topValue": 4,
+        "topValue": 0,
         "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
       }
     }

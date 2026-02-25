@@ -142,29 +142,29 @@ const CORE_OVERRIDES = {
       "desc": "旅遊/機票額外 +7X"
     },
     "citi_cb_base": {
-      "desc": "基本簽賬回贈 (1%)"
+      "desc": "基本簽賬回贈"
     },
     "citi_cb_special": {
-      "desc": "本地食肆、酒店及外幣(2%)"
+      "desc": "本地食肆、酒店及外幣"
     },
     "easy_moneyback_bonus": {
-      "desc": "Easy Card 易賞錢6倍 (2.4%)",
+      "desc": "易賞錢指定商戶 6倍",
       "promo_end": "2026-12-31",
       "rate": 0.024,
       "valid_from": "2025-05-19",
       "valid_to": "2026-12-31"
     },
     "easy_moneyback_fortress_6x": {
-      "desc": "易賞錢：豐澤 6倍 (1.2%)"
+      "desc": "易賞錢：豐澤 6倍"
     },
     "easy_moneyback_pns_watsons_6x": {
-      "desc": "易賞錢：百佳/屈臣氏 6倍 (2.4%)"
+      "desc": "易賞錢：百佳/屈臣氏 6倍"
     },
     "em_designated": {
-      "desc": "EveryMile 指定商戶 (2.5%)"
+      "desc": "EveryMile 指定商戶"
     },
     "em_grocery_low": {
-      "desc": "EveryMile 超市 (0.4%)"
+      "desc": "EveryMile 超市"
     },
     "em_overseas_bonus": {
       "desc": "EveryMile 外幣簽賬優惠"
@@ -196,10 +196,10 @@ const CORE_OVERRIDES = {
       "desc": "食肆/酒店 $4/里"
     },
     "sc_simply_cash_base": {
-      "desc": "任何港幣消費 (1.5%)"
+      "desc": "任何港幣消費"
     },
     "sc_simply_cash_foreign": {
-      "desc": "任何外幣消費 (2%)"
+      "desc": "任何外幣消費"
     },
     "student_tuition_bonus": {
       "cap_key": "student_tuition_cap",

@@ -1006,10 +1006,21 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
 	            const prefix = isCurrencyUnit ? "$" : "";
 	            const suffix = isCurrencyUnit ? "" : (unit ? ` ${unit}` : "");
 	            const state = unlocked ? (hasCap && reward >= capVal ? "capped" : "active") : "locked";
-	            const lockedReason = !unlocked ? "未解鎖" : null;
-                const valueText = hasCap
-                    ? `${prefix}${Math.floor(reward).toLocaleString()}${suffix} / ${prefix}${capVal.toLocaleString()}${suffix}`.trim()
-                    : (unlocked ? "已達門檻（不設上限）" : "未達門檻");
+	            let lockedReason = !unlocked ? "未解鎖" : null;
+                if (!unlocked && !hasCap && unlockTarget !== null && unlockValue !== null) {
+                    const gap = Math.max(0, Math.floor(unlockTarget - unlockValue));
+                    lockedReason = `尚差 $${gap.toLocaleString()}`;
+                }
+                let valueText;
+                if (hasCap) {
+                    valueText = `${prefix}${Math.floor(reward).toLocaleString()}${suffix} / ${prefix}${capVal.toLocaleString()}${suffix}`.trim();
+                } else if (unlocked) {
+                    valueText = "✓ 已達門檻";
+                } else if (unlockTarget !== null && unlockValue !== null) {
+                    valueText = `$${Math.floor(unlockValue).toLocaleString()} / $${Math.floor(unlockTarget).toLocaleString()}`;
+                } else {
+                    valueText = "未達門檻";
+                }
 
 	            sections.push({
 	                kind: "cap_rate",
@@ -1461,7 +1472,9 @@ function makeBreakdownFromText(text, tone, flags, meta) {
     return makeBreakdownEntry(text, tone || (nextFlags.locked ? "muted" : "normal"), nextFlags, meta);
 }
 
-function buildZeroCategoryResult(card, amount, category, displayMode, conv) {
+function buildZeroCategoryResult(card, amount, category, displayMode, conv, options) {
+    const opts = options || {};
+    const zeroLabel = String(opts.zeroLabel || "Alipay/WeChat 0%");
     let valStr = "", unitStr = "";
     let valStrPotential = "", unitStrPotential = "";
     const unsupportedMode = (displayMode === "miles") ? (conv.miles_rate === 0) : (conv.cash_rate === 0);
@@ -1490,7 +1503,7 @@ function buildZeroCategoryResult(card, amount, category, displayMode, conv) {
         estCashPotential: 0,
         foreignFee: 0,
         memberDayDiscount: 0,
-        breakdown: [makeBreakdownEntry("Alipay/WeChat 0%", "muted", { zero: true })],
+        breakdown: [makeBreakdownEntry(zeroLabel, "muted", { zero: true })],
         trackingKey: null,
         guruRC: 0,
         missionTags: [],
@@ -1506,6 +1519,33 @@ function buildZeroCategoryResult(card, amount, category, displayMode, conv) {
         nativeValPotential: 0,
         pendingUnlocks: []
     };
+}
+
+function isBillPaymentCategory(category) {
+    const cat = String(category || "").trim();
+    if (!cat) return false;
+    if (cat === "bill_services" || cat === "telecom") return true;
+
+    const visited = new Set();
+    const stack = [cat];
+    while (stack.length > 0) {
+        const cur = stack.pop();
+        if (!cur || visited.has(cur)) continue;
+        visited.add(cur);
+        const parents = CATEGORY_HIERARCHY[cur];
+        if (!Array.isArray(parents) || parents.length === 0) continue;
+        if (parents.includes("bill_services")) return true;
+        parents.forEach((p) => stack.push(p));
+    }
+    return false;
+}
+
+function moduleExplicitlyMatchesBillCategory(mod, resolvedCategory) {
+    if (!mod || mod.type !== "category" || !Array.isArray(mod.match) || mod.match.length === 0) return false;
+    return mod.match.some((matchCat) => {
+        if (!isBillPaymentCategory(matchCat)) return false;
+        return isCategoryMatch([matchCat], resolvedCategory);
+    });
 }
 
 function evaluateModules(activeModules, amount, category, ctx) {
@@ -2155,8 +2195,32 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
     const conv = conversions.find(c => c.src === rewardCurrency);
     if (!conv) return null;
 
+    if (!Array.isArray(card.rewardModules) || card.rewardModules.length === 0) return null;
+
+    const activeModules = card.rewardModules.filter(modID => {
+        const m = modules[modID];
+        if (!m) return false;
+        return checkValidity(m, txDate, isHoliday);
+    });
+
     if (isZeroCategory) {
         return buildZeroCategoryResult(card, rewardAmount, category, displayMode, conv);
+    }
+
+    const isBillCategory = isBillPaymentCategory(resolvedCategory);
+    let modulesForEvaluation = activeModules;
+    if (isBillCategory) {
+        const billModuleIds = activeModules.filter((modID) => moduleExplicitlyMatchesBillCategory(modules[modID], resolvedCategory));
+        if (billModuleIds.length === 0) {
+            return buildZeroCategoryResult(card, rewardAmount, category, displayMode, conv, { zeroLabel: "繳費預設 0%" });
+        }
+        const allowedBillIds = new Set(billModuleIds);
+        modulesForEvaluation = activeModules.filter((modID) => {
+            const mod = modules[modID];
+            if (!mod) return false;
+            if (mod.type === "always") return true;
+            return allowedBillIds.has(modID);
+        });
     }
 
     // Trackers (mission tags)
@@ -2177,15 +2241,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         });
     }
 
-    if (!Array.isArray(card.rewardModules) || card.rewardModules.length === 0) return null;
-
-    const activeModules = card.rewardModules.filter(modID => {
-        const m = modules[modID];
-        if (!m) return false;
-        return checkValidity(m, txDate, isHoliday);
-    });
-
-    const modResult = evaluateModules(activeModules, rewardAmount, resolvedCategory, {
+    const modResult = evaluateModules(modulesForEvaluation, rewardAmount, resolvedCategory, {
         modulesDB: modules,
         resolvedCategory,
         inputCategory: category,

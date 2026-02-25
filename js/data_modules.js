@@ -7,7 +7,7 @@ const modulesDB = {
     "red_hot_variable": {
         type: "red_hot_allocation",
         rate_per_x: 0.004,
-        desc: "最紅自主",
+        desc: "最紅自主獎賞",
         display_name_zhhk: "HSBC 最紅自主獎賞",
         note_zhhk: "按你分配嘅 5X 最紅自主權重計算；每 1X = 額外 0.4%，只限最紅自主類別及條款列明合資格交易。",
         setting_key: "red_hot_rewards_enabled",
@@ -124,8 +124,8 @@ const modulesDB = {
         eligible_check: (cat, ctx) => !!(ctx && ctx.paymentMethod && ctx.paymentMethod !== "physical")
     },
     "em_base": { type: "always", rate: 0.01, desc: "基本 1%", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
-    "em_designated": { type: "category", match: ["streaming", "em_designated_spend"], rate: 0.025, desc: "串流/訂閱/EveryMile 指定 2.5%", mode: "replace", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
-    "em_grocery_low": { type: "category", match: ["grocery"], rate: 0.004, desc: "超市 0.4%", mode: "replace", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
+    "em_designated": { type: "category", match: ["streaming", "em_designated_spend"], rate: 0.025, desc: "EveryMile 指定商戶 2.5%", mode: "replace", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
+    "em_grocery_low": { type: "category", match: ["grocery"], rate: 0.004, desc: "EveryMile 超市 0.4%", mode: "replace", last_verified_at: "2026-02-05", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf" },
     "red_base": {
         type: "always",
         rate: 0.004,
@@ -166,7 +166,7 @@ const modulesDB = {
         type: "category_overflow_bonus",
         match: ["online"],
         rate: 0.036,
-        desc: "指定商戶封頂後網購額外 3.6%",
+        desc: "網購額外 3.6%",
         display_name_zhhk: "HSBC Red 網上購物額外回贈（指定商戶封頂後）",
         mode: "add",
         overflow_after_cap_key: "red_designated_spend_cap",
@@ -206,7 +206,7 @@ const modulesDB = {
     // [NEW] Actual Calculation Module for EveryMile Promo
     // Base 1% + Bonus 1.5% = 2.5% ($2/mile). Req $12,000 spend.
     "em_overseas_bonus": {
-        type: "category", match: ["overseas"], rate: 0.015, desc: "EM推廣額外 1.5%",
+        type: "category", match: ["overseas"], rate: 0.015, desc: "EveryMile 海外簽賬額外 1.5%",
         display_name_zhhk: "EveryMile 外幣簽賬優惠",
         mode: "add", setting_key: "em_promo_enabled",
         last_verified_at: "2026-02-12",
@@ -246,7 +246,7 @@ const modulesDB = {
     },
 
     // --- SC ---
-    "sc_cathay_base": { type: "always", rate: 1 / 6, desc: "基本 $6/里" },
+    "sc_cathay_base": { type: "always", rate: 1 / 6, desc: "基本" },
     "sc_cathay_dining_hotel": { type: "category", match: ["dining", "hotel"], rate: 0.25, desc: "餐飲/酒店 $4/里", mode: "replace" },
     "sc_cathay_overseas_std": { type: "category", match: ["overseas"], rate: 0.25, desc: "海外 $4/里", mode: "replace" },
     "sc_cathay_overseas_priority": { type: "category", match: ["overseas"], rate: 1 / 3, desc: "優先理財：海外 $3/里", mode: "replace" },
@@ -278,6 +278,7 @@ const modulesDB = {
         type: "category",
         rate: 2667 / 8000,
         desc: "國泰/HK Express 額外每 $8,000 +2,667 里",
+        display_name_zhhk: "SC 國泰指定航空額外里數",
         mode: "add",
         req_mission_spend: 8000,
         req_mission_key: "sc_cathay_cxuo_spend",
@@ -391,6 +392,7 @@ const modulesDB = {
         match: ["citi_club_merchant"],
         rate: 0.15,
         desc: "The Club 指定商戶額外 3%",
+        display_name_zhhk: "Citi The Club 指定商戶額外回贈",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 1500,
@@ -402,6 +404,7 @@ const modulesDB = {
         match: ["club_shopping"],
         rate: 0.05,
         desc: "Club Shopping額外 1%",
+        display_name_zhhk: "Citi The Club Club Shopping 額外回贈",
         mode: "add",
         cap_mode: "reward",
         cap_limit: 500,
@@ -588,6 +591,7 @@ const modulesDB = {
         match: ["live_fresh_selected"],
         rate: 0.05,
         desc: "DBS Live Fresh 一簽即賞額外 5%",
+        display_name_zhhk: "DBS Live Fresh 一簽即賞",
         mode: "add",
         min_spend: 300,
         valid_from: "2026-01-01",
@@ -723,6 +727,7 @@ const modulesDB = {
     // Bonus = 2.0%. Cap $200 Reward.
     "university_tuition": {
         type: "category", match: ["tuition"], rate: 0.02, desc: "大學學費額外 2%",
+        display_name_zhhk: "Hang Seng University 學費回贈",
         cap_limit: 8333, cap_key: "university_tuition_cap" // Spending cap is easier ($8333 * 2.4% ~= $200)
         // Wait, if I use spending cap on Bonus (2%), $8333 * 2% = $166.
         // Total rate 2.4%. $8333 * 2.4% = $199.99.
@@ -1462,6 +1467,7 @@ const modulesDB = {
         type: "always",
         rate: 1,
         desc: "基本每 $1 賺 1 積分 (0.33%)",
+        display_name_zhhk: "AE Platinum 年度積分加速獎賞",
         mode: "add",
         cap_mode: "spending",
         cap_limit: 160000,

@@ -177,7 +177,13 @@ const cardsDB = [
         type: "master",
         fcf: 0.0195,
         rewardModules: ["sc_cathay_base", "sc_cathay_dining_hotel", "sc_cathay_overseas_std", "sc_cathay_overseas_spending_offer_2026q2", "sc_cathay_airlines"],
-        trackers: ["sc_cathay_cxuo_tracker", "sc_cathay_overseas_spend_offer_tracker_2026q2"]
+        trackers: ["sc_cathay_cxuo_tracker", "sc_cathay_overseas_spend_offer_tracker_2026q2"],
+        redemption: {
+          unit: "里",
+          min: 0,
+          fee: "免費",
+          ratio: "基本 $6/里 | 主要額外：餐飲/酒店/海外 $4/里 + 國泰/HK Express 額外每 $8,000 +2,667 里 | 任務/上限/重置見進度卡"
+        }
     },
     {
         id: "sc_cathay_priority",
@@ -186,7 +192,13 @@ const cardsDB = [
         type: "master",
         fcf: 0.0195,
         rewardModules: ["sc_cathay_base", "sc_cathay_dining_hotel", "sc_cathay_overseas_priority", "sc_cathay_overseas_spending_offer_2026q2", "sc_cathay_airlines"],
-        trackers: ["sc_cathay_cxuo_tracker", "sc_cathay_overseas_spend_offer_tracker_2026q2"]
+        trackers: ["sc_cathay_cxuo_tracker", "sc_cathay_overseas_spend_offer_tracker_2026q2"],
+        redemption: {
+          unit: "里",
+          min: 0,
+          fee: "免費",
+          ratio: "基本 $6/里 | 主要額外：餐飲/酒店 $4/里 + 海外 $3/里 + 國泰/HK Express 額外每 $8,000 +2,667 里 | 任務/上限/重置見進度卡"
+        }
     },
     {
         id: "sc_cathay_private",
@@ -195,7 +207,13 @@ const cardsDB = [
         type: "master",
         fcf: 0.0195,
         rewardModules: ["sc_cathay_base", "sc_cathay_dining_hotel", "sc_cathay_overseas_private", "sc_cathay_overseas_spending_offer_2026q2", "sc_cathay_airlines"],
-        trackers: ["sc_cathay_cxuo_tracker", "sc_cathay_overseas_spend_offer_tracker_2026q2"]
+        trackers: ["sc_cathay_cxuo_tracker", "sc_cathay_overseas_spend_offer_tracker_2026q2"],
+        redemption: {
+          unit: "里",
+          min: 0,
+          fee: "免費",
+          ratio: "基本 $6/里 | 主要額外：餐飲/酒店 $4/里 + 海外 $2/里 + 國泰/HK Express 額外每 $8,000 +2,667 里 | 任務/上限/重置見進度卡"
+        }
     },
     {
         id: "sc_simply_cash",
@@ -204,7 +222,13 @@ const cardsDB = [
         type: "visa",
         fcf: 0.0195,
         rewardModules: ["sc_simply_cash_base", "sc_simply_cash_foreign"],
-        trackers: []
+        trackers: [],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "基本 1.5% | 主要額外：外幣 2% | 任務/上限/重置見進度卡"
+        }
     },
     {
         id: "sc_smart",
@@ -213,7 +237,13 @@ const cardsDB = [
         type: "visa",
         fcf: 0,
         rewardModules: ["sc_smart_base", "sc_smart_base_tier2_bonus", "sc_smart_designated", "sc_smart_designated_tier2_adjust"],
-        trackers: ["sc_smart_monthly_tracker"]
+        trackers: ["sc_smart_monthly_tracker"],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "基本 0.56% | 主要額外：指定商戶額外 4.4% + 月簽滿 $15,000 額外 0.64% | 任務/上限/重置見進度卡"
+        }
     },
     {
         id: "citi_pm",
@@ -282,7 +312,13 @@ const cardsDB = [
         type: "visa",
         fcf: 0.0195,
         rewardModules: ["citi_cb_base", "citi_cb_special"],
-        trackers: []
+        trackers: [],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "基本 1% | 主要額外：餐飲/酒店/海外 2%（英國/歐洲經濟區實體簽賬除外） | 任務/上限/重置見進度卡"
+        }
     },
     {
         id: "citi_octopus",
@@ -291,7 +327,13 @@ const cardsDB = [
         type: "visa",
         fcf: 0.0195,
         rewardModules: ["citi_octopus_base", "citi_octopus_transport_tier2", "citi_octopus_transport_tier1", "citi_octopus_tunnel"],
-        trackers: []
+        trackers: [],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "基本 0.5% | 主要額外：交通 15%（月簽滿 $4,000／$10,000）+ 隧道/泊車 5%（月簽滿 $10,000） | 任務/上限/重置見進度卡"
+        }
     },
     {
         id: "dbs_black",
@@ -766,7 +808,13 @@ const cardsDB = [
         type: "master",
         fcf: 0.0195,
         rewardModules: ["bea_goal_base", "bea_goal_travel_transport", "bea_goal_entertainment", "bea_goal_online_mobile"],
-        trackers: ["bea_goal_mission"]
+        trackers: ["bea_goal_mission"],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "基本 0.4% | 主要額外：旅遊/公共交通工具額外 6% + 娛樂額外 5% + 網上/手機支付額外 4%（需先月簽滿 $2,000） | 任務/上限/重置見進度卡"
+        }
     },
     {
         id: "bea_world",

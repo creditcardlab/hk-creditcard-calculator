@@ -142,6 +142,15 @@ function formatRatePercent(rate) {
     return `${rounded.replace(/\.?0+$/, "")}%`;
 }
 
+function formatMilesCostPerMile(rate) {
+    const n = Number(rate);
+    if (!Number.isFinite(n) || n <= 0) return "";
+    const cost = 1 / n;
+    const numText = formatTrimmedNumber(cost);
+    if (!numText) return "";
+    return `$${numText}/里`;
+}
+
 function getCardRewardUnit(card) {
     const c = (card && typeof card === "object") ? card : {};
     const unit = c.redemption && c.redemption.unit ? String(c.redemption.unit).trim() : "";
@@ -154,6 +163,15 @@ function formatRateHint(rate, opts) {
     const options = opts || {};
     const mode = String(options.mode || "").trim();
     const unit = String(options.unit || "").trim();
+
+    if (unit === "里") {
+        const milesCost = formatMilesCostPerMile(n);
+        if (!milesCost) return "";
+        if (mode === "add") return `額外 ${milesCost}`;
+        if (mode === "replace") return `${milesCost}（取代基本）`;
+        return milesCost;
+    }
+
     const showNative = !!unit && !isCurrencyLikeUnit(unit) && n >= 1;
 
     if (showNative) {
@@ -349,21 +367,8 @@ function buildModuleInfoLines(mod, card, profile) {
         lines.push({ icon: "fas fa-bullseye", text: missionText });
     }
 
-    // 4. Cap
-    if (!suppressMetaHints && Number.isFinite(Number(m.cap_limit)) && m.cap_key) {
-        const capHint = formatCapHint(m.cap_limit, {
-            fmtMoney: (value, unit) => fmtAmount(value, unit),
-            capMode: m.cap_mode || "",
-            unit: rewardUnit
-        });
-        if (capHint) lines.push({ icon: "fas fa-info-circle", text: capHint });
-    }
-
-    // 5. Period / window
-    if (!suppressMetaHints) {
-        const periodHint = formatPeriodHint(m);
-        if (periodHint) lines.push({ icon: "fas fa-calendar-alt", text: periodHint });
-    }
+    // 4/5. Cap + period hints are intentionally hidden on progress cards.
+    // They are already represented by the section progress bars and badge/subtitle.
 
     if (lines.length === 0) {
         lines.push({ icon: "fas fa-info-circle", text: "按此模組的門檻、比率及上限計算" });
@@ -2272,14 +2277,17 @@ function getSectionUi(sec, theme) {
 	        ui.subText = cget("status.capped", "已封頂");
 	        ui.subTextClass = "text-red-500";
 	    } else {
-        if (typeof meta.remaining === "number") {
+        if (typeof meta.remaining === "number" && meta.cap > 0) {
             const prefix = meta.prefix || "";
             const unit = meta.unit || "";
 	            ui.subText = `${cget("status.remainingPrefix", "尚餘")} ${prefix}${Math.max(0, Math.floor(meta.remaining)).toLocaleString()}${unit}`;
+	        } else if (meta.unlocked && (!meta.cap || meta.cap === 0)) {
+	            ui.subText = "✓ 不設上限";
+	            ui.subTextClass = "text-green-600 font-bold";
 	        } else {
 	            ui.subText = cget("status.inProgress", "進行中");
 	        }
-        ui.subTextClass = "text-gray-500";
+        ui.subTextClass = ui.subTextClass || "text-gray-500";
     }
 
     if (hasOverlay) {
@@ -2452,6 +2460,7 @@ function breakdownToneClass(tone, flags, meta) {
 function renderBreakdown(entries, res) {
     if (!Array.isArray(entries) || entries.length === 0) return "基本回贈";
     const fmtPct = (v) => formatRatePercent(v / 100);
+    const isMilesOnlyCard = !!(res && res.supportsMiles && !res.supportsCash);
 
     // Extract % for each entry
     const parsed = entries.map(entry => {
@@ -2462,9 +2471,14 @@ function renderBreakdown(entries, res) {
         // Derive cash % — skip if text already contains one
         let pct = "";
         const textHasPct = /\d+(\.\d+)?%/.test(text);
-        if (meta && Number.isFinite(meta.rate) && Number.isFinite(meta.cashRate) && meta.rate > 0) {
-            const cashPct = meta.rate * meta.cashRate * 100; // already in %
-            pct = fmtPct(cashPct);
+        if (meta && Number.isFinite(meta.rate) && meta.rate > 0) {
+            const cashRate = Number(meta.cashRate);
+            if (isMilesOnlyCard && (!Number.isFinite(cashRate) || cashRate <= 0)) {
+                pct = formatMilesCostPerMile(meta.rate);
+            } else if (Number.isFinite(cashRate) && cashRate > 0) {
+                const cashPct = meta.rate * cashRate * 100; // already in %
+                pct = fmtPct(cashPct);
+            }
         } else if (textHasPct) {
             // Extract the last percentage from text for alignment
             const m = text.match(/(\d+(?:\.\d+)?%)/g);
@@ -2477,9 +2491,18 @@ function renderBreakdown(entries, res) {
     const rows = parsed.map(p => {
         // Strip inline % from text if we're showing it in the right column
         let displayText = p.text;
-        if (p.textHasPct && p.pct) {
+        if (p.textHasPct && p.pct && /%$/.test(p.pct)) {
             // Remove the trailing (X%) or just X% we extracted
             displayText = displayText.replace(/\s*[\(（]\d+(?:\.\d+)?%[\)）]\s*$/, "").replace(/\s*\d+(?:\.\d+)?%\s*$/, "").trim();
+        }
+        if (isMilesOnlyCard && p.pct && /\/里$/.test(String(p.pct).trim())) {
+            // For miles-only cards, keep "$X/里" only on the right column.
+            displayText = displayText
+                .replace(/\s*\$[0-9]+(?:\.[0-9]+)?\/里(?=\s*[（(]部分[）)]?\s*$)/, "")
+                .replace(/\s*[（(]?\$[0-9]+(?:\.[0-9]+)?\/里[）)]?\s*$/, "")
+                .replace(/[：:]\s*$/, "")
+                .trim();
+            if (!displayText) displayText = p.text;
         }
         const pctHtml = p.pct ? `<span class="tabular-nums whitespace-nowrap">${p.pct}</span>` : "";
         return `<div class="flex justify-between gap-2 ${p.cls}"><span>${displayText}</span>${pctHtml}</div>`;
@@ -2489,6 +2512,14 @@ function renderBreakdown(entries, res) {
     const totalPct = res && Number.isFinite(res.totalCashPercent) ? res.totalCashPercent : 0;
     if (totalPct > 0) {
         rows.push(`<div class="flex justify-between gap-2 text-stone-700 font-medium border-t border-stone-200 mt-0.5 pt-0.5"><span>合共</span><span class="tabular-nums">${fmtPct(totalPct)}</span></div>`);
+    } else if (isMilesOnlyCard) {
+        const amountNum = Number(res && res.amount);
+        const nativeNum = Number(res && res.nativeVal);
+        const totalRate = (Number.isFinite(amountNum) && amountNum > 0 && Number.isFinite(nativeNum)) ? (nativeNum / amountNum) : 0;
+        const totalMilesCost = formatMilesCostPerMile(totalRate);
+        if (totalMilesCost) {
+            rows.push(`<div class="flex justify-between gap-2 text-stone-700 font-medium border-t border-stone-200 mt-0.5 pt-0.5"><span>合共</span><span class="tabular-nums">${totalMilesCost}</span></div>`);
+        }
     }
     return rows.join("");
 }
@@ -3586,10 +3617,18 @@ function renderCalculatorResults(results, currentMode) {
 
 	        if (res.redemptionConfig) {
 	            const rd = res.redemptionConfig;
+                const nativeRounded = Math.floor(Number(res.nativeVal) || 0);
+                const displayRounded = Math.floor(Number(String(displayVal).replace(/,/g, "")) || 0);
+                const primaryUnit = String(displayUnit || "").trim();
+                const nativeUnit = String(rd.unit || "").trim();
+                const showNativeLine = !(primaryUnit && nativeUnit && primaryUnit === nativeUnit && displayRounded === nativeRounded);
+                const nativeLineHtml = showNativeLine
+                    ? `<div class="text-xs text-gray-500 mt-0.5 font-mono">${nativeRounded.toLocaleString()} ${escapeHtml(nativeUnit)}</div>`
+                    : "";
 	            if (!unsupportedMode) {
 	                mainValHtml = `
 	                    ${renderPrimaryValue(displayVal, displayUnit, valClass)}
-	                    <div class="text-xs text-gray-500 mt-0.5 font-mono">(${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit})</div>
+	                    ${nativeLineHtml}
 	                    ${potentialHtml}
 	                `;
 		            } else {
@@ -3602,9 +3641,11 @@ function renderCalculatorResults(results, currentMode) {
 		            }
 
 	            const feeStr = (rd.fee || "").replace(/✅/g, "").trim();
-	            const isFree = /^(免費|免手續費|無|N\/A|免費)$/i.test(feeStr) || !feeStr;
-	            if (!isFree) {
-	                const shortFee = escapeHtml(feeStr.replace(/\s*[（(][^）)]*[）)]\s*$/, "").trim());
+	            const feeCore = feeStr.replace(/\s*[（(][^）)]*[）)]\s*$/g, "").trim();
+	            const feeNorm = feeCore.toLowerCase().replace(/\s+/g, "");
+	            const isFree = !feeCore || /^(免費|免手續費|無|n\/a|na|free)$/i.test(feeNorm);
+	            if (!isFree && currentMode === "miles") {
+	                const shortFee = escapeHtml(feeCore);
 	                redemptionHtml = `
 	                    <div class="mt-1 flex justify-end">
 	                        <span class="text-[10px] text-amber-600">⚠️ 手續費 ${shortFee}</span>

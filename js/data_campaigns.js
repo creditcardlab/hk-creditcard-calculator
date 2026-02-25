@@ -15,7 +15,7 @@ const CAMPAIGN_REGISTRY = {
     },
     winter_promo: {
         settingKey: "winter_promo_enabled",
-        warningTitle: "HSBC 最紅冬日賞（專屬客戶）",
+        warningTitle: "HSBC 最紅冬日賞",
         warningDesc: "只限專屬客戶；需登記。部分指定商戶交易不計入合資格簽賬。",
         tncUrl: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/2025-winter-exclusive-spend.pdf",
         promoUrl: "",
@@ -208,7 +208,7 @@ const CAMPAIGNS = [
     {
         id: "winter_promo",
         promo_type: "tiered_cap",
-        name: "HSBC 最紅冬日賞（專屬客戶）",
+        name: "HSBC 最紅冬日賞",
         icon: "fas fa-gift",
         theme: "red",
         period_policy: {
@@ -267,7 +267,7 @@ const CAMPAIGNS = [
     },
     {
         id: "sc_smart_monthly",
-        promo_type: "mission_cap",
+        promo_type: "custom",
         name: "渣打 Smart 每月回贈",
         icon: "fas fa-credit-card",
         theme: "blue",
@@ -276,8 +276,13 @@ const CAMPAIGNS = [
             period: { type: "month", startDay: 1 }
         },
         cards: ["sc_smart"],
+        info_lines: [
+            { icon: "fas fa-tag", text: "適用：Smart 指定商戶（指定商戶維持 5%）" },
+            { icon: "fas fa-bullseye", text: "需先月簽 $4,000 啟動回贈" }
+        ],
         sections: [
-            { type: "mission", label: "🎯 合資格簽賬進度", usageKey: "sc_smart_monthly_eligible", target: 15000, markers: [4000, 15000] },
+            { type: "cap_rate", label: "💰 基本回贈 0.56%", rateModule: "sc_smart_base", usageKey: "sc_smart_monthly_eligible", unlockKey: "sc_smart_monthly_eligible", unlockTarget: 4000 },
+            { type: "cap_rate", label: "⭐ 高階基本 +0.64%（合共 1.2%）", rateModule: "sc_smart_base_tier2_bonus", usageKey: "sc_smart_monthly_eligible", unlockKey: "sc_smart_monthly_eligible", unlockTarget: 15000 },
             { type: "cap", label: "💳 指定商戶簽賬上限", capModule: "sc_smart_designated", unlockKey: "sc_smart_monthly_eligible", unlockTarget: 4000, unit: "元" }
         ],
         capKeys: ["sc_smart_cap"]
