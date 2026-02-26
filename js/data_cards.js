@@ -757,6 +757,239 @@ const cardsDB = [
         }
     },
     {
+        id: "aeon_purple_visa",
+        name: "AEON Card Purple Visa",
+        currency: "CASH_Direct",
+        type: "visa",
+        fcf: 0.0195,
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purple.html",
+        rewardModules: [
+            "aeon_purple_base",
+            "aeon_purple_live_base_add",
+            "aeon_purple_food_physical_bonus",
+            "aeon_purple_food_mobile_bonus",
+            "aeon_purple_live_physical_bonus",
+            "aeon_purple_live_mobile_bonus",
+            "aeon_purple_ride_physical_bonus",
+            "aeon_purple_ride_mobile_bonus"
+        ],
+        trackers: [],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "1積分≈$0.004（100,000積分=$400）| 「食住行」實體卡高達2% + 手機支付高達6% | 每類額外回贈每月上限約$100（合共約$300）"
+        }
+    },
+    {
+        id: "aeon_purple_master",
+        name: "AEON Card Purple Mastercard",
+        currency: "CASH_Direct",
+        type: "master",
+        fcf: 0.0195,
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purple.html",
+        rewardModules: [
+            "aeon_purple_base",
+            "aeon_purple_live_base_add",
+            "aeon_purple_food_physical_bonus",
+            "aeon_purple_food_mobile_bonus",
+            "aeon_purple_live_physical_bonus",
+            "aeon_purple_live_mobile_bonus",
+            "aeon_purple_ride_physical_bonus",
+            "aeon_purple_ride_mobile_bonus"
+        ],
+        trackers: [],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "1積分≈$0.004（100,000積分=$400）| 「食住行」實體卡高達2% + 手機支付高達6% | 每類額外回贈每月上限約$100（合共約$300）"
+        }
+    },
+    {
+        id: "aeon_purple_unionpay",
+        name: "AEON Card Purple UnionPay",
+        currency: "CASH_Direct",
+        type: "unionpay",
+        fcf: 0.0195,
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purple.html",
+        rewardModules: [
+            "aeon_purple_base",
+            "aeon_purple_live_base_add",
+            "aeon_purple_food_physical_bonus",
+            "aeon_purple_food_mobile_bonus",
+            "aeon_purple_live_physical_bonus",
+            "aeon_purple_live_mobile_bonus",
+            "aeon_purple_ride_physical_bonus",
+            "aeon_purple_ride_mobile_bonus"
+        ],
+        trackers: [],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "1積分≈$0.004（100,000積分=$400）| 「食住行」實體卡高達2% + 手機支付高達6% | 每類額外回贈每月上限約$100（合共約$300）"
+        }
+    },
+    {
+        id: "aeon_purple_jcb",
+        name: "AEON Card Purple JCB",
+        currency: "CASH_Direct",
+        type: "jcb",
+        fcf: 0.0195,
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
+        rewardModules: [
+            "aeon_purple_jcb_base",
+            "aeon_purple_jcb_live_base_add",
+            "aeon_purple_jcb_food_physical_bonus",
+            "aeon_purple_jcb_live_physical_bonus",
+            "aeon_purple_jcb_ride_physical_bonus"
+        ],
+        trackers: [],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "1積分≈$0.004（100,000積分=$400）| 「食住行」實體卡高達2%（JCB 不支援手機支付）| 每類額外回贈每月上限約$100（合共約$300）"
+        }
+    },
+    {
+        id: "aeon_premium_visa",
+        name: "AEON Card Premium Visa",
+        currency: "CASH_Direct",
+        type: "visa",
+        fcf: 0.0195,
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/html/credit-card/premium.html",
+        rewardModules: [
+            "aeon_premium_base",
+            "aeon_premium_live_base_add",
+            "aeon_premium_food_physical_bonus",
+            "aeon_premium_food_mobile_bonus",
+            "aeon_premium_live_physical_bonus",
+            "aeon_premium_live_mobile_bonus",
+            "aeon_premium_ride_physical_bonus",
+            "aeon_premium_ride_mobile_bonus"
+        ],
+        trackers: [],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "1積分≈$0.004（100,000積分=$400）| 「食住行」實體卡高達2% + 手機支付高達6% | 每類額外回贈每月上限約$100（合共約$300）"
+        }
+    },
+    {
+        id: "aeon_premium_master",
+        name: "AEON Card Premium Mastercard",
+        currency: "CASH_Direct",
+        type: "master",
+        fcf: 0.0195,
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/html/credit-card/premium.html",
+        rewardModules: [
+            "aeon_premium_base",
+            "aeon_premium_live_base_add",
+            "aeon_premium_food_physical_bonus",
+            "aeon_premium_food_mobile_bonus",
+            "aeon_premium_live_physical_bonus",
+            "aeon_premium_live_mobile_bonus",
+            "aeon_premium_ride_physical_bonus",
+            "aeon_premium_ride_mobile_bonus"
+        ],
+        trackers: [],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "1積分≈$0.004（100,000積分=$400）| 「食住行」實體卡高達2% + 手機支付高達6% | 每類額外回贈每月上限約$100（合共約$300）"
+        }
+    },
+    {
+        id: "aeon_premium_unionpay",
+        name: "AEON Card Premium UnionPay",
+        currency: "CASH_Direct",
+        type: "unionpay",
+        fcf: 0.0195,
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/html/credit-card/premium.html",
+        rewardModules: [
+            "aeon_premium_base",
+            "aeon_premium_live_base_add",
+            "aeon_premium_food_physical_bonus",
+            "aeon_premium_food_mobile_bonus",
+            "aeon_premium_live_physical_bonus",
+            "aeon_premium_live_mobile_bonus",
+            "aeon_premium_ride_physical_bonus",
+            "aeon_premium_ride_mobile_bonus"
+        ],
+        trackers: [],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "1積分≈$0.004（100,000積分=$400）| 「食住行」實體卡高達2% + 手機支付高達6% | 每類額外回贈每月上限約$100（合共約$300）"
+        }
+    },
+    {
+        id: "aeon_purple",
+        name: "AEON Card Purple",
+        hidden: true, // legacy aggregate card kept for backward compatibility
+        currency: "CASH_Direct",
+        type: "master",
+        fcf: 0.0195,
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        rewardModules: [
+            "aeon_purple_base",
+            "aeon_purple_live_base_add",
+            "aeon_purple_food_physical_bonus",
+            "aeon_purple_food_mobile_bonus",
+            "aeon_purple_live_physical_bonus",
+            "aeon_purple_live_mobile_bonus",
+            "aeon_purple_ride_physical_bonus",
+            "aeon_purple_ride_mobile_bonus"
+        ],
+        trackers: [],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "1積分≈$0.004（100,000積分=$400）| 「食住行」實體卡高達2% + 手機支付高達6% | 每類額外回贈每月上限約$100（合共約$300）"
+        }
+    },
+    {
+        id: "aeon_premium",
+        name: "AEON Card Premium",
+        hidden: true, // legacy aggregate card kept for backward compatibility
+        currency: "CASH_Direct",
+        type: "master",
+        fcf: 0.0195,
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        rewardModules: [
+            "aeon_premium_base",
+            "aeon_premium_live_base_add",
+            "aeon_premium_food_physical_bonus",
+            "aeon_premium_food_mobile_bonus",
+            "aeon_premium_live_physical_bonus",
+            "aeon_premium_live_mobile_bonus",
+            "aeon_premium_ride_physical_bonus",
+            "aeon_premium_ride_mobile_bonus"
+        ],
+        trackers: [],
+        redemption: {
+          unit: "$",
+          min: 0,
+          fee: "免費",
+          ratio: "1積分≈$0.004（100,000積分=$400）| 「食住行」實體卡高達2% + 手機支付高達6% | 每類額外回贈每月上限約$100（合共約$300）"
+        }
+    },
+    {
         id: "wewa",
         name: "安信 WeWa UnionPay",
         currency: "CASH_Direct",

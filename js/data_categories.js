@@ -11,6 +11,23 @@ const categoriesDB = {
     // Core / UI
     general: { label: "本地零售", order: 1 },
     dining: { label: "🍽️ 餐飲", order: 2, red_hot: "dining" },
+    aeon_store: {
+        label: "🛍️ AEON / AEON網購城",
+        order: 2.3,
+        parent: "department_store",
+        hidden: true,
+        req: (cards) => (
+            cards.includes("aeon_purple_visa")
+            || cards.includes("aeon_purple_master")
+            || cards.includes("aeon_purple_unionpay")
+            || cards.includes("aeon_purple_jcb")
+            || cards.includes("aeon_premium_visa")
+            || cards.includes("aeon_premium_master")
+            || cards.includes("aeon_premium_unionpay")
+            || cards.includes("aeon_purple") // legacy id
+            || cards.includes("aeon_premium") // legacy id
+        )
+    },
     fastfood: { label: "🍔 快餐", order: 2.1 },
     online: { label: "💻 網上購物 (Online)", order: 3, hidden: true },
 

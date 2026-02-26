@@ -154,6 +154,10 @@ function isGuruOverseasCategory(category) {
     return isCategoryMatch(["overseas"], category);
 }
 
+function isGuruEligibleSpend(category, isOnline) {
+    return !isOnline && isGuruOverseasCategory(category);
+}
+
 function isWinterPromoEligibleCard(cardId) {
     const cid = String(cardId || "").trim();
     if (!cid || !DATA || !Array.isArray(DATA.cards)) return false;
@@ -163,7 +167,7 @@ function isWinterPromoEligibleCard(cardId) {
 
 function migrateWinterUsage() {
     if (!userProfile.usage) userProfile.usage = {};
-    if (userProfile.usage.winter_recalc_v4) return;
+    if (userProfile.usage.winter_recalc_v5) return;
     let total = 0;
     let eligible = 0;
     if (Array.isArray(userProfile.transactions)) {
@@ -180,12 +184,15 @@ function migrateWinterUsage() {
                 merchantId: tx.merchantId || "",
                 cardId
             };
-            const isEligible = (typeof isWinterPromoTrackerEligible === "function")
+            const countsForThreshold = (typeof isWinterPromoTrackerEligible === "function")
                 ? !!isWinterPromoTrackerEligible(cat, txCtx)
-                : (!txCtx.isOnline && isCategoryMatch(["dining", "overseas"], cat));
-            if (!isEligible) return;
+                : true;
+            if (!countsForThreshold) return;
             total += amt;
-            eligible += amt;
+            const countsForReward = (typeof isWinterPromoRewardEligibleCategory === "function")
+                ? !!isWinterPromoRewardEligibleCategory(cat)
+                : isCategoryMatch(["dining", "overseas"], cat);
+            if (countsForReward) eligible += amt;
         });
     }
     userProfile.usage.winter_total = total;
@@ -193,6 +200,7 @@ function migrateWinterUsage() {
     userProfile.usage.winter_recalc_v2 = true;
     userProfile.usage.winter_recalc_v3 = true;
     userProfile.usage.winter_recalc_v4 = true;
+    userProfile.usage.winter_recalc_v5 = true;
     saveUserData();
 }
 
@@ -335,6 +343,7 @@ function validateUsageRegistry() {
         "winter_recalc_v2",
         "winter_recalc_v3",
         "winter_recalc_v4",
+        "winter_recalc_v5",
         "dual_cap_tracking_v1",
         "sc_cathay_cxuo_quarterly_v1"
     ]);
@@ -359,6 +368,7 @@ function refreshUI() {
 
     // Dynamically update categories based on owned cards
     if (typeof updateCategoryDropdown === 'function') updateCategoryDropdown(userProfile.ownedCards);
+    if (typeof populateCurrencyDropdown === 'function') populateCurrencyDropdown();
 
     const feeToggle = document.getElementById('toggle-fee-deduct');
     if (feeToggle) feeToggle.checked = !!userProfile.settings.deduct_fcf_ranking;
@@ -381,6 +391,7 @@ function clearUsageAndStats() {
     if (prevUsage.winter_recalc_v2) userProfile.usage.winter_recalc_v2 = prevUsage.winter_recalc_v2;
     if (prevUsage.winter_recalc_v3) userProfile.usage.winter_recalc_v3 = prevUsage.winter_recalc_v3;
     if (prevUsage.winter_recalc_v4) userProfile.usage.winter_recalc_v4 = prevUsage.winter_recalc_v4;
+    if (prevUsage.winter_recalc_v5) userProfile.usage.winter_recalc_v5 = prevUsage.winter_recalc_v5;
     if (prevUsage.dual_cap_tracking_v1) userProfile.usage.dual_cap_tracking_v1 = prevUsage.dual_cap_tracking_v1;
     if (prevUsage.sc_cathay_cxuo_quarterly_v1) userProfile.usage.sc_cathay_cxuo_quarterly_v1 = prevUsage.sc_cathay_cxuo_quarterly_v1;
     userProfile.stats = { totalSpend: 0, totalVal: 0, txCount: 0 };
@@ -419,9 +430,13 @@ window.toggleMode = function (m) {
     runCalc();
 }
 
-window.runCalc = function () {
-    const amt = parseFloat(document.getElementById('amount').value) || 0;
-    const cat = document.getElementById('category').value;
+// Debounce counter to discard stale async results
+let _runCalcSeq = 0;
+
+window.runCalc = async function () {
+    const seq = ++_runCalcSeq;
+    const foreignAmt = parseFloat(document.getElementById('amount').value) || 0;
+    let cat = document.getElementById('category').value;
     const onlineToggle = document.getElementById('tx-online');
     const isOnline = onlineToggle ? !!onlineToggle.checked : false;
     const paymentSelect = document.getElementById('tx-payment');
@@ -441,16 +456,64 @@ window.runCalc = function () {
         else badge.classList.add('hidden');
     }
 
+    // Resolve currency selection — read from separate #tx-currency picker
+    const currencySelect = document.getElementById('tx-currency');
+    const selectedCurrencyCode = currencySelect ? currencySelect.value : "HKD";
+    let selectedCurrency = null;
+    let hkdAmount = foreignAmt;
+    let fxRates = null; // Map<cardType, rateResult>
+
+    if (selectedCurrencyCode !== "HKD") {
+        selectedCurrency = selectedCurrencyCode;
+        const currDef = (typeof DATA !== "undefined" && DATA.currencies) ? DATA.currencies[selectedCurrencyCode] : null;
+        // Override category to overseas based on currency
+        cat = currDef && currDef.category ? currDef.category : "overseas_other";
+
+        if (selectedCurrencyCode !== "_OTHER" && typeof ExchangeRateService !== "undefined") {
+            // Collect unique card types from owned cards to batch-fetch rates
+            const ownedCardTypes = [];
+            if (userProfile && userProfile.ownedCards && DATA && DATA.cards) {
+                userProfile.ownedCards.forEach(cid => {
+                    const c = DATA.cards.find(x => x.id === cid);
+                    if (c && c.type && !ownedCardTypes.includes(c.type)) ownedCardTypes.push(c.type);
+                });
+            }
+            if (ownedCardTypes.length === 0) ownedCardTypes.push("master");
+
+            fxRates = await ExchangeRateService.getRatesForCardTypes(selectedCurrencyCode, ownedCardTypes, txDate);
+
+            // Stale check — if user changed inputs while we were fetching, discard
+            if (seq !== _runCalcSeq) return;
+
+            // Use first available rate to compute a representative HKD amount for ranking
+            const firstRate = fxRates.values().next().value;
+            hkdAmount = (firstRate && firstRate.rate) ? foreignAmt * firstRate.rate : foreignAmt;
+
+            // Update conversion hint
+            const hintEl = document.getElementById('fx-conversion-hint');
+            if (hintEl && firstRate && firstRate.rate) {
+                hintEl.textContent = "≈ HK$" + (hkdAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                hintEl.classList.remove('hidden');
+            } else if (hintEl) {
+                hintEl.textContent = "匯率暫時未能載入";
+                hintEl.classList.remove('hidden');
+            }
+        }
+    }
+
     // Calls core.js function
     const merchantId = (typeof window.getEffectiveMerchantId === "function")
         ? window.getEffectiveMerchantId()
         : (window.__selectedMerchantId || null);
-    const results = calculateResults(amt, cat, currentMode, userProfile, txDate, isHoliday, {
+    const results = calculateResults(hkdAmount, cat, currentMode, userProfile, txDate, isHoliday, {
         deductFcfForRanking: !!userProfile.settings.deduct_fcf_ranking && currentMode === 'cash',
         isOnline,
         isMobilePay,
         paymentMethod,
-        merchantId
+        merchantId,
+        selectedCurrency,
+        foreignAmount: selectedCurrency ? foreignAmt : null,
+        fxRates: fxRates
     });
 
     // Calls ui.js function
@@ -509,6 +572,7 @@ function rebuildUsageAndStatsFromTransactions() {
     if (prevUsage.winter_recalc_v2) userProfile.usage.winter_recalc_v2 = prevUsage.winter_recalc_v2;
     if (prevUsage.winter_recalc_v3) userProfile.usage.winter_recalc_v3 = prevUsage.winter_recalc_v3;
     if (prevUsage.winter_recalc_v4) userProfile.usage.winter_recalc_v4 = prevUsage.winter_recalc_v4;
+    if (prevUsage.winter_recalc_v5) userProfile.usage.winter_recalc_v5 = prevUsage.winter_recalc_v5;
     if (prevUsage.dual_cap_tracking_v1) userProfile.usage.dual_cap_tracking_v1 = prevUsage.dual_cap_tracking_v1;
     if (prevUsage.sc_cathay_cxuo_quarterly_v1) userProfile.usage.sc_cathay_cxuo_quarterly_v1 = prevUsage.sc_cathay_cxuo_quarterly_v1;
 
@@ -533,8 +597,8 @@ function rebuildUsageAndStatsFromTransactions() {
         }
 
         const guruUsageKeys = getGuruUsageKeys();
-        const isOverseas = isGuruOverseasCategory(category);
-        if (userProfile.settings.travel_guru_registered && isOverseas) {
+        const guruEligibleSpend = isGuruEligibleSpend(category, isOnline);
+        if (userProfile.settings.travel_guru_registered && guruEligibleSpend) {
             userProfile.usage.spend_guru_unlock = (userProfile.usage.spend_guru_unlock || 0) + amount;
             if (parseInt(userProfile.settings.guru_level) > 0) {
                 userProfile.usage[guruUsageKeys.spendKey] = (userProfile.usage[guruUsageKeys.spendKey] || 0) + amount;
@@ -571,6 +635,7 @@ function rebuildUsageAndStatsFromTransactions() {
     userProfile.usage.winter_recalc_v2 = true;
     userProfile.usage.winter_recalc_v3 = true;
     userProfile.usage.winter_recalc_v4 = true;
+    userProfile.usage.winter_recalc_v5 = true;
     userProfile.usage.dual_cap_tracking_v1 = true;
     userProfile.usage.sc_cathay_cxuo_quarterly_v1 = true;
 }
@@ -637,10 +702,10 @@ function commitTransaction(data) {
     }
 
     const level = parseInt(userProfile.settings.guru_level);
-    // Track all overseas spending for Guru upgrade progress
+    // Track Guru-eligible overseas spend for upgrade progress (exclude online tx)
     const guruUsageKeys = getGuruUsageKeys();
-    const isOverseas = isGuruOverseasCategory(category);
-    if (userProfile.settings.travel_guru_registered && isOverseas) {
+    const guruEligibleSpend = isGuruEligibleSpend(category, isOnline);
+    if (userProfile.settings.travel_guru_registered && guruEligibleSpend) {
         userProfile.usage.spend_guru_unlock = (userProfile.usage.spend_guru_unlock || 0) + amount;
         if (level > 0) {
             userProfile.usage[guruUsageKeys.spendKey] = (userProfile.usage[guruUsageKeys.spendKey] || 0) + amount;

@@ -1,0 +1,5 @@
+bucket	id	source_url	source_title	tnc_url	promo_url	registration_url	registration_start	registration_end	registration_note	last_verified_at
+modules	travel_plus_tier1_bonus			https://www.hangseng.com/content/dam/wpb/hase/rwd/personal/cards/pdfs/travelplus_fundollars_tnc_tc.pdf							2026-02-25
+campaigns	winter_promo			https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/2025-winter-exclusive-spend.pdf	https://www.hsbc.com.hk/rewardplus/						
+campaignRegistry	winter_promo				https://www.hsbc.com.hk/rewardplus/	https://www.hsbc.com.hk/rewardplus/	2025-12-01	2026-02-28	只限專屬客戶及需登記	
+cards	boc_chill	https://www.bochk.com/dam/boccreditcard/chillcard/chill_offer_tnc_tc.pdf	BOCHK Chill Card	https://www.bochk.com/dam/boccreditcard/chillcard/chill_offer_tnc_tc.pdf	https://www.bochk.com/tc/creditcard/promotions/offers/chillmerchants.html					

@@ -375,6 +375,33 @@ function getHsbcEasyMemberDayDiscount(card, amount, category, options) {
             izabis_citysuper: { rate: 0.03 },
             cafe_togather_log_on: { rate: 0.03 }
         };
+    } else if ([
+        "aeon_purple_visa",
+        "aeon_purple_master",
+        "aeon_purple_unionpay",
+        "aeon_purple_jcb",
+        "aeon_premium_visa",
+        "aeon_premium_master",
+        "aeon_premium_unionpay",
+        "aeon_purple", // legacy id
+        "aeon_premium" // legacy id
+    ].includes(card.id)) {
+        const txDate = String(opts.txDate || "");
+        if (txDate < "2025-03-10" || txDate > "2026-08-31") return 0;
+        if (String(category || "") !== "aeon_store") return 0;
+
+        const aeonMemberDayRule = { days: [2, 20], rate: 0.05 };
+        ruleByMerchant = {
+            aeon_store: aeonMemberDayRule,
+            aeon_style: aeonMemberDayRule,
+            aeon_supermarket: aeonMemberDayRule,
+            daiso_japan: aeonMemberDayRule,
+            living_plaza_aeon: aeonMemberDayRule,
+            living_plaza: aeonMemberDayRule,
+            mono_mono: aeonMemberDayRule,
+            bento_express_aeon: aeonMemberDayRule,
+            aeon_city: aeonMemberDayRule
+        };
     } else {
         return 0;
     }
@@ -1751,6 +1778,7 @@ function evaluateModules(activeModules, amount, category, ctx) {
                 }
             }
             else if (mod.type === "guru_capped") {
+                if (typeof mod.eligible_check === "function" && !mod.eligible_check(resolvedCategory, eligCtx)) return;
                 const guruSpendKey = mod.req_mission_key || "guru_spend_accum";
                 const guruSpendCurrent = Number(userProfile.usage[guruSpendKey]) || 0;
                 const guruSpendProjected = guruSpendCurrent + (isCategoryMatch([mod.category], resolvedCategory) ? amount : 0);
@@ -2158,7 +2186,7 @@ function buildFinalResult(card, amount, category, displayMode, totalRate, totalR
         estValue: estCash,
         estMiles, estCash, estCashNet, estCashNetPotential,
         estMilesPotential, estCashPotential,
-        foreignFee, memberDayDiscount: safeMemberDayDiscount,
+        foreignFee, foreignFeeRate: feeRate, memberDayDiscount: safeMemberDayDiscount,
         breakdown: breakdownEntries, trackingKey, guruRC, missionTags, category,
         rewardTrackingKey, secondaryRewardTrackingKey, generatedReward,
         redemptionConfig: card.redemption,
@@ -2380,13 +2408,36 @@ function calculateResults(amount, category, displayMode, userProfile, txDate, is
     const isMobilePay = !!options.isMobilePay;
     const paymentMethod = options.paymentMethod || (isMobilePay ? "mobile" : "physical");
     const merchantId = options.merchantId || null;
+    const selectedCurrency = options.selectedCurrency || null;
+    const foreignAmount = options.foreignAmount != null ? options.foreignAmount : null;
+    const fxRates = options.fxRates || null; // Map<cardType, rateResult>
     const cards = DATA.cards || [];
 
     userProfile.ownedCards.forEach(cardId => {
         const card = cards.find(c => c.id === cardId);
         if (!card) return;
-        const res = buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod, merchantId);
-        if (res) results.push(res);
+
+        // Per-card HKD amount: use card-network-specific exchange rate if available
+        let cardAmount = amount;
+        let cardFxRate = null;
+        if (selectedCurrency && foreignAmount != null && fxRates) {
+            cardFxRate = fxRates.get(card.type) || null;
+            if (cardFxRate && cardFxRate.rate) {
+                cardAmount = foreignAmount * cardFxRate.rate;
+            }
+        }
+
+        const res = buildCardResult(card, cardAmount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod, merchantId);
+        if (res) {
+            // Attach FX metadata for UI display
+            if (selectedCurrency) {
+                res.selectedCurrency = selectedCurrency;
+                res.foreignAmount = foreignAmount;
+                res.fxRate = cardFxRate;
+                res.hkdAmount = cardAmount;
+            }
+            results.push(res);
+        }
     });
 
     // Return extended results

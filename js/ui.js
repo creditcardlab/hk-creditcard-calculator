@@ -1279,6 +1279,12 @@ function getCampaignOffers() {
                 [reg, "tncUrl"],
                 [reg, "tnc_url"]
             ]);
+            const explicitNoSource = hasExplicitEmpty([
+                [offer, "source_url"],
+                [raw, "source_url"],
+                [reg, "sourceUrl"],
+                [reg, "source_url"]
+            ]);
             const explicitNoPromo = hasExplicitEmpty([
                 [offer, "promo_url"],
                 [raw, "promo_url"],
@@ -1356,8 +1362,8 @@ function getCampaignOffers() {
                 name: offer.name || raw.name || "",
                 note_zhhk: offer.note_zhhk || raw.note_zhhk || (firstRefModule ? (firstRefModule.note_zhhk || "") : ""),
                 info_lines: normalizeInfoLines(offer.info_lines || raw.info_lines),
-                source_url: firstNonEmpty([offer.source_url, raw.source_url, fallbackSourceUrl]),
-                source_title: firstNonEmpty([offer.source_title, raw.source_title, fallbackSourceTitle]),
+                source_url: firstNonEmpty([offer.source_url, raw.source_url, reg.sourceUrl, explicitNoSource ? "" : fallbackSourceUrl]),
+                source_title: firstNonEmpty([offer.source_title, raw.source_title, reg.sourceTitle, fallbackSourceTitle]),
                 tnc_url: firstNonEmpty([offer.tnc_url, raw.tnc_url, reg.tncUrl, explicitNoTnc ? "" : fallbackTncUrl]),
                 promo_url: firstNonEmpty([offer.promo_url, raw.promo_url, reg.promoUrl, explicitNoPromo ? "" : fallbackPromoUrl]),
                 registration_url: firstNonEmpty([offer.registration_url, raw.registration_url, reg.registrationUrl, explicitNoRegUrl ? "" : fallbackRegistrationUrl]),
@@ -1978,6 +1984,8 @@ function getCampaignToggleDefinitions() {
         if (campaign.registration_note) bySettingKey[settingKey].registrationNotes.push(campaign.registration_note);
         if (reg.tncUrl) bySettingKey[settingKey].tncUrls.push(reg.tncUrl);
         if (reg.promoUrl) bySettingKey[settingKey].promoUrls.push(reg.promoUrl);
+        if (reg.sourceUrl) bySettingKey[settingKey].sourceUrls.push(reg.sourceUrl);
+        if (reg.sourceTitle) bySettingKey[settingKey].sourceTitles.push(reg.sourceTitle);
         if (reg.registrationUrl) bySettingKey[settingKey].registrationUrls.push(reg.registrationUrl);
         if (reg.registrationStart) bySettingKey[settingKey].registrationStarts.push(reg.registrationStart);
         if (reg.registrationEnd) bySettingKey[settingKey].registrationEnds.push(reg.registrationEnd);
@@ -2565,12 +2573,16 @@ function updateCategoryDropdown(ownedCards) {
     });
     let htmlParts = [];
     const renderedParents = new Set();
+    // When a separate currency picker exists, skip overseas categories entirely
+    const hasCurrencyPicker = !!document.getElementById('tx-currency');
     options.forEach(o => {
         if (o.parent && visibleIds.has(o.parent)) {
+            if (hasCurrencyPicker && o.parent === "overseas") return;
             htmlParts.push(`<option value="${o.id}">↳ ${o.label}</option>`);
             return;
         }
         if (o.parent) {
+            if (hasCurrencyPicker && o.parent === "overseas") return; // skip overseas group
             if (!renderedParents.has(o.parent)) {
                 renderedParents.add(o.parent);
                 const parentDef = DATA.categories[o.parent];
@@ -3454,6 +3466,19 @@ function renderDashboard(userProfile) {
     container.innerHTML = html;
 }
 
+function renderFxInfo(res) {
+    if (!res.selectedCurrency || !res.fxRate || !res.fxRate.rate) return "";
+    const curr = res.selectedCurrency;
+    const rate = res.fxRate.rate;
+    const source = res.fxRate.source || "";
+    const hkd = Number(res.hkdAmount) || 0;
+    let html = `<div class="text-[10px] text-gray-500 mt-1 leading-relaxed">`;
+    html += `<div><i class="fas fa-exchange-alt mr-0.5"></i>1 ${escapeHtml(curr)} = HK$${rate.toFixed(4)} <span class="text-gray-400">(${escapeHtml(source)})</span></div>`;
+    if (hkd > 0) html += `<div>簽賬額 ≈ HK$${hkd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>`;
+    html += `</div>`;
+    return html;
+}
+
 function renderCalculatorResults(results, currentMode) {
     let html = "";
     const onlineToggle = document.getElementById('tx-online');
@@ -3510,7 +3535,20 @@ function renderCalculatorResults(results, currentMode) {
             : ((typeof window !== "undefined" && window.__selectedMerchantId) ? String(window.__selectedMerchantId) : "");
         const showMemberDayLine = !showFeeEquation
             && !!selectedMerchantId
-            && (res.cardId === "hsbc_easy" || res.cardId === "boc_sogo" || res.cardId === "ae_platinum_credit");
+            && (
+                res.cardId === "hsbc_easy"
+                || res.cardId === "boc_sogo"
+                || res.cardId === "ae_platinum_credit"
+                || res.cardId === "aeon_purple_visa"
+                || res.cardId === "aeon_purple_master"
+                || res.cardId === "aeon_purple_unionpay"
+                || res.cardId === "aeon_purple_jcb"
+                || res.cardId === "aeon_premium_visa"
+                || res.cardId === "aeon_premium_master"
+                || res.cardId === "aeon_premium_unionpay"
+                || res.cardId === "aeon_purple"
+                || res.cardId === "aeon_premium"
+            );
         const adjustmentBits = [];
         if (!showFeeEquation && foreignFee > 0) {
             adjustmentBits.push(`<div class="text-xs text-amber-600 mt-0.5"><i class="fas fa-money-bill-wave mr-1"></i>外幣手續費: -$${foreignFee.toFixed(1)}</div>`);
@@ -3663,6 +3701,7 @@ function renderCalculatorResults(results, currentMode) {
 	                <div class="font-bold text-gray-800 text-sm truncate">${res.cardName}</div>
 	                <div class="text-xs mt-1 leading-relaxed">${renderBreakdown(res.breakdown, res)}</div>
 	                ${feeLineHtml}
+	                ${renderFxInfo(res)}
 	            </div>
 	            <div class="text-right w-1/3 flex flex-col items-end">
 	                ${mainValHtml}
@@ -3785,7 +3824,12 @@ function renderSettings(userProfile) {
     const detailMode = !!(userProfile.settings && userProfile.settings.settings_detail_mode && focusedCardId);
     const editMode = !!(userProfile.settings && userProfile.settings.settings_wallet_edit_mode);
     const addCardsOpen = !!(userProfile.settings && userProfile.settings.settings_wallet_add_open);
-    const remainingCardsCount = Math.max(0, (DATA.cards || []).length - ownedCards.length);
+    const visibleCards = (DATA.cards || []).filter((c) => c && !c.hidden);
+    const ownedVisibleCount = ownedCards.reduce((count, cardId) => {
+        const card = cardsById[cardId];
+        return count + ((card && !card.hidden) ? 1 : 0);
+    }, 0);
+    const remainingCardsCount = Math.max(0, visibleCards.length - ownedVisibleCount);
     const addGroupOpenMap = (userProfile.settings && typeof userProfile.settings.settings_wallet_add_groups === "object" && userProfile.settings.settings_wallet_add_groups)
         ? userProfile.settings.settings_wallet_add_groups
         : {};
@@ -4003,7 +4047,7 @@ function renderSettings(userProfile) {
             <div class="text-[11px] text-gray-500 py-1">可連續加入多張卡，完成後再收起。</div>
             <div class="space-y-3 mt-1">`;
         bankGroups.forEach(group => {
-            const groupCards = DATA.cards.filter(c => group.filter(c.id) && !ownedSet.has(c.id));
+            const groupCards = DATA.cards.filter(c => c && !c.hidden && group.filter(c.id) && !ownedSet.has(c.id));
             if (groupCards.length > 0) {
                 const groupKey = String(group.key || "");
                 const groupKeyEsc = escapeJsSingleQuoted(groupKey);
@@ -4026,7 +4070,7 @@ function renderSettings(userProfile) {
                 html += `</details>`;
             }
         });
-        if ((DATA.cards || []).length === ownedCards.length) {
+        if (visibleCards.length === ownedVisibleCount) {
             html += `<div class="text-xs text-gray-500 border border-dashed border-gray-300 rounded-xl p-3 bg-gray-50">已加入全部卡。</div>`;
         }
         html += `</div></div>`;
@@ -4238,6 +4282,26 @@ function renderSettings(userProfile) {
             <a href="https://www.americanexpress.com/content/dam/amex/hk/benefits/pdf/TnCs_platinum-membership-rewards-accelerator.pdf" target="_blank" rel="noopener" class="underline underline-offset-2">條款</a>
         </div>
     </div>`);
+    [
+        "aeon_purple_visa",
+        "aeon_purple_master",
+        "aeon_purple_unionpay",
+        "aeon_purple_jcb",
+        "aeon_premium_visa",
+        "aeon_premium_master",
+        "aeon_premium_unionpay",
+        "aeon_purple", // legacy id
+        "aeon_premium" // legacy id
+    ].forEach((aeonCardId) => {
+        if (!ownedSet.has(aeonCardId)) return;
+        ensureBucket(preferenceBlocksByCard, aeonCardId).push(`<div class="border p-3 rounded-md bg-[#fcfcfc] border-[#e9e9e7]">
+            <div class="text-xs font-semibold text-[#37352f] mb-2">AEON信用卡：AEON Stores 感謝日</div>
+            <div class="mt-1 text-[11px] text-gray-500">
+                已按商戶 + 交易日期自動計算 95 折（每月 2 號及 20 號）。Purple/Premium 已分實體卡與手機支付計算（Purple JCB 只計實體卡）。
+                <a href="https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html" target="_blank" rel="noopener" class="underline underline-offset-2">條款</a>
+            </div>
+        </div>`);
+    });
 
     const moxMode = String(userProfile.settings.mox_reward_mode || "cashback");
     if (ownedSet.has("mox_credit")) pushScopedSettingRow("mox_deposit_task_enabled", `<div class="border p-3 rounded-md bg-[#fcfcfc] border-[#e9e9e7]">
@@ -4863,6 +4927,47 @@ window.onCategoryChange = function () {
     if (typeof toggleCategoryHelp === "function") toggleCategoryHelp();
     if (typeof runCalc === "function") runCalc();
 };
+
+// Called from currency picker onchange
+window.onCurrencyChange = function () {
+    const currencyEl = document.getElementById('tx-currency');
+    const code = currencyEl ? currencyEl.value : "HKD";
+    const currDef = (typeof DATA !== "undefined" && DATA.currencies) ? DATA.currencies[code] : null;
+    const symbolEl = document.getElementById('amount-symbol');
+    const hintEl = document.getElementById('fx-conversion-hint');
+    const categoryWrap = document.getElementById('category') ? document.getElementById('category').closest('.p-3') : null;
+
+    if (code !== "HKD" && currDef) {
+        if (symbolEl) symbolEl.textContent = currDef.symbol;
+        if (hintEl) {
+            hintEl.classList.remove('hidden');
+            hintEl.textContent = "載入匯率中...";
+        }
+        // Dim category dropdown — overseas is determined by currency
+        if (categoryWrap) categoryWrap.classList.add('opacity-40', 'pointer-events-none');
+    } else {
+        if (symbolEl) symbolEl.textContent = "$";
+        if (hintEl) {
+            hintEl.classList.add('hidden');
+            hintEl.textContent = "";
+        }
+        // Restore category dropdown
+        if (categoryWrap) categoryWrap.classList.remove('opacity-40', 'pointer-events-none');
+    }
+
+    if (typeof runCalc === "function") runCalc();
+};
+
+// Populate currency dropdown from DATA.currencies
+function populateCurrencyDropdown() {
+    const sel = document.getElementById('tx-currency');
+    if (!sel || typeof DATA === "undefined" || !DATA.currencies) return;
+    const entries = Object.entries(DATA.currencies)
+        .map(([code, c]) => ({ code, ...c }))
+        .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+    sel.innerHTML = entries.map(c => `<option value="${c.code}">${c.label}</option>`).join("");
+    sel.value = "HKD";
+}
 
 // Close merchant dropdown when clicking outside
 document.addEventListener('click', function (e) {

@@ -1630,7 +1630,9 @@
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
-        "ownedCards": ["hangseng_enjoy"],
+        "ownedCards": [
+          "hangseng_enjoy"
+        ],
         "settings": {
           "hangseng_enjoy_points4x_enabled": false
         },
@@ -1639,7 +1641,11 @@
       "expected": {
         "topCardId": "hangseng_enjoy",
         "topValue": 10,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -1652,7 +1658,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "shell",
-        "ownedCards": ["hangseng_enjoy"],
+        "ownedCards": [
+          "hangseng_enjoy"
+        ],
         "settings": {
           "hangseng_enjoy_points4x_enabled": true
         },
@@ -1661,7 +1669,11 @@
       "expected": {
         "topCardId": "hangseng_enjoy",
         "topValue": 10,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -1674,7 +1686,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "shell",
-        "ownedCards": ["hangseng_enjoy"],
+        "ownedCards": [
+          "hangseng_enjoy"
+        ],
         "settings": {
           "hangseng_enjoy_points4x_enabled": false
         },
@@ -1683,7 +1697,11 @@
       "expected": {
         "topCardId": "hangseng_enjoy",
         "topValue": 5,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -1696,7 +1714,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "jade_garden",
-        "ownedCards": ["hangseng_enjoy"],
+        "ownedCards": [
+          "hangseng_enjoy"
+        ],
         "settings": {
           "hangseng_enjoy_points4x_enabled": false
         },
@@ -1705,7 +1725,11 @@
       "expected": {
         "topCardId": "hangseng_enjoy",
         "topValue": 10,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -7775,17 +7799,29 @@
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
-        "ownedCards": ["hsbc_vs"],
+        "ownedCards": [
+          "hsbc_vs"
+        ],
         "settings": {
           "red_hot_rewards_enabled": true,
-          "red_hot_allocation": { "dining": 0, "world": 0, "home": 0, "enjoyment": 5, "style": 0 }
+          "red_hot_allocation": {
+            "dining": 0,
+            "world": 0,
+            "home": 0,
+            "enjoyment": 5,
+            "style": 0
+          }
         },
         "usage": {}
       },
       "expected": {
         "topCardId": "hsbc_vs",
         "topValue": 4,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -7798,17 +7834,29 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "netflix",
-        "ownedCards": ["hsbc_vs"],
+        "ownedCards": [
+          "hsbc_vs"
+        ],
         "settings": {
           "red_hot_rewards_enabled": true,
-          "red_hot_allocation": { "dining": 0, "world": 0, "home": 0, "enjoyment": 5, "style": 0 }
+          "red_hot_allocation": {
+            "dining": 0,
+            "world": 0,
+            "home": 0,
+            "enjoyment": 5,
+            "style": 0
+          }
         },
         "usage": {}
       },
       "expected": {
         "topCardId": "hsbc_vs",
         "topValue": 4,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -7821,17 +7869,29 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "be_earth",
-        "ownedCards": ["hsbc_vs"],
+        "ownedCards": [
+          "hsbc_vs"
+        ],
         "settings": {
           "red_hot_rewards_enabled": true,
-          "red_hot_allocation": { "dining": 0, "world": 0, "home": 0, "enjoyment": 5, "style": 0 }
+          "red_hot_allocation": {
+            "dining": 0,
+            "world": 0,
+            "home": 0,
+            "enjoyment": 5,
+            "style": 0
+          }
         },
         "usage": {}
       },
       "expected": {
         "topCardId": "hsbc_vs",
         "topValue": 36,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -7843,17 +7903,29 @@
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
-        "ownedCards": ["hsbc_vs"],
+        "ownedCards": [
+          "hsbc_vs"
+        ],
         "settings": {
           "red_hot_rewards_enabled": true,
-          "red_hot_allocation": { "dining": 0, "world": 0, "home": 0, "enjoyment": 5, "style": 0 }
+          "red_hot_allocation": {
+            "dining": 0,
+            "world": 0,
+            "home": 0,
+            "enjoyment": 5,
+            "style": 0
+          }
         },
         "usage": {}
       },
       "expected": {
         "topCardId": "hsbc_vs",
         "topValue": 4,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -7865,17 +7937,29 @@
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
-        "ownedCards": ["hsbc_vs"],
+        "ownedCards": [
+          "hsbc_vs"
+        ],
         "settings": {
           "red_hot_rewards_enabled": true,
-          "red_hot_allocation": { "dining": 5, "world": 0, "home": 0, "enjoyment": 0, "style": 0 }
+          "red_hot_allocation": {
+            "dining": 5,
+            "world": 0,
+            "home": 0,
+            "enjoyment": 0,
+            "style": 0
+          }
         },
         "usage": {}
       },
       "expected": {
         "topCardId": "hsbc_vs",
         "topValue": 36,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -7887,17 +7971,29 @@
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
-        "ownedCards": ["hsbc_vs"],
+        "ownedCards": [
+          "hsbc_vs"
+        ],
         "settings": {
           "red_hot_rewards_enabled": true,
-          "red_hot_allocation": { "dining": 0, "world": 5, "home": 0, "enjoyment": 0, "style": 0 }
+          "red_hot_allocation": {
+            "dining": 0,
+            "world": 5,
+            "home": 0,
+            "enjoyment": 0,
+            "style": 0
+          }
         },
         "usage": {}
       },
       "expected": {
         "topCardId": "hsbc_vs",
         "topValue": 36,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -7909,7 +8005,10 @@
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
-        "ownedCards": ["hsbc_red", "hsbc_pulse"],
+        "ownedCards": [
+          "hsbc_red",
+          "hsbc_pulse"
+        ],
         "settings": {
           "red_hot_rewards_enabled": false,
           "travel_guru_registered": false,
@@ -7920,7 +8019,11 @@
       "expected": {
         "topCardId": "hsbc_pulse",
         "topValue": 4,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -7932,7 +8035,10 @@
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
-        "ownedCards": ["hsbc_unionpay_std", "hsbc_pulse"],
+        "ownedCards": [
+          "hsbc_unionpay_std",
+          "hsbc_pulse"
+        ],
         "settings": {
           "red_hot_rewards_enabled": false,
           "travel_guru_registered": false,
@@ -7943,7 +8049,11 @@
       "expected": {
         "topCardId": "hsbc_pulse",
         "topValue": 4,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -7955,7 +8065,10 @@
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
-        "ownedCards": ["hsbc_vs", "hsbc_unionpay_std"],
+        "ownedCards": [
+          "hsbc_vs",
+          "hsbc_unionpay_std"
+        ],
         "settings": {
           "red_hot_rewards_enabled": false,
           "travel_guru_registered": false,
@@ -7966,7 +8079,11 @@
       "expected": {
         "topCardId": "hsbc_unionpay_std",
         "topValue": 4,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -7978,7 +8095,10 @@
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
-        "ownedCards": ["hsbc_vs", "hsbc_pulse"],
+        "ownedCards": [
+          "hsbc_vs",
+          "hsbc_pulse"
+        ],
         "settings": {
           "red_hot_rewards_enabled": false,
           "travel_guru_registered": false,
@@ -7989,7 +8109,11 @@
       "expected": {
         "topCardId": "hsbc_pulse",
         "topValue": 4,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8002,7 +8126,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "hkticketing",
-        "ownedCards": ["sc_smart"],
+        "ownedCards": [
+          "sc_smart"
+        ],
         "settings": {},
         "usage": {
           "sc_smart_monthly_eligible": 5000,
@@ -8012,7 +8138,11 @@
       "expected": {
         "topCardId": "sc_smart",
         "topValue": 50,
-        "breakdownFlags": { "hasLocked": true, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8025,7 +8155,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "hkticketing",
-        "ownedCards": ["sc_smart"],
+        "ownedCards": [
+          "sc_smart"
+        ],
         "settings": {},
         "usage": {
           "sc_smart_monthly_eligible": 5000,
@@ -8035,7 +8167,11 @@
       "expected": {
         "topCardId": "sc_smart",
         "topValue": 5.6,
-        "breakdownFlags": { "hasLocked": true, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8048,14 +8184,20 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "circle_k",
-        "ownedCards": ["citi_club"],
+        "ownedCards": [
+          "citi_club"
+        ],
         "settings": {},
         "usage": {}
       },
       "expected": {
         "topCardId": "citi_club",
         "topValue": 40,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8068,14 +8210,20 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "venchi",
-        "ownedCards": ["citi_club"],
+        "ownedCards": [
+          "citi_club"
+        ],
         "settings": {},
         "usage": {}
       },
       "expected": {
         "topCardId": "citi_club",
         "topValue": 40,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8088,14 +8236,20 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "one_o_one_zero",
-        "ownedCards": ["citi_club"],
+        "ownedCards": [
+          "citi_club"
+        ],
         "settings": {},
         "usage": {}
       },
       "expected": {
         "topCardId": "citi_club",
         "topValue": 30,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8108,14 +8262,20 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "csl",
-        "ownedCards": ["citi_club"],
+        "ownedCards": [
+          "citi_club"
+        ],
         "settings": {},
         "usage": {}
       },
       "expected": {
         "topCardId": "citi_club",
         "topValue": 30,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8128,14 +8288,20 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "netvigator",
-        "ownedCards": ["citi_club"],
+        "ownedCards": [
+          "citi_club"
+        ],
         "settings": {},
         "usage": {}
       },
       "expected": {
         "topCardId": "citi_club",
         "topValue": 30,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8148,14 +8314,20 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "now_tv",
-        "ownedCards": ["citi_club"],
+        "ownedCards": [
+          "citi_club"
+        ],
         "settings": {},
         "usage": {}
       },
       "expected": {
         "topCardId": "citi_club",
         "topValue": 30,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8168,14 +8340,20 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "the_club_shopping",
-        "ownedCards": ["citi_club"],
+        "ownedCards": [
+          "citi_club"
+        ],
         "settings": {},
         "usage": {}
       },
       "expected": {
         "topCardId": "citi_club",
         "topValue": 20,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8188,7 +8366,9 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "now_tv",
-        "ownedCards": ["dbs_live_fresh"],
+        "ownedCards": [
+          "dbs_live_fresh"
+        ],
         "settings": {
           "live_fresh_pref": "travel"
         },
@@ -8197,7 +8377,11 @@
       "expected": {
         "topCardId": "dbs_live_fresh",
         "topValue": 54,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8210,7 +8394,9 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "amazon_com",
-        "ownedCards": ["dbs_live_fresh"],
+        "ownedCards": [
+          "dbs_live_fresh"
+        ],
         "settings": {
           "live_fresh_pref": "fashion"
         },
@@ -8219,7 +8405,11 @@
       "expected": {
         "topCardId": "dbs_live_fresh",
         "topValue": 54,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8232,7 +8422,9 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "hktvmall",
-        "ownedCards": ["dbs_live_fresh"],
+        "ownedCards": [
+          "dbs_live_fresh"
+        ],
         "settings": {
           "live_fresh_pref": "charity"
         },
@@ -8241,7 +8433,11 @@
       "expected": {
         "topCardId": "dbs_live_fresh",
         "topValue": 54,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8254,7 +8450,9 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "hktvmall",
-        "ownedCards": ["dbs_live_fresh"],
+        "ownedCards": [
+          "dbs_live_fresh"
+        ],
         "settings": {
           "live_fresh_pref": "travel"
         },
@@ -8263,7 +8461,11 @@
       "expected": {
         "topCardId": "dbs_live_fresh",
         "topValue": 4,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8276,7 +8478,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "netflix",
-        "ownedCards": ["dbs_live_fresh"],
+        "ownedCards": [
+          "dbs_live_fresh"
+        ],
         "settings": {
           "live_fresh_pref": "travel"
         },
@@ -8285,7 +8489,11 @@
       "expected": {
         "topCardId": "dbs_live_fresh",
         "topValue": 54,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8298,7 +8506,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "hktvmall",
-        "ownedCards": ["dbs_live_fresh"],
+        "ownedCards": [
+          "dbs_live_fresh"
+        ],
         "settings": {
           "live_fresh_pref": "charity"
         },
@@ -8307,7 +8517,11 @@
       "expected": {
         "topCardId": "dbs_live_fresh",
         "topValue": 54,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8320,7 +8534,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "netflix",
-        "ownedCards": ["boc_chill"],
+        "ownedCards": [
+          "boc_chill"
+        ],
         "settings": {},
         "usage": {
           "spend_boc_chill_monthly": 1500
@@ -8329,7 +8545,11 @@
       "expected": {
         "topCardId": "boc_chill",
         "topValue": 104,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8342,7 +8562,9 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "netflix",
-        "ownedCards": ["boc_chill"],
+        "ownedCards": [
+          "boc_chill"
+        ],
         "settings": {},
         "usage": {
           "spend_boc_chill_monthly": 1500,
@@ -8352,7 +8574,11 @@
       "expected": {
         "topCardId": "boc_chill",
         "topValue": 10,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": true, "hasPartial": true }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": true,
+          "hasPartial": true
+        }
       }
     },
     {
@@ -8365,14 +8591,20 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "keeta",
-        "ownedCards": ["boc_go_diamond"],
+        "ownedCards": [
+          "boc_go_diamond"
+        ],
         "settings": {},
         "usage": {}
       },
       "expected": {
         "topCardId": "boc_go_diamond",
         "topValue": 50,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8385,14 +8617,20 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "wellcome",
-        "ownedCards": ["boc_go_platinum"],
+        "ownedCards": [
+          "boc_go_platinum"
+        ],
         "settings": {},
         "usage": {}
       },
       "expected": {
         "topCardId": "boc_go_platinum",
         "topValue": 50,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8405,7 +8643,9 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "hutchgo",
-        "ownedCards": ["ae_platinum"],
+        "ownedCards": [
+          "ae_platinum"
+        ],
         "settings": {
           "ae_platinum_9x_enabled": true
         },
@@ -8414,7 +8654,11 @@
       "expected": {
         "topCardId": "ae_platinum",
         "topValue": 30,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8427,7 +8671,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "parknshop",
-        "ownedCards": ["ae_platinum"],
+        "ownedCards": [
+          "ae_platinum"
+        ],
         "settings": {
           "ae_platinum_9x_enabled": true
         },
@@ -8436,7 +8682,11 @@
       "expected": {
         "topCardId": "ae_platinum",
         "topValue": 30,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8449,7 +8699,9 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "hotels_com",
-        "ownedCards": ["ae_platinum"],
+        "ownedCards": [
+          "ae_platinum"
+        ],
         "settings": {
           "ae_platinum_9x_enabled": true
         },
@@ -8458,7 +8710,11 @@
       "expected": {
         "topCardId": "ae_platinum",
         "topValue": 30,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8471,7 +8727,9 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "sogo_freshmart",
-        "ownedCards": ["ae_platinum"],
+        "ownedCards": [
+          "ae_platinum"
+        ],
         "settings": {
           "ae_platinum_9x_enabled": true
         },
@@ -8480,7 +8738,11 @@
       "expected": {
         "topCardId": "ae_platinum",
         "topValue": 30,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8493,7 +8755,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "hutchgo",
-        "ownedCards": ["ae_platinum"],
+        "ownedCards": [
+          "ae_platinum"
+        ],
         "settings": {
           "ae_platinum_9x_enabled": false
         },
@@ -8502,7 +8766,11 @@
       "expected": {
         "topCardId": "ae_platinum",
         "topValue": 6.666667,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8515,7 +8783,9 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "parknshop",
-        "ownedCards": ["ae_platinum"],
+        "ownedCards": [
+          "ae_platinum"
+        ],
         "settings": {
           "ae_platinum_9x_enabled": true
         },
@@ -8524,7 +8794,11 @@
       "expected": {
         "topCardId": "ae_platinum",
         "topValue": 6.666667,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8537,7 +8811,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "caltex",
-        "ownedCards": ["ae_platinum"],
+        "ownedCards": [
+          "ae_platinum"
+        ],
         "settings": {
           "ae_platinum_9x_enabled": true
         },
@@ -8546,7 +8822,11 @@
       "expected": {
         "topCardId": "ae_platinum",
         "topValue": 30,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8559,7 +8839,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "hutchgo",
-        "ownedCards": ["ae_platinum"],
+        "ownedCards": [
+          "ae_platinum"
+        ],
         "settings": {
           "ae_platinum_9x_enabled": true
         },
@@ -8568,7 +8850,11 @@
       "expected": {
         "topCardId": "ae_platinum",
         "topValue": 6.666667,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8581,7 +8867,9 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "kkday",
-        "ownedCards": ["ae_platinum"],
+        "ownedCards": [
+          "ae_platinum"
+        ],
         "settings": {
           "ae_platinum_9x_enabled": true
         },
@@ -8590,7 +8878,11 @@
       "expected": {
         "topCardId": "ae_platinum",
         "topValue": 6.666667,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8603,7 +8895,9 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "amazon_com",
-        "ownedCards": ["ae_explorer"],
+        "ownedCards": [
+          "ae_explorer"
+        ],
         "settings": {
           "ae_explorer_online_5x_enabled": true
         },
@@ -8612,7 +8906,11 @@
       "expected": {
         "topCardId": "ae_explorer",
         "topValue": 16.666667,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8625,7 +8923,9 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "iherb",
-        "ownedCards": ["ae_explorer"],
+        "ownedCards": [
+          "ae_explorer"
+        ],
         "settings": {
           "ae_explorer_online_5x_enabled": true
         },
@@ -8634,7 +8934,11 @@
       "expected": {
         "topCardId": "ae_explorer",
         "topValue": 16.666667,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8647,7 +8951,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "mcdonalds",
-        "ownedCards": ["ae_explorer"],
+        "ownedCards": [
+          "ae_explorer"
+        ],
         "settings": {
           "ae_explorer_online_5x_enabled": true
         },
@@ -8656,7 +8962,11 @@
       "expected": {
         "topCardId": "ae_explorer",
         "topValue": 10,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8669,7 +8979,9 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "trip_com",
-        "ownedCards": ["ae_explorer"],
+        "ownedCards": [
+          "ae_explorer"
+        ],
         "settings": {
           "ae_explorer_075x_enabled": true,
           "ae_explorer_7x_enabled": true,
@@ -8680,7 +8992,11 @@
       "expected": {
         "topCardId": "ae_explorer",
         "topValue": 35.833333,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8693,7 +9009,9 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "agoda",
-        "ownedCards": ["ae_explorer"],
+        "ownedCards": [
+          "ae_explorer"
+        ],
         "settings": {
           "ae_explorer_online_5x_enabled": true
         },
@@ -8702,7 +9020,11 @@
       "expected": {
         "topCardId": "ae_explorer",
         "topValue": 10,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8715,14 +9037,20 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "parknshop",
-        "ownedCards": ["ae_platinum_credit"],
+        "ownedCards": [
+          "ae_platinum_credit"
+        ],
         "settings": {},
         "usage": {}
       },
       "expected": {
         "topCardId": "ae_platinum_credit",
         "topValue": 10,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8735,14 +9063,20 @@
         "isOnline": true,
         "paymentMethod": "physical",
         "merchantId": "sogo_freshmart",
-        "ownedCards": ["ae_platinum_credit"],
+        "ownedCards": [
+          "ae_platinum_credit"
+        ],
         "settings": {},
         "usage": {}
       },
       "expected": {
         "topCardId": "ae_platinum_credit",
         "topValue": 20,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8755,14 +9089,20 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "citysuper",
-        "ownedCards": ["ae_platinum_credit"],
+        "ownedCards": [
+          "ae_platinum_credit"
+        ],
         "settings": {},
         "usage": {}
       },
       "expected": {
         "topCardId": "ae_platinum_credit",
         "topValue": 19.4,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8775,14 +9115,20 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "izabis_citysuper",
-        "ownedCards": ["ae_platinum_credit"],
+        "ownedCards": [
+          "ae_platinum_credit"
+        ],
         "settings": {},
         "usage": {}
       },
       "expected": {
         "topCardId": "ae_platinum_credit",
         "topValue": 9.7,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8795,14 +9141,20 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "citysuper",
-        "ownedCards": ["ae_platinum_credit"],
+        "ownedCards": [
+          "ae_platinum_credit"
+        ],
         "settings": {},
         "usage": {}
       },
       "expected": {
         "topCardId": "ae_platinum_credit",
         "topValue": 3.333333,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8814,7 +9166,9 @@
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
-        "ownedCards": ["bea_goal"],
+        "ownedCards": [
+          "bea_goal"
+        ],
         "settings": {},
         "usage": {
           "bea_goal_mission": 2000
@@ -8823,7 +9177,11 @@
       "expected": {
         "topCardId": "bea_goal",
         "topValue": 64,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8835,7 +9193,9 @@
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
-        "ownedCards": ["bea_goal"],
+        "ownedCards": [
+          "bea_goal"
+        ],
         "settings": {},
         "usage": {
           "bea_goal_mission": 2000
@@ -8844,7 +9204,11 @@
       "expected": {
         "topCardId": "bea_goal",
         "topValue": 4,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8856,7 +9220,9 @@
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "apple_pay",
-        "ownedCards": ["bea_goal"],
+        "ownedCards": [
+          "bea_goal"
+        ],
         "settings": {},
         "usage": {
           "bea_goal_mission": 2000
@@ -8865,7 +9231,11 @@
       "expected": {
         "topCardId": "bea_goal",
         "topValue": 4,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8877,7 +9247,9 @@
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "apple_pay",
-        "ownedCards": ["bea_goal"],
+        "ownedCards": [
+          "bea_goal"
+        ],
         "settings": {},
         "usage": {
           "bea_goal_mission": 2000
@@ -8886,7 +9258,11 @@
       "expected": {
         "topCardId": "bea_goal",
         "topValue": 64,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8899,7 +9275,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "adidas",
-        "ownedCards": ["sim_credit"],
+        "ownedCards": [
+          "sim_credit"
+        ],
         "settings": {
           "sim_promo_enabled": true
         },
@@ -8910,7 +9288,11 @@
       "expected": {
         "topCardId": "sim_credit",
         "topValue": 30,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8923,7 +9305,9 @@
         "isOnline": false,
         "paymentMethod": "physical",
         "merchantId": "matsukiyo_hk",
-        "ownedCards": ["sim_world"],
+        "ownedCards": [
+          "sim_world"
+        ],
         "settings": {
           "sim_world_promo_enabled": true
         },
@@ -8934,7 +9318,11 @@
       "expected": {
         "topCardId": "sim_world",
         "topValue": 30,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     },
     {
@@ -8946,7 +9334,9 @@
         "displayMode": "cash",
         "isOnline": false,
         "paymentMethod": "physical",
-        "ownedCards": ["sim_credit"],
+        "ownedCards": [
+          "sim_credit"
+        ],
         "settings": {
           "sim_promo_enabled": true
         },
@@ -8957,7 +9347,100 @@
       "expected": {
         "topCardId": "sim_credit",
         "topValue": 0,
-        "breakdownFlags": { "hasLocked": false, "hasCapped": false, "hasPartial": false }
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_314_boc_amazing_fly_other_online_unlocked",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_jp",
+        "date": "2026-02-15",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vi"
+        ],
+        "settings": {
+          "boc_amazing_enabled": true
+        },
+        "usage": {
+          "spend_boc_fly_other_stage": 10000
+        }
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vi",
+        "topValue": 54,
+        "breakdownFlags": {
+          "hasLocked": true,
+          "hasCapped": false,
+          "hasPartial": false
+        }
+      }
+    },
+    {
+      "id": "case_315_boc_amazing_fly_cn_online_unlock_same_tx",
+      "input": {
+        "amount": 5000,
+        "category": "overseas_cn",
+        "date": "2026-03-10",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "physical",
+        "ownedCards": [
+          "boc_cheers_vi"
+        ],
+        "settings": {
+          "boc_amazing_enabled": true
+        },
+        "usage": {
+          "spend_boc_fly_cn_stage": 0
+        }
+      },
+      "expected": {
+        "topCardId": "boc_cheers_vi",
+        "topValue": 260,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": true
+        }
+      }
+    },
+    {
+      "id": "case_316_wewa_overseas_online_stage_bonus_enabled",
+      "input": {
+        "amount": 1000,
+        "category": "overseas_jp",
+        "date": "2026-02-20",
+        "displayMode": "cash",
+        "isOnline": true,
+        "paymentMethod": "apple_pay",
+        "ownedCards": [
+          "wewa"
+        ],
+        "settings": {
+          "wewa_overseas_5pct_enabled": true,
+          "wewa_selected_category": "travel"
+        },
+        "usage": {
+          "wewa_overseas_stage_spend": 500,
+          "wewa_monthly_eligible_spend": 1500
+        }
+      },
+      "expected": {
+        "topCardId": "wewa",
+        "topValue": 4,
+        "breakdownFlags": {
+          "hasLocked": false,
+          "hasCapped": false,
+          "hasPartial": false
+        }
       }
     }
   ],
@@ -9183,6 +9666,82 @@
       "date": "2026-01-15T10:00:00.000Z",
       "expectedUsageKey": "spend_dbs_compass",
       "unexpectedUsageKey": "winter_total",
+      "expectedUsageValue": 1000
+    },
+    {
+      "id": "tx_008_winter_general_not_reward_eligible",
+      "ownedCards": [
+        "hsbc_red"
+      ],
+      "settings": {
+        "winter_promo_enabled": true
+      },
+      "cardId": "hsbc_red",
+      "category": "general",
+      "amount": 1000,
+      "isOnline": false,
+      "paymentMethod": "physical",
+      "txDate": "2026-01-15",
+      "date": "2026-01-15T10:00:00.000Z",
+      "expectedUsageKey": "winter_total",
+      "expectedUsageValue": 1000,
+      "unexpectedUsageKey": "winter_eligible"
+    },
+    {
+      "id": "tx_009_winter_dining_counts_reward_eligible",
+      "ownedCards": [
+        "hsbc_red"
+      ],
+      "settings": {
+        "winter_promo_enabled": true
+      },
+      "cardId": "hsbc_red",
+      "category": "dining",
+      "amount": 1000,
+      "isOnline": false,
+      "paymentMethod": "physical",
+      "txDate": "2026-01-15",
+      "date": "2026-01-15T10:00:00.000Z",
+      "expectedUsageKey": "winter_eligible",
+      "expectedUsageValue": 1000
+    },
+    {
+      "id": "tx_010_guru_online_foreign_not_counted_for_unlock",
+      "ownedCards": [
+        "hsbc_everymile"
+      ],
+      "settings": {
+        "travel_guru_registered": true,
+        "guru_level": 1
+      },
+      "cardId": "hsbc_everymile",
+      "category": "online_foreign",
+      "amount": 1000,
+      "isOnline": true,
+      "paymentMethod": "physical",
+      "txDate": "2026-01-15",
+      "date": "2026-01-15T10:00:00.000Z",
+      "expectedUsageKey": "spend_hsbc_everymile",
+      "expectedUsageValue": 1000,
+      "unexpectedUsageKey": "spend_guru_unlock"
+    },
+    {
+      "id": "tx_011_guru_overseas_physical_counts_unlock",
+      "ownedCards": [
+        "hsbc_everymile"
+      ],
+      "settings": {
+        "travel_guru_registered": true,
+        "guru_level": 1
+      },
+      "cardId": "hsbc_everymile",
+      "category": "overseas_other",
+      "amount": 1000,
+      "isOnline": false,
+      "paymentMethod": "physical",
+      "txDate": "2026-01-15",
+      "date": "2026-01-15T10:00:00.000Z",
+      "expectedUsageKey": "spend_guru_unlock",
       "expectedUsageValue": 1000
     }
   ]

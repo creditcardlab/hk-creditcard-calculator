@@ -57,6 +57,7 @@
         offers: [],
         offerRegistry: { byId: {}, bySettingKey: {}, warnings: [] },
         rules: (typeof DATA_RULES !== "undefined") ? DATA_RULES : {},
+        currencies: (typeof currenciesDB !== "undefined") ? currenciesDB : {},
         redHotCategories,
         periodDefaults: {
             month: { type: "month", startDay: 1 },
@@ -221,7 +222,24 @@
         };
 
         // Intentionally conservative for existing entities; allow full object insert for new dynamic entities.
-        const allowedCardCoreFields = ["name", "currency", "type", "fcf", "bank", "status", "hidden"];
+        const allowedCardCoreFields = [
+            "name",
+            "currency",
+            "type",
+            "fcf",
+            "bank",
+            "status",
+            "hidden",
+            "source_url",
+            "source_title",
+            "tnc_url",
+            "promo_url",
+            "registration_url",
+            "registration_start",
+            "registration_end",
+            "registration_note",
+            "last_verified_at"
+        ];
         const allowedCategoryCoreFields = ["label", "parent", "hidden"];
         const allowedModuleCoreFields = [
             "desc",
@@ -273,9 +291,30 @@
             "counter",
             "retroactive"
         ];
-        const allowedCampaignCoreFields = ["name", "period_policy", "promo_type", "icon", "theme", "cards", "sections", "capKeys", "warningOnly", "display_name_zhhk"];
+        const allowedCampaignCoreFields = [
+            "name",
+            "period_policy",
+            "promo_type",
+            "icon",
+            "theme",
+            "cards",
+            "sections",
+            "capKeys",
+            "warningOnly",
+            "display_name_zhhk",
+            "source_url",
+            "source_title",
+            "tnc_url",
+            "promo_url",
+            "registration_url",
+            "registration_start",
+            "registration_end",
+            "registration_note",
+            "last_verified_at"
+        ];
         const allowedRegistryFields = [
             "settingKey", "warningTitle", "warningDesc",
+            "sourceUrl", "sourceTitle",
             "tncUrl", "promoUrl", "registrationUrl",
             "registrationStart", "registrationEnd", "registrationNote",
             "implementationNote"

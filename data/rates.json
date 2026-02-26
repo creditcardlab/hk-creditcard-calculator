@@ -1,0 +1,160 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-02-26T08:19:58.745Z",
+  "base": "HKD",
+  "rates": {
+    "JPY": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 0.050022,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "KRW": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 0.005471,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "THB": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 0.251594,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "TWD": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 0.249701,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "CNY": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 1.137918,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "MOP": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 0.970874,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "GBP": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 10.584475,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "EUR": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 9.227816,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "USD": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 7.820076,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "SGD": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 6.184866,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "AUD": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 5.559045,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "CAD": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 5.715004,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "NZD": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 4.682591,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "CHF": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 10.11245,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "SEK": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 0.866117,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "NOK": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 0.818152,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    },
+    "DKK": {
+      "mastercard": null,
+      "visa": null,
+      "reference": {
+        "rate": 1.23664,
+        "date": "2026-02-26",
+        "source": "open.er-api"
+      }
+    }
+  }
+}

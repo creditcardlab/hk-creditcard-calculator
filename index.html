@@ -33,10 +33,14 @@
 
         <div class="py-2">
             <div class="flex items-center">
-                <span class="text-3xl font-light text-gray-300 mr-1">$</span>
+                <span id="amount-symbol" class="text-3xl font-light text-gray-300 mr-1">$</span>
                 <input type="number" id="amount" value="3000"
                     class="w-full bg-transparent text-4xl font-semibold tracking-tight text-[#37352f] focus:outline-none placeholder-gray-200" style="letter-spacing: -0.03em" placeholder="0" oninput="runCalc()">
+                <select id="tx-currency" class="ml-2 px-2 py-1.5 border border-[#e9e9e7] rounded bg-[#f7f7f5] focus:bg-white focus:outline-none text-sm shrink-0" onchange="onCurrencyChange()">
+                    <!-- Populated by JS -->
+                </select>
             </div>
+            <div id="fx-conversion-hint" class="hidden text-xs text-gray-400 mt-1 pl-1"></div>
         </div>
 
         <div class="border border-[#e9e9e7] rounded-md bg-white overflow-hidden">
@@ -141,24 +145,26 @@
     <!-- Scripts: Loaded in dependency order -->
     <script src="js/data_cards.js?v=20260225c"></script>
     <script src="js/data_categories.js?v=20260214c"></script>
-    <script src="js/data_modules.js?v=20260225l"></script>
-    <script src="js/data_trackers.js?v=20260225a"></script>
+    <script src="js/data_currencies.js?v=20260226a"></script>
+    <script src="js/data_modules.js?v=20260226b"></script>
+    <script src="js/data_trackers.js?v=20260226b"></script>
     <script src="js/data_conversions.js?v=20260214c"></script>
     <script src="js/data_rules.js?v=20260214c"></script>
     <script src="js/data_merchants.js?v=20260221a"></script>
-    <script src="js/data_campaigns.js?v=20260225g"></script>
+    <script src="js/data_campaigns.js?v=20260226b"></script>
     <script src="js/data_counters.js?v=20260214c"></script>
     <script src="js/period_policy.js?v=20260214c"></script>
     <script src="js/data_overrides.js?v=20260225d"></script>
-    <script src="js/data_index.js?v=20260214c"></script>
+    <script src="js/exchange_rate.js?v=20260226b"></script>
+    <script src="js/data_index.js?v=20260226a"></script>
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.1.0/dist/fuse.basic.min.js"></script>
     <script src="js/copy_zhhk.js?v=20260214c"></script>
     <script src="js/validate.js?v=20260214c"></script>
     <script src="js/engine_trackers.js?v=20260214c"></script>
-    <script src="js/core.js?v=20260225h"></script>
+    <script src="js/core.js?v=20260226b"></script>
     <script src="js/periods.js?v=20260214c"></script>
-    <script src="js/ui.js?v=20260225z"></script>
-    <script src="js/app.js?v=20260225b"></script>
+    <script src="js/ui.js?v=20260226a"></script>
+    <script src="js/app.js?v=20260226b"></script>
 </body>
 
 </html>

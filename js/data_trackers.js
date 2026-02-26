@@ -35,6 +35,17 @@ function isWinterPromoTrackerEligible(cat, ctx) {
     return true;
 }
 
+function isWinterPromoRewardEligibleCategory(category) {
+    const c = String(category || "").trim();
+    if (!c) return false;
+    if (typeof isCategoryMatch === "function") {
+        return isCategoryMatch(["dining", "overseas"], c);
+    }
+    if (c === "dining" || c === "overseas") return true;
+    if (c.startsWith("overseas_")) return true;
+    return c === "online_foreign" || c === "china_consumption" || c === "travel_plus_tier1";
+}
+
 const trackersDB = {
     // --- HSBC ---
     "em_overseas_mission": {
@@ -63,7 +74,10 @@ const trackersDB = {
         eligible_check: (cat, ctx) => isWinterPromoTrackerEligible(cat, ctx),
         effects_on_eligible: [
             { key: "winter_total", amount: "tx_amount" },
-            { key: "winter_eligible", amount: "tx_amount" }
+            {
+                key: "winter_eligible",
+                amount: (cat, ctx) => isWinterPromoRewardEligibleCategory(cat) ? (Number(ctx && ctx.amount) || 0) : 0
+            }
         ]
     },
     "red_mcd_stamp_tracker": {

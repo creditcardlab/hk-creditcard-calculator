@@ -969,10 +969,54 @@ const merchantsDB = {
     },
     "aeon_store": {
         name: "AEON",
-        aliases: ["aeon", "永旺"],
-        defaultCategory: "grocery",
+        aliases: ["aeon", "永旺", "aeon stores"],
+        defaultCategory: "department_store",
         byPrefix: { "hsbc": "department_store" },
-        byCardId: { "ae_platinum": "ae_plat_daily_designated", "ae_platinum_credit": "ae_pcc_designated" }
+        byCardId: {
+            "ae_platinum": "ae_plat_daily_designated",
+            "ae_platinum_credit": "ae_pcc_designated",
+            "aeon_purple_visa": "aeon_store",
+            "aeon_purple_master": "aeon_store",
+            "aeon_purple_unionpay": "aeon_store",
+            "aeon_purple_jcb": "aeon_store",
+            "aeon_premium_visa": "aeon_store",
+            "aeon_premium_master": "aeon_store",
+            "aeon_premium_unionpay": "aeon_store",
+            "aeon_purple": "aeon_store",
+            "aeon_premium": "aeon_store"
+        }
+    },
+    "aeon_city": {
+        name: "AEON網上購物城",
+        aliases: ["aeon city", "aeoncity", "aeon網上購物城", "永旺網上購物城"],
+        defaultCategory: "online",
+        byCardId: {
+            "aeon_purple_visa": "aeon_store",
+            "aeon_purple_master": "aeon_store",
+            "aeon_purple_unionpay": "aeon_store",
+            "aeon_purple_jcb": "aeon_store",
+            "aeon_premium_visa": "aeon_store",
+            "aeon_premium_master": "aeon_store",
+            "aeon_premium_unionpay": "aeon_store",
+            "aeon_purple": "aeon_store",
+            "aeon_premium": "aeon_store"
+        }
+    },
+    "daiso_japan": {
+        name: "Daiso Japan",
+        aliases: ["daiso", "daiso japan", "大創", "大創百貨"],
+        defaultCategory: "general",
+        byCardId: {
+            "aeon_purple_visa": "aeon_store",
+            "aeon_purple_master": "aeon_store",
+            "aeon_purple_unionpay": "aeon_store",
+            "aeon_purple_jcb": "aeon_store",
+            "aeon_premium_visa": "aeon_store",
+            "aeon_premium_master": "aeon_store",
+            "aeon_premium_unionpay": "aeon_store",
+            "aeon_purple": "aeon_store",
+            "aeon_premium": "aeon_store"
+        }
     },
     "donki": {
         name: "DON DON DONKI",
@@ -1166,7 +1210,18 @@ const merchantsDB = {
         name: "生活廊",
         aliases: ["生活廊", "living plaza"],
         defaultCategory: "general",
-        byPrefix: { "hsbc": "supermarket" }
+        byPrefix: { "hsbc": "supermarket" },
+        byCardId: {
+            "aeon_purple_visa": "aeon_store",
+            "aeon_purple_master": "aeon_store",
+            "aeon_purple_unionpay": "aeon_store",
+            "aeon_purple_jcb": "aeon_store",
+            "aeon_premium_visa": "aeon_store",
+            "aeon_premium_master": "aeon_store",
+            "aeon_premium_unionpay": "aeon_store",
+            "aeon_purple": "aeon_store",
+            "aeon_premium": "aeon_store"
+        }
     },
     "simmons": {
         name: "Simmons 蓆夢思",
@@ -1280,14 +1335,36 @@ const merchantsDB = {
         aliases: ["aeon style"],
         defaultCategory: "department_store",
         byPrefix: { "hsbc": "department_store" },
-        byCardId: { "ae_platinum": "ae_plat_daily_designated" }
+        byCardId: {
+            "ae_platinum": "ae_plat_daily_designated",
+            "aeon_purple_visa": "aeon_store",
+            "aeon_purple_master": "aeon_store",
+            "aeon_purple_unionpay": "aeon_store",
+            "aeon_purple_jcb": "aeon_store",
+            "aeon_premium_visa": "aeon_store",
+            "aeon_premium_master": "aeon_store",
+            "aeon_premium_unionpay": "aeon_store",
+            "aeon_purple": "aeon_store",
+            "aeon_premium": "aeon_store"
+        }
     },
     "aeon_supermarket": {
         name: "AEON SUPERMARKET",
         aliases: ["aeon supermarket"],
         defaultCategory: "department_store",
         byPrefix: { "hsbc": "department_store" },
-        byCardId: { "ae_platinum": "ae_plat_daily_designated" }
+        byCardId: {
+            "ae_platinum": "ae_plat_daily_designated",
+            "aeon_purple_visa": "aeon_store",
+            "aeon_purple_master": "aeon_store",
+            "aeon_purple_unionpay": "aeon_store",
+            "aeon_purple_jcb": "aeon_store",
+            "aeon_premium_visa": "aeon_store",
+            "aeon_premium_master": "aeon_store",
+            "aeon_premium_unionpay": "aeon_store",
+            "aeon_purple": "aeon_store",
+            "aeon_premium": "aeon_store"
+        }
     },
     "apita": {
         name: "APITA",
@@ -1300,7 +1377,18 @@ const merchantsDB = {
         name: "Bento Express by AEON",
         aliases: ["bento express by aeon", "bento express"],
         defaultCategory: "department_store",
-        byPrefix: { "hsbc": "department_store" }
+        byPrefix: { "hsbc": "department_store" },
+        byCardId: {
+            "aeon_purple_visa": "aeon_store",
+            "aeon_purple_master": "aeon_store",
+            "aeon_purple_unionpay": "aeon_store",
+            "aeon_purple_jcb": "aeon_store",
+            "aeon_premium_visa": "aeon_store",
+            "aeon_premium_master": "aeon_store",
+            "aeon_premium_unionpay": "aeon_store",
+            "aeon_purple": "aeon_store",
+            "aeon_premium": "aeon_store"
+        }
     },
     "chinese_arts_hk": {
         name: "中藝（香港）",
@@ -1351,7 +1439,18 @@ const merchantsDB = {
         name: "Living PLAZA by AEON",
         aliases: ["living plaza by aeon"],
         defaultCategory: "department_store",
-        byPrefix: { "hsbc": "department_store" }
+        byPrefix: { "hsbc": "department_store" },
+        byCardId: {
+            "aeon_purple_visa": "aeon_store",
+            "aeon_purple_master": "aeon_store",
+            "aeon_purple_unionpay": "aeon_store",
+            "aeon_purple_jcb": "aeon_store",
+            "aeon_premium_visa": "aeon_store",
+            "aeon_premium_master": "aeon_store",
+            "aeon_premium_unionpay": "aeon_store",
+            "aeon_purple": "aeon_store",
+            "aeon_premium": "aeon_store"
+        }
     },
     "log_on": {
         name: "LOG-ON",
@@ -1370,7 +1469,18 @@ const merchantsDB = {
         name: "Mono Mono",
         aliases: ["mono mono"],
         defaultCategory: "department_store",
-        byPrefix: { "hsbc": "department_store" }
+        byPrefix: { "hsbc": "department_store" },
+        byCardId: {
+            "aeon_purple_visa": "aeon_store",
+            "aeon_purple_master": "aeon_store",
+            "aeon_purple_unionpay": "aeon_store",
+            "aeon_purple_jcb": "aeon_store",
+            "aeon_premium_visa": "aeon_store",
+            "aeon_premium_master": "aeon_store",
+            "aeon_premium_unionpay": "aeon_store",
+            "aeon_purple": "aeon_store",
+            "aeon_premium": "aeon_store"
+        }
     },
     "sincere_department_store": {
         name: "先施百貨",
@@ -1762,9 +1872,24 @@ const merchantsDB = {
     },
     "uber": {
         name: "Uber",
-        aliases: ["uber", "優步"],
+        aliases: ["uber", "uber taxi", "優步"],
         defaultCategory: "public_transport",
         byCardId: { "hsbc_everymile": "em_designated_spend" }
+    },
+    "new_lantao_bus": {
+        name: "新大嶼山巴士 NLB",
+        aliases: ["nlb", "新大嶼山巴士", "嶼巴", "new lantao bus"],
+        defaultCategory: "public_transport"
+    },
+    "hong_kong_kowloon_ferry": {
+        name: "港九小輪",
+        aliases: ["港九小輪", "hong kong and kowloon ferry", "hkkf"],
+        defaultCategory: "public_transport"
+    },
+    "new_ferry": {
+        name: "新渡輪",
+        aliases: ["新渡輪", "new ferry"],
+        defaultCategory: "public_transport"
     },
     "china_railway_12306": {
         name: "12306 China Railway",

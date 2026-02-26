@@ -1,0 +1,36 @@
+name: Update Exchange Rates
+
+on:
+  schedule:
+    # Run twice daily:
+    # 00:00 UTC = 08:00 HKT (morning — catches overnight US rate updates)
+    # 08:00 UTC = 16:00 HKT (afternoon — catches same-day US rate updates)
+    - cron: '0 0 * * *'
+    - cron: '0 8 * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+permissions:
+  contents: write
+
+jobs:
+  update-rates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch exchange rates
+        run: node scripts/fetch_rates.js
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/rates.json
+          git diff --staged --quiet || git commit -m "chore: update exchange rates [skip ci]"
+          git push

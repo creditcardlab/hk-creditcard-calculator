@@ -227,6 +227,7 @@ const modulesDB = {
         type: "guru_capped",
         category: "overseas",
         setting_key: "travel_guru_registered",
+        eligible_check: (cat, ctx) => !(ctx && ctx.isOnline),
         last_verified_at: "2026-02-05",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/everymile/everymile-rewards-scheme-travel-benefits.pdf",
         req_mission_spend: 8000,
@@ -2032,6 +2033,337 @@ const modulesDB = {
         eligible_check: (cat, ctx) => {
             const s = (ctx && ctx.settings) ? ctx.settings : {};
             return String(s.mox_reward_mode || "cashback") === "miles" && !s.mox_deposit_task_enabled;
+        }
+    },
+
+    // --- AEON Purple / Premium ---
+    "aeon_purple_base": {
+        type: "always",
+        rate: 0.004,
+        desc: "基本 0.4%",
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html"
+    },
+    "aeon_purple_live_base_add": {
+        type: "category",
+        match: ["aeon_store"],
+        rate: 0.004,
+        desc: "「住」類基本額外 0.4%（2X）",
+        mode: "add",
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html"
+    },
+    "aeon_purple_food_physical_bonus": {
+        type: "category",
+        match: ["dining"],
+        rate: 0.016,
+        desc: "「食」實體卡額外 1.6%",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purplepremium_food_bonus_cap",
+        cap: { key: "aeon_purplepremium_food_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        eligible_check: (cat, ctx) => {
+            const pm = String((ctx && ctx.paymentMethod) || "physical");
+            return pm === "physical" && !(ctx && ctx.isOnline);
+        }
+    },
+    "aeon_purple_food_mobile_bonus": {
+        type: "category",
+        match: ["dining"],
+        rate: 0.056,
+        desc: "「食」手機支付額外 5.6%",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purplepremium_food_bonus_cap",
+        cap: { key: "aeon_purplepremium_food_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        eligible_check: (cat, ctx) => {
+            if (ctx && ctx.isOnline) return false;
+            const pm = String((ctx && ctx.paymentMethod) || "");
+            return pm === "apple_pay" || pm === "google_pay" || pm === "unionpay_cloud";
+        }
+    },
+    "aeon_purple_live_physical_bonus": {
+        type: "category",
+        match: ["aeon_store"],
+        rate: 0.012,
+        desc: "「住」實體卡額外 1.2%",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purplepremium_live_bonus_cap",
+        cap: { key: "aeon_purplepremium_live_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        eligible_check: (cat, ctx) => String((ctx && ctx.paymentMethod) || "physical") === "physical"
+    },
+    "aeon_purple_live_mobile_bonus": {
+        type: "category",
+        match: ["aeon_store"],
+        rate: 0.052,
+        desc: "「住」手機支付額外 5.2%",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purplepremium_live_bonus_cap",
+        cap: { key: "aeon_purplepremium_live_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        eligible_check: (cat, ctx) => {
+            const pm = String((ctx && ctx.paymentMethod) || "");
+            return pm === "apple_pay" || pm === "google_pay" || pm === "unionpay_cloud";
+        }
+    },
+    "aeon_purple_ride_physical_bonus": {
+        type: "category",
+        match: ["public_transport", "tunnel"],
+        rate: 0.016,
+        desc: "「行」實體卡額外 1.6%",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purplepremium_ride_bonus_cap",
+        cap: { key: "aeon_purplepremium_ride_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        eligible_check: (cat, ctx) => String((ctx && ctx.paymentMethod) || "physical") === "physical"
+    },
+    "aeon_purple_ride_mobile_bonus": {
+        type: "category",
+        match: ["public_transport", "tunnel"],
+        rate: 0.056,
+        desc: "「行」手機支付額外 5.6%",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purplepremium_ride_bonus_cap",
+        cap: { key: "aeon_purplepremium_ride_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        eligible_check: (cat, ctx) => {
+            const pm = String((ctx && ctx.paymentMethod) || "");
+            return pm === "apple_pay" || pm === "google_pay" || pm === "unionpay_cloud";
+        }
+    },
+    "aeon_purple_jcb_base": {
+        type: "always",
+        rate: 0.004,
+        desc: "基本 0.4%（JCB）",
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html"
+    },
+    "aeon_purple_jcb_live_base_add": {
+        type: "category",
+        match: ["aeon_store"],
+        rate: 0.004,
+        desc: "「住」類基本額外 0.4%（JCB, 2X）",
+        mode: "add",
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html"
+    },
+    "aeon_purple_jcb_food_physical_bonus": {
+        type: "category",
+        match: ["dining"],
+        rate: 0.016,
+        desc: "「食」實體卡額外 1.6%（JCB）",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purple_jcb_food_bonus_cap",
+        cap: { key: "aeon_purple_jcb_food_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
+        eligible_check: (cat, ctx) => {
+            const pm = String((ctx && ctx.paymentMethod) || "physical");
+            return pm === "physical" && !(ctx && ctx.isOnline);
+        }
+    },
+    "aeon_purple_jcb_live_physical_bonus": {
+        type: "category",
+        match: ["aeon_store"],
+        rate: 0.012,
+        desc: "「住」實體卡額外 1.2%（JCB）",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purple_jcb_live_bonus_cap",
+        cap: { key: "aeon_purple_jcb_live_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
+        eligible_check: (cat, ctx) => String((ctx && ctx.paymentMethod) || "physical") === "physical"
+    },
+    "aeon_purple_jcb_ride_physical_bonus": {
+        type: "category",
+        match: ["public_transport", "tunnel"],
+        rate: 0.016,
+        desc: "「行」實體卡額外 1.6%（JCB）",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purple_jcb_ride_bonus_cap",
+        cap: { key: "aeon_purple_jcb_ride_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
+        eligible_check: (cat, ctx) => String((ctx && ctx.paymentMethod) || "physical") === "physical"
+    },
+    "aeon_premium_base": {
+        type: "always",
+        rate: 0.008,
+        desc: "基本 0.8%",
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html"
+    },
+    "aeon_premium_live_base_add": {
+        type: "category",
+        match: ["aeon_store"],
+        rate: 0.004,
+        desc: "「住」類基本額外 0.4%（3X）",
+        mode: "add",
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html"
+    },
+    "aeon_premium_food_physical_bonus": {
+        type: "category",
+        match: ["dining"],
+        rate: 0.012,
+        desc: "「食」實體卡額外 1.2%",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purplepremium_food_bonus_cap",
+        cap: { key: "aeon_purplepremium_food_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        eligible_check: (cat, ctx) => {
+            const pm = String((ctx && ctx.paymentMethod) || "physical");
+            return pm === "physical" && !(ctx && ctx.isOnline);
+        }
+    },
+    "aeon_premium_food_mobile_bonus": {
+        type: "category",
+        match: ["dining"],
+        rate: 0.052,
+        desc: "「食」手機支付額外 5.2%",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purplepremium_food_bonus_cap",
+        cap: { key: "aeon_purplepremium_food_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        eligible_check: (cat, ctx) => {
+            if (ctx && ctx.isOnline) return false;
+            const pm = String((ctx && ctx.paymentMethod) || "");
+            return pm === "apple_pay" || pm === "google_pay" || pm === "unionpay_cloud";
+        }
+    },
+    "aeon_premium_live_physical_bonus": {
+        type: "category",
+        match: ["aeon_store"],
+        rate: 0.008,
+        desc: "「住」實體卡額外 0.8%",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purplepremium_live_bonus_cap",
+        cap: { key: "aeon_purplepremium_live_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        eligible_check: (cat, ctx) => String((ctx && ctx.paymentMethod) || "physical") === "physical"
+    },
+    "aeon_premium_live_mobile_bonus": {
+        type: "category",
+        match: ["aeon_store"],
+        rate: 0.048,
+        desc: "「住」手機支付額外 4.8%",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purplepremium_live_bonus_cap",
+        cap: { key: "aeon_purplepremium_live_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        eligible_check: (cat, ctx) => {
+            const pm = String((ctx && ctx.paymentMethod) || "");
+            return pm === "apple_pay" || pm === "google_pay" || pm === "unionpay_cloud";
+        }
+    },
+    "aeon_premium_ride_physical_bonus": {
+        type: "category",
+        match: ["public_transport", "tunnel"],
+        rate: 0.012,
+        desc: "「行」實體卡額外 1.2%",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purplepremium_ride_bonus_cap",
+        cap: { key: "aeon_purplepremium_ride_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        eligible_check: (cat, ctx) => String((ctx && ctx.paymentMethod) || "physical") === "physical"
+    },
+    "aeon_premium_ride_mobile_bonus": {
+        type: "category",
+        match: ["public_transport", "tunnel"],
+        rate: 0.052,
+        desc: "「行」手機支付額外 5.2%",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_purplepremium_ride_bonus_cap",
+        cap: { key: "aeon_purplepremium_ride_bonus_cap", period: "month" },
+        valid_from: "2025-03-10",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-02-25",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        eligible_check: (cat, ctx) => {
+            const pm = String((ctx && ctx.paymentMethod) || "");
+            return pm === "apple_pay" || pm === "google_pay" || pm === "unionpay_cloud";
         }
     },
 
