@@ -42,7 +42,7 @@ function backupOverrides(overridesPath) {
   try {
     const m = content.match(/"version"\s*:\s*(\d+)/);
     if (m) version = parseInt(m[1], 10);
-  } catch (_) {}
+  } catch (_) { }
   const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
   const backupName = `v${version}_${ts}.js`;
   const backupPath = path.resolve(HISTORY_DIR, backupName);
@@ -54,7 +54,7 @@ function backupOverrides(overridesPath) {
     .reverse();
   if (files.length > MAX_HISTORY_VERSIONS) {
     files.slice(MAX_HISTORY_VERSIONS).forEach((f) => {
-      try { fs.unlinkSync(path.resolve(HISTORY_DIR, f)); } catch (_) {}
+      try { fs.unlinkSync(path.resolve(HISTORY_DIR, f)); } catch (_) { }
     });
   }
   return backupPath;
@@ -1075,6 +1075,25 @@ function buildHtmlPayload(data, rel, audit) {
     allowedFields[bucket] = Array.from(ALLOWED_FIELDS[bucket]).sort();
   });
 
+  // Extract T&C / Source URLs for easy auditing
+  const urlRows = [];
+  const urlFields = ["tnc_url", "promo_url", "registration_url"];
+  cards.forEach(c => {
+    if (!c || !c.id) return;
+    urlFields.forEach(field => {
+      urlRows.push({ type: "card", id: c.id, field, url: c[field] || "", name: c.name || "" });
+    });
+  });
+  campaigns.forEach(c => {
+    if (!c || !c.id) return;
+    urlFields.forEach(field => {
+      urlRows.push({ type: "campaign", id: c.id, field, url: c[field] || "", name: c.name || c.display_name_zhhk || "" });
+    });
+  });
+
+  // Sort URLs by ID
+  urlRows.sort((a, b) => a.id.localeCompare(b.id));
+
   // Build relationship graph
   const relationshipGraph = buildRelationshipGraph(data, rel);
 
@@ -1084,7 +1103,11 @@ function buildHtmlPayload(data, rel, audit) {
     data.trackers || {},
     Array.isArray(data.campaigns) ? data.campaigns : []
   );
-  const usageKeyRows = Object.values(usageKeyMap).sort((a, b) => a.key.localeCompare(b.key));
+  const usageKeyRows = Object.values(usageKeyMap).sort((a, b) => {
+    const keyA = String(a.key || "");
+    const keyB = String(b.key || "");
+    return keyA.localeCompare(keyB);
+  });
 
   // Version history
   const historyFiles = listHistory();
@@ -1097,6 +1120,7 @@ function buildHtmlPayload(data, rel, audit) {
     trackers: trackerRows,
     relationshipGraph,
     usageKeyMap: usageKeyRows,
+    urlAuditRows: urlRows,
     historyFiles,
     editor: {
       allowedFields,
@@ -1363,6 +1387,16 @@ function buildHtmlReport(payload) {
     .badge-warning { display: inline-block; background: #fef9c3; color: #854d0e; border-radius: 4px; font-size: 10px; padding: 1px 6px; }
     .badge-info { display: inline-block; background: #dbeafe; color: #1e40af; border-radius: 4px; font-size: 10px; padding: 1px 6px; }
     .badge-ok { display: inline-block; background: #dcfce7; color: #166534; border-radius: 4px; font-size: 10px; padding: 1px 6px; }
+    /* Tabs & Floating Bar */
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 10px; overflow-x: auto; }
+    .tab-btn { background: #f8fafc; border: 1px solid var(--line); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; color: #475569; font-size: 14px; white-space: nowrap; }
+    .tab-btn:hover { background: #e2e8f0; }
+    .tab-btn.active { background: #0f766e; color: white; border-color: #0f766e; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .floating-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--line); padding: 12px 20px; display: flex; gap: 10px; justify-content: flex-end; align-items: center; box-shadow: 0 -4px 12px rgba(0,0,0,0.05); z-index: 900; }
+    body-wrapper { padding-bottom: 60px; } /* Space for floating bar */
   </style>
 </head>
 <body>
@@ -1372,35 +1406,30 @@ function buildHtmlReport(payload) {
       <div class="sub" id="generatedAt"></div>
     </div>
     <div class="cards" id="summaryCards"></div>
-    <div class="issues">
-      <h2>Audit Alerts</h2>
-      <div class="audit-summary-row" id="auditSummaryRow"></div>
-      <div id="auditGroups"></div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-audit">Audit</button>
+      <button class="tab-btn" data-tab="tab-editor">Editor</button>
+      <button class="tab-btn" data-tab="tab-records">Records</button>
+      <button class="tab-btn" data-tab="tab-graph">Graph & History</button>
     </div>
-    <div class="grid">
-      <section class="panel" id="panel-graph">
-        <h3>Relationship Graph</h3>
+
+    <div class="tab-content active" id="tab-audit">
+      <div class="issues" style="margin-bottom:14px;">
+        <h2>Audit Alerts</h2>
+        <div class="audit-summary-row" id="auditSummaryRow"></div>
+        <div id="auditGroups"></div>
+      </div>
+      <section class="panel">
+        <h3>T&C / Source URLs Audit</h3>
         <div class="toolbar">
-          <select id="graph-card-select"></select>
-          <button id="graph-expand-all" type="button">Expand All</button>
-          <button id="graph-collapse-all" type="button">Collapse All</button>
+          <input id="q-urls" placeholder="Search URL / entity type / id ...">
+          <span class="count" id="count-urls"></span>
         </div>
-        <div id="graph-content" style="font-size:13px;"></div>
-      </section>
-      <section class="panel" id="panel-usage-keys">
-        <h3>Usage Key Map</h3>
-        <div class="toolbar">
-          <input id="q-usage-keys" placeholder="Search usage key / module / tracker / campaign ...">
-          <span class="count" id="count-usage-keys"></span>
-        </div>
-        <div class="table-wrap"><table id="table-usage-keys"></table></div>
-      </section>
-      <section class="panel" id="panel-history">
-        <h3>Version History</h3>
-        <div id="history-content" style="font-size:13px;"></div>
+        <div class="table-wrap"><table id="table-urls"></table></div>
       </section>
     </div>
-    <div class="grid">
+
+    <div class="tab-content" id="tab-editor">
       <section class="panel panel-editor" id="panel-card-editor">
         <h3>&#9997; 信用卡編輯器</h3>
         <div class="toolbar">
@@ -1412,11 +1441,6 @@ function buildHtmlReport(payload) {
         <div id="editorStatus" class="status ok">Ready.</div>
         <div id="card-editor-content"></div>
         <div id="card-editor-pending" style="margin-top:12px;"></div>
-        <div class="editor-actions" style="margin-top:10px;">
-          <button id="editor-save-repo" class="primary" type="button">&#128190; 儲存到 Repo</button>
-          <button id="editor-save-repo-golden" class="ghost" type="button">&#128190; 儲存 + 跑 Golden</button>
-          <button id="editor-reset" class="warn" type="button">&#128465; 重設所有修改</button>
-        </div>
       </section>
       <section class="panel" id="panel-batch-ops">
         <h3>&#9889; 批量操作</h3>
@@ -1427,6 +1451,9 @@ function buildHtmlReport(payload) {
         <div class="wizard-nav" id="wizard-nav"></div>
         <div id="wizard-content"></div>
       </section>
+    </div>
+
+    <div class="tab-content" id="tab-records">
       <section class="panel">
         <h3>Unified Offers</h3>
         <div class="toolbar">
@@ -1459,7 +1486,32 @@ function buildHtmlReport(payload) {
         </div>
         <div class="table-wrap"><table id="table-trackers"></table></div>
       </section>
+      <section class="panel" id="panel-usage-keys">
+        <h3>Usage Key Map</h3>
+        <div class="toolbar">
+          <input id="q-usage-keys" placeholder="Search usage key / module / tracker / campaign ...">
+          <span class="count" id="count-usage-keys"></span>
+        </div>
+        <div class="table-wrap"><table id="table-usage-keys"></table></div>
+      </section>
     </div>
+
+    <div class="tab-content" id="tab-graph">
+      <section class="panel" id="panel-graph">
+        <h3>Relationship Graph</h3>
+        <div class="toolbar">
+          <select id="graph-card-select"></select>
+          <button id="graph-expand-all" type="button">Expand All</button>
+          <button id="graph-collapse-all" type="button">Collapse All</button>
+        </div>
+        <div id="graph-content" style="font-size:13px;"></div>
+      </section>
+      <section class="panel" id="panel-history">
+        <h3>Version History</h3>
+        <div id="history-content" style="font-size:13px;"></div>
+      </section>
+    </div>
+
     <details class="panel" style="margin-top:14px;" id="panel-advanced-editor">
       <summary style="cursor:pointer;font-size:14px;font-weight:600;padding:10px 0;">&#128295; Advanced Developer Editor</summary>
       <div style="padding:10px 0;">
@@ -1498,6 +1550,11 @@ function buildHtmlReport(payload) {
         </div>
       </div>
     </details>
+  </div>
+  <div class="floating-bar">
+    <button id="editor-save-repo" class="primary" type="button" style="border:1px solid #0f766e;background:#0f766e;color:white;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;font-weight:bold;">&#128190; 儲存到 Repo</button>
+    <button id="editor-save-repo-golden" class="ghost" type="button" style="border:1px solid var(--line);background:#f8fafc;color:#1e293b;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">&#128190; 儲存 + 跑 Golden</button>
+    <button id="editor-reset" class="warn" type="button" style="border:1px solid #fecdd3;background:#fff1f2;color:#9f1239;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">&#128465; 重設所有修改</button>
   </div>
 <script>
 const WB = ${safeJson};
@@ -2270,6 +2327,68 @@ function extendDate(dateStr, months) {
   if (isNaN(d.getTime())) return dateStr;
   d.setMonth(d.getMonth() + months);
   return d.toISOString().slice(0, 10);
+}
+
+// Render URL Audit
+function renderUrlAudit(q) {
+  var table = document.getElementById("table-urls");
+  var countEl = document.getElementById("count-urls");
+  if (!table) return;
+  var rows = WB.urlAuditRows || [];
+  if (q) {
+    var qt = q.toLowerCase();
+    rows = rows.filter(function(r) {
+      return (r.id || "").toLowerCase().indexOf(qt) > -1 ||
+             (r.url || "").toLowerCase().indexOf(qt) > -1 ||
+             (r.type || "").toLowerCase().indexOf(qt) > -1 ||
+             (r.name || "").toLowerCase().indexOf(qt) > -1;
+    });
+  }
+  countEl.textContent = rows.length + " url(s)";
+  if (rows.length === 0) {
+    table.innerHTML = "<tr><td class='muted'>No URLs found matching query.</td></tr>";
+    return;
+  }
+  var html = ["<thead><tr><th>Type</th><th>ID / Name</th><th>Field</th><th>URL (Click to Edit)</th></tr></thead><tbody>"];
+  rows.forEach(function(r) {
+    var typeBadge = '<span class="pill bg-teal">' + esc(r.type) + '</span>';
+    var idName = '<strong>' + esc(r.id) + '</strong><br><span class="muted" style="font-size:11px">' + esc(r.name) + '</span>';
+    
+    // Determine bucket
+    var bucket;
+    if (r.type === "card") bucket = "cards";
+    else if (r.type === "module") bucket = "modules";
+    else if (r.type === "campaign") bucket = "campaigns";
+    else if (r.type === "campaignRegistry") bucket = "campaignRegistry";
+    else bucket = r.type + "s"; // fallback
+    
+    var currentUrl = r.url;
+    if (typeof PENDING_EDITS !== "undefined" && PENDING_EDITS[bucket] && PENDING_EDITS[bucket][r.id] && Object.prototype.hasOwnProperty.call(PENDING_EDITS[bucket][r.id], r.field)) {
+      currentUrl = PENDING_EDITS[bucket][r.id][r.field];
+    }
+    
+    var isMissing = !currentUrl || String(currentUrl).trim() === "";
+    var displayUrl = isMissing ? '[Missing - Click to add]' : esc(currentUrl);
+    var urlLinkStyle = isMissing ? 'color:#d97706; font-style:italic;' : 'word-break: break-all;';
+    var isDeleted = currentUrl === null;
+    if (isDeleted) {
+        urlLinkStyle += ' text-decoration: line-through; opacity: 0.5;';
+        displayUrl = '[Deleted]';
+    }
+    var urlLink = '<a href="' + (isMissing || isDeleted ? '#' : esc(currentUrl)) + '" target="_blank" style="font-size: 11px; ' + urlLinkStyle + '" onclick="if(' + (isMissing || isDeleted) + ') return false;">' + displayUrl + '</a>';
+    
+    // Add inline-edit hook
+    var editSpan = '<div class="inline-edit-wrap" data-action="inline-edit" data-bucket="' + esc(bucket) + '" data-id="' + esc(r.id) + '" data-field="' + esc(r.field) + '" data-current="' + esc(currentUrl === null ? "" : currentUrl) + '" data-type="text">' + urlLink + '</div>';
+
+    html.push("<tr>" +
+      "<td style='white-space:nowrap'>" + typeBadge + "</td>" +
+      "<td>" + idName + "</td>" +
+      "<td><code>" + esc(r.field) + "</code></td>" +
+      "<td>" + editSpan + "</td>" +
+    "</tr>");
+  });
+  html.push("</tbody>");
+  table.innerHTML = html.join("");
 }
 
 function initCardEditor() {
@@ -3141,6 +3260,50 @@ function initEditor() {
     loadCurrentFieldValue();
     renderQuickFieldTable();
   });
+  // URL Audit table editing
+  var urlTable = document.getElementById("table-urls");
+  if (urlTable) {
+    urlTable.addEventListener("click", function(e) {
+      var target = e.target.closest("[data-action='inline-edit']");
+      if (!target) return;
+      
+      var bucket = target.getAttribute("data-bucket");
+      var id = target.getAttribute("data-id");
+      var field = target.getAttribute("data-field");
+      var current = target.getAttribute("data-current") || "";
+
+      var input = document.createElement("input");
+      input.className = "ce-field-input";
+      input.type = "text";
+      input.value = current;
+      target.replaceWith(input);
+      input.focus();
+      input.select();
+
+      function commit() {
+        var val = input.value.trim();
+        if (val === current) {
+          renderUrlAudit(document.getElementById("q-urls").value);
+          return;
+        }
+        ensureBucketPatch(bucket);
+        if (!PENDING_EDITS[bucket][id]) PENDING_EDITS[bucket][id] = {};
+        PENDING_EDITS[bucket][id][field] = val || null;
+        refreshPendingPreview();
+        var sel = document.getElementById("card-editor-select");
+        if (sel) renderCardEditorContent(sel.value);
+        renderUrlAudit(document.getElementById("q-urls").value);
+        setEditorStatus("已修改 " + esc(id) + "." + esc(field), false);
+      }
+
+      input.addEventListener("blur", commit);
+      input.addEventListener("keydown", function(ev) {
+        if (ev.key === "Enter") { ev.preventDefault(); input.blur(); }
+        if (ev.key === "Escape") { renderUrlAudit(document.getElementById("q-urls").value); }
+      });
+    });
+  }
+
   document.getElementById("editor-id").addEventListener("change", () => {
     refreshEditorCurrentPreview();
     loadCurrentFieldValue();
@@ -4129,64 +4292,38 @@ initHistory();
   });
 })();
 
-// ── Diff Preview (enhanced save) ────────────────────────────────────────────
+// ── UI Tabs Logic ─────────────────────────────────────────────────────────
 
-function buildDiffPreview() {
-  const exported = buildExportEdits();
-  const buckets = Object.keys(exported);
-  if (buckets.length === 0) return '<div class="review-empty">No pending changes.</div>';
-  let html = '';
-  buckets.forEach(bucket => {
-    const entries = exported[bucket];
-    Object.keys(entries).forEach(id => {
-      const patch = entries[id];
-      if (!patch || typeof patch !== "object") return;
-      const entity = getCurrentEntity(bucket, id) || {};
-      html += '<div style="margin-bottom:8px;"><span class="mono" style="font-weight:600;">' + esc(bucket) + ':' + esc(id) + '</span></div>';
-      html += '<table class="diff-table"><thead><tr><th>Field</th><th>Current</th><th>New</th></tr></thead><tbody>';
-      Object.keys(patch).forEach(field => {
-        const cur = entity[field];
-        const next = patch[field];
-        const curStr = cur === undefined ? '-' : (typeof cur === "string" ? cur : JSON.stringify(cur));
-        const nextStr = next === null ? '(deleted)' : (typeof next === "string" ? next : JSON.stringify(next));
-        const cls = cur === undefined ? 'diff-add' : (next === null ? 'diff-remove' : 'diff-change');
-        html += '<tr class="' + cls + '"><td class="mono">' + esc(field) + '</td><td>' + esc(curStr) + '</td><td>' + esc(nextStr) + '</td></tr>';
-      });
-      html += '</tbody></table>';
-    });
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    const tabId = btn.getAttribute('data-tab');
+    const content = document.getElementById(tabId);
+    if (content) content.classList.add('active');
   });
-  return html;
-}
+});
 
-// Intercept the save button to show diff preview first
-const origSaveRepo = saveToRepo;
-const diffModal = document.createElement("div");
-diffModal.id = "diff-modal";
-diffModal.style.cssText = "display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.4);overflow:auto;";
-diffModal.innerHTML = '<div style="max-width:800px;margin:60px auto;background:#fff;border-radius:16px;padding:20px;box-shadow:0 8px 32px rgba(0,0,0,.15);max-height:80vh;overflow:auto;">'
-  + '<h3 style="margin:0 0 12px;">Diff Preview</h3>'
-  + '<div id="diff-content"></div>'
-  + '<div style="display:flex;gap:8px;margin-top:16px;">'
-  + '<button id="diff-confirm" class="primary" style="border:1px solid #0f766e;background:#0f766e;color:white;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">Confirm Save</button>'
-  + '<button id="diff-confirm-golden" style="border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">Confirm + Run Golden</button>'
-  + '<button id="diff-cancel" style="border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">Cancel</button>'
-  + '</div></div>';
-document.body.appendChild(diffModal);
+// Final initialization
+initEditor();
+initCardEditor();
+initGraph();
+initHistory();
+renderUrlAudit("");
 
-function showDiffModal(runGolden) {
-  const content = document.getElementById("diff-content");
-  if (content) content.innerHTML = buildDiffPreview();
-  diffModal.style.display = "block";
-  document.getElementById("diff-confirm").onclick = () => { diffModal.style.display = "none"; origSaveRepo(false); };
-  document.getElementById("diff-confirm-golden").onclick = () => { diffModal.style.display = "none"; origSaveRepo(true); };
-  document.getElementById("diff-cancel").onclick = () => { diffModal.style.display = "none"; };
-}
+// Search listeners
+var qUrls = document.getElementById("q-urls");
+if (qUrls) qUrls.addEventListener("input", function() { renderUrlAudit(this.value); });
 
-// Re-bind save buttons to show diff first
-document.getElementById("editor-save-repo").removeEventListener("click", () => {});
-document.getElementById("editor-save-repo-golden").removeEventListener("click", () => {});
-document.getElementById("editor-save-repo").addEventListener("click", (e) => { e.stopImmediatePropagation(); showDiffModal(false); }, true);
-document.getElementById("editor-save-repo-golden").addEventListener("click", (e) => { e.stopImmediatePropagation(); showDiffModal(true); }, true);
+// Floating Action Bar bindings
+document.getElementById("editor-save-repo").addEventListener("click", () => saveToRepo(false));
+document.getElementById("editor-save-repo-golden").addEventListener("click", () => saveToRepo(true));
+document.getElementById("editor-reset").addEventListener("click", () => {
+  if (window.confirm("Are you sure you want to reset all pending modifications?")) {
+    resetPendingEdits();
+  }
+});
 </script>
 </body>
 </html>

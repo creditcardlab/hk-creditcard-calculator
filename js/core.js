@@ -985,78 +985,78 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
                 markers = list;
             }
 
-	            sections.push({
-	                kind: "mission",
-	                label: sec.label || "簽賬任務進度",
-	                valueText: `$${spend.toLocaleString()} / $${target.toLocaleString()}`,
-	                progress: isWinterPromo ? 100 : pct,
-	                // Mission is informational progress; reward sections handle lock/cap gating.
-	                state: "active",
-	                markers,
-	                overlayModel: isWinterPromo ? { type: "winter_mission", tier1: winterTier1, tier2: winterTier2, spend } : null,
-	                lockedReason: unlocked ? null : `尚差 $${Math.max(0, target - spend).toLocaleString()}`,
-	                meta: { spend, target, unlocked, isWinterPromo }
-	            });
+            sections.push({
+                kind: "mission",
+                label: sec.label || "簽賬任務進度",
+                valueText: `$${spend.toLocaleString()} / $${target.toLocaleString()}`,
+                progress: isWinterPromo ? 100 : pct,
+                // Mission is informational progress; reward sections handle lock/cap gating.
+                state: "active",
+                markers,
+                overlayModel: isWinterPromo ? { type: "winter_mission", tier1: winterTier1, tier2: winterTier2, spend } : null,
+                lockedReason: unlocked ? null : `尚差 $${Math.max(0, target - spend).toLocaleString()}`,
+                meta: { spend, target, unlocked, isWinterPromo }
+            });
         }
 
-		        if (sec.type === "cap_rate") {
-		            const used = Number(userProfile.usage[sec.usageKey]) || 0;
-	            let capVal = toPositiveNumber(sec.cap);
-	            if (sec.capModule) {
-	                const capInfo = getCapFromModule(sec.capModule);
-	                if (capInfo && capInfo.cap) capVal = toPositiveNumber(capInfo.cap);
-	            }
-	            let rate = Number(sec.rate);
-	            if (!Number.isFinite(rate) && sec.rateModule) {
-	                const rm = getModule(sec.rateModule);
-	                if (rm && Number.isFinite(Number(rm.rate))) rate = Number(rm.rate);
-	            }
-	            if (!Number.isFinite(rate) && sec.capModule) {
-	                const rm = getModule(sec.capModule);
-	                if (rm && Number.isFinite(Number(rm.rate))) rate = Number(rm.rate);
-	            }
-	            if (!Number.isFinite(rate)) rate = 0;
-	                let unlockSpec = deriveUnlockSpec(sec);
-	                if (!hasExplicitUnlockConfig(sec) && unlockSpec.unlockKey === null && unlockSpec.unlockTarget === null) {
-	                    unlockSpec = deriveUnlockSpecFromRefs([sec.capModule, sec.rateModule]);
-	                }
-	                const unlockTarget = unlockSpec.unlockTarget;
-	                const unlockValue = unlockSpec.unlockKey ? (Number(userProfile.usage[unlockSpec.unlockKey]) || 0) : null;
-	                const hasCap = capVal !== null;
+        if (sec.type === "cap_rate") {
+            const used = Number(userProfile.usage[sec.usageKey]) || 0;
+            let capVal = toPositiveNumber(sec.cap);
+            if (sec.capModule) {
+                const capInfo = getCapFromModule(sec.capModule);
+                if (capInfo && capInfo.cap) capVal = toPositiveNumber(capInfo.cap);
+            }
+            let rate = Number(sec.rate);
+            if (!Number.isFinite(rate) && sec.rateModule) {
+                const rm = getModule(sec.rateModule);
+                if (rm && Number.isFinite(Number(rm.rate))) rate = Number(rm.rate);
+            }
+            if (!Number.isFinite(rate) && sec.capModule) {
+                const rm = getModule(sec.capModule);
+                if (rm && Number.isFinite(Number(rm.rate))) rate = Number(rm.rate);
+            }
+            if (!Number.isFinite(rate)) rate = 0;
+            let unlockSpec = deriveUnlockSpec(sec);
+            if (!hasExplicitUnlockConfig(sec) && unlockSpec.unlockKey === null && unlockSpec.unlockTarget === null) {
+                unlockSpec = deriveUnlockSpecFromRefs([sec.capModule, sec.rateModule]);
+            }
+            const unlockTarget = unlockSpec.unlockTarget;
+            const unlockValue = unlockSpec.unlockKey ? (Number(userProfile.usage[unlockSpec.unlockKey]) || 0) : null;
+            const hasCap = capVal !== null;
 
-	            const rewardRaw = used * rate;
-                const reward = hasCap ? Math.min(capVal, rewardRaw) : rewardRaw;
-	            const pct = hasCap ? Math.min(100, (reward / capVal) * 100) : ((unlockTarget && unlockTarget > 0) ? Math.min(100, ((unlockValue || 0) / unlockTarget) * 100) : 100);
-	            const unlocked = (unlockTarget !== null && unlockValue !== null) ? unlockValue >= unlockTarget : true;
-	            const unit = sec.unit || "";
+            const rewardRaw = used * rate;
+            const reward = hasCap ? Math.min(capVal, rewardRaw) : rewardRaw;
+            const pct = hasCap ? Math.min(100, (reward / capVal) * 100) : ((unlockTarget && unlockTarget > 0) ? Math.min(100, ((unlockValue || 0) / unlockTarget) * 100) : 100);
+            const unlocked = (unlockTarget !== null && unlockValue !== null) ? unlockValue >= unlockTarget : true;
+            const unit = sec.unit || "";
             const isCurrencyUnit = (unit === "" || unit === "$" || unit === "HKD" || unit === "元" || unit === "HK$" || unit === "現金");
-	            const prefix = isCurrencyUnit ? "$" : "";
-	            const suffix = isCurrencyUnit ? "" : (unit ? ` ${unit}` : "");
-	            const state = unlocked ? (hasCap && reward >= capVal ? "capped" : "active") : "locked";
-	            let lockedReason = !unlocked ? "未解鎖" : null;
-                if (!unlocked && !hasCap && unlockTarget !== null && unlockValue !== null) {
-                    const gap = Math.max(0, Math.floor(unlockTarget - unlockValue));
-                    lockedReason = `尚差 $${gap.toLocaleString()}`;
-                }
-                let valueText;
-                if (hasCap) {
-                    valueText = `${prefix}${Math.floor(reward).toLocaleString()}${suffix} / ${prefix}${capVal.toLocaleString()}${suffix}`.trim();
-                } else if (unlocked) {
-                    valueText = "✓ 已達門檻";
-                } else if (unlockTarget !== null && unlockValue !== null) {
-                    valueText = `$${Math.floor(unlockValue).toLocaleString()} / $${Math.floor(unlockTarget).toLocaleString()}`;
-                } else {
-                    valueText = "未達門檻";
-                }
+            const prefix = isCurrencyUnit ? "$" : "";
+            const suffix = isCurrencyUnit ? "" : (unit ? ` ${unit}` : "");
+            const state = unlocked ? (hasCap && reward >= capVal ? "capped" : "active") : "locked";
+            let lockedReason = !unlocked ? "未解鎖" : null;
+            if (!unlocked && !hasCap && unlockTarget !== null && unlockValue !== null) {
+                const gap = Math.max(0, Math.floor(unlockTarget - unlockValue));
+                lockedReason = `尚差 $${gap.toLocaleString()}`;
+            }
+            let valueText;
+            if (hasCap) {
+                valueText = `${prefix}${Math.floor(reward).toLocaleString()}${suffix} / ${prefix}${capVal.toLocaleString()}${suffix}`.trim();
+            } else if (unlocked) {
+                valueText = "✓ 已達門檻";
+            } else if (unlockTarget !== null && unlockValue !== null) {
+                valueText = `$${Math.floor(unlockValue).toLocaleString()} / $${Math.floor(unlockTarget).toLocaleString()}`;
+            } else {
+                valueText = "未達門檻";
+            }
 
-	            sections.push({
-	                kind: "cap_rate",
-	                label: sec.label || "回贈進度",
-	                valueText,
-	                progress: pct,
-	                state,
-	                lockedReason,
-	                meta: {
+            sections.push({
+                kind: "cap_rate",
+                label: sec.label || "回贈進度",
+                valueText,
+                progress: pct,
+                state,
+                lockedReason,
+                meta: {
                     reward,
                     cap: hasCap ? capVal : 0,
                     unit,
@@ -1150,53 +1150,53 @@ function buildPromoStatus(promo, userProfile, modulesDB) {
             });
         }
 
-		        if (sec.type === "cap") {
-	                let unlockSpec = deriveUnlockSpec(sec);
-		            let capKey = sec.capKey;
-		            let capVal = toPositiveNumber(sec.cap);
-		            if (sec.capModule) {
-		                const capInfo = getCapFromModule(sec.capModule);
-		                if (capInfo) {
-		                    capVal = toPositiveNumber(capInfo.cap);
-		                    capKey = capInfo.capKey || capKey;
-		                }
-		            }
-	                if (!hasExplicitUnlockConfig(sec) && unlockSpec.unlockKey === null && unlockSpec.unlockTarget === null) {
-	                    unlockSpec = deriveUnlockSpecFromRefs([sec.capModule]);
-	                }
-		            const used = Number(userProfile.usage[capKey]) || 0;
-	                const unlockTarget = unlockSpec.unlockTarget;
-	                const unlockValue = unlockSpec.unlockKey ? (Number(userProfile.usage[unlockSpec.unlockKey]) || 0) : null;
-		            const unlocked = (unlockTarget !== null && unlockValue !== null) ? (unlockValue >= unlockTarget) : true;
-                const hasCap = capVal !== null;
-	            const pct = hasCap ? Math.min(100, (used / capVal) * 100) : ((unlockTarget && unlockTarget > 0) ? Math.min(100, ((unlockValue || 0) / unlockTarget) * 100) : 100);
-	            const unitRaw = sec.unit || '';
+        if (sec.type === "cap") {
+            let unlockSpec = deriveUnlockSpec(sec);
+            let capKey = sec.capKey;
+            let capVal = toPositiveNumber(sec.cap);
+            if (sec.capModule) {
+                const capInfo = getCapFromModule(sec.capModule);
+                if (capInfo) {
+                    capVal = toPositiveNumber(capInfo.cap);
+                    capKey = capInfo.capKey || capKey;
+                }
+            }
+            if (!hasExplicitUnlockConfig(sec) && unlockSpec.unlockKey === null && unlockSpec.unlockTarget === null) {
+                unlockSpec = deriveUnlockSpecFromRefs([sec.capModule]);
+            }
+            const used = Number(userProfile.usage[capKey]) || 0;
+            const unlockTarget = unlockSpec.unlockTarget;
+            const unlockValue = unlockSpec.unlockKey ? (Number(userProfile.usage[unlockSpec.unlockKey]) || 0) : null;
+            const unlocked = (unlockTarget !== null && unlockValue !== null) ? (unlockValue >= unlockTarget) : true;
+            const hasCap = capVal !== null;
+            const pct = hasCap ? Math.min(100, (used / capVal) * 100) : ((unlockTarget && unlockTarget > 0) ? Math.min(100, ((unlockValue || 0) / unlockTarget) * 100) : 100);
+            const unitRaw = sec.unit || '';
             const isCurrencyUnit = (unitRaw === "" || unitRaw === "$" || unitRaw === "HKD" || unitRaw === "元" || unitRaw === "HK$" || unitRaw === "現金");
-	            const prefix = isCurrencyUnit ? '$' : (unitRaw ? '' : '$');
-	            const unit = isCurrencyUnit ? '' : unitRaw;
-	            const state = hasCap ? (used >= capVal ? "capped" : (unlocked ? "active" : "locked")) : (unlocked ? "active" : "locked");
-                const valueText = hasCap
-                    ? `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${capVal.toLocaleString()}${unit}`
-                    : (unlocked ? "已達門檻（不設上限）" : "未達門檻");
+            const prefix = isCurrencyUnit ? '$' : (unitRaw ? '' : '$');
+            const unit = isCurrencyUnit ? '' : unitRaw;
+            const state = hasCap ? (used >= capVal ? "capped" : (unlocked ? "active" : "locked")) : (unlocked ? "active" : "locked");
+            const valueText = hasCap
+                ? `${prefix}${Math.floor(used).toLocaleString()}${unit} / ${prefix}${capVal.toLocaleString()}${unit}`
+                : (unlocked ? "已達門檻（不設上限）" : "未達門檻");
 
-	            sections.push({
-	                kind: "cap",
-	                label: sec.label || "回贈進度",
-	                valueText,
-	                progress: pct,
-	                state,
-	                lockedReason: unlocked ? null : "未解鎖",
-	                meta: {
-	                    used,
-	                    cap: hasCap ? capVal : 0,
-	                    unit,
-	                    prefix,
-	                    remaining: hasCap ? Math.max(0, capVal - used) : 0,
-	                    unlocked
-	                }
-	            });
-	            if (capKey) renderedCaps.add(capKey);
-	        }
+            sections.push({
+                kind: "cap",
+                label: sec.label || "回贈進度",
+                valueText,
+                progress: pct,
+                state,
+                lockedReason: unlocked ? null : "未解鎖",
+                meta: {
+                    used,
+                    cap: hasCap ? capVal : 0,
+                    unit,
+                    prefix,
+                    remaining: hasCap ? Math.max(0, capVal - used) : 0,
+                    unlocked
+                }
+            });
+            if (capKey) renderedCaps.add(capKey);
+        }
     });
 
     if (promo.capKeys) promo.capKeys.forEach(k => renderedCaps.add(k));
@@ -1627,6 +1627,7 @@ function evaluateModules(activeModules, amount, category, ctx) {
         merchantCategory: String(ctx.merchantCategory || "").trim(),
         inputCategory: String(ctx.inputCategory || "").trim(),
         resolvedCategory: String(resolvedCategory || "").trim(),
+        currency: String(ctx.currency || "").trim(),
         cardId: ctx.cardId || "",
         txDate: ctx.txDate || "",
         isHoliday: !!ctx.isHoliday,
@@ -1769,234 +1770,44 @@ function evaluateModules(activeModules, amount, category, ctx) {
                 }
             }
         }
-            else if (mod.type === "prestige_annual_bonus") {
-                const pct = getCitiPrestigeBonusPercentForSettings(userProfile.settings);
-                if (pct > 0) {
-                    rate = pct / 100;
-                    tempDesc = `${mod.desc} (+${pct}%)`;
-                    hit = true;
-                }
-            }
-            else if (mod.type === "guru_capped") {
-                if (typeof mod.eligible_check === "function" && !mod.eligible_check(resolvedCategory, eligCtx)) return;
-                const guruSpendKey = mod.req_mission_key || "guru_spend_accum";
-                const guruSpendCurrent = Number(userProfile.usage[guruSpendKey]) || 0;
-                const guruSpendProjected = guruSpendCurrent + (isCategoryMatch([mod.category], resolvedCategory) ? amount : 0);
-                const res = calculateGuru(mod, amount, parseInt(userProfile.settings.guru_level), category, {
-                    projectedSpend: guruSpendProjected
-                });
-                if (res.entry) {
-                    const displayRate = Number.isFinite(Number(res.displayRate)) ? Number(res.displayRate) : Number(res.rate || 0);
-                    breakdown.push({
-                        ...res.entry,
-                        meta: {
-                            ...(res.entry.meta || {}),
-                            rate: displayRate,
-                            cashRate: (conv || { cash_rate: 0 }).cash_rate,
-                            modType: mod.type,
-                            modMode: "add"
-                        }
-                    });
-                    guruRC = res.generatedRC;
-                    totalRate += res.rate;
-                    totalRatePotential += res.rate;
-                }
-            }
-            else if (mod.type === "category") {
-                const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline) : true;
-                if (!matchOk) return;
-                if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, eligCtx)) return;
-                if (mod.cap_limit) {
-                    if (applyCurrent && mod.cap_mode !== 'reward') trackingKey = mod.cap_key;
-
-                if (mod.cap_mode === 'reward') {
-                    const rewardCapState = getRewardCapState(mod.cap_key, mod.cap_limit);
-                    let remaining = rewardCapState.remaining;
-                    let isMaxed = rewardCapState.isMaxed;
-
-                    const potCapState = getRewardCapStatePotential(mod.cap_key, mod.cap_limit);
-                    let remainingPot = potCapState.remaining;
-                    let isMaxedPot = potCapState.isMaxed;
-
-                    if (mod.secondary_cap_key && mod.secondary_cap_limit) {
-                        const secCapState = getRewardCapState(mod.secondary_cap_key, mod.secondary_cap_limit);
-                        if (secCapState.isMaxed) isMaxed = true;
-                        remaining = Math.min(remaining, secCapState.remaining);
-                        const secCapStatePot = getRewardCapStatePotential(mod.secondary_cap_key, mod.secondary_cap_limit);
-                        if (secCapStatePot.isMaxed) isMaxedPot = true;
-                        remainingPot = Math.min(remainingPot, secCapStatePot.remaining);
-                    }
-
-                        if (isMaxed) {
-                            addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
-                        } else {
-                            const projectedReward = amount * mod.rate;
-                            if (projectedReward <= remaining) {
-                                rate = mod.rate;
-                                hit = true;
-                                addModuleBreakdown(tempDesc || mod.desc);
-                            } else {
-                                rate = remaining / amount;
-                                // For locked modules, suppress (部分) — the 🔒 prefix is sufficient
-                                if (!applyCurrent && applyPotential) {
-                                    addModuleBreakdown(tempDesc || mod.desc);
-                                } else {
-                                    addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
-                                }
-                                hit = true;
-                            }
-                        }
-                        if (!isMaxedPot) {
-                            const projectedRewardPot = amount * mod.rate;
-                            if (projectedRewardPot <= remainingPot) {
-                                ratePotential = mod.rate;
-                                if (!hit) hit = true;
-                            } else {
-                                ratePotential = remainingPot / amount;
-                                if (!hit) hit = true;
-                            }
-                        } else {
-                            ratePotential = 0;
-                        }
-                } else {
-                    const capCheck = checkCap(mod.cap_key, mod.cap_limit);
-                    if (capCheck.isMaxed) addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
-                    else if (amount > capCheck.remaining) { rate = (capCheck.remaining * mod.rate) / amount; addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true }); hit = true; }
-                    else {
-                        rate = mod.rate;
-                        hit = true;
-                        addModuleBreakdown(tempDesc || mod.desc);
-                    }
-                }
-            } else { rate = mod.rate; hit = true; }
-        }
-            else if (mod.type === "category_overflow_bonus") {
-                const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline) : true;
-                if (!matchOk) return;
-                if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, eligCtx)) return;
-
-                let overflowAmount = amount;
-                if (mod.overflow_after_cap_key && mod.overflow_after_cap_limit) {
-                    const overflowCap = checkCap(mod.overflow_after_cap_key, mod.overflow_after_cap_limit);
-                    const remainingBeforeOverflow = Math.max(0, Number(overflowCap.remaining) || 0);
-                    overflowAmount = Math.max(0, amount - remainingBeforeOverflow);
-                }
-
-                if (overflowAmount <= 0) return;
-                const overflowRewardRaw = overflowAmount * (Number(mod.rate) || 0);
-                if (overflowRewardRaw <= 0) return;
-
-                const isOverflowPartial = overflowAmount < amount;
-                const partialText = (tempDesc || mod.desc) + "(部分)";
-
-                if (mod.cap_limit) {
-                    if (applyCurrent && mod.cap_mode !== "reward") trackingKey = mod.cap_key;
-
-                    if (mod.cap_mode === "reward") {
-                        const rewardCapState = getRewardCapState(mod.cap_key, mod.cap_limit);
-                        let remaining = rewardCapState.remaining;
-                        let isMaxed = rewardCapState.isMaxed;
-
-                        const potCapState = getRewardCapStatePotential(mod.cap_key, mod.cap_limit);
-                        let remainingPot = potCapState.remaining;
-                        let isMaxedPot = potCapState.isMaxed;
-
-                        if (mod.secondary_cap_key && mod.secondary_cap_limit) {
-                            const secCapState = getRewardCapState(mod.secondary_cap_key, mod.secondary_cap_limit);
-                            if (secCapState.isMaxed) isMaxed = true;
-                            remaining = Math.min(remaining, secCapState.remaining);
-                            const secCapStatePot = getRewardCapStatePotential(mod.secondary_cap_key, mod.secondary_cap_limit);
-                            if (secCapStatePot.isMaxed) isMaxedPot = true;
-                            remainingPot = Math.min(remainingPot, secCapStatePot.remaining);
-                        }
-
-                        if (isMaxed) {
-                            addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
-                        } else if (overflowRewardRaw <= remaining) {
-                            rate = overflowRewardRaw / amount;
-                            hit = true;
-                            if (isOverflowPartial) addModuleBreakdown(partialText, null, { partial: true });
-                            else addModuleBreakdown(tempDesc || mod.desc);
-                        } else {
-                            rate = remaining / amount;
-                            hit = true;
-                            addModuleBreakdown(partialText, null, { partial: true });
-                        }
-                        if (!isMaxedPot) {
-                            if (overflowRewardRaw <= remainingPot) {
-                                ratePotential = overflowRewardRaw / amount;
-                                if (!hit) hit = true;
-                            } else {
-                                ratePotential = remainingPot / amount;
-                                if (!hit) hit = true;
-                            }
-                        } else {
-                            ratePotential = 0;
-                        }
-                    } else {
-                        const capCheck = checkCap(mod.cap_key, mod.cap_limit);
-                        if (capCheck.isMaxed) {
-                            addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
-                        } else if (overflowAmount > capCheck.remaining) {
-                            rate = (capCheck.remaining * (Number(mod.rate) || 0)) / amount;
-                            hit = true;
-                            addModuleBreakdown(partialText, null, { partial: true });
-                        } else {
-                            rate = overflowRewardRaw / amount;
-                            hit = true;
-                            if (isOverflowPartial) addModuleBreakdown(partialText, null, { partial: true });
-                            else addModuleBreakdown(tempDesc || mod.desc);
-                        }
-                    }
-                } else {
-                    rate = overflowRewardRaw / amount;
-                    hit = true;
-                    if (isOverflowPartial) addModuleBreakdown(partialText, null, { partial: true });
-                    else addModuleBreakdown(tempDesc || mod.desc);
-                }
-            }
-            else if (mod.type === "stamp_cashback") {
-                const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline) : true;
-                if (!matchOk) return;
-                if (typeof mod.eligible_check === "function" && !mod.eligible_check(resolvedCategory, eligCtx)) return;
-
-                const progressKey = String(mod.stamp_progress_key || mod.req_mission_key || "").trim();
-                const stampDelta = Math.max(0, Math.floor(Number(missionDeltaByKey[progressKey] || 0)));
-                if (!progressKey) return;
-                if (stampDelta <= 0) {
-                    const merchantId = String(eligCtx.merchantId || "").trim();
-                    if (progressKey === "red_mcd_stamp_total" && merchantId === "mcdonalds") {
-                        const reason = getHsbcRedMcdStampIneligibleReason(resolvedCategory, eligCtx);
-                        if (reason) addModuleBreakdown(`${tempDesc || mod.desc}（${reason}）`, "muted");
-                    }
-                    return;
-                }
-
-                const stampsPerReward = Math.floor(Number(mod.stamps_per_reward) || 0);
-                const rewardPerReward = Number(mod.reward_per_reward) || 0;
-                if (stampsPerReward <= 0 || rewardPerReward <= 0) return;
-
-                const stampBefore = Math.max(0, Math.floor(Number(userProfile.usage[progressKey]) || 0));
-                const stampAfter = stampBefore + stampDelta;
-                const rewardStepsBefore = Math.floor(stampBefore / stampsPerReward);
-                const rewardStepsAfter = Math.floor(stampAfter / stampsPerReward);
-                const unlockedSteps = Math.max(0, rewardStepsAfter - rewardStepsBefore);
-
-                if (unlockedSteps <= 0) {
-                    addModuleBreakdown(`${tempDesc || mod.desc}（+${stampDelta}印花）`, "muted");
-                    return;
-                }
-
-                const fixedReward = unlockedSteps * rewardPerReward;
-                if (fixedReward <= 0) return;
-                rate = fixedReward / amount;
+        else if (mod.type === "prestige_annual_bonus") {
+            const pct = getCitiPrestigeBonusPercentForSettings(userProfile.settings);
+            if (pct > 0) {
+                rate = pct / 100;
+                tempDesc = `${mod.desc} (+${pct}%)`;
                 hit = true;
-                tempDesc = `${tempDesc || mod.desc}（+${stampDelta}印花；滿${rewardStepsAfter * stampsPerReward}印花）`;
             }
-            else if (mod.type === "always") { rate = mod.rate; hit = true; }
-
-            // Enforce cap for non-category modules (e.g. red_hot_allocation / red_hot_fixed_bonus).
-            if (hit && mod.type !== "guru_capped" && mod.type !== "category" && mod.cap_limit && mod.cap_key) {
+        }
+        else if (mod.type === "guru_capped") {
+            if (typeof mod.eligible_check === "function" && !mod.eligible_check(resolvedCategory, eligCtx)) return;
+            const guruSpendKey = mod.req_mission_key || "guru_spend_accum";
+            const guruSpendCurrent = Number(userProfile.usage[guruSpendKey]) || 0;
+            const guruSpendProjected = guruSpendCurrent + (isCategoryMatch([mod.category], resolvedCategory) ? amount : 0);
+            const res = calculateGuru(mod, amount, parseInt(userProfile.settings.guru_level), category, {
+                projectedSpend: guruSpendProjected
+            });
+            if (res.entry) {
+                const displayRate = Number.isFinite(Number(res.displayRate)) ? Number(res.displayRate) : Number(res.rate || 0);
+                breakdown.push({
+                    ...res.entry,
+                    meta: {
+                        ...(res.entry.meta || {}),
+                        rate: displayRate,
+                        cashRate: (conv || { cash_rate: 0 }).cash_rate,
+                        modType: mod.type,
+                        modMode: "add"
+                    }
+                });
+                guruRC = res.generatedRC;
+                totalRate += res.rate;
+                totalRatePotential += res.rate;
+            }
+        }
+        else if (mod.type === "category") {
+            const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline) : true;
+            if (!matchOk) return;
+            if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, eligCtx)) return;
+            if (mod.cap_limit) {
                 if (applyCurrent && mod.cap_mode !== 'reward') trackingKey = mod.cap_key;
 
                 if (mod.cap_mode === 'reward') {
@@ -2019,101 +1830,291 @@ function evaluateModules(activeModules, amount, category, ctx) {
 
                     if (isMaxed) {
                         addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
-                        hit = false;
                     } else {
-                        const projectedReward = amount * rate;
+                        const projectedReward = amount * mod.rate;
                         if (projectedReward <= remaining) {
+                            rate = mod.rate;
+                            hit = true;
                             addModuleBreakdown(tempDesc || mod.desc);
                         } else {
                             rate = remaining / amount;
-                            addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
+                            // For locked modules, suppress (部分) — the 🔒 prefix is sufficient
+                            if (!applyCurrent && applyPotential) {
+                                addModuleBreakdown(tempDesc || mod.desc);
+                            } else {
+                                addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
+                            }
+                            hit = true;
                         }
                     }
                     if (!isMaxedPot) {
-                        const projRewardPot = amount * (ratePotential !== null ? ratePotential : rate);
-                        if (projRewardPot > remainingPot) {
+                        const projectedRewardPot = amount * mod.rate;
+                        if (projectedRewardPot <= remainingPot) {
+                            ratePotential = mod.rate;
+                            if (!hit) hit = true;
+                        } else {
                             ratePotential = remainingPot / amount;
-                        } else if (ratePotential === null) {
-                            ratePotential = rate;
+                            if (!hit) hit = true;
                         }
                     } else {
                         ratePotential = 0;
                     }
-                    capDisplayHandled = true;
+                } else {
+                    const capCheck = checkCap(mod.cap_key, mod.cap_limit);
+                    if (capCheck.isMaxed) addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
+                    else if (amount > capCheck.remaining) { rate = (capCheck.remaining * mod.rate) / amount; addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true }); hit = true; }
+                    else {
+                        rate = mod.rate;
+                        hit = true;
+                        addModuleBreakdown(tempDesc || mod.desc);
+                    }
+                }
+            } else { rate = mod.rate; hit = true; }
+        }
+        else if (mod.type === "category_overflow_bonus") {
+            const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline) : true;
+            if (!matchOk) return;
+            if (typeof mod.eligible_check === 'function' && !mod.eligible_check(resolvedCategory, eligCtx)) return;
+
+            let overflowAmount = amount;
+            if (mod.overflow_after_cap_key && mod.overflow_after_cap_limit) {
+                const overflowCap = checkCap(mod.overflow_after_cap_key, mod.overflow_after_cap_limit);
+                const remainingBeforeOverflow = Math.max(0, Number(overflowCap.remaining) || 0);
+                overflowAmount = Math.max(0, amount - remainingBeforeOverflow);
+            }
+
+            if (overflowAmount <= 0) return;
+            const overflowRewardRaw = overflowAmount * (Number(mod.rate) || 0);
+            if (overflowRewardRaw <= 0) return;
+
+            const isOverflowPartial = overflowAmount < amount;
+            const partialText = (tempDesc || mod.desc) + "(部分)";
+
+            if (mod.cap_limit) {
+                if (applyCurrent && mod.cap_mode !== "reward") trackingKey = mod.cap_key;
+
+                if (mod.cap_mode === "reward") {
+                    const rewardCapState = getRewardCapState(mod.cap_key, mod.cap_limit);
+                    let remaining = rewardCapState.remaining;
+                    let isMaxed = rewardCapState.isMaxed;
+
+                    const potCapState = getRewardCapStatePotential(mod.cap_key, mod.cap_limit);
+                    let remainingPot = potCapState.remaining;
+                    let isMaxedPot = potCapState.isMaxed;
+
+                    if (mod.secondary_cap_key && mod.secondary_cap_limit) {
+                        const secCapState = getRewardCapState(mod.secondary_cap_key, mod.secondary_cap_limit);
+                        if (secCapState.isMaxed) isMaxed = true;
+                        remaining = Math.min(remaining, secCapState.remaining);
+                        const secCapStatePot = getRewardCapStatePotential(mod.secondary_cap_key, mod.secondary_cap_limit);
+                        if (secCapStatePot.isMaxed) isMaxedPot = true;
+                        remainingPot = Math.min(remainingPot, secCapStatePot.remaining);
+                    }
+
+                    if (isMaxed) {
+                        addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
+                    } else if (overflowRewardRaw <= remaining) {
+                        rate = overflowRewardRaw / amount;
+                        hit = true;
+                        if (isOverflowPartial) addModuleBreakdown(partialText, null, { partial: true });
+                        else addModuleBreakdown(tempDesc || mod.desc);
+                    } else {
+                        rate = remaining / amount;
+                        hit = true;
+                        addModuleBreakdown(partialText, null, { partial: true });
+                    }
+                    if (!isMaxedPot) {
+                        if (overflowRewardRaw <= remainingPot) {
+                            ratePotential = overflowRewardRaw / amount;
+                            if (!hit) hit = true;
+                        } else {
+                            ratePotential = remainingPot / amount;
+                            if (!hit) hit = true;
+                        }
+                    } else {
+                        ratePotential = 0;
+                    }
                 } else {
                     const capCheck = checkCap(mod.cap_key, mod.cap_limit);
                     if (capCheck.isMaxed) {
                         addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
-                        hit = false;
-                    } else if (amount > capCheck.remaining) {
-                        rate = (capCheck.remaining * rate) / amount;
-                        addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
+                    } else if (overflowAmount > capCheck.remaining) {
+                        rate = (capCheck.remaining * (Number(mod.rate) || 0)) / amount;
+                        hit = true;
+                        addModuleBreakdown(partialText, null, { partial: true });
                     } else {
+                        rate = overflowRewardRaw / amount;
+                        hit = true;
+                        if (isOverflowPartial) addModuleBreakdown(partialText, null, { partial: true });
+                        else addModuleBreakdown(tempDesc || mod.desc);
+                    }
+                }
+            } else {
+                rate = overflowRewardRaw / amount;
+                hit = true;
+                if (isOverflowPartial) addModuleBreakdown(partialText, null, { partial: true });
+                else addModuleBreakdown(tempDesc || mod.desc);
+            }
+        }
+        else if (mod.type === "stamp_cashback") {
+            const matchOk = mod.match ? isCategoryOrOnlineMatch(mod.match, resolvedCategory, isOnline) : true;
+            if (!matchOk) return;
+            if (typeof mod.eligible_check === "function" && !mod.eligible_check(resolvedCategory, eligCtx)) return;
+
+            const progressKey = String(mod.stamp_progress_key || mod.req_mission_key || "").trim();
+            const stampDelta = Math.max(0, Math.floor(Number(missionDeltaByKey[progressKey] || 0)));
+            if (!progressKey) return;
+            if (stampDelta <= 0) {
+                const merchantId = String(eligCtx.merchantId || "").trim();
+                if (progressKey === "red_mcd_stamp_total" && merchantId === "mcdonalds") {
+                    const reason = getHsbcRedMcdStampIneligibleReason(resolvedCategory, eligCtx);
+                    if (reason) addModuleBreakdown(`${tempDesc || mod.desc}（${reason}）`, "muted");
+                }
+                return;
+            }
+
+            const stampsPerReward = Math.floor(Number(mod.stamps_per_reward) || 0);
+            const rewardPerReward = Number(mod.reward_per_reward) || 0;
+            if (stampsPerReward <= 0 || rewardPerReward <= 0) return;
+
+            const stampBefore = Math.max(0, Math.floor(Number(userProfile.usage[progressKey]) || 0));
+            const stampAfter = stampBefore + stampDelta;
+            const rewardStepsBefore = Math.floor(stampBefore / stampsPerReward);
+            const rewardStepsAfter = Math.floor(stampAfter / stampsPerReward);
+            const unlockedSteps = Math.max(0, rewardStepsAfter - rewardStepsBefore);
+
+            if (unlockedSteps <= 0) {
+                addModuleBreakdown(`${tempDesc || mod.desc}（+${stampDelta}印花）`, "muted");
+                return;
+            }
+
+            const fixedReward = unlockedSteps * rewardPerReward;
+            if (fixedReward <= 0) return;
+            rate = fixedReward / amount;
+            hit = true;
+            tempDesc = `${tempDesc || mod.desc}（+${stampDelta}印花；滿${rewardStepsAfter * stampsPerReward}印花）`;
+        }
+        else if (mod.type === "always") { rate = mod.rate; hit = true; }
+
+        // Enforce cap for non-category modules (e.g. red_hot_allocation / red_hot_fixed_bonus).
+        if (hit && mod.type !== "guru_capped" && mod.type !== "category" && mod.cap_limit && mod.cap_key) {
+            if (applyCurrent && mod.cap_mode !== 'reward') trackingKey = mod.cap_key;
+
+            if (mod.cap_mode === 'reward') {
+                const rewardCapState = getRewardCapState(mod.cap_key, mod.cap_limit);
+                let remaining = rewardCapState.remaining;
+                let isMaxed = rewardCapState.isMaxed;
+
+                const potCapState = getRewardCapStatePotential(mod.cap_key, mod.cap_limit);
+                let remainingPot = potCapState.remaining;
+                let isMaxedPot = potCapState.isMaxed;
+
+                if (mod.secondary_cap_key && mod.secondary_cap_limit) {
+                    const secCapState = getRewardCapState(mod.secondary_cap_key, mod.secondary_cap_limit);
+                    if (secCapState.isMaxed) isMaxed = true;
+                    remaining = Math.min(remaining, secCapState.remaining);
+                    const secCapStatePot = getRewardCapStatePotential(mod.secondary_cap_key, mod.secondary_cap_limit);
+                    if (secCapStatePot.isMaxed) isMaxedPot = true;
+                    remainingPot = Math.min(remainingPot, secCapStatePot.remaining);
+                }
+
+                if (isMaxed) {
+                    addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
+                    hit = false;
+                } else {
+                    const projectedReward = amount * rate;
+                    if (projectedReward <= remaining) {
                         addModuleBreakdown(tempDesc || mod.desc);
+                    } else {
+                        rate = remaining / amount;
+                        addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
                     }
-                    capDisplayHandled = true;
+                }
+                if (!isMaxedPot) {
+                    const projRewardPot = amount * (ratePotential !== null ? ratePotential : rate);
+                    if (projRewardPot > remainingPot) {
+                        ratePotential = remainingPot / amount;
+                    } else if (ratePotential === null) {
+                        ratePotential = rate;
+                    }
+                } else {
+                    ratePotential = 0;
+                }
+                capDisplayHandled = true;
+            } else {
+                const capCheck = checkCap(mod.cap_key, mod.cap_limit);
+                if (capCheck.isMaxed) {
+                    addModuleBreakdown(`💥 ${tempDesc || mod.desc}`, "muted", { capped: true, strike: true });
+                    hit = false;
+                } else if (amount > capCheck.remaining) {
+                    rate = (capCheck.remaining * rate) / amount;
+                    addModuleBreakdown(`${tempDesc || mod.desc}(部分)`, null, { partial: true });
+                } else {
+                    addModuleBreakdown(tempDesc || mod.desc);
+                }
+                capDisplayHandled = true;
+            }
+        }
+
+        if (hit && mod.type !== "guru_capped") {
+            const skipCurrent = mod.type === "always" && replacerModuleCurrent;
+            const skipPotential = mod.type === "always" && replacerModulePotential;
+
+            const allowCurrent = applyCurrent && !skipCurrent;
+            const allowPotential = applyPotential && !skipPotential;
+
+            const effectivePotentialRate = ratePotential !== null ? ratePotential : rate;
+
+            if (allowCurrent) totalRate += rate;
+            if (allowPotential) totalRatePotential += effectivePotentialRate;
+
+            const descText = tempDesc || mod.desc;
+            const capDisplayHandledInBranch = (mod.type === "category" && !!mod.cap_limit) || capDisplayHandled;
+            if (!capDisplayHandledInBranch && (allowCurrent || allowPotential) && showLockedBreakdown) {
+                addBreakdown(descText, null, null, { rate: rate, cashRate: (conv || { cash_rate: 0 }).cash_rate, modType: mod.type, modMode: mod.mode || "" });
+            }
+
+            if (allowCurrent && mod.cap_mode === 'reward' && mod.cap_limit) {
+                if (!rewardInfo) rewardInfo = { key: mod.cap_key, val: 0 };
+                const actualReward = amount * rate;
+                rewardInfo.val += actualReward;
+                rewardInfo.key = mod.cap_key;
+                if (mod.secondary_cap_key) rewardInfo.secondaryKey = mod.secondary_cap_key;
+                reserveRewardCap(mod.cap_key, actualReward);
+                if (mod.secondary_cap_key && mod.secondary_cap_key !== mod.cap_key) {
+                    reserveRewardCap(mod.secondary_cap_key, actualReward);
+                }
+            }
+            if ((allowCurrent || allowPotential) && mod.cap_mode === 'reward' && mod.cap_limit) {
+                const potReward = amount * effectivePotentialRate;
+                reserveRewardCapPotential(mod.cap_key, potReward);
+                if (mod.secondary_cap_key && mod.secondary_cap_key !== mod.cap_key) {
+                    reserveRewardCapPotential(mod.secondary_cap_key, potReward);
                 }
             }
 
-            if (hit && mod.type !== "guru_capped") {
-                const skipCurrent = mod.type === "always" && replacerModuleCurrent;
-                const skipPotential = mod.type === "always" && replacerModulePotential;
-
-                const allowCurrent = applyCurrent && !skipCurrent;
-                const allowPotential = applyPotential && !skipPotential;
-
-                const effectivePotentialRate = ratePotential !== null ? ratePotential : rate;
-
-                if (allowCurrent) totalRate += rate;
-                if (allowPotential) totalRatePotential += effectivePotentialRate;
-
-                const descText = tempDesc || mod.desc;
-                const capDisplayHandledInBranch = (mod.type === "category" && !!mod.cap_limit) || capDisplayHandled;
-                if (!capDisplayHandledInBranch && (allowCurrent || allowPotential) && showLockedBreakdown) {
-                    addBreakdown(descText, null, null, { rate: rate, cashRate: (conv || { cash_rate: 0 }).cash_rate, modType: mod.type, modMode: mod.mode || "" });
-                }
-
-                if (allowCurrent && mod.cap_mode === 'reward' && mod.cap_limit) {
-                    if (!rewardInfo) rewardInfo = { key: mod.cap_key, val: 0 };
-                    const actualReward = amount * rate;
-                    rewardInfo.val += actualReward;
-                    rewardInfo.key = mod.cap_key;
-                    if (mod.secondary_cap_key) rewardInfo.secondaryKey = mod.secondary_cap_key;
-                    reserveRewardCap(mod.cap_key, actualReward);
-                    if (mod.secondary_cap_key && mod.secondary_cap_key !== mod.cap_key) {
-                        reserveRewardCap(mod.secondary_cap_key, actualReward);
-                    }
-                }
-                if ((allowCurrent || allowPotential) && mod.cap_mode === 'reward' && mod.cap_limit) {
-                    const potReward = amount * effectivePotentialRate;
-                    reserveRewardCapPotential(mod.cap_key, potReward);
-                    if (mod.secondary_cap_key && mod.secondary_cap_key !== mod.cap_key) {
-                        reserveRewardCapPotential(mod.secondary_cap_key, potReward);
-                    }
-                }
-
-                if (allowPotential && !allowCurrent && retroactive && mod.req_mission_key) {
-                    const pendingNative = amount * effectivePotentialRate;
-                    if (pendingNative > 0) {
-                            pendingUnlocks.push({
-                                reqKey: mod.req_mission_key,
-                                reqSpend: mod.req_mission_spend || 0,
-                                pendingNative,
-                                cashRate: (conv || { cash_rate: 0 }).cash_rate,
-                                capMode: mod.cap_mode || "reward",
-                                capKey: mod.cap_key || null,
-                                capLimit: mod.cap_limit || null,
-                            secondaryCapKey: mod.secondary_cap_key || null,
-                            secondaryCapLimit: mod.secondary_cap_limit || null
-                        });
-                    }
+            if (allowPotential && !allowCurrent && retroactive && mod.req_mission_key) {
+                const pendingNative = amount * effectivePotentialRate;
+                if (pendingNative > 0) {
+                    pendingUnlocks.push({
+                        reqKey: mod.req_mission_key,
+                        reqSpend: mod.req_mission_spend || 0,
+                        pendingNative,
+                        cashRate: (conv || { cash_rate: 0 }).cash_rate,
+                        capMode: mod.cap_mode || "reward",
+                        capKey: mod.cap_key || null,
+                        capLimit: mod.cap_limit || null,
+                        secondaryCapKey: mod.secondary_cap_key || null,
+                        secondaryCapLimit: mod.secondary_cap_limit || null
+                    });
                 }
             }
-            if (mod.type === "guru_capped" && hit) {
-                totalRate += rate;
-                totalRatePotential += rate;
-            }
-        });
+        }
+        if (mod.type === "guru_capped" && hit) {
+            totalRate += rate;
+            totalRatePotential += rate;
+        }
+    });
 
     let rewardTrackingKey = null;
     let secondaryRewardTrackingKey = null;
@@ -2199,7 +2200,7 @@ function buildFinalResult(card, amount, category, displayMode, totalRate, totalR
     };
 }
 
-function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod, merchantId) {
+function buildCardResult(card, amount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod, merchantId, selectedCurrency) {
     if (!amount || amount <= 0) return null;
     const modules = (DATA && DATA.modules) ? DATA.modules : {};
     const conversions = (DATA && DATA.conversions) ? DATA.conversions : [];
@@ -2283,6 +2284,7 @@ function buildCardResult(card, amount, category, displayMode, userProfile, txDat
         txDate,
         isHoliday,
         merchantId,
+        currency: selectedCurrency,
         cardId: card.id
     });
 
@@ -2427,7 +2429,7 @@ function calculateResults(amount, category, displayMode, userProfile, txDate, is
             }
         }
 
-        const res = buildCardResult(card, cardAmount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod, merchantId);
+        const res = buildCardResult(card, cardAmount, category, displayMode, userProfile, txDate, isHoliday, isOnline, isMobilePay, paymentMethod, merchantId, selectedCurrency);
         if (res) {
             // Attach FX metadata for UI display
             if (selectedCurrency) {

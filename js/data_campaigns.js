@@ -1004,6 +1004,43 @@ const CAMPAIGNS = [
             { type: "cap", label: "💰 每月額外回贈進度", capModule: "aeon_waku_online", unit: "元" }
         ],
         capKeys: ["aeon_waku_bonus_cap"]
+    },
+    {
+        id: "aeon_upi_travel_2026",
+        promo_type: "multi_cap",
+        name: "AEON銀聯卡．「賞」遊世界",
+        icon: "fas fa-globe-asia",
+        theme: "purple",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2026-02-01",
+            endDate: "2026-04-30",
+            period: { type: "month", startDay: 1 }
+        },
+        cards: ["aeon_purple_unionpay", "aeon_premium_unionpay"],
+        sections: [
+            { type: "cap", label: "🇨🇳 內地/澳門/台灣 額外回贈進度", capKey: "aeon_upi_cn_mo_tw_bonus_cap", cap: 100, unit: "元" },
+            { type: "cap", label: "🌍 其他海外/外幣 額外回贈進度", capKey: "aeon_upi_overseas_bonus_cap", cap: 100, unit: "元" }
+        ],
+        capKeys: ["aeon_upi_cn_mo_tw_bonus_cap", "aeon_upi_overseas_bonus_cap"]
+    },
+    {
+        id: "aeon_jcb_japan_promo_2026",
+        promo_type: "cap",
+        name: "AEON JCB賞瀛．《「日」常有賞》",
+        icon: "fas fa-yen-sign",
+        theme: "purple",
+        period_policy: {
+            mode: "fixed",
+            startDate: "2026-03-01",
+            endDate: "2026-08-31",
+            period: { type: "promo", startDate: "2026-03-01", endDate: "2026-08-31" }
+        },
+        cards: ["aeon_purple_jcb"],
+        sections: [
+            { type: "cap", label: "🇯🇵 日本簽賬免手續費進度（推廣期）", capKey: "aeon_jcb_jpy_fcf_waiver_cap", cap: 117, unit: "元" }
+        ],
+        capKeys: ["aeon_jcb_jpy_fcf_waiver_cap"]
     }
 ];
 

@@ -352,7 +352,7 @@ const modulesDB = {
         cap: { key: "sc_smart_cap", period: "month" }
     },
 
-"sc_cathay_overseas_private": { type: "category", match: ["overseas"], rate: 0.5, desc: "優先私人：海外 $2/里", mode: "replace" },
+    "sc_cathay_overseas_private": { type: "category", match: ["overseas"], rate: 0.5, desc: "優先私人：海外 $2/里", mode: "replace" },
 
     // --- Citi ---
     "citi_pm_base": { type: "always", rate: 1.5, desc: "基本每 $1 賺 1.5 積分 (0.6%)" },
@@ -2684,6 +2684,84 @@ const modulesDB = {
         cap: { key: "bea_unionpay_cap", period: "month" },
         valid_from: "2025-01-01",
         valid_to: "2026-06-30"
+    },
+    "aeon_premium_upi_cn_mo_tw_bonus": {
+        type: "category",
+        match: ["overseas_cn", "overseas_mo", "overseas_tw"],
+        rate: 0.052,
+        desc: "內地/澳門/台灣 簽賬額外 13X",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_upi_cn_mo_tw_bonus_cap",
+        cap: { key: "aeon_upi_cn_mo_tw_bonus_cap", period: "month" },
+        valid_from: "2026-02-01",
+        valid_to: "2026-04-30",
+        last_verified_at: "2026-03-04",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html"
+    },
+    "aeon_premium_upi_overseas_bonus": {
+        type: "category",
+        match: ["overseas"],
+        rate: 0.052,
+        desc: "其他外幣/海外 簽賬額外 13X",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_upi_overseas_bonus_cap",
+        cap: { key: "aeon_upi_overseas_bonus_cap", period: "month" },
+        valid_from: "2026-02-01",
+        valid_to: "2026-04-30",
+        last_verified_at: "2026-03-04",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
+        eligible_check: (cat) => String(cat || "") !== "overseas_cn" && String(cat || "") !== "overseas_mo" && String(cat || "") !== "overseas_tw"
+    },
+    "aeon_std_upi_cn_mo_tw_bonus": {
+        type: "category",
+        match: ["overseas_cn", "overseas_mo", "overseas_tw"],
+        rate: 0.056,
+        desc: "內地/澳門/台灣 簽賬額外 14X",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_upi_cn_mo_tw_bonus_cap",
+        cap: { key: "aeon_upi_cn_mo_tw_bonus_cap", period: "month" },
+        valid_from: "2026-02-01",
+        valid_to: "2026-04-30",
+        last_verified_at: "2026-03-04",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html"
+    },
+    "aeon_std_upi_overseas_bonus": {
+        type: "category",
+        match: ["overseas"],
+        rate: 0.056,
+        desc: "其他外幣/海外 簽賬額外 14X",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 100,
+        cap_key: "aeon_upi_overseas_bonus_cap",
+        cap: { key: "aeon_upi_overseas_bonus_cap", period: "month" },
+        valid_from: "2026-02-01",
+        valid_to: "2026-04-30",
+        last_verified_at: "2026-03-04",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
+        eligible_check: (cat) => String(cat || "") !== "overseas_cn" && String(cat || "") !== "overseas_mo" && String(cat || "") !== "overseas_tw"
+    },
+    "aeon_jcb_jpy_fcf_waiver_2026": {
+        type: "category",
+        match: ["overseas"],
+        rate: 0.0195,
+        desc: "日本簽賬外幣手續費回贈 (1.95%)",
+        mode: "add",
+        cap_mode: "reward",
+        cap_limit: 117,
+        cap_key: "aeon_jcb_jpy_fcf_waiver_cap",
+        cap: { key: "aeon_jcb_jpy_fcf_waiver_cap", period: { type: "promo", startDate: "2026-03-01", endDate: "2026-08-31" } },
+        valid_from: "2026-03-01",
+        valid_to: "2026-08-31",
+        last_verified_at: "2026-03-04",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplejcb.html",
+        eligible_check: (cat, ctx) => String(ctx && ctx.currency || "").toUpperCase() === "JPY"
     }
 
 };

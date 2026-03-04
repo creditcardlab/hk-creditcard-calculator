@@ -2250,7 +2250,7 @@ function getSectionUi(sec, theme) {
         subTextClass: "text-gray-500"
     };
 
-	    if (kind === "mission") {
+    if (kind === "mission") {
         // Mission progress is informational; do not render lock overlay even if unmet.
         ui.showLock = false;
         ui.striped = false;
@@ -2262,39 +2262,39 @@ function getSectionUi(sec, theme) {
             ui.fillClass = met ? "bg-green-500" : "bg-blue-500";
         }
 
-	        if (met) {
-	            ui.subText = meta.unlockedText || cget("status.met", "已達標");
-	            ui.subTextClass = "text-green-600 font-bold";
-	        } else {
-	            ui.subText = sec.lockedReason || cget("status.inProgress", "進行中");
-	            ui.subTextClass = "text-gray-500";
-	        }
+        if (met) {
+            ui.subText = meta.unlockedText || cget("status.met", "已達標");
+            ui.subTextClass = "text-green-600 font-bold";
+        } else {
+            ui.subText = sec.lockedReason || cget("status.inProgress", "進行中");
+            ui.subTextClass = "text-gray-500";
+        }
 
         return ui;
     }
 
-	    if (state === "locked") {
+    if (state === "locked") {
         ui.trackClass = "pc-track pc-track-locked";
         ui.fillClass = "bg-gray-300";
         ui.striped = false;
-	        ui.subText = sec.lockedReason || cget("status.locked", "未解鎖");
-	        ui.subTextClass = "text-gray-400";
-	    } else if (state === "capped") {
+        ui.subText = sec.lockedReason || cget("status.locked", "未解鎖");
+        ui.subTextClass = "text-gray-400";
+    } else if (state === "capped") {
         ui.fillClass = "bg-red-500";
         ui.striped = false;
-	        ui.subText = cget("status.capped", "已封頂");
-	        ui.subTextClass = "text-red-500";
-	    } else {
+        ui.subText = cget("status.capped", "已封頂");
+        ui.subTextClass = "text-red-500";
+    } else {
         if (typeof meta.remaining === "number" && meta.cap > 0) {
             const prefix = meta.prefix || "";
             const unit = meta.unit || "";
-	            ui.subText = `${cget("status.remainingPrefix", "尚餘")} ${prefix}${Math.max(0, Math.floor(meta.remaining)).toLocaleString()}${unit}`;
-	        } else if (meta.unlocked && (!meta.cap || meta.cap === 0)) {
-	            ui.subText = "✓ 不設上限";
-	            ui.subTextClass = "text-green-600 font-bold";
-	        } else {
-	            ui.subText = cget("status.inProgress", "進行中");
-	        }
+            ui.subText = `${cget("status.remainingPrefix", "尚餘")} ${prefix}${Math.max(0, Math.floor(meta.remaining)).toLocaleString()}${unit}`;
+        } else if (meta.unlocked && (!meta.cap || meta.cap === 0)) {
+            ui.subText = "✓ 不設上限";
+            ui.subTextClass = "text-green-600 font-bold";
+        } else {
+            ui.subText = cget("status.inProgress", "進行中");
+        }
         ui.subTextClass = ui.subTextClass || "text-gray-500";
     }
 
@@ -2662,8 +2662,12 @@ function showChillMerchantList() {
     if (shouldOpen) window.open(url, "_blank", "noopener");
 }
 function getSimTermsUrlByOwnedCard() {
-    const creditUrl = "https://cdn.thesim.com/88_sim_Credit_Card_Terms_and_Conditions_of_Cash_Back_Promotion_TC_final_922dadcd98.pdf?updated_at=2026-01-30T09:07:02.934Z";
-    const worldUrl = "https://cdn.thesim.com/89_sim_World_Mastercard_Terms_and_Conditions_of_Cash_Back_Promotion_TC_final_da2d7dba35.pdf?updated_at=2026-01-30T09:07:02.858Z";
+    const worldRef = getCardReferenceFallback("sim_world");
+    const creditRef = getCardReferenceFallback("sim_credit");
+
+    const worldUrl = worldRef.tncUrl;
+    const creditUrl = creditRef.tncUrl;
+
     const hasWorld = !!(userProfile && Array.isArray(userProfile.ownedCards) && userProfile.ownedCards.includes("sim_world"));
     const hasCredit = !!(userProfile && Array.isArray(userProfile.ownedCards) && userProfile.ownedCards.includes("sim_credit"));
 
@@ -2998,7 +3002,7 @@ function renderDashboard(userProfile) {
                 : `${scopeLabel}｜${campaignTitle}`;
 
             const reg = (DATA.campaignRegistry && campaign && campaign.id) ? DATA.campaignRegistry[campaign.id] : null;
-	        if (reg && reg.settingKey && userProfile.settings[reg.settingKey] === false) {
+            if (reg && reg.settingKey && userProfile.settings[reg.settingKey] === false) {
                 if (!status || !status.eligible) return;
                 unregisteredPromos.push({
                     title: scopedCampaignTitle,
@@ -3007,10 +3011,10 @@ function renderDashboard(userProfile) {
                     icon: campaign.icon || "fas fa-gift"
                 });
                 const warningHtml = renderWarningCard(
-	                reg.warningTitle || scopedCampaignTitle,
-	                campaign.icon,
-	                reg.warningDesc || cget("warning.needRegister", "需登記以賺取回贈"),
-	                reg.settingKey,
+                    reg.warningTitle || scopedCampaignTitle,
+                    campaign.icon,
+                    reg.warningDesc || cget("warning.needRegister", "需登記以賺取回贈"),
+                    reg.settingKey,
                     primaryCardForSettings,
                     {
                         detail: campaign.note_zhhk || "",
@@ -3024,7 +3028,7 @@ function renderDashboard(userProfile) {
                         registrationNote: campaign.registration_note || "",
                         implementationNote: campaign.implementation_note || buildCampaignImplementationNote(campaign)
                     }
-	            );
+                );
                 const warnSortMeta = { daysLeft: 0, state: "warning" };
                 if (scope.type === "card") {
                     pushBlock(scope.cardId, warningHtml, warnSortMeta);
@@ -3033,11 +3037,11 @@ function renderDashboard(userProfile) {
                 } else {
                     pushBlock(null, warningHtml, warnSortMeta);
                 }
-	            // Prevent duplicate rendering in the "Remaining Caps" section.
-	            if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
-	            else if (campaign.capKeys) campaign.capKeys.forEach(k => renderedCaps.add(k));
-	            return;
-	        }
+                // Prevent duplicate rendering in the "Remaining Caps" section.
+                if (status.renderedCaps) status.renderedCaps.forEach(k => renderedCaps.add(k));
+                else if (campaign.capKeys) campaign.capKeys.forEach(k => renderedCaps.add(k));
+                return;
+            }
 
             if (!status || !status.eligible) return;
             const badgeText = getCampaignBadgeText(campaign);
@@ -3135,16 +3139,16 @@ function renderDashboard(userProfile) {
             if (!mod || !mod.cap_limit || !mod.cap_key) return;
             if (String(mod.cap_key).startsWith('boc_amazing_')) return;
             if (renderedCaps.has(mod.cap_key)) return;
-	        if (mod.setting_key && userProfile.settings[mod.setting_key] === false) {
+            if (mod.setting_key && userProfile.settings[mod.setting_key] === false) {
                 const title = (mod.display_name_zhhk && String(mod.display_name_zhhk).trim())
                     ? String(mod.display_name_zhhk).trim()
                     : String(mod.desc || mod.id || "").trim();
 
-	            pushBlock(cardId, renderWarningCard(
-	                title,
-	                "fas fa-exclamation-triangle",
-	                cget("warning.needRegister", "需登記以賺取回贈"),
-	                mod.setting_key,
+                pushBlock(cardId, renderWarningCard(
+                    title,
+                    "fas fa-exclamation-triangle",
+                    cget("warning.needRegister", "需登記以賺取回贈"),
+                    mod.setting_key,
                     cardId,
                     {
                         detail: mod.note_zhhk || mod.desc || "",
@@ -3158,10 +3162,10 @@ function renderDashboard(userProfile) {
                         registrationNote: mod.registration_note || (card && card.registration_note) || (cardReferenceMeta.registrationNote || ""),
                         implementationNote: buildModuleImplementationNote(mod, card, title)
                     }
-	            ));
-	            renderedCaps.add(mod.cap_key);
-	            return;
-	        }
+                ));
+                renderedCaps.add(mod.cap_key);
+                return;
+            }
 
             const title = (mod.display_name_zhhk && String(mod.display_name_zhhk).trim())
                 ? String(mod.display_name_zhhk).trim()
@@ -3230,43 +3234,43 @@ function renderDashboard(userProfile) {
             const pct = displayMaxVal > 0 ? Math.min(100, (displayCurrentVal / displayMaxVal) * 100) : 0;
             const remaining = Math.max(0, displayMaxVal - displayCurrentVal);
 
-	            const sections = [];
+            const sections = [];
 
-	            if (hasMissionGate) {
-	                const thresholdPct = thresholdTarget > 0 ? Math.min(100, (thresholdSpend / thresholdTarget) * 100) : 0;
-	                const thresholdMet = unlockMet;
-	                sections.push({
-	                    kind: "mission",
-	                    label: "🎯 簽賬任務進度",
-	                    valueText: `$${thresholdSpend.toLocaleString()} / $${thresholdTarget.toLocaleString()}`,
-	                    progress: thresholdPct,
-	                    state: "active",
-	                    lockedReason: thresholdMet ? null : `尚差 $${Math.max(0, thresholdTarget - thresholdSpend).toLocaleString()}`,
-	                    markers: null,
-	                    overlayModel: null,
-	                    meta: { spend: thresholdSpend, target: thresholdTarget, unlocked: thresholdMet }
-	                });
-	            }
+            if (hasMissionGate) {
+                const thresholdPct = thresholdTarget > 0 ? Math.min(100, (thresholdSpend / thresholdTarget) * 100) : 0;
+                const thresholdMet = unlockMet;
+                sections.push({
+                    kind: "mission",
+                    label: "🎯 簽賬任務進度",
+                    valueText: `$${thresholdSpend.toLocaleString()} / $${thresholdTarget.toLocaleString()}`,
+                    progress: thresholdPct,
+                    state: "active",
+                    lockedReason: thresholdMet ? null : `尚差 $${Math.max(0, thresholdTarget - thresholdSpend).toLocaleString()}`,
+                    markers: null,
+                    overlayModel: null,
+                    meta: { spend: thresholdSpend, target: thresholdTarget, unlocked: thresholdMet }
+                });
+            }
 
-	            const rewardState = rawUsage >= spendingCap ? "capped" : (unlockMet ? "active" : "locked");
-	            sections.push({
-	                kind: "cap",
-	                label: progressLabel,
-	                valueText: `${displayPrefix}${Math.floor(displayCurrentVal).toLocaleString()}${displayUnit} / ${displayPrefix}${Math.floor(displayMaxVal).toLocaleString()}${displayUnit}`,
-	                progress: pct,
-	                state: rewardState,
-	                lockedReason: unlockMet ? null : cget("status.locked", "未解鎖"),
-	                markers: null,
-	                overlayModel: null,
-	                meta: {
-	                    used: displayCurrentVal,
-	                    cap: displayMaxVal,
-	                    remaining: Math.max(0, remaining),
-	                    prefix: displayPrefix,
-	                    unit: displayUnit,
-	                    unlocked: unlockMet
-	                }
-	            });
+            const rewardState = rawUsage >= spendingCap ? "capped" : (unlockMet ? "active" : "locked");
+            sections.push({
+                kind: "cap",
+                label: progressLabel,
+                valueText: `${displayPrefix}${Math.floor(displayCurrentVal).toLocaleString()}${displayUnit} / ${displayPrefix}${Math.floor(displayMaxVal).toLocaleString()}${displayUnit}`,
+                progress: pct,
+                state: rewardState,
+                lockedReason: unlockMet ? null : cget("status.locked", "未解鎖"),
+                markers: null,
+                overlayModel: null,
+                meta: {
+                    used: displayCurrentVal,
+                    cap: displayMaxVal,
+                    remaining: Math.max(0, remaining),
+                    prefix: displayPrefix,
+                    unit: displayUnit,
+                    unlocked: unlockMet
+                }
+            });
 
             pushBlock(cardId, createProgressCard({
                 title,
@@ -3488,38 +3492,38 @@ function renderCalculatorResults(results, currentMode) {
     const isMobilePay = paymentMethod !== "physical";
 
     results.forEach((res, index) => {
-	        const unsupportedMode = currentMode === "miles" ? !res.supportsMiles : !res.supportsCash;
+        const unsupportedMode = currentMode === "miles" ? !res.supportsMiles : !res.supportsCash;
 
-            const formatValueText = (val, unit) => {
-                const v = String(val ?? "");
-                const u = String(unit ?? "");
-                if (u === "$") return `$${v}`;
-                if (u === "里") return `${v}里`;
-                if (u === "RC") return `${v} RC`;
-                if (u === "分") return `${v}分`;
-                // Fallback: keep old behavior.
-                if (u === "HKD" || u === "元" || u === "現金") return `$${v}`;
-                return u ? `${v} ${u}` : v;
-            };
-            const renderPrimaryValue = (val, unit, className) => {
-                const v = String(val ?? "");
-                const u = String(unit ?? "");
-                const safeV = escapeHtml(v);
-                const safeU = escapeHtml(u);
-                if (u === "$" || u === "HKD" || u === "元" || u === "現金") {
-                    return `<div class="text-xl ${className}">$${safeV}</div>`;
-                }
-                if (!u) return `<div class="text-xl ${className}">${safeV}</div>`;
-                return `<div class="text-xl ${className}">${safeV} <span class="text-xs text-gray-400">${safeU}</span></div>`;
-            };
+        const formatValueText = (val, unit) => {
+            const v = String(val ?? "");
+            const u = String(unit ?? "");
+            if (u === "$") return `$${v}`;
+            if (u === "里") return `${v}里`;
+            if (u === "RC") return `${v} RC`;
+            if (u === "分") return `${v}分`;
+            // Fallback: keep old behavior.
+            if (u === "HKD" || u === "元" || u === "現金") return `$${v}`;
+            return u ? `${v} ${u}` : v;
+        };
+        const renderPrimaryValue = (val, unit, className) => {
+            const v = String(val ?? "");
+            const u = String(unit ?? "");
+            const safeV = escapeHtml(v);
+            const safeU = escapeHtml(u);
+            if (u === "$" || u === "HKD" || u === "元" || u === "現金") {
+                return `<div class="text-xl ${className}">$${safeV}</div>`;
+            }
+            if (!u) return `<div class="text-xl ${className}">${safeV}</div>`;
+            return `<div class="text-xl ${className}">${safeV} <span class="text-xs text-gray-400">${safeU}</span></div>`;
+        };
 
-	        // Prepare Rebate Text (User specific request)
-	        // Miles -> "400里", Cash -> "$40", RC -> "400 RC"
-	        let resultText = "";
-	        const u = res.displayUnit;
-	        const v = res.displayVal;
+        // Prepare Rebate Text (User specific request)
+        // Miles -> "400里", Cash -> "$40", RC -> "400 RC"
+        let resultText = "";
+        const u = res.displayUnit;
+        const v = res.displayVal;
 
-	        resultText = formatValueText(v, u);
+        resultText = formatValueText(v, u);
 
         // Net value adjustment (foreign fee / merchant discount)
         let feeNetValue = null;
@@ -3565,137 +3569,137 @@ function renderCalculatorResults(results, currentMode) {
             if (Number.isFinite(netPotential)) feeNetPotential = Math.floor(netPotential).toLocaleString();
         }
 
-		        const txDateInput = document.getElementById('tx-date');
-		        const txDate = txDateInput ? txDateInput.value : "";
-			        const dataStr = encodeURIComponent(JSON.stringify({
-		            amount: res.amount, trackingKey: res.trackingKey, estValue: res.estValue,
-	                grossAmount: Number(res.grossAmount) || Number(res.amount) || 0,
-	                memberDayDiscount: Number(res.memberDayDiscount) || 0,
-		            guruRC: res.guruRC, missionTags: res.missionTags, category: res.category,
-		            cardId: res.cardId,
-		            merchantId: selectedMerchantId || null,
-		            rewardTrackingKey: res.rewardTrackingKey,
-		            secondaryRewardTrackingKey: res.secondaryRewardTrackingKey,
-		            generatedReward: res.generatedReward,
-	            resultText: resultText,
-	            unsupportedMode,
-	            pendingUnlocks: res.pendingUnlocks || [],
-	            isOnline,
-	            isMobilePay,
-	            paymentMethod,
-	            txDate
-	        }));
-	        let displayVal = res.displayVal;
-	        let displayUnit = res.displayUnit;
-	        let valClass = unsupportedMode ? 'text-gray-400 font-medium' : 'text-stone-800 font-bold';
+        const txDateInput = document.getElementById('tx-date');
+        const txDate = txDateInput ? txDateInput.value : "";
+        const dataStr = encodeURIComponent(JSON.stringify({
+            amount: res.amount, trackingKey: res.trackingKey, estValue: res.estValue,
+            grossAmount: Number(res.grossAmount) || Number(res.amount) || 0,
+            memberDayDiscount: Number(res.memberDayDiscount) || 0,
+            guruRC: res.guruRC, missionTags: res.missionTags, category: res.category,
+            cardId: res.cardId,
+            merchantId: selectedMerchantId || null,
+            rewardTrackingKey: res.rewardTrackingKey,
+            secondaryRewardTrackingKey: res.secondaryRewardTrackingKey,
+            generatedReward: res.generatedReward,
+            resultText: resultText,
+            unsupportedMode,
+            pendingUnlocks: res.pendingUnlocks || [],
+            isOnline,
+            isMobilePay,
+            paymentMethod,
+            txDate
+        }));
+        let displayVal = res.displayVal;
+        let displayUnit = res.displayUnit;
+        let valClass = unsupportedMode ? 'text-gray-400 font-medium' : 'text-stone-800 font-bold';
 
-	        if (allowFeeNet && hasNetImpact && feeNetValue !== null) {
-	            displayVal = feeNetValue;
-	            displayUnit = "$";
-	            valClass = 'text-blue-600 font-bold';
-	        }
+        if (allowFeeNet && hasNetImpact && feeNetValue !== null) {
+            displayVal = feeNetValue;
+            displayUnit = "$";
+            valClass = 'text-blue-600 font-bold';
+        }
 
-		        let mainValHtml = renderPrimaryValue(displayVal, displayUnit, valClass);
-		        if (unsupportedMode) {
-		            mainValHtml += `<div class="text-[10px] text-gray-400 mt-0.5">${escapeHtml(cget("calc.unsupportedMode", "不支援此模式"))}</div>`;
-		        }
-	        let potentialHtml = "";
-	        const lockedNonModulePotentialNative = Array.isArray(res.breakdown)
-	            ? res.breakdown.reduce((sum, entry) => {
-	                if (!entry || typeof entry !== "object") return sum;
-	                const text = String(entry.text || "");
-	                const flags = entry.flags || {};
-	                if (!(flags.locked || text.includes("🔒"))) return sum;
-	                const meta = entry.meta || {};
-	                if (meta.modType || meta.modMode) return sum;
-	                const rate = Number(meta.rate);
-	                if (!Number.isFinite(rate) || rate <= 0) return sum;
-	                return sum + ((Number(res.amount) || 0) * rate);
-	            }, 0)
-	            : 0;
-	        const lockedNonModulePotentialDisplayAddon = (() => {
-	            if (!(lockedNonModulePotentialNative > 0)) return 0;
-	            const nativePot = Number(res.nativeValPotential) || 0;
-	            const nativeNow = Number(res.nativeVal) || 0;
-	            const milesPerNative = nativePot > 0
-	                ? ((Number(res.estMilesPotential) || 0) / nativePot)
-	                : (nativeNow > 0 ? ((Number(res.estMiles) || 0) / nativeNow) : 0);
-	            const cashPerNative = nativePot > 0
-	                ? ((Number(res.estCashPotential) || 0) / nativePot)
-	                : (nativeNow > 0 ? ((Number(res.estCash) || 0) / nativeNow) : 0);
-	            if (currentMode === "miles") return lockedNonModulePotentialNative * milesPerNative;
-	            return lockedNonModulePotentialNative * cashPerNative;
-	        })();
-	        const hasPendingUnlock = Array.isArray(res.pendingUnlocks) && res.pendingUnlocks.length > 0;
-	        const hasPotentialDelta = (Number(res.nativeValPotential) || 0) > ((Number(res.nativeVal) || 0) + 1e-9);
-	        const hasLockedBreakdown = Array.isArray(res.breakdown) && res.breakdown.some((entry) => {
-	            const text = typeof entry === "string" ? entry : String((entry && entry.text) || "");
-	            const flags = (entry && typeof entry === "object" && entry.flags) ? entry.flags : {};
-	            return !!flags.locked || text.includes("🔒");
-	        });
-	        if (res.displayValPotential && (res.displayValPotential !== res.displayVal || hasPotentialDelta || hasPendingUnlock || hasLockedBreakdown)) {
-	            let potentialVal = res.displayValPotential;
-	            let potentialUnit = res.displayUnitPotential;
-	            if (allowFeeNet && hasNetImpact && feeNetPotential !== null) {
-	                potentialVal = feeNetPotential;
-	                potentialUnit = "$";
-	            }
-	            const parsedPotential = Number(String(potentialVal).replace(/,/g, ""));
-	            if (Number.isFinite(parsedPotential) && lockedNonModulePotentialDisplayAddon > 0) {
-	                potentialVal = Math.floor(Math.max(0, parsedPotential + lockedNonModulePotentialDisplayAddon)).toLocaleString();
-	            }
-	            potentialHtml = `<div class="text-[10px] text-gray-500 mt-0.5">🔓 解鎖後：${escapeHtml(formatValueText(potentialVal, potentialUnit))}</div>`;
-	        }
+        let mainValHtml = renderPrimaryValue(displayVal, displayUnit, valClass);
+        if (unsupportedMode) {
+            mainValHtml += `<div class="text-[10px] text-gray-400 mt-0.5">${escapeHtml(cget("calc.unsupportedMode", "不支援此模式"))}</div>`;
+        }
+        let potentialHtml = "";
+        const lockedNonModulePotentialNative = Array.isArray(res.breakdown)
+            ? res.breakdown.reduce((sum, entry) => {
+                if (!entry || typeof entry !== "object") return sum;
+                const text = String(entry.text || "");
+                const flags = entry.flags || {};
+                if (!(flags.locked || text.includes("🔒"))) return sum;
+                const meta = entry.meta || {};
+                if (meta.modType || meta.modMode) return sum;
+                const rate = Number(meta.rate);
+                if (!Number.isFinite(rate) || rate <= 0) return sum;
+                return sum + ((Number(res.amount) || 0) * rate);
+            }, 0)
+            : 0;
+        const lockedNonModulePotentialDisplayAddon = (() => {
+            if (!(lockedNonModulePotentialNative > 0)) return 0;
+            const nativePot = Number(res.nativeValPotential) || 0;
+            const nativeNow = Number(res.nativeVal) || 0;
+            const milesPerNative = nativePot > 0
+                ? ((Number(res.estMilesPotential) || 0) / nativePot)
+                : (nativeNow > 0 ? ((Number(res.estMiles) || 0) / nativeNow) : 0);
+            const cashPerNative = nativePot > 0
+                ? ((Number(res.estCashPotential) || 0) / nativePot)
+                : (nativeNow > 0 ? ((Number(res.estCash) || 0) / nativeNow) : 0);
+            if (currentMode === "miles") return lockedNonModulePotentialNative * milesPerNative;
+            return lockedNonModulePotentialNative * cashPerNative;
+        })();
+        const hasPendingUnlock = Array.isArray(res.pendingUnlocks) && res.pendingUnlocks.length > 0;
+        const hasPotentialDelta = (Number(res.nativeValPotential) || 0) > ((Number(res.nativeVal) || 0) + 1e-9);
+        const hasLockedBreakdown = Array.isArray(res.breakdown) && res.breakdown.some((entry) => {
+            const text = typeof entry === "string" ? entry : String((entry && entry.text) || "");
+            const flags = (entry && typeof entry === "object" && entry.flags) ? entry.flags : {};
+            return !!flags.locked || text.includes("🔒");
+        });
+        if (res.displayValPotential && (res.displayValPotential !== res.displayVal || hasPotentialDelta || hasPendingUnlock || hasLockedBreakdown)) {
+            let potentialVal = res.displayValPotential;
+            let potentialUnit = res.displayUnitPotential;
+            if (allowFeeNet && hasNetImpact && feeNetPotential !== null) {
+                potentialVal = feeNetPotential;
+                potentialUnit = "$";
+            }
+            const parsedPotential = Number(String(potentialVal).replace(/,/g, ""));
+            if (Number.isFinite(parsedPotential) && lockedNonModulePotentialDisplayAddon > 0) {
+                potentialVal = Math.floor(Math.max(0, parsedPotential + lockedNonModulePotentialDisplayAddon)).toLocaleString();
+            }
+            potentialHtml = `<div class="text-[10px] text-gray-500 mt-0.5">🔓 解鎖後：${escapeHtml(formatValueText(potentialVal, potentialUnit))}</div>`;
+        }
         let redemptionHtml = "";
         if (potentialHtml && !res.redemptionConfig) {
             mainValHtml += potentialHtml;
         }
 
-	        if (res.redemptionConfig) {
-	            const rd = res.redemptionConfig;
-                const nativeRounded = Math.floor(Number(res.nativeVal) || 0);
-                const displayRounded = Math.floor(Number(String(displayVal).replace(/,/g, "")) || 0);
-                const primaryUnit = String(displayUnit || "").trim();
-                const nativeUnit = String(rd.unit || "").trim();
-                const showNativeLine = !(primaryUnit && nativeUnit && primaryUnit === nativeUnit && displayRounded === nativeRounded);
-                const nativeLineHtml = showNativeLine
-                    ? `<div class="text-xs text-gray-500 mt-0.5 font-mono">${nativeRounded.toLocaleString()} ${escapeHtml(nativeUnit)}</div>`
-                    : "";
-	            if (!unsupportedMode) {
-	                mainValHtml = `
+        if (res.redemptionConfig) {
+            const rd = res.redemptionConfig;
+            const nativeRounded = Math.floor(Number(res.nativeVal) || 0);
+            const displayRounded = Math.floor(Number(String(displayVal).replace(/,/g, "")) || 0);
+            const primaryUnit = String(displayUnit || "").trim();
+            const nativeUnit = String(rd.unit || "").trim();
+            const showNativeLine = !(primaryUnit && nativeUnit && primaryUnit === nativeUnit && displayRounded === nativeRounded);
+            const nativeLineHtml = showNativeLine
+                ? `<div class="text-xs text-gray-500 mt-0.5 font-mono">${nativeRounded.toLocaleString()} ${escapeHtml(nativeUnit)}</div>`
+                : "";
+            if (!unsupportedMode) {
+                mainValHtml = `
 	                    ${renderPrimaryValue(displayVal, displayUnit, valClass)}
 	                    ${nativeLineHtml}
 	                    ${potentialHtml}
 	                `;
-		            } else {
-		                mainValHtml = `
+            } else {
+                mainValHtml = `
 		                    ${renderPrimaryValue(0, displayUnit, valClass)}
 		                    <div class="text-[10px] text-gray-400 mt-0.5">${escapeHtml(cget("calc.unsupportedMode", "不支援此模式"))}</div>
 		                    <div class="text-xs text-gray-500 mt-0.5 font-mono">${Math.floor(res.nativeVal).toLocaleString()} ${rd.unit}</div>
 		                    ${potentialHtml}
 		                `;
-		            }
+            }
 
-	            const feeStr = (rd.fee || "").replace(/✅/g, "").trim();
-	            const feeCore = feeStr.replace(/\s*[（(][^）)]*[）)]\s*$/g, "").trim();
-	            const feeNorm = feeCore.toLowerCase().replace(/\s+/g, "");
-	            const isFree = !feeCore || /^(免費|免手續費|無|n\/a|na|free)$/i.test(feeNorm);
-	            if (!isFree && currentMode === "miles") {
-	                const shortFee = escapeHtml(feeCore);
-	                redemptionHtml = `
+            const feeStr = (rd.fee || "").replace(/✅/g, "").trim();
+            const feeCore = feeStr.replace(/\s*[（(][^）)]*[）)]\s*$/g, "").trim();
+            const feeNorm = feeCore.toLowerCase().replace(/\s+/g, "");
+            const isFree = !feeCore || /^(免費|免手續費|無|n\/a|na|free)$/i.test(feeNorm);
+            if (!isFree && currentMode === "miles") {
+                const shortFee = escapeHtml(feeCore);
+                redemptionHtml = `
 	                    <div class="mt-1 flex justify-end">
 	                        <span class="text-[10px] text-amber-600">⚠️ 手續費 ${shortFee}</span>
 	                    </div>`;
-	            }
-	        }
+            }
+        }
 
-	        // Add top result styling for top 3
-	        const isTop = index < 3 && !unsupportedMode;
-	        const topClass = isTop ? ' top-result relative' : '';
-	        const topBadge = index === 0 && !unsupportedMode ? '<span class="top-result-badge">🏆 最佳</span>' : '';
+        // Add top result styling for top 3
+        const isTop = index < 3 && !unsupportedMode;
+        const topClass = isTop ? ' top-result relative' : '';
+        const topBadge = index === 0 && !unsupportedMode ? '<span class="top-result-badge">🏆 最佳</span>' : '';
 
         const safeCardNameForAction = escapeJsSingleQuoted(res.cardName);
-	        html += `<div class="card-enter bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start mb-3${topClass}">
+        html += `<div class="card-enter bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start mb-3${topClass}">
 	            ${topBadge}
 	            <div class="w-2/3 pr-2">
 	                <div class="font-bold text-gray-800 text-sm truncate">${res.cardName}</div>
@@ -3709,7 +3713,7 @@ function renderCalculatorResults(results, currentMode) {
 	                <button type="button" onclick="handleRecord('${safeCardNameForAction}','${dataStr}')" class="text-[10px] text-blue-600 font-bold mt-2 bg-blue-50 inline-block px-2 py-1 rounded-full border border-blue-100 hover:bg-blue-100 transition-colors">記帳</button>
 	            </div>
 	        </div>`;
-	    });
+    });
 
     if (results.length === 0) html = `<div class="text-center text-gray-400 py-10 text-sm">請先在「設定」頁面新增卡片</div>`;
     document.getElementById('calc-results').innerHTML = html;
@@ -3987,7 +3991,7 @@ function renderSettings(userProfile) {
     </div>`;
 
     if (!detailMode) {
-    html += `<div class="notion-panel p-5 rounded-2xl shadow-sm">
+        html += `<div class="notion-panel p-5 rounded-2xl shadow-sm">
         <div class="flex items-center justify-between mb-3 border-b pb-2">
             <h2 class="text-sm font-bold text-gray-800 uppercase">我的銀包</h2>
             <div class="flex items-center gap-2">
@@ -3995,21 +3999,21 @@ function renderSettings(userProfile) {
                     ＋ 加入新卡 <span class="${addCardsOpen ? "text-stone-100" : "text-stone-500"}">${remainingCardsCount}</span>
                 </button>
                 ${ownedCards.length > 0
-                    ? `<button type="button" onclick="toggleWalletEditMode()" class="text-xs px-3 py-1.5 rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-100">${editMode ? "完成" : "編輯"}</button>`
-                    : ""}
+                ? `<button type="button" onclick="toggleWalletEditMode()" class="text-xs px-3 py-1.5 rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-100">${editMode ? "完成" : "編輯"}</button>`
+                : ""}
             </div>
         </div>
         ${editMode ? `<div class="text-[11px] text-stone-600 mb-3">可拖曳排序，按右上角 X 刪除卡片。</div>` : ""}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 ${editMode ? 'wallet-edit-mode' : ''}">`;
-    ownedCards.forEach((cardId) => {
-        const cardName = getCardName(cardId);
-        const toneClass = getCardToneClass(cardId);
-        const bankTag = getCardBankTag(cardId);
-        const searchText = `${bankTag} ${cardName}`.toLowerCase();
-        const isFocused = focusedCardId === cardId;
-        const canOpenSettingsDetail = cardsWithSettingEntries.has(cardId);
-        if (editMode) {
-            html += `<div data-wallet-cover data-wallet-card="${escapeHtml(searchText)}" draggable="true"
+        ownedCards.forEach((cardId) => {
+            const cardName = getCardName(cardId);
+            const toneClass = getCardToneClass(cardId);
+            const bankTag = getCardBankTag(cardId);
+            const searchText = `${bankTag} ${cardName}`.toLowerCase();
+            const isFocused = focusedCardId === cardId;
+            const canOpenSettingsDetail = cardsWithSettingEntries.has(cardId);
+            if (editMode) {
+                html += `<div data-wallet-cover data-wallet-card="${escapeHtml(searchText)}" draggable="true"
                 ondragstart="walletDragStart(event, '${escapeJsSingleQuoted(cardId)}')"
                 ondragend="walletDragEnd()"
                 ondragover="walletDragOver(event)"
@@ -4022,43 +4026,43 @@ function renderSettings(userProfile) {
                 <div class="wallet-cover-foot">拖曳排序</div>
                 <div class="wallet-drag-hint"><i class="fas fa-grip-lines"></i></div>
             </div>`;
-        } else if (canOpenSettingsDetail) {
-            html += `<button type="button" data-wallet-cover data-wallet-card="${escapeHtml(searchText)}" onclick="openWalletCardDetail('${escapeJsSingleQuoted(cardId)}')" class="wallet-cover ${toneClass} ${isFocused ? 'wallet-cover-active' : ''}">
+            } else if (canOpenSettingsDetail) {
+                html += `<button type="button" data-wallet-cover data-wallet-card="${escapeHtml(searchText)}" onclick="openWalletCardDetail('${escapeJsSingleQuoted(cardId)}')" class="wallet-cover ${toneClass} ${isFocused ? 'wallet-cover-active' : ''}">
             <div class="wallet-cover-chip"></div>
             <div class="wallet-cover-meta">${escapeHtml(bankTag)}</div>
             <div class="wallet-cover-title">${escapeHtml(cardName)}</div>
             <div class="wallet-cover-foot">${isFocused ? "正在查看" : "點擊查看設定"}</div>
         </button>`;
-        } else {
-            html += `<div data-wallet-cover data-wallet-card="${escapeHtml(searchText)}" class="wallet-cover ${toneClass} opacity-80">
+            } else {
+                html += `<div data-wallet-cover data-wallet-card="${escapeHtml(searchText)}" class="wallet-cover ${toneClass} opacity-80">
                 <div class="wallet-cover-chip"></div>
                 <div class="wallet-cover-meta">${escapeHtml(bankTag)}</div>
                 <div class="wallet-cover-title">${escapeHtml(cardName)}</div>
                 <div class="wallet-cover-foot">暫無可設定項目</div>
             </div>`;
-        }
-    });
-    html += `<div id="wallet-cover-empty" class="${ownedCards.length > 0 ? 'hidden' : ''} col-span-full text-xs text-gray-500 border border-dashed border-gray-300 rounded-xl p-4 bg-gray-50">
+            }
+        });
+        html += `<div id="wallet-cover-empty" class="${ownedCards.length > 0 ? 'hidden' : ''} col-span-full text-xs text-gray-500 border border-dashed border-gray-300 rounded-xl p-4 bg-gray-50">
             銀包未有卡。請按右上「＋加入新卡」。
         </div>
         </div>`;
-    if (addCardsOpen) {
-        html += `<div class="border border-gray-200 rounded-xl bg-white px-3 py-2">
+        if (addCardsOpen) {
+            html += `<div class="border border-gray-200 rounded-xl bg-white px-3 py-2">
             <div class="text-[11px] text-gray-500 py-1">可連續加入多張卡，完成後再收起。</div>
             <div class="space-y-3 mt-1">`;
-        bankGroups.forEach(group => {
-            const groupCards = DATA.cards.filter(c => c && !c.hidden && group.filter(c.id) && !ownedSet.has(c.id));
-            if (groupCards.length > 0) {
-                const groupKey = String(group.key || "");
-                const groupKeyEsc = escapeJsSingleQuoted(groupKey);
-                html += `<details data-wallet-group data-wallet-total="${groupCards.length}" class="bg-gray-50 rounded-xl px-3 py-1 border border-gray-100" ${(addGroupOpenMap[groupKey]) ? "open" : ""} ontoggle="setWalletAddGroupOpen('${groupKeyEsc}', this.open)">
+            bankGroups.forEach(group => {
+                const groupCards = DATA.cards.filter(c => c && !c.hidden && group.filter(c.id) && !ownedSet.has(c.id));
+                if (groupCards.length > 0) {
+                    const groupKey = String(group.key || "");
+                    const groupKeyEsc = escapeJsSingleQuoted(groupKey);
+                    html += `<details data-wallet-group data-wallet-total="${groupCards.length}" class="bg-gray-50 rounded-xl px-3 py-1 border border-gray-100" ${(addGroupOpenMap[groupKey]) ? "open" : ""} ontoggle="setWalletAddGroupOpen('${groupKeyEsc}', this.open)">
                     <summary class="list-none cursor-pointer py-2 flex items-center justify-between">
                         <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">${group.name}</span>
                         <span class="text-[10px] text-gray-400"><span data-wallet-match-count>${groupCards.length}</span> 張</span>
                     </summary>`;
-                groupCards.forEach(c => {
-                    const searchableText = `${group.name} ${c.name}`.toLowerCase();
-                    html += `<div data-wallet-card="${escapeHtml(searchableText)}" class="flex justify-between items-center py-3 border-b border-gray-200 last:border-0 gap-3">
+                    groupCards.forEach(c => {
+                        const searchableText = `${group.name} ${c.name}`.toLowerCase();
+                        html += `<div data-wallet-card="${escapeHtml(searchableText)}" class="flex justify-between items-center py-3 border-b border-gray-200 last:border-0 gap-3">
                         <div class="min-w-0">
                             <div class="text-sm text-gray-700 font-medium truncate">${escapeHtml(c.name)}</div>
                         </div>
@@ -4066,18 +4070,18 @@ function renderSettings(userProfile) {
                             <button type="button" onclick="toggleCard('${escapeJsSingleQuoted(c.id)}', { fromAddList: true, groupKey: '${groupKeyEsc}' })" class="text-xs px-3 py-1.5 rounded-lg border border-stone-300 text-stone-700 hover:bg-stone-100">加入</button>
                         </div>
                     </div>`;
-                });
-                html += `</details>`;
+                    });
+                    html += `</details>`;
+                }
+            });
+            if (visibleCards.length === ownedVisibleCount) {
+                html += `<div class="text-xs text-gray-500 border border-dashed border-gray-300 rounded-xl p-3 bg-gray-50">已加入全部卡。</div>`;
             }
-        });
-        if (visibleCards.length === ownedVisibleCount) {
-            html += `<div class="text-xs text-gray-500 border border-dashed border-gray-300 rounded-xl p-3 bg-gray-50">已加入全部卡。</div>`;
+            html += `</div></div>`;
         }
-        html += `</div></div>`;
-    }
-    html += `</div>`;
-    list.innerHTML = html;
-    return;
+        html += `</div>`;
+        list.innerHTML = html;
+        return;
     }
 
     const cardReferenceMeta = focusedCardId ? getCardReferenceMeta(focusedCardId) : {};
