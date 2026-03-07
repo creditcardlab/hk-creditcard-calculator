@@ -1,6 +1,6 @@
 // js/data_cards.js
 
-const cardsDB = [
+module.exports = [
   {
     id: "hsbc_everymile",
     name: "HSBC EveryMile",
@@ -9,8 +9,6 @@ const cardsDB = [
     fcf: 0.0195,
     last_verified_at: "2026-02-12",
     source_url: "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/everymile-spending-offer/, https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf",
-    tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/everymile/everymile-everyday-spend.pdf",
-    promo_url: "https://www.redhotoffers.hsbc.com.hk/tc/latest-offers/everymile-spending-offer/",
     rewardModules: ["em_base", "em_designated", "em_grocery_low", "em_overseas_bonus", "travel_guru_v2"],
     trackers: ["em_overseas_mission"],
     redemption: {
@@ -28,8 +26,6 @@ const cardsDB = [
     fcf: 0.0195,
     last_verified_at: "2026-02-05",
     source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/visa-signature/special-reward-tnc.pdf",
-    tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/visa-signature/special-reward-tnc.pdf",
-    promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/visa-signature/special-reward-tnc.pdf",
     rewardModules: ["vs_base", "vs_red_hot_bonus", "red_hot_variable", "travel_guru_v2"],
     trackers: ["winter_tracker"],
     redemption: {
@@ -47,8 +43,6 @@ const cardsDB = [
     fcf: 0.0195,
     last_verified_at: "2026-02-06",
     source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-    tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-    promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
     rewardModules: ["red_base", "red_online", "red_designated_bonus", "red_designated_online_overflow_bonus", "red_mcd_stamp_cashback", "travel_guru_v2"],
     trackers: ["winter_tracker", "red_mcd_stamp_tracker"],
     redemption: {
@@ -67,8 +61,6 @@ const cardsDB = [
     note_zhhk: "人民幣、港幣及澳門幣以外簽賬收取 1% 外幣手續費；中國內地及澳門簽賬視作豁免類別",
     last_verified_at: "2026-02-06",
     source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
-    tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
-    promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
     // Mainland China + Macau are fee-free; other foreign spend uses the card's fcf.
     fcf_exempt_categories: ["overseas_cn", "overseas_mo", "china_consumption"],
     rewardModules: ["hsbc_std_base", "red_hot_variable", "pulse_china_bonus", "travel_guru_v2"],
@@ -89,8 +81,6 @@ const cardsDB = [
     note_zhhk: "港幣及人民幣以外簽賬收取 1% 外幣手續費；中國內地簽賬視作豁免類別",
     last_verified_at: "2026-02-06",
     source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
-    tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
-    promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
     // Mainland China is fee-free; other foreign spend (including Macau bucket) uses the card's fcf.
     fcf_exempt_categories: ["overseas_cn", "china_consumption"],
     rewardModules: ["hsbc_std_base", "red_hot_variable", "travel_guru_v2"],
@@ -110,8 +100,6 @@ const cardsDB = [
     fcf: 0.0195,
     last_verified_at: "2026-02-06",
     source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf, https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-exclusive-additional-offers.pdf",
-    tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
-    promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
     rewardModules: [
       "hsbc_std_base",
       "red_hot_variable",
@@ -139,8 +127,6 @@ const cardsDB = [
     fcf: 0.0195,
     last_verified_at: "2026-02-06",
     source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-    tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-    promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
     rewardModules: ["hsbc_std_base", "red_hot_variable", "student_tuition_bonus", "travel_guru_v2"],
     trackers: ["winter_tracker"],
     redemption: {
@@ -158,8 +144,6 @@ const cardsDB = [
     fcf: 0.0195,
     last_verified_at: "2026-02-06",
     source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-    tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-    promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
     rewardModules: ["hsbc_std_base", "red_hot_variable", "travel_guru_v2"],
     trackers: ["winter_tracker"],
     redemption: {
@@ -177,8 +161,6 @@ const cardsDB = [
     fcf: 0.0195,
     last_verified_at: "2026-02-06",
     source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-    tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-    promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
     rewardModules: ["hsbc_std_base", "red_hot_variable", "travel_guru_v2"],
     trackers: ["winter_tracker"],
     redemption: {
@@ -782,8 +764,6 @@ const cardsDB = [
     fcf: 0.0195,
     last_verified_at: "2026-02-25",
     source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purple.html",
-    tnc_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purple.html",
-    promo_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purple.html",
     rewardModules: [
       "aeon_purple_base",
       "aeon_purple_live_base_add",
@@ -810,8 +790,6 @@ const cardsDB = [
     fcf: 0.0195,
     last_verified_at: "2026-02-25",
     source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purple.html",
-    tnc_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purple.html",
-    promo_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purple.html",
     rewardModules: [
       "aeon_purple_base",
       "aeon_purple_live_base_add",
@@ -838,8 +816,6 @@ const cardsDB = [
     fcf: 0.01,
     last_verified_at: "2026-03-04",
     source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purple.html",
-    tnc_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purple.html",
-    promo_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purple.html",
     rewardModules: [
       "aeon_purple_base",
       "aeon_purple_live_base_add",
@@ -868,8 +844,6 @@ const cardsDB = [
     fcf: 0.0195,
     last_verified_at: "2026-02-25",
     source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
-    tnc_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
-    promo_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
     rewardModules: [
       "aeon_purple_jcb_base",
       "aeon_purple_jcb_live_base_add",
@@ -894,8 +868,6 @@ const cardsDB = [
     fcf: 0.0195,
     last_verified_at: "2026-02-25",
     source_url: "https://www.aeon.com.hk/tc/html/credit-card/premium.html",
-    tnc_url: "https://www.aeon.com.hk/tc/html/credit-card/premium.html",
-    promo_url: "https://www.aeon.com.hk/tc/html/credit-card/premium.html",
     rewardModules: [
       "aeon_premium_base",
       "aeon_premium_live_base_add",
@@ -922,8 +894,6 @@ const cardsDB = [
     fcf: 0.0195,
     last_verified_at: "2026-02-25",
     source_url: "https://www.aeon.com.hk/tc/html/credit-card/premium.html",
-    tnc_url: "https://www.aeon.com.hk/tc/html/credit-card/premium.html",
-    promo_url: "https://www.aeon.com.hk/tc/html/credit-card/premium.html",
     rewardModules: [
       "aeon_premium_base",
       "aeon_premium_live_base_add",
@@ -950,8 +920,6 @@ const cardsDB = [
     fcf: 0.01,
     last_verified_at: "2026-03-04",
     source_url: "https://www.aeon.com.hk/tc/html/credit-card/premium.html",
-    tnc_url: "https://www.aeon.com.hk/tc/html/credit-card/premium.html",
-    promo_url: "https://www.aeon.com.hk/tc/html/credit-card/premium.html",
     rewardModules: [
       "aeon_premium_base",
       "aeon_premium_live_base_add",
@@ -981,8 +949,6 @@ const cardsDB = [
     fcf: 0.0195,
     last_verified_at: "2026-02-25",
     source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-    tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-    promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
     rewardModules: [
       "aeon_purple_base",
       "aeon_purple_live_base_add",
@@ -1010,8 +976,6 @@ const cardsDB = [
     fcf: 0.0195,
     last_verified_at: "2026-02-25",
     source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-    tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-    promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
     rewardModules: [
       "aeon_premium_base",
       "aeon_premium_live_base_add",

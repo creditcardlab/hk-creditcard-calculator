@@ -3699,6 +3699,13 @@ function renderCalculatorResults(results, currentMode) {
         const topBadge = index === 0 && !unsupportedMode ? '<span class="top-result-badge">🏆 最佳</span>' : '';
 
         const safeCardNameForAction = escapeJsSingleQuoted(res.cardName);
+        const cardRefMeta = getCardReferenceMeta(res.cardId) || {};
+        const refLinksHtml = renderReferenceActions(
+            { sourceUrl: cardRefMeta.sourceUrl, sourceTitle: cardRefMeta.sourceTitle, tncUrl: cardRefMeta.tncUrl, promoUrl: cardRefMeta.promoUrl },
+            { linkClass: "text-[10px] text-stone-500 hover:text-stone-700 underline underline-offset-2", showPromo: true, showTnc: true, showImplementation: false, showRegistration: false }
+        );
+        const refHtmlWrapper = refLinksHtml ? `<div class="mt-2 pt-2 border-t border-gray-100">${refLinksHtml}</div>` : "";
+
         html += `<div class="card-enter bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-start mb-3${topClass}">
 	            ${topBadge}
 	            <div class="w-2/3 pr-2">
@@ -3706,6 +3713,7 @@ function renderCalculatorResults(results, currentMode) {
 	                <div class="text-xs mt-1 leading-relaxed">${renderBreakdown(res.breakdown, res)}</div>
 	                ${feeLineHtml}
 	                ${renderFxInfo(res)}
+                    ${refHtmlWrapper}
 	            </div>
 	            <div class="text-right w-1/3 flex flex-col items-end">
 	                ${mainValHtml}

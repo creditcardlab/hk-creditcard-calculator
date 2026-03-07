@@ -1,6 +1,6 @@
 // js/data_modules.js
 
-const modulesDB = {
+module.exports = {
     // --- HSBC ---
     "hsbc_std_base": { type: "always", rate: 0.004, desc: "基本 0.4%", last_verified_at: "2026-02-06", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf" },
     "vs_base": { type: "always", rate: 0.004, desc: "基本 0.4%", last_verified_at: "2026-02-06", source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/visa-signature/special-reward-tnc.pdf" },
@@ -30,9 +30,7 @@ const modulesDB = {
         display_name_zhhk: "Visa Signature 特別獎賞",
         note_zhhk: "Visa Signature 於最紅自主類別之合資格簽賬，固定額外 1.2%，可與最紅自主分配同時生效。",
         last_verified_at: "2026-02-05",
-        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/rewards/2026-red-hot-rewards-of-your-choice-terms-and-conditions.pdf, https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/#3",
-        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/rewards/2026-red-hot-rewards-of-your-choice-terms-and-conditions.pdf",
-        promo_url: "https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/#3",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/rewards/2026-red-hot-rewards-of-your-choice-terms-and-conditions.pdf, https://www.hsbc.com.hk/zh-hk/credit-cards/rewards/your-choice/#3"
     },
     // Easy Card「易賞錢」：百佳/屈臣氏 $5=1分；豐澤 $10=1分（同樣 6 倍會出現兩個不同回贈率）。
     // - 新交易請用細分 category；舊 category 仍保留以支援已記帳資料。
@@ -40,9 +38,7 @@ const modulesDB = {
         type: "category", match: ["moneyback_merchant"], rate: 0.024, desc: "易賞錢指定商戶 6倍 2.4%", mode: "replace",
         note_zhhk: "基本「易賞錢」獎賞積分即於百佳及屈臣氏作每港幣 5 元簽賬相等於 1「易賞錢」積分或於豐澤作\n每港幣 10 元簽賬相等於 1「易賞錢」積分;6 倍「易賞錢」獎賞積分即於百佳及屈臣氏作每港幣 5 元\n簽賬相等於 6「易賞錢」 積分或於豐澤作每港幣 10 元簽賬相等於 6「易賞錢」積分;而 4 倍「易賞錢\n」獎賞積分即於百佳及屈臣氏作每港幣 5 元簽賬相等於 4「易賞錢」積分或於豐澤作每港幣 10 元簽\n賬相等於 4「易賞錢」積分。有關「易賞錢」積分的條款及細則請參閱「易賞錢」網頁",
         last_verified_at: "2026-02-06",
-        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
-        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
-        promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf"
     },
     "easy_moneyback_pns_watsons_4x": {
         type: "category",
@@ -53,8 +49,6 @@ const modulesDB = {
         valid_from: "2025-05-19",
         valid_to: "2026-12-31",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
-        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
-        promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
         eligible_check: (cat, ctx) => !((ctx && ctx.settings && ctx.settings.hsbc_easy_is_vip))
     },
     "easy_moneyback_pns_watsons_6x": {
@@ -66,8 +60,6 @@ const modulesDB = {
         valid_from: "2025-05-19",
         valid_to: "2026-12-31",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
-        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
-        promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
         eligible_check: (cat, ctx) => !!(ctx && ctx.settings && ctx.settings.hsbc_easy_is_vip)
     },
     "easy_moneyback_fortress_4x": {
@@ -79,8 +71,6 @@ const modulesDB = {
         valid_from: "2025-05-19",
         valid_to: "2026-12-31",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
-        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
-        promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
         eligible_check: (cat, ctx) => !((ctx && ctx.settings && ctx.settings.hsbc_easy_is_vip))
     },
     "easy_moneyback_fortress_6x": {
@@ -92,8 +82,6 @@ const modulesDB = {
         valid_from: "2025-05-19",
         valid_to: "2026-12-31",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
-        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
-        promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/visa-platinum-card-exclusive-offers.pdf",
         eligible_check: (cat, ctx) => !!(ctx && ctx.settings && ctx.settings.hsbc_easy_is_vip)
     },
     "easy_additional_offer_3x": {
@@ -119,7 +107,6 @@ const modulesDB = {
         display_name_zhhk: "HSBC 學生卡學費回贈",
         last_verified_at: "2026-02-06",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/tc/tuition-fee-payment-tcs1.pdf",
-        promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/docs/credit-cards/tc/tuition-fee-payment-tcs1.pdf",
         cap_mode: "reward",
         cap_limit: 200,
         cap_key: "student_tuition_cap",
@@ -133,8 +120,6 @@ const modulesDB = {
         display_name_zhhk: "HSBC Pulse 內地/澳門手機支付額外回贈",
         last_verified_at: "2026-02-06",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
-        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
-        promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/unionpay-dual-currency/diamond-card-terms-and-conditions.pdf",
         mode: "add",
         eligible_check: (cat, ctx) => !!(ctx && ctx.paymentMethod && ctx.paymentMethod !== "physical")
     },
@@ -146,9 +131,7 @@ const modulesDB = {
         rate: 0.004,
         desc: "基本 0.4%",
         last_verified_at: "2026-02-21",
-        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-        promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf"
     },
     "red_online": {
         type: "category",
@@ -163,8 +146,6 @@ const modulesDB = {
         cap: { key: "red_online_bonus_cap", period: "month" },
         last_verified_at: "2026-02-21",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-        promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
         eligible_check: (cat, ctx) => !(ctx && ctx.isOnline && cat === "red_designated")
     },
     "red_designated_bonus": {
@@ -179,9 +160,7 @@ const modulesDB = {
         cap_key: "red_designated_spend_cap",
         cap: { key: "red_designated_spend_cap", period: "month" },
         last_verified_at: "2026-02-21",
-        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-        promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
+        source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf"
     },
     "red_designated_online_overflow_bonus": {
         type: "category_overflow_bonus",
@@ -198,8 +177,6 @@ const modulesDB = {
         cap: { key: "red_online_bonus_cap", period: "month" },
         last_verified_at: "2026-02-21",
         source_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-        tnc_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
-        promo_url: "https://www.hsbc.com.hk/content/dam/hsbc/hk/tc/docs/credit-cards/reward-scheme-terms-and-conditions.pdf",
         eligible_check: (cat, ctx) => !!(ctx && ctx.isOnline && cat === "red_designated")
     },
     "red_mcd_stamp_cashback": {
@@ -292,7 +269,6 @@ const modulesDB = {
         valid_to: "2026-03-03",
         last_verified_at: "2026-02-21",
         source_url: "https://av.sc.com/hk/content/docs/hk-cc-cx-overseas-spending-offer-tnc.pdf",
-        promo_url: "https://av.sc.com/hk/content/docs/hk-cc-cx-overseas-spending-offer-tnc.pdf",
         tnc_url: "https://av.sc.com/hk/content/docs/hk-cc-cx-overseas-spending-offer-tnc.pdf",
         registration_url: "https://www.sc.com/hk/campaign/cathay-mastercard-spending-rewards-promotion/apply/",
         registration_start: "2025-12-16",
@@ -1213,8 +1189,6 @@ const modulesDB = {
         valid_to: "2026-03-31",
         tnc_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
         source_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
-        tnc_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
-        promo_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
         registration_note: "需先登記；首30,000位成功登記客戶（系統未能自動核實）",
         eligible_check: (cat, ctx) => {
             if (!ctx) return false;
@@ -1242,8 +1216,6 @@ const modulesDB = {
         valid_to: "2026-03-31",
         tnc_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
         source_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
-        tnc_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
-        promo_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
         registration_note: "需先登記；首30,000位成功登記客戶（系統未能自動核實）",
         eligible_check: (cat, ctx) => {
             if (!ctx) return false;
@@ -1320,8 +1292,6 @@ const modulesDB = {
         valid_to: "2026-03-31",
         tnc_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
         source_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
-        tnc_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
-        promo_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
         registration_note: "需先登記；首30,000位成功登記客戶（系統未能自動核實）",
         eligible_check: (cat, ctx) => {
             if (!ctx) return false;
@@ -1349,8 +1319,6 @@ const modulesDB = {
         valid_to: "2026-03-31",
         tnc_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
         source_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
-        tnc_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
-        promo_url: "https://www.bochk.com/dam/boccreditcard/gopmq126/tnc_tc.pdf",
         registration_note: "需先登記；首30,000位成功登記客戶（系統未能自動核實）",
         eligible_check: (cat, ctx) => {
             if (!ctx) return false;
@@ -1381,9 +1349,7 @@ const modulesDB = {
         rate: 0.004,
         desc: "基本 0.4%",
         last_verified_at: "2026-02-23",
-        source_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf",
-        tnc_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf",
-        promo_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf",
+        source_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf"
     },
     "boc_sogo_designated": {
         type: "category",
@@ -1395,7 +1361,6 @@ const modulesDB = {
         valid_to: "2026-12-31",
         last_verified_at: "2026-02-23",
         source_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf",
-        promo_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf",
         tnc_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf",
         eligible_check: (cat, ctx) => {
             if (!ctx) return true;
@@ -1416,7 +1381,6 @@ const modulesDB = {
         valid_to: "2026-12-31",
         last_verified_at: "2026-02-23",
         source_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf",
-        promo_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf",
         tnc_url: "https://www.bochk.com/dam/boccreditcard/sogo_doc/sogocard_tnc_tc.pdf",
         eligible_check: (cat, ctx) => !!(ctx && ["apple_pay", "google_pay", "samsung_pay"].includes(ctx.paymentMethod))
     },
@@ -2080,9 +2044,7 @@ const modulesDB = {
         valid_from: "2025-03-10",
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
-        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html"
     },
     "aeon_purple_live_base_add": {
         type: "category",
@@ -2093,9 +2055,7 @@ const modulesDB = {
         valid_from: "2025-03-10",
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
-        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html"
     },
     "aeon_purple_food_physical_bonus": {
         type: "category",
@@ -2111,8 +2071,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
         eligible_check: (cat, ctx) => {
             const pm = String((ctx && ctx.paymentMethod) || "physical");
             return pm === "physical" && !(ctx && ctx.isOnline);
@@ -2132,8 +2090,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
         eligible_check: (cat, ctx) => {
             if (ctx && ctx.isOnline) return false;
             const pm = String((ctx && ctx.paymentMethod) || "");
@@ -2154,8 +2110,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
         eligible_check: (cat, ctx) => String((ctx && ctx.paymentMethod) || "physical") === "physical"
     },
     "aeon_purple_live_mobile_bonus": {
@@ -2172,8 +2126,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
         eligible_check: (cat, ctx) => {
             const pm = String((ctx && ctx.paymentMethod) || "");
             return pm === "apple_pay" || pm === "google_pay" || pm === "unionpay_cloud";
@@ -2193,8 +2145,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
         eligible_check: (cat, ctx) => String((ctx && ctx.paymentMethod) || "physical") === "physical"
     },
     "aeon_purple_ride_mobile_bonus": {
@@ -2211,8 +2161,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
         eligible_check: (cat, ctx) => {
             const pm = String((ctx && ctx.paymentMethod) || "");
             return pm === "apple_pay" || pm === "google_pay" || pm === "unionpay_cloud";
@@ -2225,9 +2173,7 @@ const modulesDB = {
         valid_from: "2025-03-10",
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
-        source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
+        source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html"
     },
     "aeon_purple_jcb_live_base_add": {
         type: "category",
@@ -2238,9 +2184,7 @@ const modulesDB = {
         valid_from: "2025-03-10",
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
-        source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
+        source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html"
     },
     "aeon_purple_jcb_food_physical_bonus": {
         type: "category",
@@ -2256,8 +2200,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
         eligible_check: (cat, ctx) => {
             const pm = String((ctx && ctx.paymentMethod) || "physical");
             return pm === "physical" && !(ctx && ctx.isOnline);
@@ -2277,8 +2219,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
         eligible_check: (cat, ctx) => String((ctx && ctx.paymentMethod) || "physical") === "physical"
     },
     "aeon_purple_jcb_ride_physical_bonus": {
@@ -2295,8 +2235,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/creditcard-purplejcb.html",
         eligible_check: (cat, ctx) => String((ctx && ctx.paymentMethod) || "physical") === "physical"
     },
     "aeon_premium_base": {
@@ -2306,9 +2244,7 @@ const modulesDB = {
         valid_from: "2025-03-10",
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
-        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html"
     },
     "aeon_premium_live_base_add": {
         type: "category",
@@ -2319,9 +2255,7 @@ const modulesDB = {
         valid_from: "2025-03-10",
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
-        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html"
     },
     "aeon_premium_food_physical_bonus": {
         type: "category",
@@ -2337,8 +2271,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
         eligible_check: (cat, ctx) => {
             const pm = String((ctx && ctx.paymentMethod) || "physical");
             return pm === "physical" && !(ctx && ctx.isOnline);
@@ -2358,8 +2290,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
         eligible_check: (cat, ctx) => {
             if (ctx && ctx.isOnline) return false;
             const pm = String((ctx && ctx.paymentMethod) || "");
@@ -2380,8 +2310,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
         eligible_check: (cat, ctx) => String((ctx && ctx.paymentMethod) || "physical") === "physical"
     },
     "aeon_premium_live_mobile_bonus": {
@@ -2398,8 +2326,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
         eligible_check: (cat, ctx) => {
             const pm = String((ctx && ctx.paymentMethod) || "");
             return pm === "apple_pay" || pm === "google_pay" || pm === "unionpay_cloud";
@@ -2419,8 +2345,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
         eligible_check: (cat, ctx) => String((ctx && ctx.paymentMethod) || "physical") === "physical"
     },
     "aeon_premium_ride_mobile_bonus": {
@@ -2437,8 +2361,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-02-25",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplepremium.html",
         eligible_check: (cat, ctx) => {
             const pm = String((ctx && ctx.paymentMethod) || "");
             return pm === "apple_pay" || pm === "google_pay" || pm === "unionpay_cloud";
@@ -2776,9 +2698,7 @@ const modulesDB = {
         valid_from: "2026-02-01",
         valid_to: "2026-04-30",
         last_verified_at: "2026-03-04",
-        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html"
     },
     "aeon_premium_upi_overseas_bonus": {
         type: "category",
@@ -2794,8 +2714,6 @@ const modulesDB = {
         valid_to: "2026-04-30",
         last_verified_at: "2026-03-04",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
         eligible_check: (cat) => String(cat || "") !== "overseas_cn" && String(cat || "") !== "overseas_mo" && String(cat || "") !== "overseas_tw"
     },
     "aeon_std_upi_cn_mo_tw_bonus": {
@@ -2811,9 +2729,7 @@ const modulesDB = {
         valid_from: "2026-02-01",
         valid_to: "2026-04-30",
         last_verified_at: "2026-03-04",
-        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
+        source_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html"
     },
     "aeon_std_upi_overseas_bonus": {
         type: "category",
@@ -2829,8 +2745,6 @@ const modulesDB = {
         valid_to: "2026-04-30",
         last_verified_at: "2026-03-04",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
         eligible_check: (cat) => String(cat || "") !== "overseas_cn" && String(cat || "") !== "overseas_mo" && String(cat || "") !== "overseas_tw"
     },
     "aeon_jcb_jpy_fcf_waiver_2026": {
@@ -2847,8 +2761,6 @@ const modulesDB = {
         valid_to: "2026-08-31",
         last_verified_at: "2026-03-04",
         source_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplejcb.html",
-        tnc_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplejcb.html",
-        promo_url: "https://www.aeon.com.hk/tc/privilege/promotion_purplejcb.html",
         eligible_check: (cat, ctx) => String(ctx && ctx.currency || "").toUpperCase() === "JPY"
     }
 
