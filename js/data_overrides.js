@@ -37,11 +37,36 @@ const CORE_OVERRIDES = {
       "registration_url": "https://global.americanexpress.com/enrollments/oletenroll?campaignId=hkbonusplatmracc9x25&channel=IBW&locale=zh-HK",
       "tnc_url": "https://www.americanexpress.com/content/dam/amex/hk/benefits/pdf/TnCs_platinum-membership-rewards-accelerator.pdf"
     },
+    "aeon_jcb_japan_promo_2026": {
+      "promo_url": "https://www.aeon.com.hk/tc/privilege/promotion_purplejcb.html",
+      "tnc_url": "https://www.aeon.com.hk/tc/privilege/promotion_purplejcb.html"
+    },
+    "aeon_upi_travel_2026": {
+      "promo_url": "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html",
+      "tnc_url": "https://www.aeon.com.hk/tc/privilege/promotion_upi_0226.html"
+    },
     "aeon_wakuwaku_2025_2026": {
-      "promo_type": "custom"
+      "promo_type": "custom",
+      "promo_url": "https://www.aeon.com.hk/tc/privilege/promotion_wakuwakuwo_full_0422.html",
+      "tnc_url": "https://www.aeon.com.hk/tc/pdf/credit-card/AEONCARDWAKUWAKU_RBBD_TC.pdf"
+    },
+    "bea_goal_2025_2026h1": {
+      "promo_url": "https://www.hkbea.com/html/tc/bea-goal-credit-card.html",
+      "tnc_url": "https://www.hkbea.com/pdf/tc/credit-card/master-reward-tnc_tc.pdf"
+    },
+    "bea_ititanium_2025_2026": {
+      "promo_url": "https://www.hkbea.com/html/tc/bea-i-titanium-card.html",
+      "tnc_url": "https://www.hkbea.com/pdf/tc/credit-card/master-reward-tnc_tc.pdf"
     },
     "bea_unionpay_diamond_2025_2026h1": {
-      "promo_type": "custom"
+      "promo_type": "custom",
+      "promo_url": "https://www.hkbea.com/html/tc/bea-unionpay-dual-currency-diamond-card.html",
+      "tnc_url": "https://www.hkbea.com/pdf/tc/credit-card/master-reward-tnc_tc.pdf"
+    },
+    "bea_world_flying_2025_2026h1": {
+      "promo_url": "https://www.hkbea.com/html/tc/bea-credit-card-world-mc.html",
+      "registration_url": "https://www.hkbea.com/pdf/wmcreg.pdf",
+      "tnc_url": "https://www.hkbea.com/pdf/tc/credit-card/master-reward-tnc_tc.pdf"
     },
     "boc_go_offer": {
       "promo_type": "custom"
@@ -136,6 +161,26 @@ const CORE_OVERRIDES = {
       "promo_url": "https://www.americanexpress.com/zh-hk/benefits/offers/the-platinum-credit-card/",
       "registration_url": "https://www.americanexpress.com/hk/ch/credit-cards/platinum-credit-card/?linknav=hk-ch-amex-cardshop-allcards-learn-PlatinumCreditCard-fc",
       "tnc_url": "https://www.americanexpress.com/content/dam/amex/hk/benefits/shopping/offers/pdf/Double_Point_Plat_G_2026_TnC.pdf"
+    },
+    "aeon_wakuwaku": {
+      "promo_url": "https://www.aeon.com.hk/tc/privilege/promotion_wakuwakuwo_full_0422.html",
+      "tnc_url": "https://www.aeon.com.hk/tc/privilege/promotion_wakuwakuwo_full_0422.html"
+    },
+    "bea_goal": {
+      "promo_url": "https://www.hkbea.com/html/tc/bea-goal-credit-card.html",
+      "tnc_url": "https://www.hkbea.com/pdf/tc/credit-card/master-reward-tnc_tc.pdf"
+    },
+    "bea_ititanium": {
+      "promo_url": "https://www.hkbea.com/html/tc/bea-i-titanium-card.html",
+      "tnc_url": "https://www.hkbea.com/pdf/tc/credit-card/master-reward-tnc_tc.pdf"
+    },
+    "bea_unionpay_diamond": {
+      "promo_url": "https://www.hkbea.com/html/tc/bea-unionpay-dual-currency-diamond-card.html",
+      "tnc_url": "https://www.hkbea.com/pdf/tc/credit-card/master-reward-tnc_tc.pdf"
+    },
+    "bea_world": {
+      "promo_url": "https://www.hkbea.com/html/tc/bea-credit-card-world-mc.html",
+      "tnc_url": "https://www.hkbea.com/pdf/tc/credit-card/master-reward-tnc_tc.pdf"
     },
     "hsbc_easy": {
       "name": "HSBC Easy Card / 白金卡"
