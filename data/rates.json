@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-04-27T10:24:24.584Z",
+  "generated_at": "2026-04-28T03:37:52.158Z",
   "base": "HKD",
   "rates": {
     "JPY": {
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 0.049109,
-        "date": "2026-04-27",
+        "rate": 0.049191,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -16,8 +16,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 0.005301,
-        "date": "2026-04-27",
+        "rate": 0.005319,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -25,8 +25,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 0.241813,
-        "date": "2026-04-27",
+        "rate": 0.242262,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -34,8 +34,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 0.249136,
-        "date": "2026-04-27",
+        "rate": 0.249176,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -43,8 +43,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 1.145533,
-        "date": "2026-04-27",
+        "rate": 1.146652,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -53,7 +53,7 @@
       "visa": null,
       "reference": {
         "rate": 0.970874,
-        "date": "2026-04-27",
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -61,8 +61,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 10.584587,
-        "date": "2026-04-27",
+        "rate": 10.614134,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -70,8 +70,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 9.172376,
-        "date": "2026-04-27",
+        "rate": 9.191261,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -79,8 +79,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 7.835271,
-        "date": "2026-04-27",
+        "rate": 7.837236,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -88,8 +88,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 6.136249,
-        "date": "2026-04-27",
+        "rate": 6.15131,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -97,8 +97,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 5.597568,
-        "date": "2026-04-27",
+        "rate": 5.632058,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -106,8 +106,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 5.727869,
-        "date": "2026-04-27",
+        "rate": 5.754369,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -115,8 +115,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 4.600366,
-        "date": "2026-04-27",
+        "rate": 4.634285,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -124,8 +124,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 9.965718,
-        "date": "2026-04-27",
+        "rate": 9.983029,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -133,8 +133,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 0.847519,
-        "date": "2026-04-27",
+        "rate": 0.850962,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -142,8 +142,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 0.840311,
-        "date": "2026-04-27",
+        "rate": 0.844352,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     },
@@ -151,8 +151,8 @@
       "mastercard": null,
       "visa": null,
       "reference": {
-        "rate": 1.229474,
-        "date": "2026-04-27",
+        "rate": 1.231794,
+        "date": "2026-04-28",
         "source": "open.er-api"
       }
     }
